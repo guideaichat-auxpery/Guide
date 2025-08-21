@@ -1,10 +1,12 @@
 # Overview
 
-Guide is an AI-powered curriculum assistant built with Streamlit that helps teachers create lesson plans, generate activities, and communicate with parents. The application supports both Australian Curriculum V9 and Montessori Curriculum Australia frameworks, providing contextual guidance through an interactive chat interface powered by OpenAI's GPT-4o model.
+Guide is a cosmic curriculum companion built with Streamlit that bridges Montessori's Cosmic Education philosophy with contemporary curriculum frameworks. The application integrates systems thinking and interconnected learning approaches, helping teachers create meaningful learning experiences that connect to the larger patterns of life and the universe. It supports both Australian Curriculum V9 and Montessori Curriculum Australia frameworks through an AI-powered interface that emphasizes warm, humble, and practical guidance.
 
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Philosophy: Montessori Cosmic Education and systems thinking approach - emphasizing interconnections, big ideas, patterns, and the child's place in the universe story.
+Tone: Warm, humble, practical, avoiding jargon while honoring developmental stages and student agency.
 
 # System Architecture
 
@@ -30,11 +32,11 @@ Preferred communication style: Simple, everyday language.
 - **Error Handling**: Graceful error handling for missing API keys with user-friendly messages
 
 ## Core Features Architecture
-- **Curriculum Adaptation**: Context-aware responses based on Australian Curriculum V9 or Montessori frameworks
-- **Lesson Planning**: AI-generated lesson ideas aligned to selected curriculum
-- **Scope & Sequence**: CSV-based topic visualization with timeline charts
-- **Communication Tools**: Parent letter and information sheet generation
-- **Activity Generation**: Age-appropriate task suggestions for primary and middle years
+- **Cosmic Curriculum Integration**: Responses rooted in Montessori's Cosmic Education philosophy with systems thinking approach
+- **Learning Connections**: AI-generated lesson ideas that link topics to larger systems (historical, ecological, social, economic)
+- **Learning Threads & Patterns**: Interconnected topic mapping showing relationships rather than linear sequences
+- **Family & Community Connection**: Parent communication highlighting whole-child development and cosmic perspective
+- **Learning Invitations**: Student activities fostering independence, collaboration, real-world connection, and cosmic reflection
 
 # External Dependencies
 

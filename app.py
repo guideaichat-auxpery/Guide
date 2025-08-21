@@ -41,13 +41,17 @@ if "uploaded_content" not in st.session_state:
 
 # Helper functions
 def get_system_prompt(curriculum):
-    """Get system prompt based on selected curriculum"""
-    base_prompt = "You are an AI trained on both the Australian Curriculum V9 and Montessori Curriculum Australia. Always answer with practical, accurate, and teacher-friendly guidance."
+    """Get system prompt based on selected curriculum with Montessori Cosmic Education and systems thinking approach"""
+    base_prompt = """You are an AI curriculum guide inspired by Montessori's Cosmic Education and grounded in systems thinking. Your responses are warm, humble, and practical, avoiding jargon-heavy academic language. 
+
+You honor the adolescent developmental plane: curiosity, belonging, purpose, and independence. You emphasize interconnections across disciplines rather than siloed subjects, drawing attention to big ideas and patterns (cycles, cause-and-effect, networks) rather than isolated facts. 
+
+You respect Montessori principles of freedom within responsibility, hands-on experience, and student agency. You help teachers, students, and parents understand not only what to learn, but why it matters in the bigger picture of life and the world."""
     
     if curriculum == "Australian Curriculum V9":
-        return f"{base_prompt} Focus your responses on the Australian Curriculum V9 framework, including learning areas, general capabilities, and cross-curriculum priorities."
+        return f"{base_prompt}\n\nYou integrate the Australian Curriculum V9 framework with Cosmic Education principles, showing how learning areas, general capabilities, and cross-curriculum priorities connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience."
     else:
-        return f"{base_prompt} Focus your responses on the Montessori Curriculum Australia framework, emphasizing child-led learning, prepared environments, and developmental stages."
+        return f"{base_prompt}\n\nYou work within the Montessori Curriculum Australia framework, emphasizing child-led learning, prepared environments, and developmental stages while connecting all learning to the 'universe story' - showing how each topic fits into the grand narrative of cosmic evolution, human civilization, and our interconnected world."
 
 def call_openai_api(messages, system_prompt):
     """Call OpenAI API with error handling"""
@@ -68,8 +72,17 @@ def call_openai_api(messages, system_prompt):
         return None
 
 def generate_lesson_ideas(topic, curriculum):
-    """Generate lesson ideas for a given topic"""
-    prompt = f"Generate 3-5 creative lesson ideas for the topic '{topic}' aligned with {curriculum}. Include learning objectives, activities, and assessment strategies. Format as a structured response with clear headings."
+    """Generate lesson ideas for a given topic with systems thinking approach"""
+    prompt = f"""Create 3-5 interconnected lesson ideas for '{topic}' that connect to larger systems (historical, ecological, social, economic). 
+
+For each lesson, show:
+- How this topic connects to the bigger picture of life and the world
+- Real-world applications that foster independence and responsibility  
+- Collaborative opportunities that build community
+- Ways students can contribute meaningfully to society through this learning
+- Reflection questions about patterns, cycles, and interconnections
+
+Design activities that honor curiosity, belonging, purpose, and independence while connecting to the cosmic story of how everything is related."""
     
     messages = [{"role": "user", "content": prompt}]
     system_prompt = get_system_prompt(curriculum)
@@ -77,9 +90,21 @@ def generate_lesson_ideas(topic, curriculum):
     return call_openai_api(messages, system_prompt)
 
 def generate_scope_sequence(topics_data, curriculum):
-    """Generate scope and sequence suggestions"""
+    """Generate scope and sequence as interconnected learning threads"""
     topics_text = "\n".join([f"- {topic}" for topic in topics_data])
-    prompt = f"Analyze these curriculum topics and suggest an optimal teaching sequence with rationale:\n{topics_text}\n\nProvide a structured scope and sequence plan for {curriculum} with timing recommendations and prerequisite relationships."
+    prompt = f"""Create a scope and sequence that presents these topics not as isolated subjects, but as interconnected learning threads in the tapestry of knowledge:
+
+{topics_text}
+
+Present this as:
+- Learning threads that weave together rather than linear progression
+- Patterns and connections between topics (cycles, cause-and-effect, networks)
+- How each topic contributes to understanding larger systems
+- Opportunities for students to see their place in the cosmic story
+- Natural spiral progression that respects developmental readiness
+- Real-world connections that show why this learning matters to humanity
+
+Show how these topics create a map of interconnected understanding rather than separate academic boxes."""
     
     messages = [{"role": "user", "content": prompt}]
     system_prompt = get_system_prompt(curriculum)
@@ -87,8 +112,18 @@ def generate_scope_sequence(topics_data, curriculum):
     return call_openai_api(messages, system_prompt)
 
 def generate_parent_communication(topic, curriculum):
-    """Generate parent communication content"""
-    prompt = f"Create a parent information letter or newsletter about '{topic}' for {curriculum}. Include what students will learn, how parents can support at home, and key vocabulary or concepts. Make it friendly and informative."
+    """Generate parent communication highlighting whole-child development and cosmic connections"""
+    prompt = f"""Create a warm, accessible parent communication about '{topic}' that explains curriculum in terms of whole-child development and lifelong learning skills.
+
+Include:
+- How this learning connects to the child's place in the "universe story"
+- The bigger picture of why this topic matters for humanity and our world
+- How this supports the child's natural curiosity, belonging, purpose, and independence
+- Practical ways parents can extend this learning through real-world connections at home
+- How this topic weaves into larger patterns and systems the child is discovering
+- The child's role as an active contributor to their community and world through this learning
+
+Write in a tone that honors both the curriculum framework and Montessori's vision of education as preparation for life and citizenship in the cosmic community."""
     
     messages = [{"role": "user", "content": prompt}]
     system_prompt = get_system_prompt(curriculum)
@@ -96,8 +131,30 @@ def generate_parent_communication(topic, curriculum):
     return call_openai_api(messages, system_prompt)
 
 def generate_student_tasks(topic, age_group, curriculum):
-    """Generate student tasks and activities"""
-    prompt = f"Create age-appropriate activities and scaffolds for {age_group} students learning about '{topic}' in {curriculum}. Include differentiation strategies for various learning needs and abilities."
+    """Generate student tasks that foster independence, collaboration, and cosmic connection"""
+    prompt = f"""Create meaningful activities for {age_group} students exploring '{topic}' that always foster:
+
+Independence & Responsibility:
+- Self-directed learning opportunities
+- Choices in how to demonstrate understanding
+- Real ownership of learning outcomes
+
+Collaboration & Community:
+- Authentic opportunities to work together
+- Ways to share knowledge and teach others
+- Building classroom and wider community connections
+
+Real-World Connection:
+- Authentic audiences for student work
+- Purposeful outcomes that matter beyond the classroom
+- Connections to local and global communities
+
+Cosmic Reflection:
+- How this learning contributes to understanding larger systems (society, ecology, culture)
+- The student's role in the ongoing story of human civilization
+- Patterns and connections to other areas of knowledge
+
+Design these as invitations to explore rather than assignments to complete, honoring the child's natural curiosity and developmental readiness."""
     
     messages = [{"role": "user", "content": prompt}]
     system_prompt = get_system_prompt(curriculum)
@@ -145,8 +202,8 @@ def create_timeline_visualization(topics_data):
     return fig
 
 # Main app layout
-st.title("🎓 Guide - AI Curriculum Assistant")
-st.markdown("*Your intelligent companion for curriculum-aligned teaching*")
+st.title("🌍 Guide - Cosmic Curriculum Companion")
+st.markdown("*Weaving threads of knowledge in the tapestry of learning*")
 
 # Sidebar
 with st.sidebar:
@@ -210,7 +267,7 @@ with col1:
                 st.markdown(message["content"])
     
     # Chat input
-    if prompt := st.chat_input("Ask me anything about curriculum, lesson planning, or teaching strategies..."):
+    if prompt := st.chat_input("Share your curiosity about learning, teaching, or how knowledge connects to the bigger picture..."):
         # Add user message
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -219,7 +276,7 @@ with col1:
         
         # Generate AI response
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+            with st.spinner("Reflecting on connections..."):
                 system_prompt = get_system_prompt(st.session_state.curriculum)
                 response = call_openai_api(st.session_state.messages, system_prompt)
                 
@@ -227,36 +284,37 @@ with col1:
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 else:
-                    st.error("Failed to generate response. Please try again.")
+                    st.error("I'm having trouble connecting right now. Please try again.")
 
 with col2:
     st.header("🛠️ Tools & Generators")
     
     # Lesson Idea Generator
-    with st.expander("📝 Lesson Idea Generator", expanded=True):
-        lesson_topic = st.text_input("Enter a topic:", key="lesson_topic")
-        if st.button("Generate Lesson Ideas", key="gen_lesson"):
+    with st.expander("🌱 Learning Connections", expanded=True):
+        lesson_topic = st.text_input("What topic would you like to explore?", key="lesson_topic", placeholder="e.g., Water cycle, Ancient civilizations, Fractions...")
+        if st.button("Discover Connections", key="gen_lesson"):
             if lesson_topic:
-                with st.spinner("Generating lesson ideas..."):
+                with st.spinner("Weaving connections across the cosmic curriculum..."):
                     ideas = generate_lesson_ideas(lesson_topic, st.session_state.curriculum)
                     if ideas:
-                        st.markdown("### Generated Lesson Ideas")
+                        st.markdown("### Learning Connections & Invitations")
                         st.markdown(ideas)
             else:
-                st.warning("Please enter a topic first.")
+                st.info("Share a topic you're curious about exploring with students.")
     
-    # Scope & Sequence Visualizer
-    with st.expander("📊 Scope & Sequence Visualizer"):
-        st.markdown("**Upload CSV or enter topics manually:**")
+    # Learning Threads Visualizer
+    with st.expander("🕸️ Learning Threads & Patterns"):
+        st.markdown("**Map the interconnected web of knowledge:**")
         
         # Manual topic entry
         manual_topics = st.text_area(
-            "Enter topics (one per line):",
+            "What learning threads would you like to weave together?",
             height=100,
-            key="manual_topics"
+            key="manual_topics",
+            placeholder="Mathematics patterns in nature\nHistory of human migration\nClimate and ecosystem changes..."
         )
         
-        if st.button("Generate Scope & Sequence", key="gen_scope"):
+        if st.button("Weave Learning Threads", key="gen_scope"):
             topics = []
             
             # Get topics from manual input
@@ -275,11 +333,11 @@ with col2:
                     pass
             
             if topics:
-                with st.spinner("Generating scope and sequence..."):
+                with st.spinner("Mapping connections in the cosmic curriculum..."):
                     # Generate AI suggestions
                     sequence_plan = generate_scope_sequence(topics, st.session_state.curriculum)
                     if sequence_plan:
-                        st.markdown("### Scope & Sequence Plan")
+                        st.markdown("### Learning Threads & Interconnections")
                         st.markdown(sequence_plan)
                     
                     # Create timeline visualization
@@ -287,46 +345,47 @@ with col2:
                     if fig:
                         st.plotly_chart(fig, use_container_width=True)
             else:
-                st.warning("Please enter topics or upload a CSV file with topics.")
+                st.info("Share the learning topics you'd like to connect in meaningful ways.")
     
     # Parent Communication Helper
-    with st.expander("👨‍👩‍👧‍👦 Parent Communication Helper"):
-        parent_topic = st.text_input("Topic for parent communication:", key="parent_topic")
-        if st.button("Generate Parent Letter", key="gen_parent"):
+    with st.expander("💫 Family & Community Connection"):
+        parent_topic = st.text_input("What learning would you like to share with families?", key="parent_topic", placeholder="e.g., Our exploration of ecosystems, Understanding fractions through real life...")
+        if st.button("Craft Family Letter", key="gen_parent"):
             if parent_topic:
-                with st.spinner("Generating parent communication..."):
+                with st.spinner("Crafting meaningful family connection..."):
                     parent_content = generate_parent_communication(parent_topic, st.session_state.curriculum)
                     if parent_content:
-                        st.markdown("### Parent Communication")
+                        st.markdown("### Family Learning Connection")
                         st.markdown(parent_content)
             else:
-                st.warning("Please enter a topic first.")
+                st.info("Share what learning experience you'd like to connect with families.")
     
     # Student Task Generator
-    with st.expander("🎯 Student Task Generator"):
-        task_topic = st.text_input("Topic for student tasks:", key="task_topic")
+    with st.expander("🌟 Learning Invitations"):
+        task_topic = st.text_input("What learning would you like to invite students into?", key="task_topic", placeholder="e.g., Understanding democracy, Exploring geometric patterns, Investigating local water systems...")
         age_group = st.selectbox(
-            "Age Group:",
+            "Developmental Stage:",
             ["Early Years (3-5)", "Primary Years (6-11)", "Middle Years (12-15)"],
             key="age_group"
         )
-        if st.button("Generate Student Tasks", key="gen_tasks"):
+        if st.button("Create Learning Invitations", key="gen_tasks"):
             if task_topic:
-                with st.spinner("Generating student tasks..."):
+                with st.spinner("Crafting meaningful invitations to explore..."):
                     tasks = generate_student_tasks(task_topic, age_group, st.session_state.curriculum)
                     if tasks:
-                        st.markdown("### Student Tasks & Activities")
+                        st.markdown("### Learning Invitations & Explorations")
                         st.markdown(tasks)
             else:
-                st.warning("Please enter a topic first.")
+                st.info("Share what learning experience you'd like to create for students.")
 
 # Footer
 st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666; font-size: 0.8em;'>
-        Guide - AI Curriculum Assistant | Powered by OpenAI GPT-4o<br>
-        Supporting Australian Curriculum V9 and Montessori Curriculum Australia
+        Guide - Cosmic Curriculum Companion | Powered by OpenAI GPT-4o<br>
+        Bridging Montessori's Cosmic Education with contemporary curriculum frameworks<br>
+        <em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em>
     </div>
     """,
     unsafe_allow_html=True
