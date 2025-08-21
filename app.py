@@ -48,6 +48,15 @@ if "student_work" not in st.session_state:
 if "student_feedback_history" not in st.session_state:
     st.session_state.student_feedback_history = []
 
+if "student_progress" not in st.session_state:
+    st.session_state.student_progress = {}
+
+if "shared_lessons" not in st.session_state:
+    st.session_state.shared_lessons = []
+
+if "collaboration_mode" not in st.session_state:
+    st.session_state.collaboration_mode = False
+
 # Helper functions
 def get_system_prompt(curriculum):
     """Get system prompt based on selected curriculum with Montessori Cosmic Education and systems thinking approach"""
@@ -214,6 +223,116 @@ Frame these as invitations to continue their cosmic journey of discovery."""
     system_prompt = get_system_prompt(curriculum)
     
     return call_openai_api(messages, system_prompt)
+
+def generate_assessment_rubric(topic, curriculum, assessment_type, year_level):
+    """Generate curriculum-aligned assessment rubric with Montessori developmental approach"""
+    prompt = f"""Create a comprehensive assessment rubric for '{topic}' aligned to {curriculum} standards for {year_level} students.
+
+Design the rubric with these Montessori-inspired principles:
+- Honor developmental stages and individual learning paths
+- Focus on growth and progress rather than deficit-based language
+- Include both academic standards and whole-child development
+- Recognize different ways students can demonstrate understanding
+- Celebrate effort, curiosity, and connection-making alongside achievement
+- Connect learning to larger systems and real-world applications
+
+Structure the rubric with:
+- Clear curriculum standards alignment
+- 4 performance levels (Emerging, Developing, Proficient, Extending)
+- Multiple criteria that honor different learning styles and strengths
+- Language that celebrates progress and suggests next steps
+- Connections to cosmic education themes where appropriate
+- Self-reflection prompts for students
+
+Assessment type: {assessment_type}
+
+Make this a tool for nurturing growth, not just measuring performance."""
+    
+    messages = [{"role": "user", "content": prompt}]
+    system_prompt = get_system_prompt(curriculum)
+    
+    return call_openai_api(messages, system_prompt)
+
+def track_student_progress(student_name, work_analysis, learning_goals):
+    """Track and analyze student progress over time"""
+    if student_name not in st.session_state.student_progress:
+        st.session_state.student_progress[student_name] = {
+            "entries": [],
+            "learning_goals": [],
+            "strengths": [],
+            "growth_areas": [],
+            "interests": []
+        }
+    
+    # Add new progress entry
+    progress_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "work_analysis": work_analysis,
+        "learning_goals": learning_goals,
+        "date": datetime.now().strftime("%Y-%m-%d")
+    }
+    
+    st.session_state.student_progress[student_name]["entries"].append(progress_entry)
+
+def generate_progress_report(student_name, curriculum, time_period="recent"):
+    """Generate comprehensive progress report for a student"""
+    if student_name not in st.session_state.student_progress:
+        return "No progress data available for this student."
+    
+    student_data = st.session_state.student_progress[student_name]
+    entries_summary = "\n".join([f"- {entry['timestamp']}: {entry['work_analysis'][:100]}..." 
+                                for entry in student_data["entries"][-5:]])
+    
+    prompt = f"""Create a holistic progress report for {student_name} based on their learning journey data:
+
+Recent Learning Entries:
+{entries_summary}
+
+Generate a report that:
+- Celebrates growth and discoveries in a warm, encouraging tone
+- Identifies patterns in their learning and thinking development
+- Shows connections between different areas of learning
+- Honors their individual learning path and developmental stage
+- Suggests meaningful next steps that build on their interests and strengths
+- Connects their progress to the bigger picture of their cosmic education
+- Uses language that could be shared with families
+- Focuses on the whole child, not just academic achievement
+
+Frame this as a story of their learning journey with {curriculum} principles."""
+    
+    messages = [{"role": "user", "content": prompt}]
+    system_prompt = get_system_prompt(curriculum)
+    
+    return call_openai_api(messages, system_prompt)
+
+def create_shared_lesson(lesson_content, author, curriculum, topic):
+    """Create a shareable lesson plan for team collaboration"""
+    lesson = {
+        "id": len(st.session_state.shared_lessons) + 1,
+        "title": f"Learning Connections: {topic}",
+        "author": author,
+        "curriculum": curriculum,
+        "topic": topic,
+        "content": lesson_content,
+        "created": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "collaborators": [],
+        "comments": [],
+        "tags": []
+    }
+    
+    st.session_state.shared_lessons.append(lesson)
+    return lesson
+
+def add_lesson_comment(lesson_id, commenter, comment):
+    """Add collaborative comment to a shared lesson"""
+    for lesson in st.session_state.shared_lessons:
+        if lesson["id"] == lesson_id:
+            lesson["comments"].append({
+                "author": commenter,
+                "content": comment,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+            })
+            break
 
 def create_timeline_visualization(topics_data):
     """Create a timeline visualization for scope and sequence"""
@@ -440,8 +559,131 @@ if st.session_state.user_type == "Teacher":
                     if tasks:
                         st.markdown("### Learning Invitations & Explorations")
                         st.markdown(tasks)
+                        
+                        # Option to share lesson
+                        if st.button("Share with Team", key="share_tasks"):
+                            teacher_name = st.text_input("Your name:", key="teacher_name_tasks")
+                            if teacher_name:
+                                create_shared_lesson(tasks, teacher_name, st.session_state.curriculum, task_topic)
+                                st.success("Lesson shared with your team!")
             else:
                 st.info("Share what learning experience you'd like to create for students.")
+    
+    # Assessment Rubric Generator
+    with st.expander("📏 Assessment Rubric Creator"):
+        rubric_topic = st.text_input("Topic for assessment:", key="rubric_topic", placeholder="e.g., Scientific inquiry, Creative writing, Mathematical reasoning...")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            rubric_year = st.selectbox("Year Level:", 
+                                     ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", 
+                                      "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"],
+                                     key="rubric_year")
+        with col2:
+            assessment_type = st.selectbox("Assessment Type:",
+                                         ["Project-based", "Performance task", "Portfolio", 
+                                          "Presentation", "Investigation", "Creative work"],
+                                         key="assessment_type")
+        
+        if st.button("Create Growth-Focused Rubric", key="gen_rubric"):
+            if rubric_topic:
+                with st.spinner("Creating developmental assessment rubric..."):
+                    rubric = generate_assessment_rubric(rubric_topic, st.session_state.curriculum, assessment_type, rubric_year)
+                    if rubric:
+                        st.markdown("### Developmental Assessment Rubric")
+                        st.markdown(rubric)
+            else:
+                st.info("Enter a topic to create an assessment rubric.")
+    
+    # Student Progress Tracking
+    with st.expander("📈 Student Progress Tracking"):
+        progress_student = st.text_input("Student name:", key="progress_student")
+        
+        if progress_student:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                work_observation = st.text_area("Learning observation or work analysis:", 
+                                              height=100, key="work_observation")
+                learning_goals = st.text_input("Learning goals/focus:", key="learning_goals")
+                
+                if st.button("Record Progress Entry", key="record_progress"):
+                    if work_observation:
+                        track_student_progress(progress_student, work_observation, learning_goals)
+                        st.success(f"Progress recorded for {progress_student}!")
+                    else:
+                        st.warning("Please add a learning observation.")
+            
+            with col2:
+                if st.button("Generate Progress Report", key="gen_report"):
+                    with st.spinner("Creating holistic progress report..."):
+                        report = generate_progress_report(progress_student, st.session_state.curriculum)
+                        if report:
+                            st.markdown(f"### Learning Journey Report: {progress_student}")
+                            st.markdown(report)
+                
+                # Show recent entries
+                if progress_student in st.session_state.student_progress:
+                    entries = st.session_state.student_progress[progress_student]["entries"]
+                    if entries:
+                        st.markdown("**Recent Entries:**")
+                        for entry in entries[-3:]:
+                            st.markdown(f"*{entry['date']}*: {entry['work_analysis'][:80]}...")
+    
+    # Collaborative Lesson Sharing
+    with st.expander("🤝 Team Collaboration Hub"):
+        st.markdown("**Share and explore lessons with your teaching team**")
+        
+        # Toggle collaboration mode
+        collab_mode = st.checkbox("Enable collaboration features", key="collab_toggle")
+        st.session_state.collaboration_mode = collab_mode
+        
+        if collab_mode:
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.markdown("**Shared Lessons:**")
+                if st.session_state.shared_lessons:
+                    for lesson in st.session_state.shared_lessons[-5:]:
+                        with st.expander(f"📚 {lesson['title']} by {lesson['author']}"):
+                            st.markdown(f"**Topic:** {lesson['topic']}")
+                            st.markdown(f"**Curriculum:** {lesson['curriculum']}")
+                            st.markdown(f"**Created:** {lesson['created']}")
+                            st.markdown("**Content:**")
+                            st.markdown(lesson['content'][:300] + "..." if len(lesson['content']) > 300 else lesson['content'])
+                            
+                            # Comments section
+                            if lesson['comments']:
+                                st.markdown("**Team Comments:**")
+                                for comment in lesson['comments'][-3:]:
+                                    st.markdown(f"*{comment['author']} ({comment['timestamp']}):* {comment['content']}")
+                            
+                            # Add comment
+                            new_comment = st.text_input(f"Add comment to {lesson['title']}", key=f"comment_{lesson['id']}")
+                            commenter_name = st.text_input("Your name:", key=f"commenter_{lesson['id']}")
+                            
+                            if st.button(f"Add Comment", key=f"add_comment_{lesson['id']}"):
+                                if new_comment and commenter_name:
+                                    add_lesson_comment(lesson['id'], commenter_name, new_comment)
+                                    st.success("Comment added!")
+                                    st.rerun()
+                else:
+                    st.info("No shared lessons yet. Create and share lessons using the tools above!")
+            
+            with col2:
+                st.markdown("**Quick Share:**")
+                share_title = st.text_input("Lesson title:", key="share_title")
+                share_content = st.text_area("Lesson content or idea:", height=150, key="share_content")
+                share_author = st.text_input("Your name:", key="share_author")
+                share_topic = st.text_input("Topic/subject:", key="share_topic")
+                
+                if st.button("Share with Team", key="quick_share"):
+                    if share_content and share_author and share_topic:
+                        create_shared_lesson(share_content, share_author, st.session_state.curriculum, share_topic)
+                        st.success("Lesson shared with your team!")
+                        st.rerun()
+                    else:
+                        st.warning("Please fill in all fields to share.")
 
 else:
     # Student interface

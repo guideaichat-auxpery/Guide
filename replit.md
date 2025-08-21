@@ -40,6 +40,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Learning Invitations**: Student activities fostering independence, collaboration, real-world connection, and cosmic reflection
 - **Student Work Analysis**: AI-powered feedback on student work that celebrates discoveries and suggests meaningful extensions
 - **Skill Development**: Personalized learning pathways based on student interests and demonstrated understanding
+- **Assessment Rubrics**: Curriculum-aligned rubric generator with Montessori developmental approach and growth-focused language
+- **Progress Tracking**: Holistic student progress monitoring with learning journey reports that honor individual development
+- **Collaborative Planning**: Team lesson sharing with commenting system for collaborative curriculum development
 
 # External Dependencies
 
