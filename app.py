@@ -253,8 +253,8 @@ Make this a tool for nurturing growth, not just measuring performance."""
     
     return call_openai_api(messages, system_prompt)
 
-def track_student_progress(student_name, work_analysis, learning_goals, bpl_competencies=None):
-    """Track and analyze student progress with Big Picture Learning competencies"""
+def track_student_progress(student_name, work_analysis, learning_goals, cec_competencies=None, student_activity=None):
+    """Track and analyze student progress with Cosmic Education Competencies"""
     if student_name not in st.session_state.student_progress:
         st.session_state.student_progress[student_name] = {
             "entries": [],
@@ -262,7 +262,7 @@ def track_student_progress(student_name, work_analysis, learning_goals, bpl_comp
             "strengths": [],
             "growth_areas": [],
             "interests": [],
-            "bpl_competencies": {
+            "cec_competencies": {
                 "knowing_how_to_learn": {"level": 1, "evidence": []},
                 "empirical_reasoning": {"level": 1, "evidence": []},
                 "quantitative_reasoning": {"level": 1, "evidence": []},
@@ -272,7 +272,8 @@ def track_student_progress(student_name, work_analysis, learning_goals, bpl_comp
             },
             "internships": [],
             "exhibitions": [],
-            "real_world_projects": []
+            "real_world_projects": [],
+            "student_activities": []
         }
     
     # Add new progress entry
@@ -281,51 +282,63 @@ def track_student_progress(student_name, work_analysis, learning_goals, bpl_comp
         "work_analysis": work_analysis,
         "learning_goals": learning_goals,
         "date": datetime.now().strftime("%Y-%m-%d"),
-        "bpl_competencies": bpl_competencies or {}
+        "cec_competencies": cec_competencies or {},
+        "student_activity": student_activity or {}
     }
     
     st.session_state.student_progress[student_name]["entries"].append(progress_entry)
     
-    # Update BPL competency levels if provided
-    if bpl_competencies:
-        for competency, data in bpl_competencies.items():
-            if competency in st.session_state.student_progress[student_name]["bpl_competencies"]:
-                current = st.session_state.student_progress[student_name]["bpl_competencies"][competency]
+    # Update CEC competency levels if provided
+    if cec_competencies:
+        for competency, data in cec_competencies.items():
+            if competency in st.session_state.student_progress[student_name]["cec_competencies"]:
+                current = st.session_state.student_progress[student_name]["cec_competencies"][competency]
                 if "level" in data:
                     current["level"] = max(current["level"], data["level"])
                 if "evidence" in data:
                     current["evidence"].extend(data["evidence"])
+    
+    # Add student activity to activity log
+    if student_activity:
+        st.session_state.student_progress[student_name]["student_activities"].append({
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "activity_type": student_activity.get("type", "unknown"),
+            "content": student_activity.get("content", ""),
+            "feedback_received": student_activity.get("feedback", ""),
+            "competency_analysis": student_activity.get("competency_analysis", ""),
+            "learning_connections": student_activity.get("extensions", "")
+        })
 
-def generate_bpl_competency_assessment(work_content, curriculum):
-    """Analyze work against Big Picture Learning competencies"""
-    prompt = f"""Analyze this student work against the Big Picture Learning competency framework:
+def generate_cec_competency_assessment(work_content, curriculum):
+    """Analyze work against Cosmic Education Competencies"""
+    prompt = f"""Analyze this student work against the Cosmic Education Competency framework:
 
 Student Work:
 {work_content}
 
 For each competency, assess evidence and suggest a progression level (1-5):
 
-1. **Knowing How to Learn**: Self-directed learning, metacognitive skills, reflection on learning processes
-2. **Empirical Reasoning**: Using evidence, observation, investigation, scientific thinking
-3. **Quantitative Reasoning**: Mathematical thinking, analyzing data, understanding numerical relationships
-4. **Social Reasoning**: Analyzing social issues, community understanding, responsible action
-5. **Communication**: Writing, speaking, listening, artistic expression, audience awareness
-6. **Personal Qualities**: Leadership, respect, responsibility, organization, self-reflection
+1. **Knowing How to Learn**: Self-directed learning, metacognitive skills, reflection on learning processes, connection to cosmic patterns
+2. **Empirical Reasoning**: Using evidence, observation, investigation, scientific thinking, understanding cosmic interconnections
+3. **Quantitative Reasoning**: Mathematical thinking, analyzing data, understanding numerical relationships in nature and cosmos
+4. **Social Reasoning**: Analyzing social issues, community understanding, responsible action, cosmic citizenship
+5. **Communication**: Writing, speaking, listening, artistic expression, audience awareness, sharing cosmic connections
+6. **Personal Qualities**: Leadership, respect, responsibility, organization, self-reflection, cosmic consciousness
 
 For each competency present in the work, provide:
 - Evidence observed (specific examples)
 - Suggested progression level (1-5)
-- Growth recommendations
+- Growth recommendations connecting to cosmic education themes
 
-Format as structured assessment aligned with {curriculum} standards."""
+Format as structured assessment aligned with {curriculum} standards and cosmic education principles."""
     
     messages = [{"role": "user", "content": prompt}]
     system_prompt = get_system_prompt(curriculum)
     
     return call_openai_api(messages, system_prompt)
 
-def generate_progress_report(student_name, curriculum, time_period="recent", include_bpl=True):
-    """Generate comprehensive progress report with BPL competencies"""
+def generate_progress_report(student_name, curriculum, time_period="recent", include_cec=True):
+    """Generate comprehensive progress report with Cosmic Education Competencies"""
     if student_name not in st.session_state.student_progress:
         return "No progress data available for this student."
     
@@ -333,9 +346,16 @@ def generate_progress_report(student_name, curriculum, time_period="recent", inc
     entries_summary = "\n".join([f"- {entry['timestamp']}: {entry['work_analysis'][:100]}..." 
                                 for entry in student_data["entries"][-5:]])
     
-    bpl_summary = ""
-    if include_bpl and "bpl_competencies" in student_data:
-        bpl_summary = "Big Picture Learning Competency Levels:\n"
+    # Include student activity summary
+    activity_summary = ""
+    if student_data.get("student_activities"):
+        activity_summary = "Student Learning Activities:\n"
+        for activity in student_data["student_activities"][-3:]:
+            activity_summary += f"- {activity['timestamp']} ({activity['activity_type']}): {activity['content'][:80]}...\n"
+    
+    cec_summary = ""
+    if include_cec and "cec_competencies" in student_data:
+        cec_summary = "Cosmic Education Competency Levels:\n"
         competency_names = {
             "knowing_how_to_learn": "Knowing How to Learn",
             "empirical_reasoning": "Empirical Reasoning", 
@@ -345,54 +365,77 @@ def generate_progress_report(student_name, curriculum, time_period="recent", inc
             "personal_qualities": "Personal Qualities"
         }
         
-        for comp_key, comp_data in student_data["bpl_competencies"].items():
+        for comp_key, comp_data in student_data["cec_competencies"].items():
             name = competency_names.get(comp_key, comp_key)
-            bpl_summary += f"- {name}: Level {comp_data['level']}\n"
+            cec_summary += f"- {name}: Level {comp_data['level']}\n"
     
-    prompt = f"""Create a holistic learning journey report for {student_name} integrating Montessori Cosmic Education and Big Picture Learning principles:
+    prompt = f"""Create a holistic learning journey report for {student_name} integrating Montessori Cosmic Education Competencies:
 
 Recent Learning Entries:
 {entries_summary}
 
-{bpl_summary}
+{activity_summary}
+
+{cec_summary}
 
 Generate a report that:
 - Celebrates growth and discoveries in a warm, encouraging tone
-- Maps progress across Big Picture Learning competencies in real-world context
+- Maps progress across Cosmic Education Competencies showing cosmic connections
 - Shows connections between academic learning and authentic experiences
 - Identifies patterns in metacognitive development and self-directed learning
-- Connects learning to community engagement and social responsibility
+- Connects learning to community engagement and cosmic responsibility
 - Suggests meaningful next steps that build on demonstrated competencies
 - Uses asset-based language focusing on "how the student is smart"
-- Includes recommendations for real-world learning opportunities
-- Frames assessment as growth documentation, not ranking
+- Includes recommendations for real-world learning opportunities that connect to cosmic themes
+- Frames assessment as growth documentation celebrating the child's place in the universe
+- References specific student activities and learning interactions when available
 
-Create this as a personalized learner profile that honors individual learning pathways and celebrates authentic achievement."""
+Create this as a personalized cosmic learner profile that honors individual learning pathways and celebrates authentic achievement."""
     
     messages = [{"role": "user", "content": prompt}]
     system_prompt = get_system_prompt(curriculum)
     
     return call_openai_api(messages, system_prompt)
 
-def create_bpl_learner_profile(student_name, curriculum):
-    """Create Big Picture Learning style learner profile"""
+def create_cec_learner_profile(student_name, curriculum):
+    """Create Cosmic Education Competency learner profile"""
     if student_name not in st.session_state.student_progress:
         return "No profile data available."
     
     student_data = st.session_state.student_progress[student_name]
     
     # Competency visualization data
-    competencies = student_data.get("bpl_competencies", {})
+    competencies = student_data.get("cec_competencies", {})
     
     profile_data = {
         "student": student_name,
         "competency_levels": competencies,
         "real_world_experiences": student_data.get("internships", []) + student_data.get("real_world_projects", []),
         "exhibitions": student_data.get("exhibitions", []),
-        "learning_journey": student_data.get("entries", [])[-10:]  # Last 10 entries
+        "learning_journey": student_data.get("entries", [])[-10:],  # Last 10 entries
+        "student_activities": student_data.get("student_activities", [])[-10:]  # Last 10 activities
     }
     
     return profile_data
+
+def link_student_activity(student_name, activity_data):
+    """Link student interface activity to their progress tracking"""
+    if 'student_progress' not in st.session_state:
+        st.session_state.student_progress = {}
+    
+    if student_name not in st.session_state.student_progress:
+        # Initialize if first activity
+        track_student_progress(student_name, "Initial student activity", "Self-directed learning", None, activity_data)
+    else:
+        # Add activity to existing profile
+        st.session_state.student_progress[student_name]["student_activities"].append({
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "activity_type": activity_data.get("type", "unknown"),
+            "content": activity_data.get("content", ""),
+            "feedback_received": activity_data.get("feedback", ""),
+            "competency_analysis": activity_data.get("competency_analysis", ""),
+            "learning_connections": activity_data.get("extensions", "")
+        })
 
 def create_shared_lesson(lesson_content, author, curriculum, topic):
     """Create a shareable lesson plan for team collaboration"""
@@ -684,13 +727,13 @@ if st.session_state.user_type == "Teacher":
             else:
                 st.info("Enter a topic to create an assessment rubric.")
     
-    # Enhanced Student Progress Tracking with BPL
-    with st.expander("📈 Big Picture Learning Progress Tracking"):
+    # Enhanced Student Progress Tracking with CEC
+    with st.expander("📈 Cosmic Education Competency Tracking"):
         progress_student = st.text_input("Student name:", key="progress_student")
         
         if progress_student:
             # Tabs for different tracking aspects
-            tab1, tab2, tab3 = st.tabs(["📝 Record Progress", "🌟 BPL Profile", "📊 Reports"])
+            tab1, tab2, tab3 = st.tabs(["📝 Record Progress", "🌟 CEC Profile", "📊 Reports"])
             
             with tab1:
                 col1, col2 = st.columns(2)
@@ -700,20 +743,20 @@ if st.session_state.user_type == "Teacher":
                                                   height=100, key="work_observation")
                     learning_goals = st.text_input("Learning goals/focus:", key="learning_goals")
                     
-                    # BPL Competency Assessment
-                    st.markdown("**Assess Big Picture Learning Competencies (optional):**")
-                    bpl_assessment = st.checkbox("Auto-assess BPL competencies from work", key="auto_bpl")
+                    # CEC Competency Assessment
+                    st.markdown("**Assess Cosmic Education Competencies (optional):**")
+                    cec_assessment = st.checkbox("Auto-assess CEC competencies from work", key="auto_cec")
                     
                     if st.button("Record Progress Entry", key="record_progress"):
                         if work_observation:
-                            bpl_data = None
-                            if bpl_assessment:
-                                with st.spinner("Analyzing work against BPL competencies..."):
-                                    bpl_analysis = generate_bpl_competency_assessment(work_observation, st.session_state.curriculum)
-                                    if bpl_analysis:
-                                        st.info("BPL competency analysis included in progress record")
+                            cec_data = None
+                            if cec_assessment:
+                                with st.spinner("Analyzing work against Cosmic Education Competencies..."):
+                                    cec_analysis = generate_cec_competency_assessment(work_observation, st.session_state.curriculum)
+                                    if cec_analysis:
+                                        st.info("CEC competency analysis included in progress record")
                             
-                            track_student_progress(progress_student, work_observation, learning_goals, bpl_data)
+                            track_student_progress(progress_student, work_observation, learning_goals, cec_data)
                             st.success(f"Progress recorded for {progress_student}!")
                         else:
                             st.warning("Please add a learning observation.")
@@ -745,11 +788,11 @@ if st.session_state.user_type == "Teacher":
                             st.success(f"{experience_type} experience recorded!")
             
             with tab2:
-                # BPL Competency Profile Visualization
+                # CEC Competency Profile Visualization
                 if progress_student in st.session_state.student_progress:
                     student_data = st.session_state.student_progress[progress_student]
                     
-                    st.markdown("### Big Picture Learning Competency Profile")
+                    st.markdown("### Cosmic Education Competency Profile")
                     
                     competency_names = {
                         "knowing_how_to_learn": "Knowing How to Learn",
@@ -760,12 +803,12 @@ if st.session_state.user_type == "Teacher":
                         "personal_qualities": "Personal Qualities"
                     }
                     
-                    if "bpl_competencies" in student_data:
+                    if "cec_competencies" in student_data:
                         # Create visual competency profile
                         competencies = []
                         levels = []
                         
-                        for comp_key, comp_data in student_data["bpl_competencies"].items():
+                        for comp_key, comp_data in student_data["cec_competencies"].items():
                             competencies.append(competency_names.get(comp_key, comp_key))
                             levels.append(comp_data["level"])
                         
@@ -789,7 +832,7 @@ if st.session_state.user_type == "Teacher":
                                     range=[0, 5]
                                 )
                             ),
-                            title=f"{progress_student}'s BPL Competency Profile",
+                            title=f"{progress_student}'s Cosmic Education Competency Profile",
                             height=400
                         )
                         
@@ -797,7 +840,7 @@ if st.session_state.user_type == "Teacher":
                         
                         # Detailed competency breakdown
                         st.markdown("**Competency Details:**")
-                        for comp_key, comp_data in student_data["bpl_competencies"].items():
+                        for comp_key, comp_data in student_data["cec_competencies"].items():
                             name = competency_names.get(comp_key, comp_key)
                             level = comp_data["level"]
                             evidence_count = len(comp_data.get("evidence", []))
@@ -837,18 +880,18 @@ if st.session_state.user_type == "Teacher":
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    if st.button("Generate BPL Learning Journey Report", key="gen_bpl_report"):
-                        with st.spinner("Creating comprehensive BPL learning journey..."):
-                            report = generate_progress_report(progress_student, st.session_state.curriculum, include_bpl=True)
+                    if st.button("Generate CEC Learning Journey Report", key="gen_cec_report"):
+                        with st.spinner("Creating comprehensive Cosmic Education learning journey..."):
+                            report = generate_progress_report(progress_student, st.session_state.curriculum, include_cec=True)
                             if report:
-                                st.markdown(f"### Big Picture Learning Journey: {progress_student}")
+                                st.markdown(f"### Cosmic Education Learning Journey: {progress_student}")
                                 st.markdown(report)
                 
                 with col2:
                     if st.button("Create Learner Profile", key="create_profile"):
-                        profile_data = create_bpl_learner_profile(progress_student, st.session_state.curriculum)
+                        profile_data = create_cec_learner_profile(progress_student, st.session_state.curriculum)
                         if profile_data and profile_data != "No profile data available.":
-                            st.markdown(f"### Learner Profile: {progress_student}")
+                            st.markdown(f"### Cosmic Learner Profile: {progress_student}")
                             st.json(profile_data)
                         else:
                             st.info("No profile data available yet.")
@@ -920,6 +963,35 @@ else:
     # Student interface
     st.header("🌟 Welcome, Young Explorer!")
     st.markdown("*Share your discoveries and let's explore connections together*")
+    
+    # Initialize student session state
+    if 'student_work' not in st.session_state:
+        st.session_state.student_work = ""
+    if 'student_feedback_history' not in st.session_state:
+        st.session_state.student_feedback_history = []
+    if 'current_student_name' not in st.session_state:
+        st.session_state.current_student_name = ""
+    
+    # Student identification for progress linking
+    with st.sidebar:
+        st.markdown("### Your Learning Profile")
+        student_name_input = st.text_input(
+            "What's your name?", 
+            value=st.session_state.current_student_name,
+            help="This helps us track your amazing learning journey and connect your work to your progress profile"
+        )
+        if student_name_input:
+            st.session_state.current_student_name = student_name_input
+            st.success(f"Great to see you, {student_name_input}! 🌟")
+            
+            # Show basic progress info if available
+            if (st.session_state.current_student_name in 
+                st.session_state.get('student_progress', {})):
+                progress_data = st.session_state.student_progress[st.session_state.current_student_name]
+                activity_count = len(progress_data.get('student_activities', []))
+                st.info(f"Your learning activities: {activity_count}")
+        else:
+            st.info("Enter your name to connect your work to your learning profile!")
     
     # Student work upload and analysis section
     col1, col2 = st.columns([3, 2])
@@ -1004,8 +1076,8 @@ else:
                     feedback = analyze_student_work(st.session_state.student_work, st.session_state.curriculum)
                     extensions = suggest_skill_extensions(st.session_state.student_work, st.session_state.curriculum, student_interests)
                     
-                    # Also generate BPL competency analysis for student
-                    bpl_analysis = generate_bpl_competency_assessment(st.session_state.student_work, st.session_state.curriculum)
+                    # Also generate CEC competency analysis for student
+                    cec_analysis = generate_cec_competency_assessment(st.session_state.student_work, st.session_state.curriculum)
                     
                     if feedback and extensions:
                         # Store in history
@@ -1013,10 +1085,21 @@ else:
                             "work": st.session_state.student_work,
                             "feedback": feedback,
                             "extensions": extensions,
-                            "bpl_analysis": bpl_analysis,
+                            "cec_analysis": cec_analysis,
                             "interests": student_interests,
                             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
                         })
+                        
+                        # Link to progress tracking if student name available
+                        if 'current_student_name' in st.session_state and st.session_state.current_student_name:
+                            activity_data = {
+                                "type": "work_submission",
+                                "content": st.session_state.student_work,
+                                "feedback": feedback,
+                                "competency_analysis": cec_analysis,
+                                "extensions": extensions
+                            }
+                            link_student_activity(st.session_state.current_student_name, activity_data)
                         
                         # Display feedback
                         st.success("Here's what I discovered in your work!")
@@ -1027,11 +1110,11 @@ else:
                         with st.expander("🚀 Ways to Explore Further", expanded=True):
                             st.markdown(extensions)
                         
-                        # Show BPL competency insights
-                        if bpl_analysis:
+                        # Show CEC competency insights
+                        if cec_analysis:
                             with st.expander("💪 Real-World Skills in Your Work", expanded=False):
                                 st.markdown("**This analysis shows the amazing real-world skills your work demonstrates:**")
-                                st.markdown(bpl_analysis)
+                                st.markdown(cec_analysis)
                                 st.info("These are skills that help you succeed in life, not just school! Keep developing them through your projects and interests.")
                     else:
                         st.error("I'm having trouble analyzing your work right now. Please try again!")
@@ -1055,9 +1138,9 @@ else:
                         st.markdown("**Extensions:**")
                         st.markdown(entry['extensions'])
                         
-                        if 'bpl_analysis' in entry and entry['bpl_analysis']:
+                        if 'cec_analysis' in entry and entry['cec_analysis']:
                             st.markdown("**Real-World Skills:**")
-                            st.markdown(entry['bpl_analysis'])
+                            st.markdown(entry['cec_analysis'])
         
         # Combined chat interface
         st.markdown("---")

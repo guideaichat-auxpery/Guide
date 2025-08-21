@@ -42,11 +42,12 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Skill Development**: Personalized learning pathways based on student interests and demonstrated understanding
 - **Assessment Rubrics**: Curriculum-aligned rubric generator with Montessori developmental approach and growth-focused language
 - **Progress Tracking**: Holistic student progress monitoring with learning journey reports that honor individual development
-- **Big Picture Learning Integration**: Competency-based tracking system inspired by International BPL Credential with 6 core competencies
+- **Cosmic Education Competencies (CEC)**: Competency-based tracking system inspired by International Big Picture Learning with 6 core competencies adapted for cosmic education
 - **Real-World Learning Portfolio**: Track internships, exhibitions, community projects, and authentic learning experiences
-- **BPL Competency Visualization**: Radar chart profiles showing progression across Knowing How to Learn, Empirical Reasoning, Quantitative Reasoning, Social Reasoning, Communication, and Personal Qualities
+- **CEC Competency Visualization**: Radar chart profiles showing progression across Knowing How to Learn, Empirical Reasoning, Quantitative Reasoning, Social Reasoning, Communication, and Personal Qualities with cosmic education themes
 - **Asset-Based Assessment**: Focus on "how the student is smart" rather than deficit-based evaluation
-- **Learner Profile Generation**: Comprehensive profiles combining academic progress with real-world competencies
+- **Learner Profile Generation**: Comprehensive profiles combining academic progress with real-world competencies and cosmic consciousness
+- **Student Activity Linking**: Automatic connection between student interface activities and their progress profiles, tracking submissions, feedback, and competency development
 - **Collaborative Planning**: Team lesson sharing with commenting system for collaborative curriculum development
 
 # External Dependencies
