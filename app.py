@@ -518,9 +518,10 @@ else:
         # Student interests and goals
         st.markdown("---")
         student_interests = st.text_input(
-            "What are you most curious about right now?",
+            "What topics fascinate you? (This helps me suggest connections to your work)",
             placeholder="Space, animals, how things work, art, music, math patterns...",
-            key="student_interests"
+            key="student_interests",
+            help="Sharing your interests helps me connect your work to things you're curious about"
         )
         
         # Get feedback button
@@ -556,9 +557,6 @@ else:
     with col2:
         st.subheader("💭 Your Learning Journey")
         
-        # Student chat interface
-        st.markdown("**Ask questions or share your wondering:**")
-        
         # Display recent feedback
         if st.session_state.student_feedback_history:
             st.markdown("### Recent Explorations")
@@ -573,10 +571,18 @@ else:
                         st.markdown("**Extensions:**")
                         st.markdown(entry['extensions'])
         
-        # Simple student chat
+        # Combined chat interface
         st.markdown("---")
-        if student_question := st.text_input("What are you wondering about?", key="student_chat"):
-            if st.button("Explore Together 🌍"):
+        st.markdown("### 🤔 Ask Questions & Explore Ideas")
+        st.markdown("*Ask anything about your work or topics you're curious about*")
+        
+        if student_question := st.text_input(
+            "What would you like to explore or understand better?", 
+            key="student_chat",
+            placeholder="How does this connect to...? / Why do you think...? / What if...?",
+            help="Ask questions about your work, wonder about connections, or explore new ideas"
+        ):
+            if st.button("Let's Explore Together 🌍"):
                 with st.spinner("Thinking about your question..."):
                     student_system_prompt = """You are speaking directly to a curious student. Use warm, encouraging language appropriate for their age. Help them see connections to the bigger picture of how everything in the universe is related. Ask questions that spark their curiosity rather than giving direct answers. Honor their natural desire to explore and discover."""
                     
