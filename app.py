@@ -851,6 +851,35 @@ if st.session_state.user_type == "Teacher":
                             with col2:
                                 st.write(f"{evidence_count} evidence items")
                     
+                    # Student Activity Summary
+                    st.markdown("### Student Learning Activities")
+                    activities = student_data.get("student_activities", [])
+                    
+                    if activities:
+                        # Separate final submissions from other activities
+                        final_submissions = [a for a in activities if a.get('activity_type') == 'final_submission']
+                        other_activities = [a for a in activities if a.get('activity_type') != 'final_submission']
+                        
+                        if final_submissions:
+                            st.markdown("**📤 Final Work Submissions:**")
+                            for submission in final_submissions[-3:]:
+                                file_info = submission.get('file_info', {})
+                                file_name = file_info.get('name', 'Unknown file')
+                                file_type = file_info.get('type', 'Unknown type')
+                                st.markdown(f"- *{submission['timestamp']}*: **{file_name}** ({file_type})")
+                                if st.button(f"View submission details", key=f"view_submission_{submission['timestamp']}"):
+                                    st.markdown("**Content Summary:**")
+                                    st.markdown(submission['content'][:200] + "..." if len(submission['content']) > 200 else submission['content'])
+                                    if submission.get('competency_analysis'):
+                                        st.markdown("**CEC Analysis:**")
+                                        st.markdown(submission['competency_analysis'][:300] + "..." if len(submission['competency_analysis']) > 300 else submission['competency_analysis'])
+                        
+                        if other_activities:
+                            st.markdown("**📝 Learning Activities:**")
+                            for activity in other_activities[-3:]:
+                                activity_type = activity.get('activity_type', 'work_submission')
+                                st.markdown(f"- *{activity['timestamp']}* ({activity_type}): {activity['content'][:60]}...")
+                    
                     # Real-world experiences summary
                     st.markdown("### Real-World Learning Portfolio")
                     internships = student_data.get("internships", [])
@@ -1126,19 +1155,34 @@ else:
         
         # Display recent feedback
         if st.session_state.student_feedback_history:
-            st.markdown("### Recent Explorations")
+            st.markdown("### Your Learning Journey")
             for i, entry in enumerate(reversed(st.session_state.student_feedback_history[-3:])):
-                with st.expander(f"📚 Learning from {entry['timestamp']}", expanded=(i == 0)):
-                    st.markdown("**Your work:**")
-                    st.markdown(entry['work'][:200] + "..." if len(entry['work']) > 200 else entry['work'])
+                # Different display for final submissions vs regular work
+                if entry.get('type') == 'final_submission':
+                    title = f"🎯 Final Work: {entry.get('filename', 'Submission')}"
+                else:
+                    title = f"📚 Learning from {entry['timestamp']}"
+                
+                with st.expander(title, expanded=(i == 0)):
+                    if entry.get('type') == 'final_submission':
+                        st.markdown(f"**File:** {entry.get('filename', 'Unknown')} ({entry.get('file_type', 'Unknown type')})")
+                        if entry.get('reflection'):
+                            st.markdown("**Your Reflection:**")
+                            st.markdown(entry['reflection'][:150] + "..." if len(entry.get('reflection', '')) > 150 else entry.get('reflection', ''))
+                    else:
+                        st.markdown("**Your work:**")
+                        work_content = entry.get('work', entry.get('content', ''))
+                        st.markdown(work_content[:200] + "..." if len(work_content) > 200 else work_content)
                     
                     if st.button(f"View full feedback", key=f"view_feedback_{len(st.session_state.student_feedback_history)-i}"):
                         st.markdown("**Feedback:**")
-                        st.markdown(entry['feedback'])
-                        st.markdown("**Extensions:**")
-                        st.markdown(entry['extensions'])
+                        st.markdown(entry.get('feedback', 'No feedback available'))
                         
-                        if 'cec_analysis' in entry and entry['cec_analysis']:
+                        if entry.get('extensions'):
+                            st.markdown("**Ways to Explore Further:**")
+                            st.markdown(entry['extensions'])
+                        
+                        if entry.get('cec_analysis'):
                             st.markdown("**Real-World Skills:**")
                             st.markdown(entry['cec_analysis'])
         
@@ -1167,6 +1211,138 @@ else:
                     if response:
                         st.markdown("**Guide's Response:**")
                         st.markdown(response)
+        
+        # Final Work Submission Section
+        st.markdown("---")
+        st.markdown("### 📤 Submit Your Final Work")
+        st.markdown("*Ready to share your completed project, essay, or creation? Upload your final work here!*")
+        
+        final_work_upload = st.file_uploader(
+            "Upload your final work:",
+            type=['txt', 'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'mp3', 'mp4'],
+            help="Share your completed work - writing, artwork, presentations, recordings, or any creative project",
+            key="final_work_upload"
+        )
+        
+        if final_work_upload is not None:
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                # File information
+                file_info = f"📁 **{final_work_upload.name}**\n"
+                file_info += f"Size: {final_work_upload.size / 1024:.1f} KB\n"
+                file_info += f"Type: {final_work_upload.type}"
+                st.markdown(file_info)
+                
+                # Reflection questions for final submission
+                st.markdown("**Tell us about your final work:**")
+                final_reflection = st.text_area(
+                    "Reflect on your learning journey:",
+                    placeholder="What did you discover while creating this? What are you most proud of? How does this connect to bigger ideas you're exploring?",
+                    height=120,
+                    key="final_reflection"
+                )
+                
+                learning_process = st.text_area(
+                    "Describe your creative/learning process:",
+                    placeholder="How did you approach this work? What challenges did you overcome? What would you do differently?",
+                    height=100,
+                    key="learning_process"
+                )
+                
+            with col2:
+                st.markdown("**Final Submission**")
+                
+                if st.button("🌟 Submit Final Work", use_container_width=True):
+                    if final_reflection and learning_process:
+                        # Process the final submission
+                        with st.spinner("Analyzing your final work and celebrating your learning..."):
+                            
+                            # Create comprehensive analysis combining file and reflection
+                            submission_content = f"""
+FINAL WORK SUBMISSION
+File: {final_work_upload.name} ({final_work_upload.type})
+
+STUDENT REFLECTION:
+{final_reflection}
+
+LEARNING PROCESS:
+{learning_process}
+"""
+                            
+                            # Try to read text-based files
+                            file_content = ""
+                            try:
+                                if final_work_upload.type == "text/plain":
+                                    file_content = str(final_work_upload.read(), "utf-8")
+                                    submission_content += f"\n\nFILE CONTENT:\n{file_content[:1000]}..." if len(file_content) > 1000 else f"\n\nFILE CONTENT:\n{file_content}"
+                                elif final_work_upload.type == "application/pdf":
+                                    submission_content += "\n\n[PDF file uploaded - content analysis available to teacher]"
+                                else:
+                                    submission_content += f"\n\n[{final_work_upload.type} file uploaded - multimedia content submitted]"
+                            except:
+                                submission_content += f"\n\n[File uploaded successfully - {final_work_upload.type} format]"
+                            
+                            # Generate comprehensive feedback
+                            feedback = analyze_student_work(submission_content, st.session_state.curriculum)
+                            extensions = suggest_skill_extensions(submission_content, st.session_state.curriculum, st.session_state.get('student_interests', ''))
+                            cec_analysis = generate_cec_competency_assessment(submission_content, st.session_state.curriculum)
+                            
+                            if feedback:
+                                # Store final submission in history
+                                final_submission = {
+                                    "type": "final_submission",
+                                    "filename": final_work_upload.name,
+                                    "file_type": final_work_upload.type,
+                                    "reflection": final_reflection,
+                                    "process": learning_process,
+                                    "content": submission_content,
+                                    "feedback": feedback,
+                                    "extensions": extensions,
+                                    "cec_analysis": cec_analysis,
+                                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+                                }
+                                
+                                # Add to feedback history
+                                st.session_state.student_feedback_history.append(final_submission)
+                                
+                                # Link to progress tracking
+                                if st.session_state.current_student_name:
+                                    activity_data = {
+                                        "type": "final_submission",
+                                        "content": submission_content,
+                                        "feedback": feedback,
+                                        "competency_analysis": cec_analysis,
+                                        "extensions": extensions,
+                                        "file_info": {
+                                            "name": final_work_upload.name,
+                                            "type": final_work_upload.type,
+                                            "size": final_work_upload.size
+                                        }
+                                    }
+                                    link_student_activity(st.session_state.current_student_name, activity_data)
+                                
+                                # Display celebration and feedback
+                                st.success("🎉 Your final work has been submitted! What an amazing learning journey!")
+                                
+                                with st.expander("🏆 Celebrating Your Achievement", expanded=True):
+                                    st.markdown(feedback)
+                                
+                                with st.expander("🌟 Your Cosmic Education Skills", expanded=True):
+                                    if cec_analysis:
+                                        st.markdown("**Your final work demonstrates these incredible skills:**")
+                                        st.markdown(cec_analysis)
+                                    else:
+                                        st.markdown("Your work shows amazing growth across multiple areas of learning!")
+                                
+                                with st.expander("🚀 Continue Your Learning Adventure", expanded=False):
+                                    st.markdown(extensions)
+                                
+                                st.balloons()
+                            else:
+                                st.error("Having trouble analyzing your work. Please try again!")
+                    else:
+                        st.warning("Please share your reflections about your final work!")
         
         # Clear student work button
         if st.button("🗑️ Start Fresh", use_container_width=True):
