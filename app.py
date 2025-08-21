@@ -437,6 +437,109 @@ def link_student_activity(student_name, activity_data):
             "learning_connections": activity_data.get("extensions", "")
         })
 
+def create_portfolio_template(template_type, student_name, custom_params=None):
+    """Create portfolio template based on type"""
+    templates = {
+        "blank": {
+            "title": f"{student_name}'s Learning Portfolio",
+            "sections": ["My Work", "Reflections", "Learning Journey"],
+            "description": "A blank canvas for your learning story"
+        },
+        "themed": {
+            "title": f"{student_name}'s Themed Portfolio",
+            "sections": [
+                "Theme Exploration",
+                "Connections Discovered", 
+                "Creative Expressions",
+                "Reflections on Learning",
+                "Future Investigations"
+            ],
+            "description": "Organize your work around themes and big ideas"
+        },
+        "subject": {
+            "title": f"{student_name}'s Subject Portfolio", 
+            "sections": [
+                "Mathematics & Patterns",
+                "Language & Communication",
+                "Science & Discovery",
+                "Arts & Expression",
+                "Social Studies & Community",
+                "Cross-Curricular Connections"
+            ],
+            "description": "Showcase learning across different subject areas"
+        },
+        "year_level": {
+            "title": f"{student_name}'s Year {custom_params.get('year', 'X')} Portfolio",
+            "sections": [
+                "Term 1 Highlights",
+                "Term 2 Growth", 
+                "Term 3 Discoveries",
+                "Term 4 Achievements",
+                "Year Reflections"
+            ],
+            "description": f"Document your learning journey through Year {custom_params.get('year', 'X')}"
+        },
+        "term": {
+            "title": f"{student_name}'s {custom_params.get('term', 'Term')} Portfolio",
+            "sections": [
+                "Learning Goals",
+                "Projects & Investigations",
+                "Skill Development",
+                "Challenges & Growth",
+                "Term Reflection"
+            ],
+            "description": f"Capture your {custom_params.get('term', 'term')} learning experience"
+        }
+    }
+    
+    template = templates.get(template_type, templates["blank"])
+    
+    return {
+        "template_type": template_type,
+        "title": template["title"],
+        "sections": template["sections"],
+        "description": template["description"],
+        "created": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "entries": {section: [] for section in template["sections"]},
+        "annotations": [],
+        "custom_params": custom_params or {}
+    }
+
+def add_portfolio_entry(portfolio, section, entry_data):
+    """Add an entry to a portfolio section"""
+    if section in portfolio["entries"]:
+        portfolio["entries"][section].append({
+            "id": len(portfolio["entries"][section]) + 1,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "content": entry_data.get("content", ""),
+            "type": entry_data.get("type", "text"),
+            "file_info": entry_data.get("file_info", {}),
+            "reflection": entry_data.get("reflection", ""),
+            "tags": entry_data.get("tags", []),
+            "cec_analysis": entry_data.get("cec_analysis", "")
+        })
+
+def annotate_portfolio_entry(portfolio, section, entry_id, annotation):
+    """Add annotation to a specific portfolio entry"""
+    portfolio["annotations"].append({
+        "id": len(portfolio["annotations"]) + 1,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "section": section,
+        "entry_id": entry_id,
+        "annotation": annotation,
+        "type": "entry_annotation"
+    })
+
+def add_portfolio_reflection(portfolio, reflection_text, reflection_type="general"):
+    """Add a learning reflection to the portfolio"""
+    portfolio["annotations"].append({
+        "id": len(portfolio["annotations"]) + 1,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "reflection": reflection_text,
+        "type": reflection_type,
+        "section": "general"
+    })
+
 def create_shared_lesson(lesson_content, author, curriculum, topic):
     """Create a shareable lesson plan for team collaboration"""
     lesson = {
@@ -900,6 +1003,42 @@ if st.session_state.user_type == "Teacher":
                         st.markdown("**Community Projects:**")
                         for exp in projects[-3:]:
                             st.markdown(f"- *{exp['date']}*: {exp['description'][:80]}...")
+                    
+                    # Student Portfolio Summary
+                    st.markdown("### Student Portfolio Overview")
+                    student_portfolios = st.session_state.student_portfolios.get(selected_student, [])
+                    
+                    if student_portfolios:
+                        for i, portfolio in enumerate(student_portfolios):
+                            total_entries = sum(len(entries) for entries in portfolio['entries'].values())
+                            total_annotations = len(portfolio.get('annotations', []))
+                            
+                            with st.expander(f"📁 {portfolio['title']}", expanded=len(student_portfolios) == 1):
+                                st.markdown(f"**Template:** {portfolio['template_type'].title()}")
+                                st.markdown(f"**Created:** {portfolio['created']}")
+                                st.markdown(f"**Total Entries:** {total_entries}")
+                                st.markdown(f"**Student Annotations:** {total_annotations}")
+                                
+                                # Show section breakdown
+                                st.markdown("**Section Overview:**")
+                                for section in portfolio['sections']:
+                                    entries_count = len(portfolio['entries'].get(section, []))
+                                    st.markdown(f"- {section}: {entries_count} entries")
+                                
+                                # Recent portfolio reflections
+                                portfolio_reflections = [ann for ann in portfolio.get('annotations', []) 
+                                                       if ann.get('type') in ['portfolio_reflection', 'general']]
+                                if portfolio_reflections:
+                                    st.markdown("**Recent Reflections:**")
+                                    latest_reflection = portfolio_reflections[-1]
+                                    reflection_text = latest_reflection.get('reflection', latest_reflection.get('annotation', ''))
+                                    st.markdown(f"*{latest_reflection['timestamp']}*: {reflection_text[:150]}..." if len(reflection_text) > 150 else reflection_text)
+                                
+                                if st.button(f"View Full Portfolio", key=f"view_portfolio_{selected_student}_{i}"):
+                                    st.session_state.selected_portfolio = (selected_student, i)
+                                    st.rerun()
+                    else:
+                        st.info(f"{selected_student} hasn't created any portfolios yet.")
                 
                 else:
                     st.info("No profile data available yet. Record some progress entries first.")
@@ -1022,8 +1161,16 @@ else:
         else:
             st.info("Enter your name to connect your work to your learning profile!")
     
-    # Student work upload and analysis section
-    col1, col2 = st.columns([3, 2])
+    # Initialize portfolio session state
+    if 'student_portfolios' not in st.session_state:
+        st.session_state.student_portfolios = {}
+    
+    # Portfolio Management Tab System
+    portfolio_tabs = st.tabs(["📝 Share Work", "📁 My Portfolios", "💭 Learning Journey"])
+    
+    with portfolio_tabs[0]:
+        # Student work upload and analysis section
+        col1, col2 = st.columns([3, 2])
     
     with col1:
         st.subheader("📝 Share Your Work & Thinking")
@@ -1348,7 +1495,355 @@ LEARNING PROCESS:
         if st.button("🗑️ Start Fresh", use_container_width=True):
             st.session_state.student_work = ""
             st.session_state.student_feedback_history = []
-            st.rerun()
+    
+    with portfolio_tabs[1]:
+        # Portfolio Management Interface
+        st.subheader("📁 My Learning Portfolios")
+        
+        if st.session_state.current_student_name:
+            student_portfolios = st.session_state.student_portfolios.get(st.session_state.current_student_name, [])
+            
+            # Create new portfolio section
+            with st.expander("➕ Create New Portfolio", expanded=len(student_portfolios) == 0):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    template_type = st.selectbox(
+                        "Choose a portfolio template:",
+                        ["blank", "themed", "subject", "year_level", "term"],
+                        format_func=lambda x: {
+                            "blank": "🎨 Blank Canvas - Design your own layout",
+                            "themed": "🎭 Themed - Organize by big ideas and themes", 
+                            "subject": "📚 Subject-Based - Organize by learning areas",
+                            "year_level": "📅 Year Level - Track your yearly journey",
+                            "term": "⏱️ Term-Based - Focus on a specific term"
+                        }[x]
+                    )
+                
+                with col2:
+                    custom_params = {}
+                    if template_type == "year_level":
+                        year_input = st.text_input("Year Level:", placeholder="e.g., 7, 8, 9...")
+                        if year_input:
+                            custom_params["year"] = year_input
+                    elif template_type == "term":
+                        term_input = st.selectbox("Term:", ["Term 1", "Term 2", "Term 3", "Term 4"])
+                        custom_params["term"] = term_input
+                    elif template_type == "themed":
+                        theme_input = st.text_input("Theme:", placeholder="e.g., Water Cycle, Community, Space...")
+                        if theme_input:
+                            custom_params["theme"] = theme_input
+                
+                portfolio_name = st.text_input("Portfolio Name (optional):", placeholder="Leave blank to use default name")
+                
+                if st.button("Create Portfolio"):
+                    # Create new portfolio
+                    new_portfolio = create_portfolio_template(template_type, st.session_state.current_student_name, custom_params)
+                    if portfolio_name:
+                        new_portfolio["title"] = portfolio_name
+                    
+                    # Add to student's portfolios
+                    if st.session_state.current_student_name not in st.session_state.student_portfolios:
+                        st.session_state.student_portfolios[st.session_state.current_student_name] = []
+                    
+                    st.session_state.student_portfolios[st.session_state.current_student_name].append(new_portfolio)
+                    st.success(f"Portfolio '{new_portfolio['title']}' created! 🎉")
+                    st.rerun()
+            
+            # Display existing portfolios
+            if student_portfolios:
+                st.markdown("### Your Portfolios")
+                
+                for i, portfolio in enumerate(student_portfolios):
+                    with st.expander(f"📁 {portfolio['title']}", expanded=len(student_portfolios) == 1):
+                        st.markdown(f"**Created:** {portfolio['created']}")
+                        st.markdown(f"**Type:** {portfolio['template_type'].title()} Template")
+                        st.markdown(f"**Description:** {portfolio['description']}")
+                        
+                        # Portfolio sections
+                        st.markdown("### Portfolio Sections")
+                        
+                        for section in portfolio['sections']:
+                            section_entries = portfolio['entries'].get(section, [])
+                            
+                            with st.expander(f"📋 {section} ({len(section_entries)} items)"):
+                                # Add entry to section
+                                st.markdown("**Add New Entry:**")
+                                
+                                entry_type = st.selectbox(
+                                    "Entry type:",
+                                    ["text", "work_sample", "reflection", "image", "file"],
+                                    key=f"entry_type_{i}_{section}"
+                                )
+                                
+                                if entry_type == "text":
+                                    entry_content = st.text_area(
+                                        "Content:",
+                                        height=100,
+                                        key=f"entry_content_{i}_{section}",
+                                        placeholder="Write about your learning, discoveries, or thoughts..."
+                                    )
+                                    
+                                elif entry_type == "work_sample":
+                                    entry_file = st.file_uploader(
+                                        "Upload work sample:",
+                                        type=['txt', 'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+                                        key=f"entry_file_{i}_{section}"
+                                    )
+                                    entry_content = st.text_area(
+                                        "Describe this work:",
+                                        height=80,
+                                        key=f"work_desc_{i}_{section}",
+                                        placeholder="What does this work show about your learning?"
+                                    )
+                                
+                                elif entry_type == "reflection":
+                                    entry_content = st.text_area(
+                                        "Learning reflection:",
+                                        height=120,
+                                        key=f"reflection_{i}_{section}",
+                                        placeholder="What did you learn? How did you grow? What connections did you make?"
+                                    )
+                                
+                                else:  # image or file
+                                    entry_file = st.file_uploader(
+                                        f"Upload {entry_type}:",
+                                        key=f"upload_{i}_{section}"
+                                    )
+                                    entry_content = st.text_area(
+                                        "Caption or description:",
+                                        height=60,
+                                        key=f"caption_{i}_{section}"
+                                    )
+                                
+                                # Entry reflection and tags
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    entry_reflection = st.text_input(
+                                        "Personal reflection:",
+                                        key=f"personal_reflection_{i}_{section}",
+                                        placeholder="How does this connect to your learning journey?"
+                                    )
+                                with col2:
+                                    entry_tags = st.text_input(
+                                        "Tags (comma-separated):",
+                                        key=f"tags_{i}_{section}",
+                                        placeholder="creativity, problem-solving, collaboration..."
+                                    )
+                                
+                                if st.button(f"Add to {section}", key=f"add_entry_{i}_{section}"):
+                                    entry_data = {
+                                        "content": entry_content if 'entry_content' in locals() else "",
+                                        "type": entry_type,
+                                        "reflection": entry_reflection,
+                                        "tags": [tag.strip() for tag in entry_tags.split(",")] if entry_tags else []
+                                    }
+                                    
+                                    if 'entry_file' in locals() and entry_file:
+                                        entry_data["file_info"] = {
+                                            "name": entry_file.name,
+                                            "type": entry_file.type,
+                                            "size": entry_file.size
+                                        }
+                                    
+                                    add_portfolio_entry(portfolio, section, entry_data)
+                                    st.success(f"Entry added to {section}! 📚")
+                                    st.rerun()
+                                
+                                # Display existing entries
+                                if section_entries:
+                                    st.markdown("**Current Entries:**")
+                                    for j, entry in enumerate(section_entries):
+                                        with st.container():
+                                            st.markdown(f"**Entry {entry['id']}** - *{entry['timestamp']}*")
+                                            
+                                            if entry['file_info']:
+                                                st.markdown(f"📎 **File:** {entry['file_info'].get('name', 'Unknown')}")
+                                            
+                                            if entry['content']:
+                                                st.markdown(f"**Content:** {entry['content'][:200]}..." if len(entry['content']) > 200 else entry['content'])
+                                            
+                                            if entry['reflection']:
+                                                st.markdown(f"**Reflection:** {entry['reflection']}")
+                                            
+                                            if entry['tags']:
+                                                st.markdown(f"**Tags:** {', '.join(entry['tags'])}")
+                                            
+                                            # Annotation system
+                                            annotation_text = st.text_input(
+                                                "Add learning annotation:",
+                                                key=f"annotation_{i}_{section}_{j}",
+                                                placeholder="Looking back, what do you notice about this work?"
+                                            )
+                                            
+                                            if st.button(f"Annotate Entry {entry['id']}", key=f"annotate_{i}_{section}_{j}"):
+                                                if annotation_text:
+                                                    annotate_portfolio_entry(portfolio, section, entry['id'], annotation_text)
+                                                    st.success("Annotation added! 📝")
+                                                    st.rerun()
+                                            
+                                            st.markdown("---")
+                        
+                        # Portfolio-wide reflections
+                        st.markdown("### Portfolio Reflection")
+                        portfolio_reflection = st.text_area(
+                            "Reflect on your learning journey in this portfolio:",
+                            height=100,
+                            key=f"portfolio_reflection_{i}",
+                            placeholder="What patterns do you see in your learning? How have you grown? What are you most proud of?"
+                        )
+                        
+                        if st.button(f"Add Portfolio Reflection", key=f"add_portfolio_reflection_{i}"):
+                            if portfolio_reflection:
+                                add_portfolio_reflection(portfolio, portfolio_reflection, "portfolio_reflection")
+                                st.success("Portfolio reflection added! 🌟")
+                                st.rerun()
+                        
+                        # Display portfolio annotations
+                        portfolio_annotations = [ann for ann in portfolio.get('annotations', []) if ann.get('type') in ['portfolio_reflection', 'general']]
+                        if portfolio_annotations:
+                            st.markdown("**Your Portfolio Reflections:**")
+                            for ann in portfolio_annotations[-3:]:
+                                st.markdown(f"*{ann['timestamp']}*: {ann.get('reflection', ann.get('annotation', ''))}")
+            else:
+                st.info("Create your first portfolio to start documenting your learning journey! 📚")
+        
+        else:
+            st.warning("Please enter your name in the sidebar to create and manage portfolios.")
+    
+    with portfolio_tabs[2]:
+        # Learning Journey Overview
+        st.subheader("💭 Your Learning Journey")
+        
+        if st.session_state.current_student_name:
+            # Display recent feedback as before
+            if st.session_state.student_feedback_history:
+                st.markdown("### Recent Learning Experiences")
+                for i, entry in enumerate(reversed(st.session_state.student_feedback_history[-3:])):
+                    if entry.get('type') == 'final_submission':
+                        title = f"🎯 Final Work: {entry.get('filename', 'Submission')}"
+                    else:
+                        title = f"📚 Learning from {entry['timestamp']}"
+                    
+                    with st.expander(title, expanded=(i == 0)):
+                        if entry.get('type') == 'final_submission':
+                            st.markdown(f"**File:** {entry.get('filename', 'Unknown')} ({entry.get('file_type', 'Unknown type')})")
+                            if entry.get('reflection'):
+                                st.markdown("**Your Reflection:**")
+                                st.markdown(entry['reflection'][:150] + "..." if len(entry.get('reflection', '')) > 150 else entry.get('reflection', ''))
+                        else:
+                            st.markdown("**Your work:**")
+                            work_content = entry.get('work', entry.get('content', ''))
+                            st.markdown(work_content[:200] + "..." if len(work_content) > 200 else work_content)
+                        
+                        # Add to portfolio option
+                        if st.session_state.current_student_name in st.session_state.student_portfolios:
+                            portfolios = st.session_state.student_portfolios[st.session_state.current_student_name]
+                            if portfolios:
+                                selected_portfolio = st.selectbox(
+                                    "Add to portfolio:",
+                                    ["Select portfolio..."] + [p['title'] for p in portfolios],
+                                    key=f"portfolio_select_{i}"
+                                )
+                                
+                                if selected_portfolio != "Select portfolio...":
+                                    portfolio = next(p for p in portfolios if p['title'] == selected_portfolio)
+                                    selected_section = st.selectbox(
+                                        "Add to section:",
+                                        portfolio['sections'],
+                                        key=f"section_select_{i}"
+                                    )
+                                    
+                                    if st.button(f"Add to Portfolio", key=f"add_to_portfolio_{i}"):
+                                        entry_data = {
+                                            "content": work_content if 'work_content' in locals() else entry.get('content', ''),
+                                            "type": "learning_experience",
+                                            "reflection": entry.get('reflection', ''),
+                                            "cec_analysis": entry.get('cec_analysis', ''),
+                                            "tags": ["learning_experience", "feedback_session"]
+                                        }
+                                        
+                                        if entry.get('filename'):
+                                            entry_data["file_info"] = {
+                                                "name": entry['filename'],
+                                                "type": entry.get('file_type', 'unknown')
+                                            }
+                                        
+                                        add_portfolio_entry(portfolio, selected_section, entry_data)
+                                        st.success(f"Added to {selected_portfolio}! 📁")
+                                        st.rerun()
+            else:
+                st.info("Start sharing your work to build your learning journey!")
+        else:
+            st.warning("Please enter your name in the sidebar to view your learning journey.")
+
+# Detailed Portfolio View for Teachers (appears when teacher clicks "View Full Portfolio")
+if 'selected_portfolio' in st.session_state and st.session_state.selected_portfolio:
+    student_name, portfolio_index = st.session_state.selected_portfolio
+    if student_name in st.session_state.student_portfolios:
+        portfolio = st.session_state.student_portfolios[student_name][portfolio_index]
+        
+        st.markdown("---")
+        st.markdown(f"## 📁 {portfolio['title']} - Detailed Teacher View")
+        
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("← Back to Student Overview"):
+                del st.session_state.selected_portfolio
+                st.rerun()
+        
+        with col1:
+            st.markdown(f"**Student:** {student_name}")
+            st.markdown(f"**Template:** {portfolio['template_type'].title()}")
+            st.markdown(f"**Created:** {portfolio['created']}")
+            st.markdown(f"**Description:** {portfolio['description']}")
+        
+        # Display all portfolio sections with entries
+        for section in portfolio['sections']:
+            entries = portfolio['entries'].get(section, [])
+            
+            with st.expander(f"📋 {section} ({len(entries)} entries)", expanded=len(entries) > 0):
+                if entries:
+                    for entry in entries:
+                        st.markdown(f"**Entry {entry['id']}** - *{entry['timestamp']}*")
+                        
+                        if entry['file_info']:
+                            st.markdown(f"📎 **File:** {entry['file_info'].get('name', 'Unknown')} ({entry['file_info'].get('type', 'Unknown')})")
+                        
+                        if entry['content']:
+                            st.markdown(f"**Content:** {entry['content']}")
+                        
+                        if entry['reflection']:
+                            st.markdown(f"**Student Reflection:** {entry['reflection']}")
+                        
+                        if entry['tags']:
+                            st.markdown(f"**Tags:** {', '.join(entry['tags'])}")
+                        
+                        if entry['cec_analysis']:
+                            st.markdown(f"**CEC Skills Demonstrated:** {entry['cec_analysis']}")
+                        
+                        # Show annotations for this entry
+                        entry_annotations = [ann for ann in portfolio.get('annotations', []) 
+                                           if ann.get('section') == section and ann.get('entry_id') == entry['id']]
+                        if entry_annotations:
+                            st.markdown("**Student Annotations:**")
+                            for ann in entry_annotations:
+                                st.markdown(f"- *{ann['timestamp']}*: {ann.get('annotation', '')}")
+                        
+                        st.markdown("---")
+                else:
+                    st.info(f"No entries in {section} yet.")
+        
+        # Portfolio-wide reflections
+        portfolio_reflections = [ann for ann in portfolio.get('annotations', []) 
+                               if ann.get('type') in ['portfolio_reflection', 'general']]
+        if portfolio_reflections:
+            st.markdown("### Student Portfolio Reflections")
+            for reflection in portfolio_reflections:
+                st.markdown(f"**{reflection['timestamp']}**")
+                reflection_text = reflection.get('reflection', reflection.get('annotation', ''))
+                st.markdown(reflection_text)
+                st.markdown("---")
 
 # Footer
 st.markdown("---")

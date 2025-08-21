@@ -50,6 +50,10 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Student Activity Linking**: Automatic connection between student interface activities and their progress profiles, tracking submissions, feedback, and competency development
 - **Final Work Submissions**: Dedicated submission system for completed projects supporting multiple file types (PDF, DOC, images, audio, video) with integrated reflection and CEC assessment
 - **Multimedia File Processing**: Comprehensive support for various file formats with automatic content analysis and integration into student learning profiles
+- **Portfolio System**: Comprehensive portfolio creation and management with multiple templates (blank, themed, subject-based, year-level, term-based)
+- **Portfolio Templates**: Pre-designed structures including blank canvas for custom layouts, themed organization by big ideas, subject-based learning areas, yearly tracking, and term-specific focus
+- **Entry Annotation System**: Students can annotate their portfolio entries with learning reflections and growth observations over time
+- **Portfolio Reflection Tools**: Built-in reflection prompts and tools for students to document their learning journey and identify patterns in their growth
 - **Collaborative Planning**: Team lesson sharing with commenting system for collaborative curriculum development
 
 # External Dependencies
