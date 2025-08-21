@@ -1,0 +1,85 @@
+Prompt to build your AI Classroom App
+
+(Paste this whole thing into Replit AI)
+
+Build me a Python + Streamlit web app called "AI Curriculum Assistant".
+
+Core Features:
+
+Friendly Chat Interface
+
+A text box for user questions.
+
+Responses generated using the OpenAI API.
+
+System prompt: “You are an AI trained on both the Australian Curriculum V9 and Montessori Curriculum Australia. Always answer with practical, accurate, and teacher-friendly guidance.”
+
+Curriculum Support
+
+A dropdown menu to choose curriculum framework:
+
+"Australian Curriculum V9"
+
+"Montessori Curriculum Australia"
+
+Responses should adapt based on the chosen curriculum.
+
+Enhancements (include these directly in first build)
+
+Lesson Idea Generator → Users enter a topic, AI generates lesson ideas aligned to curriculum.
+
+Scope & Sequence Visualiser → Allow users to upload a CSV of topics, and AI outputs a suggested sequence with a visual timeline (using Streamlit’s charting).
+
+Parent Communication Helper → Generate sample parent letters or info sheets (based on curriculum choice).
+
+Student Task Generator → Suggest age-appropriate activities and scaffolds for students (primary and middle years).
+
+File Handling
+
+Allow uploads of .txt or .csv with curriculum notes.
+
+AI should read and incorporate those into responses.
+
+History / Memory
+
+Maintain conversation history in session state.
+
+Allow “Clear Chat” button to reset.
+
+UI / UX
+
+Clean Streamlit layout with sidebar:
+
+Curriculum selector
+
+Upload section
+
+Quick-access buttons for: “Generate Lesson”, “Scope & Sequence”, “Parent Letter”, “Student Task”.
+
+Main panel shows chat and outputs.
+
+Config
+
+Store OpenAI API key securely via Streamlit’s st.secrets.
+
+Deployment:
+
+Use .replit, requirements.txt, and replit.nix setup so it runs with Streamlit in Replit.
+
+Requirements: streamlit, openai, pandas.
+
+Set run command in .replit:
+
+run = "streamlit run app.py --server.port=3000 --server.address=0.0.0.0"
+
+Output:
+
+Please generate the full project structure:
+
+app.py (main Streamlit app, all code)
+
+.replit
+
+requirements.txt
+
+replit.nix
