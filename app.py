@@ -486,9 +486,22 @@ else:
                         with st.expander("Preview your work"):
                             st.text(content[:500] + "..." if len(content) > 500 else content)
                     else:
-                        st.session_state.student_work = f"Student uploaded a {uploaded_student_file.type} file: {uploaded_student_file.name}"
                         st.success("Your file has been uploaded! ✨")
-                        st.info("I can see you've shared a file. Please also describe what you discovered or learned!")
+                        st.info("Now tell me about what you discovered or learned!")
+                        
+                        # Add description field for uploaded files
+                        file_description = st.text_area(
+                            "Describe what you discovered, learned, or created:",
+                            height=120,
+                            placeholder="This shows... / I learned that... / I discovered... / My project demonstrates...",
+                            key="file_description"
+                        )
+                        
+                        if file_description:
+                            st.session_state.student_work = f"Student uploaded a {uploaded_student_file.type} file: {uploaded_student_file.name}\n\nStudent's description: {file_description}"
+                        else:
+                            st.session_state.student_work = f"Student uploaded a {uploaded_student_file.type} file: {uploaded_student_file.name}"
+                            
                 except Exception as e:
                     st.error(f"Having trouble reading your file: {str(e)}")
         
