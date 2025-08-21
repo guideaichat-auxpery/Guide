@@ -253,15 +253,26 @@ Make this a tool for nurturing growth, not just measuring performance."""
     
     return call_openai_api(messages, system_prompt)
 
-def track_student_progress(student_name, work_analysis, learning_goals):
-    """Track and analyze student progress over time"""
+def track_student_progress(student_name, work_analysis, learning_goals, bpl_competencies=None):
+    """Track and analyze student progress with Big Picture Learning competencies"""
     if student_name not in st.session_state.student_progress:
         st.session_state.student_progress[student_name] = {
             "entries": [],
             "learning_goals": [],
             "strengths": [],
             "growth_areas": [],
-            "interests": []
+            "interests": [],
+            "bpl_competencies": {
+                "knowing_how_to_learn": {"level": 1, "evidence": []},
+                "empirical_reasoning": {"level": 1, "evidence": []},
+                "quantitative_reasoning": {"level": 1, "evidence": []},
+                "social_reasoning": {"level": 1, "evidence": []},
+                "communication": {"level": 1, "evidence": []},
+                "personal_qualities": {"level": 1, "evidence": []}
+            },
+            "internships": [],
+            "exhibitions": [],
+            "real_world_projects": []
         }
     
     # Add new progress entry
@@ -269,13 +280,52 @@ def track_student_progress(student_name, work_analysis, learning_goals):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "work_analysis": work_analysis,
         "learning_goals": learning_goals,
-        "date": datetime.now().strftime("%Y-%m-%d")
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "bpl_competencies": bpl_competencies or {}
     }
     
     st.session_state.student_progress[student_name]["entries"].append(progress_entry)
+    
+    # Update BPL competency levels if provided
+    if bpl_competencies:
+        for competency, data in bpl_competencies.items():
+            if competency in st.session_state.student_progress[student_name]["bpl_competencies"]:
+                current = st.session_state.student_progress[student_name]["bpl_competencies"][competency]
+                if "level" in data:
+                    current["level"] = max(current["level"], data["level"])
+                if "evidence" in data:
+                    current["evidence"].extend(data["evidence"])
 
-def generate_progress_report(student_name, curriculum, time_period="recent"):
-    """Generate comprehensive progress report for a student"""
+def generate_bpl_competency_assessment(work_content, curriculum):
+    """Analyze work against Big Picture Learning competencies"""
+    prompt = f"""Analyze this student work against the Big Picture Learning competency framework:
+
+Student Work:
+{work_content}
+
+For each competency, assess evidence and suggest a progression level (1-5):
+
+1. **Knowing How to Learn**: Self-directed learning, metacognitive skills, reflection on learning processes
+2. **Empirical Reasoning**: Using evidence, observation, investigation, scientific thinking
+3. **Quantitative Reasoning**: Mathematical thinking, analyzing data, understanding numerical relationships
+4. **Social Reasoning**: Analyzing social issues, community understanding, responsible action
+5. **Communication**: Writing, speaking, listening, artistic expression, audience awareness
+6. **Personal Qualities**: Leadership, respect, responsibility, organization, self-reflection
+
+For each competency present in the work, provide:
+- Evidence observed (specific examples)
+- Suggested progression level (1-5)
+- Growth recommendations
+
+Format as structured assessment aligned with {curriculum} standards."""
+    
+    messages = [{"role": "user", "content": prompt}]
+    system_prompt = get_system_prompt(curriculum)
+    
+    return call_openai_api(messages, system_prompt)
+
+def generate_progress_report(student_name, curriculum, time_period="recent", include_bpl=True):
+    """Generate comprehensive progress report with BPL competencies"""
     if student_name not in st.session_state.student_progress:
         return "No progress data available for this student."
     
@@ -283,27 +333,66 @@ def generate_progress_report(student_name, curriculum, time_period="recent"):
     entries_summary = "\n".join([f"- {entry['timestamp']}: {entry['work_analysis'][:100]}..." 
                                 for entry in student_data["entries"][-5:]])
     
-    prompt = f"""Create a holistic progress report for {student_name} based on their learning journey data:
+    bpl_summary = ""
+    if include_bpl and "bpl_competencies" in student_data:
+        bpl_summary = "Big Picture Learning Competency Levels:\n"
+        competency_names = {
+            "knowing_how_to_learn": "Knowing How to Learn",
+            "empirical_reasoning": "Empirical Reasoning", 
+            "quantitative_reasoning": "Quantitative Reasoning",
+            "social_reasoning": "Social Reasoning",
+            "communication": "Communication",
+            "personal_qualities": "Personal Qualities"
+        }
+        
+        for comp_key, comp_data in student_data["bpl_competencies"].items():
+            name = competency_names.get(comp_key, comp_key)
+            bpl_summary += f"- {name}: Level {comp_data['level']}\n"
+    
+    prompt = f"""Create a holistic learning journey report for {student_name} integrating Montessori Cosmic Education and Big Picture Learning principles:
 
 Recent Learning Entries:
 {entries_summary}
 
+{bpl_summary}
+
 Generate a report that:
 - Celebrates growth and discoveries in a warm, encouraging tone
-- Identifies patterns in their learning and thinking development
-- Shows connections between different areas of learning
-- Honors their individual learning path and developmental stage
-- Suggests meaningful next steps that build on their interests and strengths
-- Connects their progress to the bigger picture of their cosmic education
-- Uses language that could be shared with families
-- Focuses on the whole child, not just academic achievement
+- Maps progress across Big Picture Learning competencies in real-world context
+- Shows connections between academic learning and authentic experiences
+- Identifies patterns in metacognitive development and self-directed learning
+- Connects learning to community engagement and social responsibility
+- Suggests meaningful next steps that build on demonstrated competencies
+- Uses asset-based language focusing on "how the student is smart"
+- Includes recommendations for real-world learning opportunities
+- Frames assessment as growth documentation, not ranking
 
-Frame this as a story of their learning journey with {curriculum} principles."""
+Create this as a personalized learner profile that honors individual learning pathways and celebrates authentic achievement."""
     
     messages = [{"role": "user", "content": prompt}]
     system_prompt = get_system_prompt(curriculum)
     
     return call_openai_api(messages, system_prompt)
+
+def create_bpl_learner_profile(student_name, curriculum):
+    """Create Big Picture Learning style learner profile"""
+    if student_name not in st.session_state.student_progress:
+        return "No profile data available."
+    
+    student_data = st.session_state.student_progress[student_name]
+    
+    # Competency visualization data
+    competencies = student_data.get("bpl_competencies", {})
+    
+    profile_data = {
+        "student": student_name,
+        "competency_levels": competencies,
+        "real_world_experiences": student_data.get("internships", []) + student_data.get("real_world_projects", []),
+        "exhibitions": student_data.get("exhibitions", []),
+        "learning_journey": student_data.get("entries", [])[-10:]  # Last 10 entries
+    }
+    
+    return profile_data
 
 def create_shared_lesson(lesson_content, author, curriculum, topic):
     """Create a shareable lesson plan for team collaboration"""
@@ -595,38 +684,180 @@ if st.session_state.user_type == "Teacher":
             else:
                 st.info("Enter a topic to create an assessment rubric.")
     
-    # Student Progress Tracking
-    with st.expander("📈 Student Progress Tracking"):
+    # Enhanced Student Progress Tracking with BPL
+    with st.expander("📈 Big Picture Learning Progress Tracking"):
         progress_student = st.text_input("Student name:", key="progress_student")
         
         if progress_student:
-            col1, col2 = st.columns(2)
+            # Tabs for different tracking aspects
+            tab1, tab2, tab3 = st.tabs(["📝 Record Progress", "🌟 BPL Profile", "📊 Reports"])
             
-            with col1:
-                work_observation = st.text_area("Learning observation or work analysis:", 
-                                              height=100, key="work_observation")
-                learning_goals = st.text_input("Learning goals/focus:", key="learning_goals")
+            with tab1:
+                col1, col2 = st.columns(2)
                 
-                if st.button("Record Progress Entry", key="record_progress"):
-                    if work_observation:
-                        track_student_progress(progress_student, work_observation, learning_goals)
-                        st.success(f"Progress recorded for {progress_student}!")
-                    else:
-                        st.warning("Please add a learning observation.")
+                with col1:
+                    work_observation = st.text_area("Learning observation or work analysis:", 
+                                                  height=100, key="work_observation")
+                    learning_goals = st.text_input("Learning goals/focus:", key="learning_goals")
+                    
+                    # BPL Competency Assessment
+                    st.markdown("**Assess Big Picture Learning Competencies (optional):**")
+                    bpl_assessment = st.checkbox("Auto-assess BPL competencies from work", key="auto_bpl")
+                    
+                    if st.button("Record Progress Entry", key="record_progress"):
+                        if work_observation:
+                            bpl_data = None
+                            if bpl_assessment:
+                                with st.spinner("Analyzing work against BPL competencies..."):
+                                    bpl_analysis = generate_bpl_competency_assessment(work_observation, st.session_state.curriculum)
+                                    if bpl_analysis:
+                                        st.info("BPL competency analysis included in progress record")
+                            
+                            track_student_progress(progress_student, work_observation, learning_goals, bpl_data)
+                            st.success(f"Progress recorded for {progress_student}!")
+                        else:
+                            st.warning("Please add a learning observation.")
+                
+                with col2:
+                    # Real-world learning tracking
+                    st.markdown("**Real-World Learning Experiences:**")
+                    
+                    experience_type = st.selectbox("Experience type:", 
+                                                 ["Internship", "Community Project", "Exhibition", "Research Project", "Social Action"])
+                    experience_desc = st.text_area("Describe the experience:", height=80, key="experience_desc")
+                    
+                    if st.button("Add Real-World Experience", key="add_experience"):
+                        if experience_desc and progress_student in st.session_state.student_progress:
+                            experience_entry = {
+                                "type": experience_type,
+                                "description": experience_desc,
+                                "date": datetime.now().strftime("%Y-%m-%d"),
+                                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+                            }
+                            
+                            if experience_type == "Internship":
+                                st.session_state.student_progress[progress_student]["internships"].append(experience_entry)
+                            elif experience_type == "Exhibition":
+                                st.session_state.student_progress[progress_student]["exhibitions"].append(experience_entry)
+                            else:
+                                st.session_state.student_progress[progress_student]["real_world_projects"].append(experience_entry)
+                            
+                            st.success(f"{experience_type} experience recorded!")
             
-            with col2:
-                if st.button("Generate Progress Report", key="gen_report"):
-                    with st.spinner("Creating holistic progress report..."):
-                        report = generate_progress_report(progress_student, st.session_state.curriculum)
-                        if report:
-                            st.markdown(f"### Learning Journey Report: {progress_student}")
-                            st.markdown(report)
+            with tab2:
+                # BPL Competency Profile Visualization
+                if progress_student in st.session_state.student_progress:
+                    student_data = st.session_state.student_progress[progress_student]
+                    
+                    st.markdown("### Big Picture Learning Competency Profile")
+                    
+                    competency_names = {
+                        "knowing_how_to_learn": "Knowing How to Learn",
+                        "empirical_reasoning": "Empirical Reasoning", 
+                        "quantitative_reasoning": "Quantitative Reasoning",
+                        "social_reasoning": "Social Reasoning",
+                        "communication": "Communication",
+                        "personal_qualities": "Personal Qualities"
+                    }
+                    
+                    if "bpl_competencies" in student_data:
+                        # Create visual competency profile
+                        competencies = []
+                        levels = []
+                        
+                        for comp_key, comp_data in student_data["bpl_competencies"].items():
+                            competencies.append(competency_names.get(comp_key, comp_key))
+                            levels.append(comp_data["level"])
+                        
+                        # Create radar chart style visualization
+                        import plotly.graph_objects as go
+                        
+                        fig = go.Figure()
+                        
+                        fig.add_trace(go.Scatterpolar(
+                            r=levels,
+                            theta=competencies,
+                            fill='toself',
+                            name=progress_student,
+                            line_color='#1f77b4'
+                        ))
+                        
+                        fig.update_layout(
+                            polar=dict(
+                                radialaxis=dict(
+                                    visible=True,
+                                    range=[0, 5]
+                                )
+                            ),
+                            title=f"{progress_student}'s BPL Competency Profile",
+                            height=400
+                        )
+                        
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Detailed competency breakdown
+                        st.markdown("**Competency Details:**")
+                        for comp_key, comp_data in student_data["bpl_competencies"].items():
+                            name = competency_names.get(comp_key, comp_key)
+                            level = comp_data["level"]
+                            evidence_count = len(comp_data.get("evidence", []))
+                            
+                            col1, col2 = st.columns([3, 1])
+                            with col1:
+                                st.write(f"**{name}**: Level {level}")
+                            with col2:
+                                st.write(f"{evidence_count} evidence items")
+                    
+                    # Real-world experiences summary
+                    st.markdown("### Real-World Learning Portfolio")
+                    internships = student_data.get("internships", [])
+                    exhibitions = student_data.get("exhibitions", [])
+                    projects = student_data.get("real_world_projects", [])
+                    
+                    if internships:
+                        st.markdown("**Internships:**")
+                        for exp in internships[-3:]:
+                            st.markdown(f"- *{exp['date']}*: {exp['description'][:80]}...")
+                    
+                    if exhibitions:
+                        st.markdown("**Exhibitions:**")
+                        for exp in exhibitions[-3:]:
+                            st.markdown(f"- *{exp['date']}*: {exp['description'][:80]}...")
+                    
+                    if projects:
+                        st.markdown("**Community Projects:**")
+                        for exp in projects[-3:]:
+                            st.markdown(f"- *{exp['date']}*: {exp['description'][:80]}...")
+                
+                else:
+                    st.info("No profile data available yet. Record some progress entries first.")
+            
+            with tab3:
+                # Reports and Analysis
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if st.button("Generate BPL Learning Journey Report", key="gen_bpl_report"):
+                        with st.spinner("Creating comprehensive BPL learning journey..."):
+                            report = generate_progress_report(progress_student, st.session_state.curriculum, include_bpl=True)
+                            if report:
+                                st.markdown(f"### Big Picture Learning Journey: {progress_student}")
+                                st.markdown(report)
+                
+                with col2:
+                    if st.button("Create Learner Profile", key="create_profile"):
+                        profile_data = create_bpl_learner_profile(progress_student, st.session_state.curriculum)
+                        if profile_data and profile_data != "No profile data available.":
+                            st.markdown(f"### Learner Profile: {progress_student}")
+                            st.json(profile_data)
+                        else:
+                            st.info("No profile data available yet.")
                 
                 # Show recent entries
                 if progress_student in st.session_state.student_progress:
                     entries = st.session_state.student_progress[progress_student]["entries"]
                     if entries:
-                        st.markdown("**Recent Entries:**")
+                        st.markdown("**Recent Learning Entries:**")
                         for entry in entries[-3:]:
                             st.markdown(f"*{entry['date']}*: {entry['work_analysis'][:80]}...")
     
@@ -773,12 +1004,16 @@ else:
                     feedback = analyze_student_work(st.session_state.student_work, st.session_state.curriculum)
                     extensions = suggest_skill_extensions(st.session_state.student_work, st.session_state.curriculum, student_interests)
                     
+                    # Also generate BPL competency analysis for student
+                    bpl_analysis = generate_bpl_competency_assessment(st.session_state.student_work, st.session_state.curriculum)
+                    
                     if feedback and extensions:
                         # Store in history
                         st.session_state.student_feedback_history.append({
                             "work": st.session_state.student_work,
                             "feedback": feedback,
                             "extensions": extensions,
+                            "bpl_analysis": bpl_analysis,
                             "interests": student_interests,
                             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
                         })
@@ -791,6 +1026,13 @@ else:
                         
                         with st.expander("🚀 Ways to Explore Further", expanded=True):
                             st.markdown(extensions)
+                        
+                        # Show BPL competency insights
+                        if bpl_analysis:
+                            with st.expander("💪 Real-World Skills in Your Work", expanded=False):
+                                st.markdown("**This analysis shows the amazing real-world skills your work demonstrates:**")
+                                st.markdown(bpl_analysis)
+                                st.info("These are skills that help you succeed in life, not just school! Keep developing them through your projects and interests.")
                     else:
                         st.error("I'm having trouble analyzing your work right now. Please try again!")
             else:
@@ -812,6 +1054,10 @@ else:
                         st.markdown(entry['feedback'])
                         st.markdown("**Extensions:**")
                         st.markdown(entry['extensions'])
+                        
+                        if 'bpl_analysis' in entry and entry['bpl_analysis']:
+                            st.markdown("**Real-World Skills:**")
+                            st.markdown(entry['bpl_analysis'])
         
         # Combined chat interface
         st.markdown("---")
