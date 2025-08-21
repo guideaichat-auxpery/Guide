@@ -32,11 +32,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Error Handling**: Graceful error handling for missing API keys with user-friendly messages
 
 ## Core Features Architecture
+- **Dual Interface**: Separate teacher and student-facing modes with appropriate tools for each audience
 - **Cosmic Curriculum Integration**: Responses rooted in Montessori's Cosmic Education philosophy with systems thinking approach
 - **Learning Connections**: AI-generated lesson ideas that link topics to larger systems (historical, ecological, social, economic)
 - **Learning Threads & Patterns**: Interconnected topic mapping showing relationships rather than linear sequences
 - **Family & Community Connection**: Parent communication highlighting whole-child development and cosmic perspective
 - **Learning Invitations**: Student activities fostering independence, collaboration, real-world connection, and cosmic reflection
+- **Student Work Analysis**: AI-powered feedback on student work that celebrates discoveries and suggests meaningful extensions
+- **Skill Development**: Personalized learning pathways based on student interests and demonstrated understanding
 
 # External Dependencies
 
