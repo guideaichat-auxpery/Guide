@@ -36,6 +36,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Cosmic Curriculum Integration**: Responses rooted in Montessori's Cosmic Education philosophy with systems thinking approach
 - **Curriculum Document Upload**: File upload system supporting .txt, .csv, .pdf, .docx files for enhanced AI responses with custom curriculum content
 - **Montessori National Curriculum Integration**: Embedded official 2011 Montessori National Curriculum document provides authentic reference throughout all AI responses, ensuring alignment with official Montessori principles and developmental frameworks
+- **Australian Curriculum V9 Integration**: Comprehensive embedding of official curriculum documents including all learning areas, strands, achievement standards, content descriptions, and glossaries. Covers English, HASS F-6, and Years 7-10 specialised subjects (Civics & Citizenship, Economics & Business, Geography, History) with authentic terminology and assessment approaches
 - **Learning Connections**: AI-generated lesson ideas that link topics to larger systems (historical, ecological, social, economic)
 - **Learning Threads & Patterns**: Interconnected topic mapping showing relationships rather than linear sequences
 - **Family & Community Connection**: Parent communication highlighting whole-child development and cosmic perspective
@@ -88,6 +89,6 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Environment Variables**: OPENAI_API_KEY for API authentication
 
 ## Curriculum Frameworks
-- **Australian Curriculum V9**: Government education standards and learning areas
+- **Australian Curriculum V9**: Complete integration of official government education standards including English (Language, Literature, Literacy strands), HASS F-6, and specialised subjects for Years 7-10 (Civics & Citizenship, Economics & Business, Geography, History). Includes authentic terminology, achievement standards, content descriptions, and glossaries from all learning areas
 - **Montessori National Curriculum (2011)**: Official Montessori Australia Foundation curriculum framework integrated throughout the system, providing authentic reference for the three planes of development, Cosmic Education approach, and developmental characteristics
 - **Montessori Curriculum Australia**: Child-centered educational methodology and developmental stages

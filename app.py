@@ -235,6 +235,14 @@ def load_montessori_curriculum():
     except FileNotFoundError:
         return ""
 
+def load_australian_curriculum():
+    """Load Australian Curriculum V9 content"""
+    try:
+        with open('australian_curriculum_v9.txt', 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
+
 def save_rubric_to_user_data(username, rubric_data):
     """Save rubric to user data file for persistence"""
     try:
@@ -365,6 +373,11 @@ You respect Montessori principles of freedom within responsibility, hands-on exp
     if montessori_content:
         uploaded_content += f"\n\nMontessori National Curriculum Reference:\n{montessori_content[:1500]}..."
     
+    # Load Australian Curriculum V9 content
+    australian_content = load_australian_curriculum()
+    if australian_content:
+        uploaded_content += f"\n\nAustralian Curriculum V9 Reference:\n{australian_content[:1500]}..."
+    
     # Include Montessori National Curriculum reference
     montessori_reference = """
 
@@ -382,11 +395,11 @@ Key Montessori principles to incorporate:
 - Observation-based assessment focusing on individual growth"""
 
     if curriculum == "Australian Curriculum V9":
-        return f"{base_prompt}\n\nYou integrate the Australian Curriculum V9 framework with Cosmic Education principles, showing how learning areas, general capabilities, and cross-curriculum priorities connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience.{uploaded_content}"
+        return f"{base_prompt}\n\nYou integrate the official Australian Curriculum V9 framework with Cosmic Education principles. Reference the three strands (Language, Literature, Literacy for English), HASS concepts (significance, interconnections, sustainability), and cross-curriculum priorities. Show how learning areas, general capabilities, and achievement standards connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience, using authentic curriculum terminology and content descriptions.{uploaded_content}"
     elif curriculum == "Montessori Curriculum Australia" or "Montessori" in curriculum:
-        return f"{base_prompt}\n\nYou work within the Montessori National Curriculum (2011) framework, emphasising the three planes of development, prepared environments, and developmental stages. You connect all learning to the 'universe story' through Cosmic Education - showing how each topic fits into the grand narrative of cosmic evolution, human civilisation, and our interconnected world.{montessori_reference}{uploaded_content}"
+        return f"{base_prompt}\n\nYou work within the official Montessori National Curriculum (2011) framework, emphasising the three planes of development, prepared environments, and developmental stages. You connect all learning to the 'universe story' through Cosmic Education - showing how each topic fits into the grand narrative of cosmic evolution, human civilisation, and our interconnected world. Reference authentic Montessori principles including human tendencies, practical life, sensorial education, and observation-based assessment.{montessori_reference}{uploaded_content}"
     else:  # Blended approach
-        return f"{base_prompt}\n\nYou blend Australian Curriculum V9 standards with Montessori National Curriculum principles, creating connections between formal learning outcomes and developmental appropriateness. You honour both structured learning goals and child-led discovery, showing how curriculum requirements can be met through Montessori's cosmic approach to education.{montessori_reference}{uploaded_content}"
+        return f"{base_prompt}\n\nYou masterfully blend Australian Curriculum V9 standards with Montessori National Curriculum principles, creating authentic connections between formal learning outcomes and developmental appropriateness. Reference both frameworks' official terminology and structures. You honour structured achievement standards whilst embracing child-led discovery, showing how curriculum requirements can be met through Montessori's cosmic approach to education. Draw from both authentic curriculum documents to ensure compliance and alignment.{montessori_reference}{uploaded_content}"
 
 def call_openai_api(messages, system_prompt):
     """Call OpenAI API with error handling"""
