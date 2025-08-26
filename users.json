@@ -1,0 +1,37 @@
+{
+  "users": {
+    "Ben Noble": {
+      "password": "161fa3061cd1feff48f58847f5767a914bcf4ee0aec94dc194a85a204644f49e",
+      "role": "teacher",
+      "email": "ben@hmswairoa.net",
+      "school": "HMS",
+      "created": "2025-08-26 03:07",
+      "students": {
+        "7o4t2rtw": "Bob Test"
+      },
+      "monthly_usage": 0,
+      "monthly_limit": 100000,
+      "daily_requests": 0,
+      "daily_limit": 200,
+      "last_request_date": "2025-08-26",
+      "archived": false
+    },
+    "7o4t2rtw": {
+      "password": "011d2a5f5e3e683b56da98c2a884d96a69c473b11049b40865f907384ea2044c",
+      "role": "student",
+      "real_name": "Bob Test",
+      "teacher": "Ben Noble",
+      "created": "2025-08-26 03:07",
+      "monthly_usage": 0,
+      "monthly_limit": 10000,
+      "daily_requests": 0,
+      "daily_limit": 50,
+      "last_request_date": "2025-08-26",
+      "archived": false
+    }
+  },
+  "usage_logs": {
+    "Ben Noble": [],
+    "7o4t2rtw": []
+  }
+}

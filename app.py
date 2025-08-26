@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import secrets
 import string
+import re
 
 # Configure page
 st.set_page_config(
@@ -1150,10 +1151,23 @@ if not st.session_state.authenticated:
             
             col1, col2, col3 = st.columns([1,2,1])
             with col2:
-                new_student_name = st.text_input("Your Name", key="new_student_name")
-                new_student_username = st.text_input("Choose Username", key="new_student_username")
-                new_student_password = st.text_input("Choose Password", type="password", key="new_student_password")
-                confirm_password = st.text_input("Confirm Password", type="password", key="confirm_student_password")
+                new_student_name = st.text_input("Your Name", key="new_student_name", 
+                                                placeholder="Enter your full name")
+                
+                # Auto-suggest username based on name
+                suggested_username = ""
+                if new_student_name:
+                    # Create username from name (remove spaces, make lowercase, keep only letters and numbers)
+                    suggested_username = re.sub(r'[^a-zA-Z0-9]', '', new_student_name.lower())
+                    
+                new_student_username = st.text_input("Choose Username", 
+                                                    key="new_student_username",
+                                                    value=suggested_username if suggested_username else "",
+                                                    placeholder="Your username for logging in")
+                new_student_password = st.text_input("Choose Password", type="password", key="new_student_password",
+                                                   placeholder="At least 6 characters")
+                confirm_password = st.text_input("Confirm Password", type="password", key="confirm_student_password",
+                                               placeholder="Type your password again")
                 
                 # Optional teacher connection
                 teacher_code = st.text_input("Teacher's Username (Optional)", 
@@ -1421,18 +1435,45 @@ else:
             
             with mgmt_subtabs[0]:  # Create Student
                 st.markdown("### Create New Student Account")
+                student_creation_method = st.radio("Account Creation Method:", 
+                                                  ["Auto-generate credentials", "Custom username/password"])
+                
                 student_name = st.text_input("Student's Full Name")
+                
+                if student_creation_method == "Custom username/password":
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        custom_username = st.text_input("Username", help="This will be the student's login username")
+                    with col2:
+                        custom_password = st.text_input("Password", type="password", help="Choose a password for the student")
                 
                 if st.button("🌱 Create Student Account"):
                     if student_name:
-                        success, message, username, password = create_student_account(current_user, student_name)
-                        if success:
-                            st.success(f"Student account created!")
-                            st.markdown(f"**Username:** `{username}`")
-                            st.markdown(f"**Password:** `{password}`")
-                            st.info("Please share these credentials securely with the student.")
-                        else:
-                            st.error(message)
+                        if student_creation_method == "Auto-generate credentials":
+                            success, message, username, password = create_student_account(current_user, student_name)
+                            if success:
+                                st.success(f"Student account created!")
+                                st.markdown(f"**Username:** `{username}`")
+                                st.markdown(f"**Password:** `{password}`")
+                                st.info("Please share these credentials securely with the student.")
+                            else:
+                                st.error(message)
+                        else:  # Custom credentials
+                            if custom_username and custom_password:
+                                success, message = create_custom_student_account(
+                                    custom_username, custom_password, student_name, current_user
+                                )
+                                if success:
+                                    st.success(f"Student account created!")
+                                    st.markdown(f"**Username:** `{custom_username}`")
+                                    st.markdown(f"**Password:** `{custom_password}`")
+                                    st.info("Please share these credentials securely with the student.")
+                                else:
+                                    st.error(message)
+                            else:
+                                st.warning("Please provide both username and password for custom credentials.")
+                    else:
+                        st.warning("Please provide the student's full name.")
             
             with mgmt_subtabs[1]:  # View Progress
                 teacher_students = user_data.get('students', {})
