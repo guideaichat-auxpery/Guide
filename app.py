@@ -433,7 +433,8 @@ def call_openai_api(messages, system_prompt):
         )
         
         # Log usage
-        log_api_usage(st.session_state.get('current_user', 'anonymous'), response.usage.total_tokens)
+        if response.usage:
+            log_api_usage(st.session_state.get('current_user', 'anonymous'), response.usage.total_tokens)
         
         return response.choices[0].message.content
     except Exception as e:
@@ -968,7 +969,7 @@ def create_portfolio_template(template_type, student_name, custom_params=None):
             "description": "Showcase learning across different subject areas"
         },
         "year_level": {
-            "title": f"{student_name}'s Year {custom_params.get('year', 'X')} Portfolio",
+            "title": f"{student_name}'s Year {(custom_params or {}).get('year', 'X')} Portfolio",
             "sections": [
                 "Term 1 Highlights",
                 "Term 2 Growth", 
@@ -976,10 +977,10 @@ def create_portfolio_template(template_type, student_name, custom_params=None):
                 "Term 4 Achievements",
                 "Year Reflections"
             ],
-            "description": f"Document your learning journey through Year {custom_params.get('year', 'X')}"
+            "description": f"Document your learning journey through Year {(custom_params or {}).get('year', 'X')}"
         },
         "term": {
-            "title": f"{student_name}'s {custom_params.get('term', 'Term')} Portfolio",
+            "title": f"{student_name}'s {(custom_params or {}).get('term', 'Term')} Portfolio",
             "sections": [
                 "Learning Goals",
                 "Projects & Investigations",
@@ -987,7 +988,7 @@ def create_portfolio_template(template_type, student_name, custom_params=None):
                 "Challenges & Growth",
                 "Term Reflection"
             ],
-            "description": f"Capture your {custom_params.get('term', 'term')} learning experience"
+            "description": f"Capture your {(custom_params or {}).get('term', 'term')} learning experience"
         }
     }
     
@@ -1795,6 +1796,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 
                 student_name = st.text_input("Student's Full Name")
                 
+                custom_username = ""
+                custom_password = ""
                 if student_creation_method == "Custom username/password":
                     col1, col2 = st.columns(2)
                     with col1:
