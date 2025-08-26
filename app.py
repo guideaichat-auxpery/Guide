@@ -281,6 +281,12 @@ if "show_login" not in st.session_state:
 if "portfolios" not in st.session_state:
     st.session_state.portfolios = {}
 
+if "saved_rubrics" not in st.session_state:
+    st.session_state.saved_rubrics = []
+
+if "shared_rubrics" not in st.session_state:
+    st.session_state.shared_rubrics = []
+
 # Helper functions
 def get_system_prompt(curriculum):
     """Get system prompt based on selected curriculum with Montessori Cosmic Education and systems thinking approach"""
@@ -951,6 +957,24 @@ def create_shared_lesson(lesson_content, author, curriculum, topic):
     st.session_state.shared_lessons.append(lesson)
     return lesson
 
+def share_rubric_with_team(rubric_content, teacher_username, topic, curriculum):
+    """Share assessment rubric with teaching team"""
+    if 'shared_rubrics' not in st.session_state:
+        st.session_state.shared_rubrics = []
+    
+    shared_rubric = {
+        'id': len(st.session_state.shared_rubrics) + 1,
+        'title': f"Assessment Rubric: {topic}",
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'teacher': teacher_username,
+        'topic': topic,
+        'curriculum': curriculum,
+        'content': rubric_content,
+        'comments': [],
+        'tags': ['assessment', 'rubric']
+    }
+    st.session_state.shared_rubrics.append(shared_rubric)
+
 def add_lesson_comment(lesson_id, commenter, comment):
     """Add collaborative comment to a shared lesson"""
     for lesson in st.session_state.shared_lessons:
@@ -1289,6 +1313,7 @@ else:
             "💬 AI Assistant", 
             "🧠 Learning Tools", 
             "👥 Student Management", 
+            "🤝 Collaboration",
             "📊 All & Advisory", 
             "💌 Pilot Feedback"
         ])
@@ -1405,28 +1430,161 @@ else:
                                 st.markdown(tasks)
             
             with tool_subtabs[4]:  # Assessment Rubrics
-                st.markdown("### Growth-Focused Assessment")
-                col1, col2 = st.columns(2)
+                st.markdown("### Curriculum-Aligned Assessment Rubrics")
+                st.markdown("*Create growth-focused rubrics aligned to curriculum standards*")
                 
-                with col1:
-                    rubric_topic = st.text_input("Topic for assessment:", 
-                                               placeholder="e.g., Scientific inquiry...")
+                # Rubric Configuration
+                rubric_col1, rubric_col2 = st.columns(2)
+                
+                with rubric_col1:
+                    st.markdown("#### Learning Context")
+                    rubric_topic = st.text_input("Topic/Subject Area:", 
+                                               placeholder="e.g., Scientific inquiry, Narrative writing, Mathematical reasoning...")
+                    
                     rubric_year = st.selectbox("Year Level:", 
                                              ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", 
                                               "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"])
+                    
+                    learning_area = st.selectbox("Learning Area:", [
+                        "English", "Mathematics", "Science", "Humanities and Social Sciences", 
+                        "The Arts", "Technologies", "Health and Physical Education", 
+                        "Languages", "Cross-curricular", "Practical Life", "Sensorial", 
+                        "Cultural Studies", "Cosmic Education"
+                    ])
                 
-                with col2:
+                with rubric_col2:
+                    st.markdown("#### Assessment Design")
                     assessment_type = st.selectbox("Assessment Type:",
-                                                 ["Project-based", "Performance task", "Portfolio", 
-                                                  "Presentation", "Investigation", "Creative work"])
+                                                 ["Project-based Assessment", "Performance Task", "Portfolio Assessment", 
+                                                  "Presentation/Exhibition", "Investigation/Research", "Creative Work",
+                                                  "Collaborative Project", "Real-world Application", "Reflection Journal"])
+                    
+                    rubric_focus = st.multiselect("Assessment Focus Areas:", [
+                        "Knowledge & Understanding", "Thinking & Inquiry", "Communication", 
+                        "Application", "Self-Direction", "Collaboration", "Critical Thinking",
+                        "Creative Thinking", "Systems Thinking", "Cosmic Connections"
+                    ], default=["Knowledge & Understanding", "Communication"])
+                    
+                    include_standards = st.checkbox("Include specific curriculum standards", value=True)
+                    include_selfreflection = st.checkbox("Include student self-reflection prompts", value=True)
                 
-                if st.button("📏 Create Growth-Focused Rubric"):
-                    if rubric_topic:
-                        with st.spinner("Creating developmental assessment rubric..."):
-                            rubric = generate_assessment_rubric(rubric_topic, curriculum, assessment_type, rubric_year)
+                # Advanced Options
+                with st.expander("🔧 Advanced Rubric Options"):
+                    col_adv1, col_adv2 = st.columns(2)
+                    
+                    with col_adv1:
+                        performance_levels = st.selectbox("Number of Performance Levels:", 
+                                                        ["3 levels", "4 levels", "5 levels"], index=1)
+                        
+                        rubric_style = st.selectbox("Rubric Style:", [
+                            "Growth-focused (Montessori-inspired)",
+                            "Standards-based (Traditional)",
+                            "Holistic (Whole-child development)",
+                            "Competency-based (Skills focus)"
+                        ])
+                    
+                    with col_adv2:
+                        language_style = st.selectbox("Language Style:", [
+                            "Student-friendly", "Teacher-focused", "Parent-accessible", "Academic"
+                        ])
+                        
+                        additional_features = st.multiselect("Additional Features:", [
+                            "Differentiation notes", "Extension suggestions", 
+                            "Support strategies", "Digital integration", "Peer assessment"
+                        ])
+                
+                # Generate Rubric
+                if st.button("📏 Generate Curriculum-Aligned Rubric", use_container_width=True):
+                    if rubric_topic and rubric_focus:
+                        with st.spinner("Creating comprehensive assessment rubric..."):
+                            # Enhanced prompt for detailed rubric generation
+                            enhanced_prompt = f"""Create a comprehensive, curriculum-aligned assessment rubric for '{rubric_topic}' in {learning_area} for {rubric_year} students using {curriculum} standards.
+
+Assessment Details:
+- Type: {assessment_type}
+- Focus Areas: {', '.join(rubric_focus)}
+- Performance Levels: {performance_levels}
+- Style: {rubric_style}
+- Language: {language_style}
+
+Required Components:
+1. Clear curriculum standards alignment {'(include specific standard codes and descriptors)' if include_standards else ''}
+2. {performance_levels.split()[0]} performance levels with descriptive criteria
+3. Multiple assessment criteria covering: {', '.join(rubric_focus)}
+4. Growth-oriented language that celebrates progress and suggests next steps
+5. Cosmic education connections showing how learning fits into larger systems
+6. Observable behaviors and evidence descriptors
+7. {'Student self-reflection prompts and questions' if include_selfreflection else ''}
+
+Additional Features: {', '.join(additional_features) if additional_features else 'None'}
+
+Design Principles:
+- Honor individual learning paths and developmental stages
+- Use asset-based language (what students CAN do)
+- Include multiple ways to demonstrate understanding
+- Connect learning to real-world applications and community
+- Encourage curiosity, exploration, and deep thinking
+- Support both formative and summative assessment purposes
+- Align with Montessori principles of intrinsic motivation and self-direction
+
+Format as a clear, usable rubric with table structure where appropriate."""
+                            
+                            messages = [{"role": "user", "content": enhanced_prompt}]
+                            system_prompt = get_system_prompt(curriculum)
+                            
+                            rubric = call_openai_api(messages, system_prompt)
                             if rubric:
-                                st.markdown("### Developmental Assessment Rubric")
+                                st.markdown("### 📏 Curriculum-Aligned Assessment Rubric")
+                                st.markdown(f"**Topic:** {rubric_topic} | **Year Level:** {rubric_year} | **Learning Area:** {learning_area}")
+                                st.markdown(f"**Assessment Type:** {assessment_type} | **Curriculum:** {curriculum}")
+                                st.markdown("---")
                                 st.markdown(rubric)
+                                
+                                # Save rubric option
+                                st.markdown("---")
+                                col_save1, col_save2 = st.columns(2)
+                                
+                                with col_save1:
+                                    if st.button("💾 Save Rubric to Library"):
+                                        if 'saved_rubrics' not in st.session_state:
+                                            st.session_state.saved_rubrics = []
+                                        
+                                        rubric_data = {
+                                            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                            'topic': rubric_topic,
+                                            'year_level': rubric_year,
+                                            'learning_area': learning_area,
+                                            'assessment_type': assessment_type,
+                                            'curriculum': curriculum,
+                                            'content': rubric,
+                                            'created_by': current_user
+                                        }
+                                        st.session_state.saved_rubrics.append(rubric_data)
+                                        st.success("Rubric saved to your library!")
+                                
+                                with col_save2:
+                                    if st.button("📤 Share with Team"):
+                                        share_rubric_with_team(rubric, current_user, rubric_topic, curriculum)
+                                        st.success("Rubric shared with your team!")
+                            else:
+                                st.error("Unable to generate rubric. Please try again.")
+                    else:
+                        st.warning("Please provide a topic and select at least one focus area.")
+                
+                # Saved Rubrics Library
+                st.markdown("---")
+                if st.button("📚 View My Rubric Library"):
+                    if 'saved_rubrics' in st.session_state and st.session_state.saved_rubrics:
+                        st.markdown("### My Saved Rubrics")
+                        for idx, rubric in enumerate(reversed(st.session_state.saved_rubrics[-10:])):  # Show last 10
+                            with st.expander(f"📏 {rubric['topic']} - {rubric['year_level']} ({rubric['timestamp']})"):
+                                st.markdown(f"**Learning Area:** {rubric['learning_area']}")
+                                st.markdown(f"**Assessment Type:** {rubric['assessment_type']}")
+                                st.markdown(f"**Curriculum:** {rubric['curriculum']}")
+                                st.markdown("---")
+                                st.markdown(rubric['content'])
+                    else:
+                        st.info("No saved rubrics yet. Create your first rubric above!")
         
         with teacher_tabs[2]:  # Student Management
             st.markdown("### Your Students & Their Journey")
@@ -1526,7 +1684,113 @@ else:
                 else:
                     st.info("No students created yet.")
         
-        with teacher_tabs[3]:  # All & Advisory (CEC Organization)
+        with teacher_tabs[3]:  # Collaboration
+            st.markdown("### Team Collaboration & Resource Sharing")
+            st.markdown("*Share and discover teaching resources with your team*")
+            
+            collab_tabs = st.tabs(["📤 Shared Rubrics", "📝 Shared Lessons", "💬 Team Comments"])
+            
+            with collab_tabs[0]:  # Shared Rubrics
+                st.markdown("#### Assessment Rubrics from Your Team")
+                
+                if st.session_state.shared_rubrics:
+                    for rubric in reversed(st.session_state.shared_rubrics[-10:]):  # Show last 10
+                        with st.expander(f"📏 {rubric['topic']} by {rubric['teacher']} ({rubric['timestamp']})"):
+                            st.markdown(f"**Curriculum:** {rubric['curriculum']}")
+                            st.markdown("---")
+                            st.markdown(rubric['content'])
+                            
+                            # Comment section
+                            st.markdown("**Team Comments:**")
+                            if rubric['comments']:
+                                for comment in rubric['comments']:
+                                    st.markdown(f"*{comment['teacher']}* ({comment['timestamp']}): {comment['content']}")
+                            
+                            # Add comment
+                            new_comment = st.text_input(f"Add comment", key=f"comment_rubric_{rubric['id']}")
+                            if st.button(f"💬 Comment", key=f"btn_comment_rubric_{rubric['id']}"):
+                                if new_comment:
+                                    comment = {
+                                        'teacher': current_user,
+                                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                        'content': new_comment
+                                    }
+                                    rubric['comments'].append(comment)
+                                    st.success("Comment added!")
+                                    st.rerun()
+                else:
+                    st.info("No rubrics have been shared by the team yet. Share your first rubric from the Assessment Rubrics tool!")
+            
+            with collab_tabs[1]:  # Shared Lessons
+                st.markdown("#### Learning Connections from Your Team")
+                
+                if st.session_state.shared_lessons:
+                    for lesson in reversed(st.session_state.shared_lessons[-10:]):  # Show last 10
+                        with st.expander(f"🌱 {lesson['title']} by {lesson['author']} ({lesson['created']})"):
+                            st.markdown(f"**Topic:** {lesson['topic']}")
+                            st.markdown(f"**Curriculum:** {lesson['curriculum']}")
+                            st.markdown("---")
+                            st.markdown(lesson['content'])
+                            
+                            # Comment section
+                            st.markdown("**Team Comments:**")
+                            if lesson['comments']:
+                                for comment in lesson['comments']:
+                                    st.markdown(f"*{comment['teacher']}* ({comment['timestamp']}): {comment['content']}")
+                            
+                            # Add comment
+                            new_comment = st.text_input(f"Add comment", key=f"comment_lesson_{lesson['id']}")
+                            if st.button(f"💬 Comment", key=f"btn_comment_lesson_{lesson['id']}"):
+                                if new_comment:
+                                    comment = {
+                                        'teacher': current_user,
+                                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                        'content': new_comment
+                                    }
+                                    lesson['comments'].append(comment)
+                                    st.success("Comment added!")
+                                    st.rerun()
+                else:
+                    st.info("No lessons have been shared by the team yet. Share your first lesson from Learning Connections!")
+            
+            with collab_tabs[2]:  # Team Comments
+                st.markdown("#### Recent Team Activity")
+                
+                # Combine recent activity from rubrics and lessons
+                all_activity = []
+                
+                # Add rubric activities
+                for rubric in st.session_state.shared_rubrics[-5:]:
+                    all_activity.append({
+                        'type': 'rubric',
+                        'title': f"Rubric: {rubric['topic']}",
+                        'teacher': rubric['teacher'],
+                        'timestamp': rubric['timestamp'],
+                        'comments': len(rubric['comments'])
+                    })
+                
+                # Add lesson activities
+                for lesson in st.session_state.shared_lessons[-5:]:
+                    all_activity.append({
+                        'type': 'lesson',
+                        'title': lesson['title'],
+                        'teacher': lesson['author'],
+                        'timestamp': lesson['created'],
+                        'comments': len(lesson['comments'])
+                    })
+                
+                # Sort by timestamp
+                all_activity.sort(key=lambda x: x['timestamp'], reverse=True)
+                
+                if all_activity:
+                    st.markdown("**Recent Sharing Activity:**")
+                    for activity in all_activity[:10]:
+                        icon = "📏" if activity['type'] == 'rubric' else "🌱"
+                        st.markdown(f"{icon} **{activity['title']}** by {activity['teacher']} ({activity['timestamp']}) - {activity['comments']} comments")
+                else:
+                    st.info("No team activity yet. Start sharing resources to see activity here!")
+        
+        with teacher_tabs[4]:  # All & Advisory (CEC Organization)
             st.markdown("### All & Advisory - CEC Organization")
             
             advisory_tabs = st.tabs(["📊 All Students Overview", "🎯 Advisory Groups", "📈 CEC Analytics"])
@@ -1601,7 +1865,7 @@ else:
                 else:
                     st.info("No students to analyze yet.")
         
-        with teacher_tabs[4]:  # Pilot Feedback
+        with teacher_tabs[5]:  # Pilot Feedback
             st.markdown("### Pilot Phase Feedback")
             st.markdown("*Help us improve Guide by sharing your experience*")
             
