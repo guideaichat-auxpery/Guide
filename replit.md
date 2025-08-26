@@ -105,6 +105,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - Technologies (Design and Digital with thinking frameworks)
   - Indonesian Language (Second Language Learner pathway)
   - Health and Physical Education (health and movement focus areas)
+  - The Arts - Visual Arts (elements/principles, 2D/3D/4D processes, cultural practices, ICIP protocols)
   Includes authentic terminology, achievement standards, content descriptions, glossaries, and visual learning resources
 - **Montessori National Curriculum (2011)**: Official Montessori Australia Foundation curriculum framework integrated throughout the system, providing authentic reference for the three planes of development, Cosmic Education approach, and developmental characteristics
 - **Montessori Curriculum Australia**: Child-centered educational methodology and developmental stages
