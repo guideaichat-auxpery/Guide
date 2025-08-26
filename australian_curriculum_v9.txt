@@ -117,3 +117,225 @@ Civics: Active citizenship, rule of law, constitutional monarchy
 Economics: Opportunity cost, entrepreneurship, resource allocation
 
 This framework ensures authentic curriculum alignment while maintaining flexibility for diverse learning contexts and student needs.
+
+TECHNOLOGIES CURRICULUM V9:
+============================
+
+ABOUT THE LEARNING AREA:
+The Australian Curriculum: Technologies comprises two subjects:
+- Design and Technologies: Students use design thinking and technologies to generate and produce designed solutions
+- Digital Technologies: Students use computational thinking and information systems to define, design and implement digital solutions
+
+RATIONALE:
+Technologies enrich and impact lives globally, playing important roles in transforming, restoring and sustaining societies and environments. Australia needs enterprising individuals who can make discerning decisions about technology development and use, develop solutions to complex challenges, and contribute to sustainable living patterns.
+
+CORE CONCEPTS (Visual Resources Available):
+1. Systems Thinking: Understanding interactions and interconnections that shape system behaviour
+   - Big picture development
+   - Pattern identification
+   - Impact assessment
+   - Structure modelling
+   - Implementation evaluation
+   - Interaction analysis
+
+2. Design Thinking: Problem-solving approach for user-centred solutions
+   - Understand (empathise with users, understand needs)
+   - Ideate (generate ideas, consider alternatives)
+   - Model (test, prototype ideas)
+   - Reflect (analyse, evaluate, iterate solutions)
+
+3. Computational Thinking: Breaking down problems systematically
+   - Decomposition (break problems into parts)
+   - Abstraction (focus on important aspects)
+   - Pattern recognition (analyse data/relationships)
+   - Algorithms (create ordered steps)
+   - Generalisation (extend patterns to new situations)
+   - Models, experiments and simulations
+
+DESIGN AND TECHNOLOGIES:
+
+Structure - Two Strands:
+1. Knowledge and Understanding
+   - Technologies and society
+   - Engineering principles and systems
+   - Food and fibre production
+   - Food specialisations
+   - Materials and technologies specialisations
+
+2. Processes and Production Skills
+   - Investigating and defining
+   - Generating and designing
+   - Producing and implementing
+   - Evaluating
+   - Collaborating and managing
+
+Rationale:
+In an increasingly technological world, we need citizens with knowledge and confidence to analyse and creatively respond to design opportunities and challenges including for a circular economy. Students become creative and responsive designers when considering ethical, legal, aesthetic and functional factors.
+
+Key Focus Areas:
+- Creating quality designed solutions for identified needs
+- Managing projects from conception to realisation
+- Applying design and systems thinking
+- Developing confidence as critical users and producers
+- Understanding roles in design and technologies occupations
+
+Technologies Contexts:
+- Engineering principles and systems (forces, energy, control systems)
+- Food and fibre production (sustainable agriculture, food security)
+- Food specialisations (nutrition, food safety, culinary traditions)
+- Materials and technologies specialisations (properties, selection, sustainability)
+
+DIGITAL TECHNOLOGIES:
+
+Structure - Two Strands:
+1. Knowledge and Understanding
+   - Digital systems (hardware, software, networks)
+   - Data representation (symbols, structures, formats)
+
+2. Processes and Production Skills
+   - Acquiring, managing and analysing data
+   - Investigating and defining
+   - Generating and designing
+   - Producing and implementing
+   - Evaluating
+   - Collaborating and managing
+   - Privacy and security
+
+Rationale:
+In an increasingly digitised and automated world, digital solutions must be purposefully designed to include user empowerment, autonomy and accountability. Students need deep knowledge of information systems to be safe, respectful, creative and discerning decision-makers.
+
+Key Focus Areas:
+- Computational thinking and design processes
+- Creating digital solutions using data
+- User interactions and system impacts
+- Privacy, security and ethical considerations
+- Understanding digital systems and networks
+
+Achievement Standards Progression:
+Foundation: Identify familiar products/systems, follow steps, represent data with objects/pictures
+Years 1-2: Describe purposes, follow basic algorithms, use digital systems for known purposes
+Years 3-4: Explain designed solutions meet needs, design simple algorithms, use digital tools safely
+Years 5-6: Explain how solutions meet needs, design algorithms with branching/iteration, select digital tools
+Years 7-8: Explain innovation impacts, create designed solutions, implement programming solutions, explain data transmission
+Years 9-10: Analyse complex factors, create innovative solutions, develop modular programs, evaluate digital solutions
+
+TECHNOLOGIES GLOSSARY TERMS:
+- Aesthetics: Visual impact judgements influenced by social/emotional factors
+- Algorithm: Precise steps and decisions to solve problems
+- Biomimicry: Nature-inspired design features and functions
+- Computational thinking: Problem-solving approach using decomposition, abstraction, patterns
+- Design criteria: Requirements for determining if solutions meet needs
+- Design process: Investigating, generating, producing, evaluating, collaborating
+- Digital systems: Binary processing systems with hardware, software, networks
+- Functionality: Fitness for purpose meeting intended needs
+- Innovation: Novel ideas responding to change, creating differentiation
+- Iteration: Repetition of steps/instructions in algorithms
+- Life cycle thinking: Strategy identifying improvements to reduce environmental impact
+- Preferred futures: Student-identified preferences informing solution creation
+- Properties: Distinctive qualities helping select suitable materials
+- Sustainability: Economic, environmental, social capacity for future needs
+- Systems: Structure, properties, behaviour within natural/constructed environments
+- User experience: How users interact with and experience designed solutions
+
+INDONESIAN LANGUAGE CURRICULUM V9:
+=================================
+
+ABOUT INDONESIAN:
+Second Language Learner Pathway for students learning Indonesian as additional language.
+Two sequences available: Foundation to Year 10, and Years 7 to 10.
+
+RATIONALE:
+Indonesian is the official language of Indonesia, standardised and spoken throughout the archipelago. Historical connections between First Nations Peoples of northern Australia and Indonesian islands include sharing of art, commerce, cuisine, culture and language. As Australia's largest neighbour in Southeast Asia, commercial, cultural and linguistic ties continue growing.
+
+STRUCTURE - Two Strands:
+1. Communicating Meaning in Indonesian
+   - Interacting in Indonesian (exchanging ideas, experiences, feelings)
+   - Mediating meaning in and between languages (processing, interpreting information)
+   - Creating text in Indonesian (spoken, written, multimodal texts)
+
+2. Understanding Language and Culture
+   - Understanding systems of language (sound, writing, grammatical conventions)
+   - Understanding interrelationship of language and culture (meaning and identity)
+
+Key Features:
+- Uses Romanised script with phonetic pronunciation
+- Enhances language learning strategies understanding
+- Develops appreciation of Indonesian-speaking communities
+- Enriches travel experiences and employment opportunities
+- Promotes understanding of diverse cultures
+
+Achievement Standards Progression:
+Foundation: Use play/imagination to interact, recognise Indonesian/English differences
+Years 1-2: Use Indonesian to interact/share information, locate key information, create texts
+Years 3-4: Exchange information about experiences, convey information using cues, create simple texts
+Years 5-6: Interact using descriptive/expressive language, interpret information, create texts for audiences
+Years 7-8: Interact/collaborate in familiar contexts, respond to information, approximate pronunciation
+Years 9-10: Engage in discussions, analyse information, adapt language for different contexts
+
+HEALTH AND PHYSICAL EDUCATION CURRICULUM V9:
+==========================================
+
+ABOUT THE LEARNING AREA:
+Enables students to develop skills, understanding and willingness to positively influence health and wellbeing of themselves and communities. Essential for young Australians to flourish as healthy, safe, active and informed citizens.
+
+RATIONALE:
+In an increasingly complex, sedentary and rapidly changing world, young people must develop ability to respond to new health issues and evolving physical activity options. Movement is a powerful learning medium through which students acquire personal, social and cognitive skills.
+
+STRUCTURE - Two Strands:
+1. Personal, Social and Community Health
+   - Identities and change
+   - Interacting with others
+   - Making healthy and safe choices
+
+2. Movement and Physical Activity
+   - Moving our bodies
+   - Making active choices
+   - Learning through movement
+
+12 FOCUS AREAS:
+Health Focus Areas:
+- Alcohol and other drugs
+- Food and nutrition
+- Health benefits of physical activity
+- Mental health and wellbeing
+- Relationships and sexuality
+- Safety
+
+Movement Focus Areas:
+- Active play and minor games
+- Challenge and adventure activities
+- Fundamental movement skills
+- Games and sports
+- Lifelong physical activities
+- Rhythmic and expressive activities
+
+Key Considerations:
+- Strengths-based approach and socio-critical perspectives
+- Practical application essential for knowledge/skill development
+- Weekly physical activity minimum as part of curriculum
+- Focus areas provide breadth across Foundation to Year 10
+- Personal, social and cognitive skills development through movement
+- Health literacy and critical evaluation of information
+
+Achievement Standards Progression:
+Foundation: Describe similarities/differences, demonstrate personal/social skills, apply movement skills
+Years 1-2: Describe strategies for health/safety, identify influences, practise movement skills
+Years 3-4: Explain strategies for health/safety, describe influences, apply movement skills in games
+Years 5-6: Analyse factors influencing health/safety, explain benefits, perform movement skills
+Years 7-8: Analyse factors influencing identities/emotions, propose health strategies, evaluate movement
+Years 9-10: Evaluate factors affecting health decisions, analyse movement concepts, create physical activity plans
+
+HEALTH AND PHYSICAL EDUCATION GLOSSARY HIGHLIGHTS:
+- Active play: Structured/unstructured physically active play
+- Consent: Informed and freely given agreement
+- Diversity: Mix of people with different characteristics
+- Empathy: Understanding and sharing others' feelings
+- Fair play: Equity, respect, inclusion and safety in activities
+- Health-enhancing behaviours: Regular practices improving wellbeing
+- Resilient: Ability to deal constructively with change/challenge
+- Respectful relationships: Non-violent, equal, trusting connections
+- Safety: Freedom from danger through risk assessment and safe decisions
+- Wellbeing: Sense of wellness and quality of life capacity
+
+COMPREHENSIVE CURRICULUM INTEGRATION FRAMEWORK:
+This expanded framework now encompasses English, HASS (F-6 and 7-10 specialised subjects), Mathematics, Science, Technologies (Design and Digital), Indonesian, and Health and Physical Education, ensuring authentic curriculum alignment across all major learning areas while maintaining flexibility for diverse learning contexts and student needs.
