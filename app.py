@@ -36,15 +36,37 @@ client = get_openai_client()
 
 # Authentication and User Management System
 def init_user_database():
-    """Initialize user database in session state"""
-    if 'users' not in st.session_state:
+    """Initialize user database with persistent storage"""
+    # Load from file if exists
+    if os.path.exists('users.json'):
+        try:
+            with open('users.json', 'r') as f:
+                data = json.load(f)
+                st.session_state.users = data.get('users', {})
+                st.session_state.usage_logs = data.get('usage_logs', {})
+        except Exception as e:
+            st.session_state.users = {}
+            st.session_state.usage_logs = {}
+    else:
         st.session_state.users = {}
-    if 'usage_logs' not in st.session_state:
         st.session_state.usage_logs = {}
+    
     if 'training_content' not in st.session_state:
         st.session_state.training_content = ""
     if 'feedback_messages' not in st.session_state:
         st.session_state.feedback_messages = []
+
+def save_user_database():
+    """Save user database to persistent storage"""
+    try:
+        data = {
+            'users': st.session_state.users,
+            'usage_logs': st.session_state.usage_logs
+        }
+        with open('users.json', 'w') as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        st.error(f"Error saving user data: {str(e)}")
 
 def hash_password(password):
     """Hash password for security"""
@@ -77,10 +99,11 @@ def create_teacher_account(username, password, email, school=""):
     }
     
     st.session_state.usage_logs[username] = []
+    save_user_database()  # Save to persistent storage
     return True, "Account created successfully"
 
 def create_student_account(teacher_username, student_name):
-    """Create student account linked to teacher"""
+    """Create student account with auto-generated credentials linked to teacher"""
     if teacher_username not in st.session_state.users:
         return False, "Teacher not found", None, None
     
@@ -103,8 +126,37 @@ def create_student_account(teacher_username, student_name):
     # Add student to teacher's student list
     st.session_state.users[teacher_username]['students'][username] = student_name
     st.session_state.usage_logs[username] = []
+    save_user_database()  # Save to persistent storage
     
     return True, "Student account created", username, password
+
+def create_custom_student_account(username, password, student_name, teacher_username=None):
+    """Create student account with custom username and password"""
+    if username in st.session_state.users:
+        return False, "Username already exists"
+    
+    st.session_state.users[username] = {
+        'password': hash_password(password),
+        'role': 'student',
+        'real_name': student_name,
+        'teacher': teacher_username,
+        'created': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'monthly_usage': 0,
+        'monthly_limit': 10000,  # 10k tokens per month for students
+        'daily_requests': 0,
+        'daily_limit': 50,  # 50 requests per day for students
+        'last_request_date': datetime.now().strftime("%Y-%m-%d"),
+        'archived': False
+    }
+    
+    # Add student to teacher's student list if teacher is specified
+    if teacher_username and teacher_username in st.session_state.users:
+        st.session_state.users[teacher_username]['students'][username] = student_name
+    
+    st.session_state.usage_logs[username] = []
+    save_user_database()  # Save to persistent storage
+    
+    return True, "Student account created successfully"
 
 def authenticate_user(username, password):
     """Authenticate user login"""
@@ -1066,26 +1118,81 @@ if not st.session_state.authenticated:
     
     with auth_tabs[2]:  # Student Access
         st.markdown("### Student Learning Portal")
-        st.markdown("*Ask your teacher for your unique login details*")
         
-        col1, col2, col3 = st.columns([1,2,1])
-        with col2:
-            student_username = st.text_input("Student Username", key="student_username")
-            student_password = st.text_input("Student Password", type="password", key="student_password")
+        student_access_tabs = st.tabs(["🔑 Login", "🆕 Create Account"])
+        
+        with student_access_tabs[0]:  # Student Login
+            st.markdown("#### Sign In to Your Learning Space")
+            st.markdown("*Use your existing username and password*")
             
-            if st.button("🌟 Enter My Learning Journey", use_container_width=True):
-                if student_username and student_password:
-                    success, message = authenticate_user(student_username, student_password)
-                    if success:
-                        st.session_state.authenticated = True
-                        st.session_state.current_user = student_username
-                        st.session_state.user_role = 'student'
-                        st.success("Welcome to your learning adventure!")
-                        st.rerun()
+            col1, col2, col3 = st.columns([1,2,1])
+            with col2:
+                student_username = st.text_input("Student Username", key="student_login_username")
+                student_password = st.text_input("Student Password", type="password", key="student_login_password")
+                
+                if st.button("🌟 Enter My Learning Journey", use_container_width=True):
+                    if student_username and student_password:
+                        success, message = authenticate_user(student_username, student_password)
+                        if success:
+                            st.session_state.authenticated = True
+                            st.session_state.current_user = student_username
+                            st.session_state.user_role = 'student'
+                            st.success("Welcome to your learning adventure!")
+                            st.rerun()
+                        else:
+                            st.error(message)
                     else:
-                        st.error(message)
-                else:
-                    st.warning("Please enter your username and password")
+                        st.warning("Please enter your username and password")
+        
+        with student_access_tabs[1]:  # Create Student Account
+            st.markdown("#### Create Your Student Account")
+            st.markdown("*Choose your own username and password*")
+            
+            col1, col2, col3 = st.columns([1,2,1])
+            with col2:
+                new_student_name = st.text_input("Your Name", key="new_student_name")
+                new_student_username = st.text_input("Choose Username", key="new_student_username")
+                new_student_password = st.text_input("Choose Password", type="password", key="new_student_password")
+                confirm_password = st.text_input("Confirm Password", type="password", key="confirm_student_password")
+                
+                # Optional teacher connection
+                teacher_code = st.text_input("Teacher's Username (Optional)", 
+                                           key="teacher_code",
+                                           help="If your teacher gave you their username, enter it here to connect your accounts")
+                
+                if st.button("🌱 Create My Learning Account", use_container_width=True):
+                    if new_student_name and new_student_username and new_student_password:
+                        if new_student_password != confirm_password:
+                            st.error("Passwords don't match. Please try again.")
+                        elif len(new_student_password) < 6:
+                            st.error("Password must be at least 6 characters long.")
+                        else:
+                            # Validate teacher username if provided
+                            teacher_username = None
+                            if teacher_code:
+                                if teacher_code in st.session_state.users:
+                                    if st.session_state.users[teacher_code]['role'] == 'teacher':
+                                        teacher_username = teacher_code
+                                    else:
+                                        st.error("The provided teacher code is not valid.")
+                                        st.stop()
+                                else:
+                                    st.error("Teacher username not found. You can still create an account without connecting to a teacher.")
+                            
+                            success, message = create_custom_student_account(
+                                new_student_username, 
+                                new_student_password, 
+                                new_student_name, 
+                                teacher_username
+                            )
+                            
+                            if success:
+                                st.success("Account created successfully! You can now login above.")
+                                st.info("Remember to save your username and password somewhere safe!")
+                            else:
+                                st.error(message)
+                    else:
+                        st.warning("Please fill in your name, username, and password")
 
 else:
     # Authenticated user interface

@@ -1,54 +1,5 @@
-Change API key from Chat 4o to 5o mini
-to add: CEC organisation into 'All' and 'Advisory'
-Controlling Usage
-Here’s how you stop runaway costs:
-⚖️ App-Level Controls
-Word limits per request (e.g. 2,000 tokens per request, Total per teacher/month: 100,000 tokens).
-Caps on requests per user/day (e.g. 200 calls per teacher/month).
-When students use it, you’ll want:
-Word caps per response (e.g. max_tokens=300) so they don’t just generate full essays.
+Allow for custom student username and password
 
-Guided prompting (e.g. “Ask the AI for feedback on your draft” instead of “Write my essay”).
+Newly generated accounts aren't being saved so each time the page refreshes I have to regenerate a new account.
 
-Logging (you save queries + outputs so teachers can review if needed).
-
-Filtered roles — give the AI a system instruction like:
-
-{"role": "system", "content": "You are a study assistant for Year 7–9 students. Help them think, explain, and reflect. Never give full essay answers."}
-
-4. Deployment Strategy
-
-Pilot Phase: Maybe let just 1–2 student groups (10–20 kids) try it alongside the 6–10 teachers.
-
-Role separation: Use different API “wrappers” so teacher queries and student queries are billed separately.
-
-Interface:
-
-Teachers get a “Planning Assistant” style box.
-
-Students get a “Study Buddy” box with guardrails.
-📊 Monitoring - 'Guide' Admin access only - not teachers or students:
-Use OpenAI usage dashboards (shows tokens + costs in real time).
-Add logging inside your app (who used it, how much, when).
-Set daily/weekly budget alerts sent to guideaichat@gmail.com
-Fail-Safes
-If usage spikes, the app should politely refuse further requests until the next billing cycle (with a message like:
-“you’ve reached this month’s quota. Please try again next month.” - for each account holder.
-🔹 3. Smart Optimizations
-Caching: Keep the Montessori philosophy, ACARA curriculum docs, or school policy as cached context (so you don’t pay full input price every time).
-Shorter outputs: Instead of “Write the whole 2,000-word unit plan,” break it into steps (“Give me the outline,” “Now expand section 1”).
-Batching: Encourage teachers to do bulk work in fewer requests instead of many small ones.
-
-Teacher login. Teacher's have a dashboard to oversee their use options/prompts and also their class.  students gain access to an account through a teacher made unique username and password that is then given to the student, but not using student email: Teachers, can edit their content, delete their account, change password or username, or archive their account all from the teacher dashboard. Each Teacher account is personalised to them and the same for the student accounts. 
-
-Creating a clear differentiation between the teacher's account abilities and student's account abilities.
-
-Create an initial pop up set of instructions and definitions for each teacher ability: Learning connections, Learning thread & Patterns, Family & Community Connection, Learning Invitations, 
-
-Include an initial planning/scaffolding option for students to create a planner for their work: poster, essay, diorama, video, music, role-play, model, etc. 
-
-The interface is clunky. Make it more intuitive, calm yet aspirational, Montessori feel, and clear distinction between Teacher and Student accounts. 
-
-Allow me (the developer) to upload content/training data to the app so that the GPT API references from the hard data provided, ensuring a reduction of hallucinations in the teacher output. Provide a solution to reduce hallucinations in student accounts - eg: no original content creation, only capacity for ideation, scaffolding, and prompting further engagement. 
-
-In the teacher section include a space where teachers can provide feedback during the pilot phase. A box that they can write in and push send and it will be directly sent to guideaichat@gmail.com 
+Once I input a username, it sends me to a new tab. this needs a fix
