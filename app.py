@@ -230,19 +230,26 @@ def send_feedback_email(teacher_name, feedback_content):
 def save_rubric_to_user_data(username, rubric_data):
     """Save rubric to user data file for persistence"""
     try:
+        # Read existing users data
         with open('users.json', 'r') as f:
             users = json.load(f)
         
         if username in users:
             if 'saved_rubrics' not in users[username]:
                 users[username]['saved_rubrics'] = []
+            
+            # Add the rubric
             users[username]['saved_rubrics'].append(rubric_data)
             
+            # Write back to file
             with open('users.json', 'w') as f:
                 json.dump(users, f, indent=2)
+            
             return True
+        else:
+            return False
     except Exception as e:
-        st.error(f"Error saving rubric: {e}")
+        print(f"Error saving rubric: {e}")  # Log for developer
         return False
 
 def load_user_rubrics(username):
@@ -1287,14 +1294,15 @@ else:
             st.markdown(f'<p class="cosmic-subtitle">Hello, {student_name}! 🌱</p>', unsafe_allow_html=True)
     
     with header_col2:
-        # Usage tracking display
+        # Hidden usage tracking (still logs for developer)
         daily_used = user_data.get('daily_requests', 0)
         daily_limit = user_data.get('daily_limit', 200)
         monthly_used = user_data.get('monthly_usage', 0)
         monthly_limit = user_data.get('monthly_limit', 100000)
         
-        st.metric("Today's Requests", f"{daily_used}/{daily_limit}")
-        st.metric("Monthly Usage", f"{monthly_used:,}/{monthly_limit:,} tokens")
+        # Usage is tracked but not displayed to users
+        # Log usage data for developer tracking
+        log_user_usage(current_user, 0)  # Placeholder call to maintain logging
     
     with header_col3:
         if st.button("🚪 Logout", use_container_width=True):
@@ -1508,9 +1516,32 @@ else:
                     rubric_topic = st.text_input("Topic/Subject Area:", 
                                                placeholder="e.g., Scientific inquiry, Narrative writing, Mathematical reasoning...")
                     
-                    rubric_year = st.selectbox("Year Level:", 
-                                             ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", 
-                                              "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"])
+                    # Year level selection with Montessori cycles
+                    year_selection_type = st.radio("Year Level Selection:", ["Single Year", "Montessori Cycle", "Multi-Year Range"])
+                    
+                    if year_selection_type == "Single Year":
+                        rubric_year = st.selectbox("Year Level:", [
+                            "Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5",
+                            "Year 6", "Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12"
+                        ])
+                    elif year_selection_type == "Montessori Cycle":
+                        rubric_year = st.selectbox("Montessori Cycle:", [
+                            "Cycle 1 (3-6 years)", "Cycle 2 (6-9 years)", 
+                            "Cycle 3 (9-12 years)", "Cycle 4 (12-15 years)"
+                        ])
+                    else:  # Multi-Year Range
+                        col_start, col_end = st.columns(2)
+                        with col_start:
+                            start_year = st.selectbox("From Year:", [
+                                "Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5",
+                                "Year 6", "Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12"
+                            ])
+                        with col_end:
+                            end_year = st.selectbox("To Year:", [
+                                "Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5",
+                                "Year 6", "Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12"
+                            ])
+                        rubric_year = f"{start_year} to {end_year}"
                     
                     learning_area = st.selectbox("Learning Area:", [
                         "English", "Mathematics", "Science", "Humanities and Social Sciences", 
@@ -1521,6 +1552,14 @@ else:
                 
                 with rubric_col2:
                     st.markdown("#### Assessment Design")
+                    
+                    # Curriculum reference selection
+                    curriculum_reference = st.selectbox("Curriculum Reference:", [
+                        "Australian Curriculum V9", 
+                        "Montessori Curriculum Australia", 
+                        "Blended (Australian + Montessori)"
+                    ])
+                    
                     assessment_type = st.selectbox("Assessment Type:",
                                                  ["Project-based Assessment", "Performance Task", "Portfolio Assessment", 
                                                   "Presentation/Exhibition", "Investigation/Research", "Creative Work",
@@ -1565,7 +1604,7 @@ else:
                     if rubric_topic and rubric_focus:
                         with st.spinner("Creating comprehensive assessment rubric..."):
                             # Enhanced prompt for detailed rubric generation
-                            enhanced_prompt = f"""Create a comprehensive, curriculum-aligned assessment rubric for '{rubric_topic}' in {learning_area} for {rubric_year} students using {curriculum} standards.
+                            enhanced_prompt = f"""Create a comprehensive, curriculum-aligned assessment rubric for '{rubric_topic}' in {learning_area} for {rubric_year} students using {curriculum_reference} standards.
 
 Assessment Details:
 - Type: {assessment_type}
@@ -1597,13 +1636,13 @@ Design Principles:
 Format as a clear, usable rubric with table structure where appropriate."""
                             
                             messages = [{"role": "user", "content": enhanced_prompt}]
-                            system_prompt = get_system_prompt(curriculum)
+                            system_prompt = get_system_prompt(curriculum_reference)
                             
                             rubric = call_openai_api(messages, system_prompt)
                             if rubric:
                                 st.markdown("### 📏 Curriculum-Aligned Assessment Rubric")
                                 st.markdown(f"**Topic:** {rubric_topic} | **Year Level:** {rubric_year} | **Learning Area:** {learning_area}")
-                                st.markdown(f"**Assessment Type:** {assessment_type} | **Curriculum:** {curriculum}")
+                                st.markdown(f"**Assessment Type:** {assessment_type} | **Curriculum:** {curriculum_reference}")
                                 st.markdown("---")
                                 st.markdown(rubric)
                                 
@@ -1612,34 +1651,36 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 col_save1, col_save2 = st.columns(2)
                                 
                                 with col_save1:
-                                    if st.button("💾 Save Rubric to Library"):
+                                    if st.button("💾 Save Rubric to Library", key="save_rubric_btn"):
                                         # Save to both session state and user data file
                                         if 'saved_rubrics' not in st.session_state:
                                             st.session_state.saved_rubrics = []
                                         
                                         rubric_data = {
+                                            'id': f"rubric_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                                             'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
                                             'topic': rubric_topic,
                                             'year_level': rubric_year,
                                             'learning_area': learning_area,
                                             'assessment_type': assessment_type,
-                                            'curriculum': curriculum,
+                                            'curriculum': curriculum_reference,
                                             'content': rubric,
                                             'created_by': current_user
                                         }
                                         
-                                        # Add to session state
-                                        st.session_state.saved_rubrics.append(rubric_data)
-                                        
                                         # Save to user data file for persistence
-                                        save_rubric_to_user_data(current_user, rubric_data)
+                                        success = save_rubric_to_user_data(current_user, rubric_data)
                                         
-                                        st.success("Rubric saved to your library!")
-                                        st.rerun()
+                                        if success:
+                                            # Add to session state
+                                            st.session_state.saved_rubrics.append(rubric_data)
+                                            st.success("✅ Rubric saved to your library!")
+                                        else:
+                                            st.error("❌ Failed to save rubric. Please try again.")
                                 
                                 with col_save2:
-                                    if st.button("📤 Share with Team"):
-                                        share_rubric_with_team(rubric, current_user, rubric_topic, curriculum)
+                                    if st.button("📤 Share with Team", key="share_rubric_btn"):
+                                        share_rubric_with_team(rubric, current_user, rubric_topic, curriculum_reference)
                                         st.success("Rubric shared with your team!")
                             else:
                                 st.error("Unable to generate rubric. Please try again.")

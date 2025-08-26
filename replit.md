@@ -41,12 +41,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Learning Invitations**: Student activities fostering independence, collaboration, real-world connection, and cosmic reflection
 - **Student Work Analysis**: AI-powered feedback on student work that celebrates discoveries and suggests meaningful extensions
 - **Skill Development**: Personalized learning pathways based on student interests and demonstrated understanding
-- **Comprehensive Assessment Rubrics**: Advanced curriculum-aligned rubric generator with detailed configuration options:
+- **Enhanced Assessment Rubrics System**: Advanced curriculum-aligned rubric generator with comprehensive configuration:
+  - **Flexible Year Selection**: Single year, Montessori 3-year cycles (Cycle 1: 3-6, Cycle 2: 6-9, Cycle 3: 9-12, Cycle 4: 12-15), and multi-year ranges
+  - **Multi-Curriculum Support**: Australian Curriculum V9, Montessori Curriculum Australia, or blended approach
   - Learning area selection (8 Australian Curriculum areas + Montessori equivalents)
-  - Assessment type options (formative, summative, portfolio, project-based, etc.)
-  - Focus area customization (knowledge, skills, understanding, application)
-  - Advanced options (performance levels, rubric style, language complexity)
-  - Persistent rubric library with file-based storage
+  - Assessment type options (project-based, performance tasks, portfolio, etc.)
+  - Focus area customization (knowledge, skills, understanding, application, cosmic connections)
+  - Advanced options (3-5 performance levels, growth-focused/standards-based styles, language complexity)
+  - Persistent rubric library with robust file-based storage and error handling
   - Team collaboration features for sharing rubrics with commenting system
 - **Progress Tracking**: Holistic student progress monitoring with learning journey reports that honor individual development
 - **Cosmic Education Competencies (CEC)**: Competency-based tracking system inspired by International Big Picture Learning with 6 core competencies adapted for cosmic education
