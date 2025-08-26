@@ -241,13 +241,26 @@ def save_rubric_to_user_data(username, rubric_data):
             # Add the rubric
             users[username]['saved_rubrics'].append(rubric_data)
             
-            # Write back to file
+            # Write back to file with error checking
             with open('users.json', 'w') as f:
                 json.dump(users, f, indent=2)
             
-            return True
-        else:
+            # Verify the save worked by reading it back
+            with open('users.json', 'r') as f:
+                verify_users = json.load(f)
+                if username in verify_users and 'saved_rubrics' in verify_users[username]:
+                    return True
+            
             return False
+        else:
+            print(f"Username {username} not found in users database")
+            return False
+    except FileNotFoundError:
+        print("users.json file not found")
+        return False
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {e}")
+        return False
     except Exception as e:
         print(f"Error saving rubric: {e}")  # Log for developer
         return False
@@ -328,9 +341,9 @@ if "shared_rubrics" not in st.session_state:
 # Helper functions
 def get_system_prompt(curriculum):
     """Get system prompt based on selected curriculum with Montessori Cosmic Education and systems thinking approach"""
-    base_prompt = """You are an AI curriculum guide inspired by Montessori's Cosmic Education and grounded in systems thinking. Your responses are warm, humble, and practical, avoiding jargon-heavy academic language. 
+    base_prompt = """You are an AI curriculum guide inspired by Montessori's Cosmic Education and grounded in systems thinking. Your responses are warm, humble, and practical, avoiding jargon-heavy academic language. Use British/Australian English spelling and terminology throughout.
 
-You honor the adolescent developmental plane: curiosity, belonging, purpose, and independence. You emphasize interconnections across disciplines rather than siloed subjects, drawing attention to big ideas and patterns (cycles, cause-and-effect, networks) rather than isolated facts. 
+You honour the adolescent developmental plane: curiosity, belonging, purpose, and independence. You emphasise interconnections across disciplines rather than siloed subjects, drawing attention to big ideas and patterns (cycles, cause-and-effect, networks) rather than isolated facts. 
 
 You respect Montessori principles of freedom within responsibility, hands-on experience, and student agency. You help teachers, students, and parents understand not only what to learn, but why it matters in the bigger picture of life and the world."""
     
@@ -1545,7 +1558,7 @@ else:
                     learning_area = st.selectbox("Learning Area:", [
                         "English", "Mathematics", "Science", "Humanities and Social Sciences", 
                         "The Arts", "Technologies", "Health and Physical Education", 
-                        "Languages", "Cross-curricular", "Practical Life", "Sensorial", 
+                        "Languages", "Cross-curricular Studies", "Practical Life", "Sensorial", 
                         "Cultural Studies", "Cosmic Education"
                     ])
                 
@@ -1624,7 +1637,7 @@ Required Components:
 Additional Features: {', '.join(additional_features) if additional_features else 'None'}
 
 Design Principles:
-- Honor individual learning paths and developmental stages
+- Honour individual learning paths and developmental stages
 - Use asset-based language (what students CAN do)
 - Include multiple ways to demonstrate understanding
 - Connect learning to real-world applications and community
@@ -1645,12 +1658,23 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 st.markdown("---")
                                 st.markdown(rubric)
                                 
+                                # Store generated rubric in session state for saving
+                                st.session_state.current_rubric = {
+                                    'topic': rubric_topic,
+                                    'year_level': rubric_year,
+                                    'learning_area': learning_area,
+                                    'assessment_type': assessment_type,
+                                    'curriculum': curriculum_reference,
+                                    'content': rubric
+                                }
+                                
                                 # Save rubric option
                                 st.markdown("---")
                                 col_save1, col_save2 = st.columns(2)
                                 
                                 with col_save1:
-                                    if st.button("💾 Save Rubric to Library", key="save_rubric_btn"):
+                                    st.markdown("**Save for Later Use:**")
+                                    if st.button("💾 Save Rubric to Library", key=f"save_{rubric_topic}_{datetime.now().strftime('%H%M%S')}"):
                                         # Save to both session state and user data file
                                         if 'saved_rubrics' not in st.session_state:
                                             st.session_state.saved_rubrics = []
@@ -1674,11 +1698,14 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                             # Add to session state
                                             st.session_state.saved_rubrics.append(rubric_data)
                                             st.success("✅ Rubric saved to your library!")
+                                            # Force reload of library data
+                                            st.session_state.rubrics_loaded = False
                                         else:
-                                            st.error("❌ Failed to save rubric. Please try again.")
+                                            st.error("❌ Failed to save rubric. Check console for details.")
                                 
                                 with col_save2:
-                                    if st.button("📤 Share with Team", key="share_rubric_btn"):
+                                    st.markdown("**Share with Colleagues:**")
+                                    if st.button("📤 Share with Team", key=f"share_{rubric_topic}_{datetime.now().strftime('%H%M%S')}"):
                                         share_rubric_with_team(rubric, current_user, rubric_topic, curriculum_reference)
                                         st.success("Rubric shared with your team!")
                             else:
