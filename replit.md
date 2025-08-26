@@ -34,13 +34,20 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 ## Core Features Architecture
 - **Dual Interface**: Separate teacher and student-facing modes with appropriate tools for each audience
 - **Cosmic Curriculum Integration**: Responses rooted in Montessori's Cosmic Education philosophy with systems thinking approach
+- **Curriculum Document Upload**: File upload system supporting .txt, .csv, .pdf, .docx files for enhanced AI responses with custom curriculum content
 - **Learning Connections**: AI-generated lesson ideas that link topics to larger systems (historical, ecological, social, economic)
 - **Learning Threads & Patterns**: Interconnected topic mapping showing relationships rather than linear sequences
 - **Family & Community Connection**: Parent communication highlighting whole-child development and cosmic perspective
 - **Learning Invitations**: Student activities fostering independence, collaboration, real-world connection, and cosmic reflection
 - **Student Work Analysis**: AI-powered feedback on student work that celebrates discoveries and suggests meaningful extensions
 - **Skill Development**: Personalized learning pathways based on student interests and demonstrated understanding
-- **Assessment Rubrics**: Curriculum-aligned rubric generator with Montessori developmental approach and growth-focused language
+- **Comprehensive Assessment Rubrics**: Advanced curriculum-aligned rubric generator with detailed configuration options:
+  - Learning area selection (8 Australian Curriculum areas + Montessori equivalents)
+  - Assessment type options (formative, summative, portfolio, project-based, etc.)
+  - Focus area customization (knowledge, skills, understanding, application)
+  - Advanced options (performance levels, rubric style, language complexity)
+  - Persistent rubric library with file-based storage
+  - Team collaboration features for sharing rubrics with commenting system
 - **Progress Tracking**: Holistic student progress monitoring with learning journey reports that honor individual development
 - **Cosmic Education Competencies (CEC)**: Competency-based tracking system inspired by International Big Picture Learning with 6 core competencies adapted for cosmic education
 - **Real-World Learning Portfolio**: Track internships, exhibitions, community projects, and authentic learning experiences
@@ -54,7 +61,11 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Portfolio Templates**: Pre-designed structures including blank canvas for custom layouts, themed organization by big ideas, subject-based learning areas, yearly tracking, and term-specific focus
 - **Entry Annotation System**: Students can annotate their portfolio entries with learning reflections and growth observations over time
 - **Portfolio Reflection Tools**: Built-in reflection prompts and tools for students to document their learning journey and identify patterns in their growth
-- **Collaborative Planning**: Team lesson sharing with commenting system for collaborative curriculum development
+- **Team Collaboration Hub**: Comprehensive collaboration system featuring:
+  - Shared rubrics library with team commenting
+  - Shared lesson plans and learning connections
+  - Team activity feed showing recent sharing and collaboration
+  - Resource discovery across teaching teams
 
 # External Dependencies
 

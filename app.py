@@ -227,6 +227,37 @@ def send_feedback_email(teacher_name, feedback_content):
     except Exception as e:
         return False, f"Error sending feedback: {str(e)}"
 
+def save_rubric_to_user_data(username, rubric_data):
+    """Save rubric to user data file for persistence"""
+    try:
+        with open('users.json', 'r') as f:
+            users = json.load(f)
+        
+        if username in users:
+            if 'saved_rubrics' not in users[username]:
+                users[username]['saved_rubrics'] = []
+            users[username]['saved_rubrics'].append(rubric_data)
+            
+            with open('users.json', 'w') as f:
+                json.dump(users, f, indent=2)
+            return True
+    except Exception as e:
+        st.error(f"Error saving rubric: {e}")
+        return False
+
+def load_user_rubrics(username):
+    """Load user's saved rubrics from user data file"""
+    try:
+        with open('users.json', 'r') as f:
+            users = json.load(f)
+        
+        if username in users and 'saved_rubrics' in users[username]:
+            return users[username]['saved_rubrics']
+        return []
+    except Exception as e:
+        st.error(f"Error loading rubrics: {e}")
+        return []
+
 def upload_training_content(content, admin_password):
     """Upload training content (admin only)"""
     # Simple admin check - in production this would be more secure
@@ -296,10 +327,15 @@ You honor the adolescent developmental plane: curiosity, belonging, purpose, and
 
 You respect Montessori principles of freedom within responsibility, hands-on experience, and student agency. You help teachers, students, and parents understand not only what to learn, but why it matters in the bigger picture of life and the world."""
     
+    # Add uploaded curriculum content if available
+    uploaded_content = ""
+    if hasattr(st.session_state, 'uploaded_content') and st.session_state.uploaded_content:
+        uploaded_content = f"\n\nAdditional curriculum documents and context:\n{st.session_state.uploaded_content[:2000]}..."
+    
     if curriculum == "Australian Curriculum V9":
-        return f"{base_prompt}\n\nYou integrate the Australian Curriculum V9 framework with Cosmic Education principles, showing how learning areas, general capabilities, and cross-curriculum priorities connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience."
+        return f"{base_prompt}\n\nYou integrate the Australian Curriculum V9 framework with Cosmic Education principles, showing how learning areas, general capabilities, and cross-curriculum priorities connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience.{uploaded_content}"
     else:
-        return f"{base_prompt}\n\nYou work within the Montessori Curriculum Australia framework, emphasizing child-led learning, prepared environments, and developmental stages while connecting all learning to the 'universe story' - showing how each topic fits into the grand narrative of cosmic evolution, human civilization, and our interconnected world."
+        return f"{base_prompt}\n\nYou work within the Montessori Curriculum Australia framework, emphasizing child-led learning, prepared environments, and developmental stages while connecting all learning to the 'universe story' - showing how each topic fits into the grand narrative of cosmic evolution, human civilization, and our interconnected world.{uploaded_content}"
 
 def call_openai_api(messages, system_prompt):
     """Call OpenAI API with error handling"""
@@ -1321,13 +1357,44 @@ else:
         with teacher_tabs[0]:  # AI Assistant
             st.markdown("### Your AI Teaching Companion")
             
-            # Curriculum selector
-            curriculum = st.selectbox(
-                "📚 Curriculum Framework",
-                ["Australian Curriculum V9", "Montessori Curriculum Australia"],
-                key="teacher_curriculum_selector"
-            )
-            st.session_state.curriculum = curriculum
+            # Curriculum selector and document upload
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                curriculum = st.selectbox(
+                    "📚 Curriculum Framework",
+                    ["Australian Curriculum V9", "Montessori Curriculum Australia"],
+                    key="teacher_curriculum_selector"
+                )
+                st.session_state.curriculum = curriculum
+            
+            with col2:
+                uploaded_file = st.file_uploader(
+                    "📄 Upload Curriculum Documents",
+                    type=['txt', 'csv', 'pdf', 'docx'],
+                    help="Upload curriculum documents, unit plans, or topic notes to enhance AI responses"
+                )
+                
+                if uploaded_file is not None:
+                    try:
+                        if uploaded_file.type == "text/plain":
+                            content = str(uploaded_file.read(), "utf-8")
+                            st.session_state.uploaded_content = content
+                            st.success(f"✓ Loaded {uploaded_file.name}")
+                        elif uploaded_file.type == "text/csv":
+                            import io
+                            content = str(uploaded_file.read(), "utf-8")
+                            st.session_state.uploaded_content = content
+                            st.success(f"✓ Loaded {uploaded_file.name}")
+                        else:
+                            st.info(f"File {uploaded_file.name} uploaded. PDF/Word support coming soon!")
+                    except Exception as e:
+                        st.error(f"Error reading file: {e}")
+            
+            # Show uploaded content info
+            if hasattr(st.session_state, 'uploaded_content') and st.session_state.uploaded_content:
+                with st.expander("📄 Uploaded Content Preview"):
+                    st.text_area("Content", st.session_state.uploaded_content[:500] + "..." if len(st.session_state.uploaded_content) > 500 else st.session_state.uploaded_content, height=100, disabled=True)
             
             # Chat interface
             for message in st.session_state.messages:
@@ -1546,6 +1613,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 
                                 with col_save1:
                                     if st.button("💾 Save Rubric to Library"):
+                                        # Save to both session state and user data file
                                         if 'saved_rubrics' not in st.session_state:
                                             st.session_state.saved_rubrics = []
                                         
@@ -1559,8 +1627,15 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                             'content': rubric,
                                             'created_by': current_user
                                         }
+                                        
+                                        # Add to session state
                                         st.session_state.saved_rubrics.append(rubric_data)
+                                        
+                                        # Save to user data file for persistence
+                                        save_rubric_to_user_data(current_user, rubric_data)
+                                        
                                         st.success("Rubric saved to your library!")
+                                        st.rerun()
                                 
                                 with col_save2:
                                     if st.button("📤 Share with Team"):
@@ -1573,10 +1648,21 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 
                 # Saved Rubrics Library
                 st.markdown("---")
+                
+                # Load rubrics from file if not in session state
+                if 'rubrics_loaded' not in st.session_state:
+                    user_rubrics = load_user_rubrics(current_user)
+                    st.session_state.saved_rubrics = user_rubrics
+                    st.session_state.rubrics_loaded = True
+                
                 if st.button("📚 View My Rubric Library"):
-                    if 'saved_rubrics' in st.session_state and st.session_state.saved_rubrics:
+                    # Reload from file to get latest
+                    user_rubrics = load_user_rubrics(current_user)
+                    st.session_state.saved_rubrics = user_rubrics
+                    
+                    if user_rubrics:
                         st.markdown("### My Saved Rubrics")
-                        for idx, rubric in enumerate(reversed(st.session_state.saved_rubrics[-10:])):  # Show last 10
+                        for idx, rubric in enumerate(reversed(user_rubrics[-10:])):  # Show last 10
                             with st.expander(f"📏 {rubric['topic']} - {rubric['year_level']} ({rubric['timestamp']})"):
                                 st.markdown(f"**Learning Area:** {rubric['learning_area']}")
                                 st.markdown(f"**Assessment Type:** {rubric['assessment_type']}")
