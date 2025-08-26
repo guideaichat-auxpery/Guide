@@ -1301,8 +1301,7 @@ else:
         monthly_limit = user_data.get('monthly_limit', 100000)
         
         # Usage is tracked but not displayed to users
-        # Log usage data for developer tracking
-        log_user_usage(current_user, 0)  # Placeholder call to maintain logging
+        # Usage data is still logged in the background for developer monitoring
     
     with header_col3:
         if st.button("🚪 Logout", use_container_width=True):

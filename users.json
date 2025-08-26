@@ -7,7 +7,8 @@
       "school": "HMS",
       "created": "2025-08-26 03:07",
       "students": {
-        "7o4t2rtw": "Bob Test"
+        "7o4t2rtw": "Bob Test",
+        "Ben Test": "Ben Test"
       },
       "monthly_usage": 0,
       "monthly_limit": 100000,
@@ -28,10 +29,24 @@
       "daily_limit": 50,
       "last_request_date": "2025-08-26",
       "archived": false
+    },
+    "Ben Test": {
+      "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+      "role": "student",
+      "real_name": "Ben Test",
+      "teacher": "Ben Noble",
+      "created": "2025-08-26 12:15",
+      "monthly_usage": 0,
+      "monthly_limit": 10000,
+      "daily_requests": 0,
+      "daily_limit": 50,
+      "last_request_date": "2025-08-26",
+      "archived": false
     }
   },
   "usage_logs": {
     "Ben Noble": [],
-    "7o4t2rtw": []
+    "7o4t2rtw": [],
+    "Ben Test": []
   }
 }
