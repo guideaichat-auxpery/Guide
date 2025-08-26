@@ -227,6 +227,14 @@ def send_feedback_email(teacher_name, feedback_content):
     except Exception as e:
         return False, f"Error sending feedback: {str(e)}"
 
+def load_montessori_curriculum():
+    """Load Montessori National Curriculum content"""
+    try:
+        with open('montessori_national_curriculum.txt', 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
+
 def save_rubric_to_user_data(username, rubric_data):
     """Save rubric to user data file for persistence"""
     try:
@@ -352,10 +360,33 @@ You respect Montessori principles of freedom within responsibility, hands-on exp
     if hasattr(st.session_state, 'uploaded_content') and st.session_state.uploaded_content:
         uploaded_content = f"\n\nAdditional curriculum documents and context:\n{st.session_state.uploaded_content[:2000]}..."
     
+    # Load Montessori National Curriculum content
+    montessori_content = load_montessori_curriculum()
+    if montessori_content:
+        uploaded_content += f"\n\nMontessori National Curriculum Reference:\n{montessori_content[:1500]}..."
+    
+    # Include Montessori National Curriculum reference
+    montessori_reference = """
+
+MONTESSORI NATIONAL CURRICULUM INTEGRATION:
+You reference the official Montessori National Curriculum (2011) which organises learning by three planes of development:
+- First Plane (Birth-6): Absorbent mind, sensory exploration, practical life skills
+- Second Plane (6-12): Reasoning mind, Cosmic Education approach, Great Stories foundation  
+- Third Plane (12-18): Social consciousness, real-world learning, personal development
+
+Key Montessori principles to incorporate:
+- Human tendencies: exploration, communication, work, repetition, self-perfection
+- Prepared environment with order, beauty, mixed ages, freedom within limits
+- Cosmic Education showing universe story and interconnections
+- Curriculum areas: Practical Life, Sensorial, Language, Mathematics, Cultural Studies
+- Observation-based assessment focusing on individual growth"""
+
     if curriculum == "Australian Curriculum V9":
         return f"{base_prompt}\n\nYou integrate the Australian Curriculum V9 framework with Cosmic Education principles, showing how learning areas, general capabilities, and cross-curriculum priorities connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience.{uploaded_content}"
-    else:
-        return f"{base_prompt}\n\nYou work within the Montessori Curriculum Australia framework, emphasizing child-led learning, prepared environments, and developmental stages while connecting all learning to the 'universe story' - showing how each topic fits into the grand narrative of cosmic evolution, human civilization, and our interconnected world.{uploaded_content}"
+    elif curriculum == "Montessori Curriculum Australia" or "Montessori" in curriculum:
+        return f"{base_prompt}\n\nYou work within the Montessori National Curriculum (2011) framework, emphasising the three planes of development, prepared environments, and developmental stages. You connect all learning to the 'universe story' through Cosmic Education - showing how each topic fits into the grand narrative of cosmic evolution, human civilisation, and our interconnected world.{montessori_reference}{uploaded_content}"
+    else:  # Blended approach
+        return f"{base_prompt}\n\nYou blend Australian Curriculum V9 standards with Montessori National Curriculum principles, creating connections between formal learning outcomes and developmental appropriateness. You honour both structured learning goals and child-led discovery, showing how curriculum requirements can be met through Montessori's cosmic approach to education.{montessori_reference}{uploaded_content}"
 
 def call_openai_api(messages, system_prompt):
     """Call OpenAI API with error handling"""
