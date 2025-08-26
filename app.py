@@ -234,7 +234,7 @@ def log_api_usage(username, tokens_used):
     log_entry = {
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'tokens': tokens_used,
-        'model': 'gpt-5'
+        'model': 'gpt-4o-mini'
     }
     
     if username not in st.session_state.usage_logs:
@@ -505,9 +505,7 @@ def call_openai_api(messages, system_prompt):
         max_tokens = 300 if st.session_state.get('user_role') == 'student' else 2000
         
         response = client.chat.completions.create(
-            # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-            # do not change this unless explicitly requested by the user
-            model="gpt-5",
+            model="gpt-4o-mini",
             messages=full_messages,
             temperature=0.7,
             max_tokens=max_tokens
@@ -2512,7 +2510,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666; font-size: 0.8em;'>
-        Guide - Cosmic Curriculum Companion | Powered by OpenAI GPT-5<br>
+        Guide - Cosmic Curriculum Companion | Powered by OpenAI GPT-4o Mini<br>
         Bridging Montessori's Cosmic Education with contemporary curriculum frameworks<br>
         <em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em>
     </div>
