@@ -8,9 +8,7 @@ from openai import OpenAI
 import io
 import json
 import hashlib
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+# Note: Email functionality handled via feedback system, not direct SMTP
 import secrets
 import string
 import re
@@ -41,11 +39,16 @@ def init_user_database():
     # Load from file if exists
     if os.path.exists('users.json'):
         try:
-            with open('users.json', 'r') as f:
+            with open('users.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 st.session_state.users = data.get('users', {})
                 st.session_state.usage_logs = data.get('usage_logs', {})
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            st.error(f"Error reading user database: {str(e)}. Starting with empty database.")
+            st.session_state.users = {}
+            st.session_state.usage_logs = {}
         except Exception as e:
+            st.error(f"Unexpected error loading user data: {str(e)}")
             st.session_state.users = {}
             st.session_state.usage_logs = {}
     else:
@@ -64,10 +67,12 @@ def save_user_database():
             'users': st.session_state.users,
             'usage_logs': st.session_state.usage_logs
         }
-        with open('users.json', 'w') as f:
-            json.dump(data, f, indent=2)
+        with open('users.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
     except Exception as e:
         st.error(f"Error saving user data: {str(e)}")
+        return False
+    return True
 
 def hash_password(password):
     """Hash password for security"""
@@ -81,6 +86,19 @@ def generate_student_credentials():
 
 def create_teacher_account(username, password, email, school=""):
     """Create new teacher account"""
+    # Input validation
+    if not username or not password or not email:
+        return False, "Username, password, and email are required"
+    
+    if len(username) < 3:
+        return False, "Username must be at least 3 characters"
+    
+    if len(password) < 6:
+        return False, "Password must be at least 6 characters"
+    
+    if '@' not in email:
+        return False, "Please enter a valid email address"
+    
     if username in st.session_state.users:
         return False, "Username already exists"
     
@@ -133,6 +151,16 @@ def create_student_account(teacher_username, student_name):
 
 def create_custom_student_account(username, password, student_name, teacher_username=None):
     """Create student account with custom username and password"""
+    # Input validation
+    if not username or not password or not student_name:
+        return False, "Username, password, and student name are required"
+    
+    if len(username) < 3:
+        return False, "Username must be at least 3 characters"
+    
+    if len(password) < 4:
+        return False, "Password must be at least 4 characters"
+    
     if username in st.session_state.users:
         return False, "Username already exists"
     
@@ -206,7 +234,7 @@ def log_api_usage(username, tokens_used):
     log_entry = {
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'tokens': tokens_used,
-        'model': 'gpt-4o-mini'
+        'model': 'gpt-5'
     }
     
     if username not in st.session_state.usage_logs:
@@ -227,20 +255,30 @@ def send_feedback_email(teacher_name, feedback_content):
     except Exception as e:
         return False, f"Error sending feedback: {str(e)}"
 
+@st.cache_data
 def load_montessori_curriculum():
-    """Load Montessori National Curriculum content"""
+    """Load Montessori National Curriculum content with caching"""
     try:
-        with open('montessori_national_curriculum.txt', 'r') as f:
+        with open('montessori_national_curriculum.txt', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
+        st.warning("Montessori National Curriculum file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading Montessori curriculum: {str(e)}")
         return ""
 
+@st.cache_data
 def load_australian_curriculum():
-    """Load Australian Curriculum V9 content"""
+    """Load Australian Curriculum V9 content with caching"""
     try:
-        with open('australian_curriculum_v9.txt', 'r') as f:
+        with open('australian_curriculum_v9.txt', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
+        st.warning("Australian Curriculum V9 file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading Australian curriculum: {str(e)}")
         return ""
 
 def save_rubric_to_user_data(username, rubric_data):
@@ -354,6 +392,45 @@ if "saved_rubrics" not in st.session_state:
 if "shared_rubrics" not in st.session_state:
     st.session_state.shared_rubrics = []
 
+if "cec_competency_data" not in st.session_state:
+    st.session_state.cec_competency_data = {}
+
+if "file_processing_cache" not in st.session_state:
+    st.session_state.file_processing_cache = {}
+
+# Initialize session state safely
+def ensure_session_state():
+    """Ensure all required session state variables are initialized"""
+    defaults = {
+        'messages': [],
+        'curriculum': "Australian Curriculum V9",
+        'uploaded_content': "",
+        'user_type': "Teacher",
+        'student_work': "",
+        'student_feedback_history': [],
+        'student_progress': {},
+        'shared_lessons': [],
+        'collaboration_mode': False,
+        'authenticated': False,
+        'current_user': None,
+        'user_role': None,
+        'show_login': True,
+        'portfolios': {},
+        'saved_rubrics': [],
+        'shared_rubrics': [],
+        'cec_competency_data': {},
+        'file_processing_cache': {},
+        'training_content': "",
+        'feedback_messages': []
+    }
+    
+    for key, default_value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = default_value
+
+# Call ensure_session_state to properly initialize
+ensure_session_state()
+
 # Helper functions
 def get_system_prompt(curriculum):
     """Get system prompt based on selected curriculum with Montessori Cosmic Education and systems thinking approach"""
@@ -368,15 +445,17 @@ You respect Montessori principles of freedom within responsibility, hands-on exp
     if hasattr(st.session_state, 'uploaded_content') and st.session_state.uploaded_content:
         uploaded_content = f"\n\nAdditional curriculum documents and context:\n{st.session_state.uploaded_content[:2000]}..."
     
-    # Load Montessori National Curriculum content
+    # Load Montessori National Curriculum content (optimized)
     montessori_content = load_montessori_curriculum()
-    if montessori_content:
-        uploaded_content += f"\n\nMontessori National Curriculum Reference:\n{montessori_content[:1500]}..."
+    if montessori_content and len(montessori_content) > 100:
+        # Use first 1000 chars for better context while keeping prompt manageable
+        uploaded_content += f"\n\nMontessori National Curriculum Reference:\n{montessori_content[:1000]}..."
     
-    # Load Australian Curriculum V9 content
+    # Load Australian Curriculum V9 content (optimized)  
     australian_content = load_australian_curriculum()
-    if australian_content:
-        uploaded_content += f"\n\nAustralian Curriculum V9 Reference:\n{australian_content[:1500]}..."
+    if australian_content and len(australian_content) > 100:
+        # Use first 1000 chars for better context while keeping prompt manageable
+        uploaded_content += f"\n\nAustralian Curriculum V9 Reference:\n{australian_content[:1000]}..."
     
     # Include Montessori National Curriculum reference
     montessori_reference = """
@@ -396,7 +475,7 @@ Key Montessori principles to incorporate:
 
     if curriculum == "Australian Curriculum V9":
         return f"{base_prompt}\n\nYou integrate the official Australian Curriculum V9 framework with Cosmic Education principles. Reference the three strands (Language, Literature, Literacy for English), HASS concepts (significance, interconnections, sustainability), and cross-curriculum priorities. Show how learning areas, general capabilities, and achievement standards connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience, using authentic curriculum terminology and content descriptions.{uploaded_content}"
-    elif curriculum == "Montessori Curriculum Australia" or "Montessori" in curriculum:
+    elif curriculum == "Montessori Curriculum Australia" or ("Montessori" in curriculum):
         return f"{base_prompt}\n\nYou work within the official Montessori National Curriculum (2011) framework, emphasising the three planes of development, prepared environments, and developmental stages. You connect all learning to the 'universe story' through Cosmic Education - showing how each topic fits into the grand narrative of cosmic evolution, human civilisation, and our interconnected world. Reference authentic Montessori principles including human tendencies, practical life, sensorial education, and observation-based assessment.{montessori_reference}{uploaded_content}"
     else:  # Blended approach
         return f"{base_prompt}\n\nYou masterfully blend Australian Curriculum V9 standards with Montessori National Curriculum principles, creating authentic connections between formal learning outcomes and developmental appropriateness. Reference both frameworks' official terminology and structures. You honour structured achievement standards whilst embracing child-led discovery, showing how curriculum requirements can be met through Montessori's cosmic approach to education. Draw from both authentic curriculum documents to ensure compliance and alignment.{montessori_reference}{uploaded_content}"
@@ -426,7 +505,9 @@ def call_openai_api(messages, system_prompt):
         max_tokens = 300 if st.session_state.get('user_role') == 'student' else 2000
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
+            # do not change this unless explicitly requested by the user
+            model="gpt-5",
             messages=full_messages,
             temperature=0.7,
             max_tokens=max_tokens
@@ -2393,17 +2474,26 @@ if st.session_state.authenticated:
         
         if uploaded_file is not None:
             try:
+                # Reset file pointer to beginning
+                uploaded_file.seek(0)
+                
                 if uploaded_file.type == "text/plain":
-                    content = str(uploaded_file.read(), "utf-8")
+                    content = uploaded_file.read().decode("utf-8")
                     st.session_state.uploaded_content = content
                     st.success("Text file uploaded successfully!")
                 elif uploaded_file.type == "text/csv":
-                    df = pd.read_csv(io.BytesIO(uploaded_file.getvalue()))
+                    df = pd.read_csv(uploaded_file)
                     content = df.to_string()
                     st.session_state.uploaded_content = content
                     st.success("CSV file uploaded successfully!")
                     with st.expander("Preview uploaded data"):
-                        st.dataframe(df.head())
+                        st.dataframe(df.head(10))
+                else:
+                    st.warning("Unsupported file type. Please upload .txt or .csv files only.")
+            except UnicodeDecodeError:
+                st.error("File encoding error. Please ensure your file is UTF-8 encoded.")
+            except pd.errors.EmptyDataError:
+                st.error("The CSV file appears to be empty.")
             except Exception as e:
                 st.error(f"Error reading file: {str(e)}")
         
