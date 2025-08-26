@@ -1179,7 +1179,7 @@ else:
             curriculum = st.selectbox(
                 "📚 Curriculum Framework",
                 ["Australian Curriculum V9", "Montessori Curriculum Australia"],
-                key="curriculum_selector"
+                key="teacher_curriculum_selector"
             )
             st.session_state.curriculum = curriculum
             
@@ -1765,7 +1765,7 @@ if st.session_state.authenticated:
         curriculum = st.selectbox(
             "📚 Curriculum Framework",
             ["Australian Curriculum V9", "Montessori Curriculum Australia"],
-            key="curriculum_selector"
+            key="sidebar_curriculum_selector"
         )
         st.session_state.curriculum = curriculum
         
