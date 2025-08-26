@@ -23,8 +23,7 @@ st.set_page_config(
 )
 
 # Initialize OpenAI client
-# the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-# do not change this unless explicitly requested by the user
+# Using ChatGPT 4o-mini model as requested by the user
 @st.cache_resource
 def get_openai_client():
     api_key = os.getenv("OPENAI_API_KEY")
@@ -154,7 +153,7 @@ def log_api_usage(username, tokens_used):
     log_entry = {
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'tokens': tokens_used,
-        'model': 'gpt-5'
+        'model': 'gpt-4o-mini'
     }
     
     if username not in st.session_state.usage_logs:
@@ -268,7 +267,7 @@ def call_openai_api(messages, system_prompt):
         max_tokens = 300 if st.session_state.get('user_role') == 'student' else 2000
         
         response = client.chat.completions.create(
-            model="gpt-5",
+            model="gpt-4o-mini",
             messages=full_messages,
             temperature=0.7,
             max_tokens=max_tokens
