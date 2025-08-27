@@ -1446,6 +1446,7 @@ else:
         
         with teacher_tabs[0]:  # AI Assistant
             st.markdown("### Your AI Teaching Companion")
+            st.markdown("*Chat with Maria, your cosmic curriculum guide, for teaching inspiration and practical guidance*")
             
             # Curriculum selector and document upload
             col1, col2 = st.columns([2, 1])
@@ -1491,7 +1492,7 @@ else:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
             
-            if prompt := st.chat_input("Share your curiosity about learning, teaching, or cosmic connections..."):
+            if prompt := st.chat_input("Ask Maria a question about teaching, learning, or cosmic connections..."):
                 st.session_state.messages.append({"role": "user", "content": prompt})
                 
                 with st.chat_message("user"):
