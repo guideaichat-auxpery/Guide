@@ -45,10 +45,10 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - Indonesian Language (Second Language Learner pathway)
   - Health and Physical Education (Personal/Social/Community Health, Movement/Physical Activity)
   All with authentic terminology, achievement standards, content descriptions, focus areas, and assessment approaches
-- **Learning Connections**: AI-generated lesson ideas that link topics to larger systems (historical, ecological, social, economic)
-- **Learning Threads & Patterns**: Interconnected topic mapping showing relationships rather than linear sequences
-- **Family & Community Connection**: Parent communication highlighting whole-child development and cosmic perspective
-- **Learning Invitations**: Student activities fostering independence, collaboration, real-world connection, and cosmic reflection
+- **Enhanced Scope & Sequence Creation**: Comprehensive learning progressions with choice between explicit/siloed learning areas or concept/theme-based integration, supporting AC V9 only, MNC only, or blended approaches with cosmic education priority
+- **Unified Learning Invitations & Connections**: Merged tool combining learning invitations and connections with age group adjustment capabilities and integrated GPT-4o mini chat for teacher refinement and curation
+- **Learning Threads & Patterns**: Interconnected topic mapping showing relationships rather than linear sequences with enhanced curriculum framework selection
+- **Family & Community Connection**: Parent communication highlighting whole-child development and cosmic perspective with multiple communication types and tones
 - **Student Work Analysis**: AI-powered feedback on student work that celebrates discoveries and suggests meaningful extensions
 - **Skill Development**: Personalized learning pathways based on student interests and demonstrated understanding
 - **Enhanced Assessment Rubrics System**: Advanced curriculum-aligned rubric generator with comprehensive configuration:

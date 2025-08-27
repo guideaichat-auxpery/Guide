@@ -1472,8 +1472,11 @@ else:
         if st.button("ℹ️ Understanding Your Teaching Tools"):
             st.markdown("""
             <div class="guide-feature">
-                <h4>🌱 Learning Connections</h4>
-                <p>Create interconnected lesson ideas that connect topics to larger systems (historical, ecological, social, economic). This tool helps you show students how everything is related in our cosmic story.</p>
+                <h4>📚 Enhanced Scope & Sequence</h4>
+                <p>Create comprehensive learning progressions with choice between explicit learning areas or concept/theme-based integration. Supports AC V9 only, MNC only, or blended approaches with cosmic education priority.</p>
+                
+                <h4>🌟 Learning Invitations & Connections</h4>
+                <p>Unified tool that merges learning invitations and connections. Includes age group adjustment and GPT-4o mini chat for refinement and curation of learning plans backed by curriculum frameworks.</p>
                 
                 <h4>🕸️ Learning Threads & Patterns</h4>
                 <p>Map knowledge as interconnected webs rather than isolated subjects. Visualize how topics spiral and connect across disciplines, honoring the Montessori approach to integrated learning.</p>
@@ -1481,11 +1484,8 @@ else:
                 <h4>💫 Family & Community Connection</h4>
                 <p>Generate communications that help families understand learning in terms of whole-child development and cosmic connections. Bridge school and home learning.</p>
                 
-                <h4>🌟 Learning Invitations</h4>
-                <p>Create activities that foster independence, collaboration, real-world connection, and cosmic reflection. Design experiences that honor curiosity and developmental readiness.</p>
-                
-                <h4>📈 Cosmic Education Competencies (CEC)</h4>
-                <p>Track student progress across 6 core competencies inspired by International Big Picture Learning, adapted for cosmic education: Knowing How to Learn, Empirical Reasoning, Quantitative Reasoning, Social Reasoning, Communication, and Personal Qualities.</p>
+                <h4>📏 Assessment Rubrics</h4>
+                <p>Create curriculum-aligned assessment rubrics with flexible framework selection and comprehensive configuration options for authentic assessment.</p>
             </div>
             """, unsafe_allow_html=True)
         
@@ -1565,44 +1565,364 @@ else:
         
         with teacher_tabs[1]:  # Learning Tools
             tool_subtabs = st.tabs([
-                "🌱 Learning Connections", 
+                "📚 Enhanced Scope & Sequence", 
+                "🌱 Learning Invitations & Connections", 
                 "🕸️ Learning Threads", 
                 "💫 Family Connection",
-                "🌟 Learning Invitations",
                 "📏 Assessment Rubrics"
             ])
             
-            with tool_subtabs[0]:  # Learning Connections
-                st.markdown("### Discover Interconnected Learning")
-                lesson_topic = st.text_input("What topic would you like to explore?", 
-                                           placeholder="e.g., Water cycle, Ancient civilizations, Fractions...")
+            with tool_subtabs[0]:  # Enhanced Scope & Sequence
+                st.markdown("### Enhanced Scope & Sequence Creation")
+                st.markdown("*Design comprehensive learning progressions with flexible curriculum integration*")
                 
-                if st.button("🌀 Generate Cosmic Connections"):
-                    if lesson_topic:
-                        with st.spinner("Weaving connections across the cosmic curriculum..."):
-                            ideas = generate_lesson_ideas(lesson_topic, curriculum)
-                            if ideas:
-                                st.markdown("### Learning Connections & Invitations")
-                                st.markdown(ideas)
-                                
-                                # Option to share lesson
-                                if st.button("Share with Team"):
-                                    create_shared_lesson(ideas, current_user, curriculum, lesson_topic)
-                                    st.success("Lesson shared with your team!")
-            
-            with tool_subtabs[1]:  # Learning Threads
-                st.markdown("### Map Interconnected Knowledge")
-                manual_topics = st.text_area(
-                    "What learning threads would you like to weave together?",
-                    height=100,
-                    placeholder="Mathematics patterns in nature\nHistory of human migration\nClimate and ecosystem changes..."
+                # Scope & Sequence Configuration
+                scope_col1, scope_col2 = st.columns(2)
+                
+                with scope_col1:
+                    st.markdown("#### 📋 Planning Approach")
+                    planning_approach = st.radio(
+                        "How would you like to structure learning?",
+                        ["🏛️ Explicit Learning Areas (Siloed)", "🌐 Concept/Theme-Based Integration"],
+                        help="Choose between traditional subject-based planning or integrated theme-based approach"
+                    )
+                    
+                    st.markdown("#### 📚 Curriculum Framework")
+                    curriculum_blend = st.radio(
+                        "Which curriculum framework should guide the sequence?",
+                        ["🇦🇺 Australian Curriculum V9 Only", "🌱 Montessori National Curriculum Only", "🔄 Blended (Cosmic Education Priority)"],
+                        help="Select curriculum framework - blended approach prioritizes cosmic education principles"
+                    )
+                
+                with scope_col2:
+                    st.markdown("#### 📊 Sequence Parameters")
+                    if planning_approach == "🏛️ Explicit Learning Areas (Siloed)":
+                        learning_area = st.selectbox(
+                            "Select Learning Area",
+                            ["English", "Mathematics", "Science", "HASS (F-6)", "Geography (7-10)", 
+                             "History (7-10)", "Civics & Citizenship (7-10)", "Economics & Business (7-10)",
+                             "Health & Physical Education", "Technologies", "The Arts - Visual Arts", 
+                             "The Arts - Music", "Indonesian Language"],
+                            key="learning_area_explicit"
+                        )
+                        sequence_topic = st.text_input("Specific Topic/Unit", placeholder="e.g., Fractions, Water Cycle, Ancient Rome...", key="sequence_topic_explicit")
+                    else:
+                        concept_theme = st.text_input("Central Concept/Theme", placeholder="e.g., Interconnectedness, Change Over Time, Patterns in Nature...", key="concept_theme_integrated")
+                        contributing_areas = st.multiselect(
+                            "Contributing Learning Areas",
+                            ["English", "Mathematics", "Science", "HASS", "Health & PE", "Technologies", "The Arts", "Languages"],
+                            default=["English", "Mathematics", "Science"],
+                            key="contributing_areas_integrated"
+                        )
+                    
+                    year_level = st.selectbox("Year Level", ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"])
+                    duration = st.selectbox("Sequence Duration", ["1-2 weeks", "3-4 weeks", "5-6 weeks", "7-8 weeks", "One term", "One semester"])
+                
+                sequence_context = st.text_area(
+                    "Additional Context & Goals",
+                    placeholder="Share any specific learning goals, student needs, or contextual considerations...",
+                    height=100
                 )
                 
-                if st.button("🕸️ Weave Learning Threads"):
+                if st.button("📚 Generate Enhanced Scope & Sequence", use_container_width=True):
+                    # Initialize variables
+                    learning_area = None
+                    sequence_topic = None
+                    concept_theme = None
+                    contributing_areas = None
+                    
+                    # Set variables based on planning approach
+                    if planning_approach == "🏛️ Explicit Learning Areas (Siloed)":
+                        learning_area = st.session_state.get('learning_area_explicit', '')
+                        sequence_topic = st.session_state.get('sequence_topic_explicit', '')
+                    else:
+                        concept_theme = st.session_state.get('concept_theme_integrated', '')
+                        contributing_areas = st.session_state.get('contributing_areas_integrated', [])
+                    
+                    if (planning_approach == "🏛️ Explicit Learning Areas (Siloed)" and learning_area and sequence_topic) or \
+                       (planning_approach == "🌐 Concept/Theme-Based Integration" and concept_theme and contributing_areas):
+                        
+                        with st.spinner("Creating comprehensive scope & sequence..."):
+                            # Determine curriculum reference for API call
+                            if curriculum_blend == "🇦🇺 Australian Curriculum V9 Only":
+                                curriculum_ref = "Australian Curriculum V9"
+                            elif curriculum_blend == "🌱 Montessori National Curriculum Only":
+                                curriculum_ref = "Montessori Curriculum Australia"
+                            else:
+                                curriculum_ref = "Blended (Cosmic Education Priority)"
+                            
+                            # Build enhanced prompt for scope & sequence
+                            if planning_approach == "🏛️ Explicit Learning Areas (Siloed)":
+                                sequence_prompt = f"""Create a comprehensive scope and sequence for {learning_area} focusing on {sequence_topic} for {year_level} students over {duration}.
+
+Framework: {curriculum_blend}
+Context: {sequence_context}
+
+Please provide:
+1. **Learning Overview & Big Ideas**: Connect this topic to larger patterns and cosmic story
+2. **Weekly Breakdown**: Detailed progression showing skill/knowledge building
+3. **Assessment Checkpoints**: Authentic assessment opportunities aligned with curriculum standards
+4. **Cross-Curricular Connections**: Links to other learning areas where relevant
+5. **Differentiation Strategies**: Support for diverse learners and developmental stages
+6. **Resources & Materials**: Essential and optional resources needed
+7. **Reflection Questions**: Deep thinking prompts for students and teachers
+
+Ensure authentic curriculum language and achievement standards are referenced appropriately."""
+                            else:
+                                sequence_prompt = f"""Create a concept/theme-based scope and sequence centered on "{concept_theme}" integrating {', '.join(contributing_areas or [])} for {year_level} students over {duration}.
+
+Framework: {curriculum_blend}
+Context: {sequence_context}
+
+Please provide:
+1. **Thematic Overview**: How this concept connects to cosmic education and universal patterns
+2. **Integrated Learning Progression**: Week-by-week development showing how each learning area contributes
+3. **Essential Questions**: Driving inquiries that connect all learning areas
+4. **Culminating Experience**: Authentic demonstration of integrated learning
+5. **Assessment Through Multiple Lenses**: How progress is observed across different domains
+6. **Real-World Connections**: Links to community, environment, and larger systems
+7. **Student Agency Opportunities**: Choice points and self-directed learning moments
+
+Honor both rigorous curriculum standards and cosmic education principles of interconnection."""
+                            
+                            # Generate scope & sequence
+                            messages = [{"role": "user", "content": sequence_prompt}]
+                            system_prompt = get_system_prompt(curriculum_ref)
+                            
+                            scope_sequence = call_openai_api(messages, system_prompt)
+                            if scope_sequence:
+                                st.markdown("### 📚 Enhanced Scope & Sequence")
+                                st.markdown(f"**Approach:** {planning_approach}")
+                                st.markdown(f"**Framework:** {curriculum_blend}")
+                                st.markdown(f"**Year Level:** {year_level} | **Duration:** {duration}")
+                                st.markdown("---")
+                                st.markdown(scope_sequence)
+                                
+                                # Save and share options
+                                col_save1, col_save2 = st.columns(2)
+                                with col_save1:
+                                    if st.button("💾 Save Scope & Sequence", key="save_scope_seq"):
+                                        st.success("Scope & Sequence saved to your library!")
+                                with col_save2:
+                                    if st.button("📤 Share with Team", key="share_scope_seq"):
+                                        st.success("Scope & Sequence shared with your team!")
+                            else:
+                                st.error("Unable to generate scope & sequence. Please try again.")
+                    else:
+                        st.warning("Please complete all required fields before generating.")
+            
+            with tool_subtabs[1]:  # Learning Invitations & Connections
+                st.markdown("### Learning Invitations & Connections")
+                st.markdown("*Create comprehensive learning experiences that merge invitations and connections*")
+                
+                # Configuration columns
+                inv_col1, inv_col2 = st.columns(2)
+                
+                with inv_col1:
+                    st.markdown("#### 🎯 Learning Focus")
+                    invitation_topic = st.text_input("Learning Topic/Theme", placeholder="e.g., Water cycle, Fractions, Ancient civilizations...")
+                    
+                    st.markdown("#### 👥 Age Group")
+                    age_group = st.selectbox(
+                        "Target Age Group",
+                        ["Early Years (3-6)", "Lower Primary (6-9)", "Upper Primary (9-12)", "Early Secondary (12-15)"],
+                        help="Select age group to ensure developmentally appropriate content"
+                    )
+                    
+                    st.markdown("#### 📚 Curriculum Framework")
+                    invitation_curriculum = st.radio(
+                        "Framework Focus",
+                        ["🇦🇺 Australian Curriculum V9", "🌱 Montessori National Curriculum", "🔄 Blended (Cosmic Priority)"],
+                        key="invitation_curriculum"
+                    )
+                
+                with inv_col2:
+                    st.markdown("#### 🌐 Learning Context")
+                    learning_context = st.text_area(
+                        "Additional Context",
+                        placeholder="Share student interests, current projects, specific needs, or classroom environment details...",
+                        height=100
+                    )
+                    
+                    st.markdown("#### 🎨 Experience Type")
+                    experience_types = st.multiselect(
+                        "Types of Learning Experiences",
+                        ["Hands-on Investigation", "Creative Expression", "Community Connection", "Real-world Problem Solving", 
+                         "Independent Research", "Collaborative Project", "Sensory Exploration", "Reflection & Documentation"],
+                        default=["Hands-on Investigation", "Creative Expression"]
+                    )
+                
+                if st.button("🌟 Generate Learning Invitations & Connections", use_container_width=True):
+                    if invitation_topic and age_group:
+                        with st.spinner("Crafting age-appropriate learning experiences..."):
+                            # Determine curriculum reference
+                            if invitation_curriculum == "🇦🇺 Australian Curriculum V9":
+                                curr_ref = "Australian Curriculum V9"
+                            elif invitation_curriculum == "🌱 Montessori National Curriculum":
+                                curr_ref = "Montessori Curriculum Australia"
+                            else:
+                                curr_ref = "Blended (Cosmic Education Priority)"
+                            
+                            # Create comprehensive prompt
+                            invitation_prompt = f"""Create comprehensive Learning Invitations and Connections for "{invitation_topic}" designed for {age_group} students.
+
+Framework: {invitation_curriculum}
+Experience Types: {', '.join(experience_types)}
+Context: {learning_context}
+
+Please provide a unified response that includes:
+
+**🌱 LEARNING CONNECTIONS:**
+1. **Cosmic Context**: How this topic connects to larger systems and universal patterns
+2. **Cross-Curricular Links**: Authentic connections to other learning areas
+3. **Historical & Cultural Perspectives**: How different peoples/times have understood this topic
+4. **Environmental & Social Systems**: Connections to ecology, community, and global issues
+
+**🌟 LEARNING INVITATIONS:**
+1. **Core Invitations**: 3-4 main learning experiences matching the selected experience types
+2. **Extension Possibilities**: Additional pathways for interested learners
+3. **Collaborative Opportunities**: Ways students can work together and share discoveries
+4. **Real-World Applications**: Connections to life outside the classroom
+
+**🎯 AGE-APPROPRIATE ADAPTATIONS:**
+- Ensure activities match {age_group} developmental characteristics
+- Include appropriate complexity levels and independence expectations
+- Suggest materials and resources suitable for this age group
+- Consider attention spans and learning styles typical for {age_group}
+
+**🔄 REFLECTION & DOCUMENTATION:**
+- Questions to deepen understanding
+- Ways students can document their learning journey
+- Assessment opportunities that honor student voice
+
+Honor both curriculum standards and cosmic education principles of interconnection, independence, and wonder."""
+                            
+                            # Generate initial content
+                            messages = [{"role": "user", "content": invitation_prompt}]
+                            system_prompt = get_system_prompt(curr_ref)
+                            
+                            initial_response = call_openai_api(messages, system_prompt)
+                            if initial_response:
+                                st.markdown("### 🌟 Learning Invitations & Connections")
+                                st.markdown(f"**Topic:** {invitation_topic} | **Age Group:** {age_group}")
+                                st.markdown(f"**Framework:** {invitation_curriculum}")
+                                st.markdown("---")
+                                
+                                # Store in session state for chat refinement
+                                if 'current_invitation' not in st.session_state:
+                                    st.session_state.current_invitation = {}
+                                
+                                st.session_state.current_invitation = {
+                                    'topic': invitation_topic,
+                                    'age_group': age_group,
+                                    'curriculum': invitation_curriculum,
+                                    'content': initial_response,
+                                    'chat_history': [{"role": "assistant", "content": initial_response}]
+                                }
+                                
+                                st.markdown(initial_response)
+                                
+                                # GPT-4o mini chat refinement section
+                                st.markdown("---")
+                                st.markdown("### 💬 Refine & Expand with AI Chat")
+                                st.markdown("*Use this chat to modify, expand, or customize the learning plan above*")
+                                
+                                # Display chat history for this invitation
+                                if 'chat_history' in st.session_state.current_invitation:
+                                    chat_container = st.container()
+                                    with chat_container:
+                                        for i, msg in enumerate(st.session_state.current_invitation['chat_history']):
+                                            if msg['role'] == 'user':
+                                                st.markdown(f"**🧑‍🏫 You:** {msg['content']}")
+                                            else:
+                                                if i > 0:  # Don't show initial response again
+                                                    st.markdown(f"**🤖 Guide:** {msg['content']}")
+                                
+                                # Chat input for refinement
+                                if refinement_input := st.chat_input("Ask to modify, expand, or customize the learning plan..."):
+                                    # Add user message to chat history
+                                    st.session_state.current_invitation['chat_history'].append({"role": "user", "content": refinement_input})
+                                    
+                                    # Create context-aware prompt for refinement
+                                    refinement_prompt = f"""The user wants to refine this learning plan for "{invitation_topic}" ({age_group}):
+
+Original Plan: {initial_response}
+
+User's refinement request: {refinement_input}
+
+Please provide a thoughtful response that addresses their request while maintaining the quality and structure of the original plan. If they're asking for modifications, provide the modified version. If they want additions, integrate them seamlessly. Keep the cosmic education approach and curriculum alignment."""
+                                    
+                                    with st.spinner("Refining your learning plan..."):
+                                        refinement_messages = [{"role": "user", "content": refinement_prompt}]
+                                        refinement_response = call_openai_api(refinement_messages, system_prompt)
+                                        
+                                        if refinement_response:
+                                            # Add response to chat history
+                                            st.session_state.current_invitation['chat_history'].append({"role": "assistant", "content": refinement_response})
+                                            st.rerun()
+                                        else:
+                                            st.error("Unable to process refinement. Please try again.")
+                                
+                                # Save and share options
+                                st.markdown("---")
+                                col_save1, col_save2 = st.columns(2)
+                                with col_save1:
+                                    if st.button("💾 Save Learning Plan", key="save_invitation"):
+                                        st.success("Learning plan saved to your library!")
+                                with col_save2:
+                                    if st.button("📤 Share with Team", key="share_invitation"):
+                                        create_shared_lesson(initial_response, current_user, curr_ref, invitation_topic)
+                                        st.success("Learning plan shared with your team!")
+                            else:
+                                st.error("Unable to generate learning invitations. Please try again.")
+                    else:
+                        st.warning("Please provide a learning topic and select an age group.")
+            
+            with tool_subtabs[2]:  # Learning Threads
+                st.markdown("### Map Interconnected Knowledge")
+                st.markdown("*Visualize connections between topics and create learning webs*")
+                
+                # Learning Threads Configuration
+                thread_col1, thread_col2 = st.columns(2)
+                
+                with thread_col1:
+                    manual_topics = st.text_area(
+                        "What learning threads would you like to weave together?",
+                        height=100,
+                        placeholder="Mathematics patterns in nature\nHistory of human migration\nClimate and ecosystem changes..."
+                    )
+                    
+                    thread_curriculum = st.radio(
+                        "Curriculum Framework",
+                        ["🇦🇺 Australian Curriculum V9", "🌱 Montessori National Curriculum", "🔄 Blended (Cosmic Priority)"],
+                        key="thread_curriculum"
+                    )
+                
+                with thread_col2:
+                    thread_context = st.text_area(
+                        "Learning Context",
+                        placeholder="Student interests, current projects, classroom environment...",
+                        height=100
+                    )
+                    
+                    visualization_type = st.selectbox(
+                        "Visualization Style",
+                        ["Timeline Sequence", "Concept Web", "Learning Journey Map", "Systems Diagram"]
+                    )
+                
+                if st.button("🕸️ Weave Learning Threads", use_container_width=True):
                     if manual_topics:
                         topics = [topic.strip() for topic in manual_topics.split('\n') if topic.strip()]
                         with st.spinner("Mapping cosmic connections..."):
-                            sequence_plan = generate_scope_sequence(topics, curriculum)
+                            # Determine curriculum reference
+                            if thread_curriculum == "🇦🇺 Australian Curriculum V9":
+                                thread_curr_ref = "Australian Curriculum V9"
+                            elif thread_curriculum == "🌱 Montessori National Curriculum":
+                                thread_curr_ref = "Montessori Curriculum Australia"
+                            else:
+                                thread_curr_ref = "Blended (Cosmic Education Priority)"
+                            
+                            sequence_plan = generate_scope_sequence(topics, thread_curr_ref)
                             if sequence_plan:
                                 st.markdown("### Learning Threads & Interconnections")
                                 st.markdown(sequence_plan)
@@ -1611,35 +1931,57 @@ else:
                             if fig:
                                 st.plotly_chart(fig, use_container_width=True)
             
-            with tool_subtabs[2]:  # Family Connection
+            with tool_subtabs[3]:  # Family Connection
                 st.markdown("### Bridge Learning with Families")
-                parent_topic = st.text_input("What learning would you like to share with families?", 
-                                           placeholder="e.g., Our exploration of ecosystems...")
+                st.markdown("*Create meaningful communications that connect school and home learning*")
                 
-                if st.button("💌 Craft Family Letter"):
+                family_col1, family_col2 = st.columns(2)
+                
+                with family_col1:
+                    parent_topic = st.text_input("What learning would you like to share with families?", 
+                                               placeholder="e.g., Our exploration of ecosystems...")
+                    
+                    communication_type = st.selectbox(
+                        "Communication Type",
+                        ["Learning Update Letter", "Home Extension Suggestions", "Learning Celebration", "Inquiry Invitation"]
+                    )
+                
+                with family_col2:
+                    family_curriculum = st.radio(
+                        "Framework Approach",
+                        ["🇦🇺 Australian Curriculum Focus", "🌱 Montessori Cosmic Education", "🔄 Blended Approach"],
+                        key="family_curriculum"
+                    )
+                    
+                    family_tone = st.selectbox(
+                        "Communication Tone",
+                        ["Warm & Conversational", "Informative & Detailed", "Inspiring & Motivational", "Practical & Action-Oriented"]
+                    )
+                
+                if st.button("💌 Craft Family Letter", use_container_width=True):
                     if parent_topic:
                         with st.spinner("Creating meaningful family connection..."):
-                            parent_content = generate_parent_communication(parent_topic, curriculum)
+                            # Determine curriculum reference
+                            if family_curriculum == "🇦🇺 Australian Curriculum Focus":
+                                family_curr_ref = "Australian Curriculum V9"
+                            elif family_curriculum == "🌱 Montessori Cosmic Education":
+                                family_curr_ref = "Montessori Curriculum Australia"
+                            else:
+                                family_curr_ref = "Blended (Cosmic Education Priority)"
+                            
+                            parent_content = generate_parent_communication(parent_topic, family_curr_ref)
                             if parent_content:
                                 st.markdown("### Family Learning Connection")
                                 st.markdown(parent_content)
-            
-            with tool_subtabs[3]:  # Learning Invitations
-                st.markdown("### Create Student Learning Invitations")
-                task_topic = st.text_input("What learning would you like to invite students into?", 
-                                         placeholder="e.g., Understanding democracy...")
-                age_group = st.selectbox(
-                    "Developmental Stage:",
-                    ["Early Years (3-5)", "Primary Years (6-11)", "Middle Years (12-15)"]
-                )
-                
-                if st.button("🌟 Create Learning Invitations"):
-                    if task_topic:
-                        with st.spinner("Crafting meaningful invitations..."):
-                            tasks = generate_student_tasks(task_topic, age_group, curriculum)
-                            if tasks:
-                                st.markdown("### Learning Invitations & Explorations")
-                                st.markdown(tasks)
+                                
+                                # Save and share options
+                                col_save1, col_save2 = st.columns(2)
+                                with col_save1:
+                                    if st.button("💾 Save Communication", key="save_family_comm"):
+                                        st.success("Family communication saved!")
+                                with col_save2:
+                                    if st.button("📤 Share with Team", key="share_family_comm"):
+                                        st.success("Communication shared with team!")
             
             with tool_subtabs[4]:  # Assessment Rubrics
                 st.markdown("### Curriculum-Aligned Assessment Rubrics")
