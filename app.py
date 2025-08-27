@@ -341,63 +341,8 @@ def upload_training_content(content, admin_password):
         return True, "Training content uploaded successfully"
     return False, "Invalid admin password"
 
-# Initialize session state and user database
+# Initialize session state and user database  
 init_user_database()
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "curriculum" not in st.session_state:
-    st.session_state.curriculum = "Australian Curriculum V9"
-
-if "uploaded_content" not in st.session_state:
-    st.session_state.uploaded_content = ""
-
-if "user_type" not in st.session_state:
-    st.session_state.user_type = "Teacher"
-
-if "student_work" not in st.session_state:
-    st.session_state.student_work = ""
-
-if "student_feedback_history" not in st.session_state:
-    st.session_state.student_feedback_history = []
-
-if "student_progress" not in st.session_state:
-    st.session_state.student_progress = {}
-
-if "shared_lessons" not in st.session_state:
-    st.session_state.shared_lessons = []
-
-if "collaboration_mode" not in st.session_state:
-    st.session_state.collaboration_mode = False
-
-# Authentication state
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-if "current_user" not in st.session_state:
-    st.session_state.current_user = None
-
-if "user_role" not in st.session_state:
-    st.session_state.user_role = None
-
-if "show_login" not in st.session_state:
-    st.session_state.show_login = True
-
-if "portfolios" not in st.session_state:
-    st.session_state.portfolios = {}
-
-if "saved_rubrics" not in st.session_state:
-    st.session_state.saved_rubrics = []
-
-if "shared_rubrics" not in st.session_state:
-    st.session_state.shared_rubrics = []
-
-if "cec_competency_data" not in st.session_state:
-    st.session_state.cec_competency_data = {}
-
-if "file_processing_cache" not in st.session_state:
-    st.session_state.file_processing_cache = {}
 
 # Initialize session state safely
 def ensure_session_state():
