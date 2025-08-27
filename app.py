@@ -285,7 +285,7 @@ def save_rubric_to_user_data(username, rubric_data):
     """Save rubric to user data file for persistence"""
     try:
         # Read existing users data
-        with open('users.json', 'r') as f:
+        with open('users.json', 'r', encoding='utf-8') as f:
             users = json.load(f)
         
         if username in users:
@@ -296,33 +296,33 @@ def save_rubric_to_user_data(username, rubric_data):
             users[username]['saved_rubrics'].append(rubric_data)
             
             # Write back to file with error checking
-            with open('users.json', 'w') as f:
-                json.dump(users, f, indent=2)
+            with open('users.json', 'w', encoding='utf-8') as f:
+                json.dump(users, f, indent=2, ensure_ascii=False)
             
             # Verify the save worked by reading it back
-            with open('users.json', 'r') as f:
+            with open('users.json', 'r', encoding='utf-8') as f:
                 verify_users = json.load(f)
                 if username in verify_users and 'saved_rubrics' in verify_users[username]:
                     return True
             
             return False
         else:
-            print(f"Username {username} not found in users database")
+            st.error(f"Username {username} not found in users database")
             return False
     except FileNotFoundError:
-        print("users.json file not found")
+        st.error("users.json file not found")
         return False
     except json.JSONDecodeError as e:
-        print(f"JSON decode error: {e}")
+        st.error(f"JSON decode error: {e}")
         return False
     except Exception as e:
-        print(f"Error saving rubric: {e}")  # Log for developer
+        st.error(f"Error saving rubric: {e}")
         return False
 
 def load_user_rubrics(username):
     """Load user's saved rubrics from user data file"""
     try:
-        with open('users.json', 'r') as f:
+        with open('users.json', 'r', encoding='utf-8') as f:
             users = json.load(f)
         
         if username in users and 'saved_rubrics' in users[username]:
@@ -334,8 +334,9 @@ def load_user_rubrics(username):
 
 def upload_training_content(content, admin_password):
     """Upload training content (admin only)"""
-    # Simple admin check - in production this would be more secure
-    if admin_password == "guide_admin_2025":
+    # Simple admin check - using environment variable for security
+    expected_password = os.getenv("GUIDE_ADMIN_PASSWORD", "guide_admin_2025")
+    if admin_password == expected_password:
         st.session_state.training_content = content
         return True, "Training content uploaded successfully"
     return False, "Invalid admin password"
