@@ -2204,7 +2204,12 @@ Format as a clear, usable rubric with table structure where appropriate."""
             with mgmt_subtabs[1]:  # View Progress
                 teacher_students = user_data.get('students', {})
                 if teacher_students:
-                    selected_student = st.selectbox("Select Student", list(teacher_students.keys()))
+                    student_options = list(teacher_students.keys())
+                    if student_options:
+                        selected_student = st.selectbox("Select Student", student_options)
+                    else:
+                        st.info("No students found.")
+                        selected_student = None
                     
                     if selected_student:
                         student_name = teacher_students[selected_student]
@@ -2219,7 +2224,12 @@ Format as a clear, usable rubric with table structure where appropriate."""
             with mgmt_subtabs[2]:  # View Portfolios
                 teacher_students = user_data.get('students', {})
                 if teacher_students:
-                    selected_student = st.selectbox("Select Student Portfolio", list(teacher_students.keys()), key="portfolio_select")
+                    student_options = list(teacher_students.keys())
+                    if student_options:
+                        selected_student = st.selectbox("Select Student Portfolio", student_options, key="portfolio_select")
+                    else:
+                        st.info("No students found.")
+                        selected_student = None
                     
                     if selected_student and selected_student in st.session_state.portfolios:
                         student_portfolios = st.session_state.portfolios[selected_student]
@@ -2663,23 +2673,29 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 
                 user_portfolios = st.session_state.portfolios.get(current_user, {})
                 if user_portfolios:
-                    selected_portfolio = st.selectbox("Select portfolio:", list(user_portfolios.keys()))
+                    portfolio_options = list(user_portfolios.keys())
+                    if portfolio_options:
+                        selected_portfolio = st.selectbox("Select portfolio:", portfolio_options)
+                    else:
+                        st.info("No portfolios found.")
+                        selected_portfolio = None
                     
-                    reflection_type = st.selectbox("Type of reflection:", [
-                        "general", "daily_reflection", "project_reflection", "skill_reflection"
-                    ])
-                    
-                    reflection_text = st.text_area("What are you thinking about your learning?", 
-                                                 height=150,
-                                                 placeholder="What patterns do you notice? What connections are you making? How are you growing?")
-                    
-                    if st.button("💭 Add Reflection"):
-                        if reflection_text:
-                            portfolio = user_portfolios[selected_portfolio]
-                            add_portfolio_reflection(portfolio, reflection_text, reflection_type)
-                            st.success("Reflection added to your portfolio!")
-                        else:
-                            st.warning("Please write your reflection.")
+                    if selected_portfolio:
+                        reflection_type = st.selectbox("Type of reflection:", [
+                            "general", "daily_reflection", "project_reflection", "skill_reflection"
+                        ])
+                        
+                        reflection_text = st.text_area("What are you thinking about your learning?", 
+                                                     height=150,
+                                                     placeholder="What patterns do you notice? What connections are you making? How are you growing?")
+                        
+                        if st.button("💭 Add Reflection"):
+                            if reflection_text:
+                                portfolio = user_portfolios[selected_portfolio]
+                                add_portfolio_reflection(portfolio, reflection_text, reflection_type)
+                                st.success("Reflection added to your portfolio!")
+                            else:
+                                st.warning("Please write your reflection.")
                 else:
                     st.info("Create a portfolio first to add reflections.")
         
