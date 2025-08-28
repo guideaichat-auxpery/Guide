@@ -367,8 +367,401 @@ def upload_training_content(content, admin_password):
         return True, "Training content uploaded successfully"
     return False, "Invalid admin password"
 
+def accessibility_wizard():
+    """Accessibility wizard to customize learning interface for diverse learners"""
+    st.header("♿ Accessibility Wizard")
+    st.markdown("Customize your learning interface to meet your unique needs and learning preferences.")
+    
+    # Load current settings
+    settings = st.session_state.accessibility_settings
+    
+    # Visual Accessibility Section
+    with st.expander("👁️ Visual & Display Settings", expanded=True):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            settings['font_size'] = st.selectbox(
+                "Font Size",
+                ["Small", "Medium", "Large", "Extra Large"],
+                index=["Small", "Medium", "Large", "Extra Large"].index(settings['font_size']),
+                help="Choose a comfortable text size for reading"
+            )
+            
+            settings['contrast_mode'] = st.selectbox(
+                "Display Contrast",
+                ["Standard", "High Contrast", "Dark Mode", "Low Light"],
+                index=["Standard", "High Contrast", "Dark Mode", "Low Light"].index(settings['contrast_mode']),
+                help="Adjust contrast for better visibility"
+            )
+        
+        with col2:
+            settings['dyslexia_support'] = st.checkbox(
+                "Dyslexia-Friendly Font",
+                value=settings['dyslexia_support'],
+                help="Use fonts designed for dyslexic readers"
+            )
+            
+            settings['motion_reduced'] = st.checkbox(
+                "Reduce Motion & Animations",
+                value=settings['motion_reduced'],
+                help="Minimize moving elements and transitions"
+            )
+    
+    # Cognitive Support Section
+    with st.expander("🧠 Cognitive & Learning Support"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            settings['simple_layout'] = st.checkbox(
+                "Simplified Interface",
+                value=settings['simple_layout'],
+                help="Reduce visual clutter and simplify navigation"
+            )
+            
+            settings['focus_mode'] = st.checkbox(
+                "Focus Mode",
+                value=settings['focus_mode'],
+                help="Highlight current section and reduce distractions"
+            )
+            
+            settings['adhd_support'] = st.checkbox(
+                "ADHD Support",
+                value=settings['adhd_support'],
+                help="Break content into smaller chunks with clear progress indicators"
+            )
+        
+        with col2:
+            settings['memory_support'] = st.checkbox(
+                "Memory Support",
+                value=settings['memory_support'],
+                help="Add visual cues and reminders throughout the interface"
+            )
+            
+            settings['reading_support'] = st.checkbox(
+                "Reading Comprehension Aid",
+                value=settings['reading_support'],
+                help="Highlight key terms and provide definitions"
+            )
+    
+    # Motor & Navigation Section
+    with st.expander("⌨️ Motor & Navigation Support"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            settings['keyboard_nav'] = st.checkbox(
+                "Enhanced Keyboard Navigation",
+                value=settings['keyboard_nav'],
+                help="Optimize interface for keyboard-only navigation"
+            )
+        
+        with col2:
+            settings['screen_reader'] = st.checkbox(
+                "Screen Reader Optimization",
+                value=settings['screen_reader'],
+                help="Enhance compatibility with screen reading software"
+            )
+    
+    # Audio Support Section
+    with st.expander("🔊 Audio & Communication Support"):
+        settings['audio_support'] = st.checkbox(
+            "Text-to-Speech",
+            value=settings['audio_support'],
+            help="Enable audio reading of content"
+        )
+    
+    # Save settings
+    st.session_state.accessibility_settings = settings
+    
+    # Apply Settings Preview
+    if st.button("💾 Save & Apply Settings", type="primary", use_container_width=True):
+        st.success("✅ Accessibility settings saved! Your interface will update to match your preferences.")
+        st.rerun()
+    
+    # Reset to defaults
+    if st.button("🔄 Reset to Default Settings"):
+        st.session_state.accessibility_settings = {
+            'font_size': 'Medium',
+            'contrast_mode': 'Standard',
+            'reading_support': False,
+            'audio_support': False,
+            'simple_layout': False,
+            'focus_mode': False,
+            'motion_reduced': False,
+            'keyboard_nav': False,
+            'screen_reader': False,
+            'dyslexia_support': False,
+            'adhd_support': False,
+            'memory_support': False
+        }
+        st.success("Settings reset to defaults")
+        st.rerun()
+
+def apply_accessibility_styles():
+    """Apply custom CSS based on accessibility settings"""
+    # Ensure accessibility_settings exists
+    if 'accessibility_settings' not in st.session_state:
+        return
+    
+    settings = st.session_state.accessibility_settings
+    
+    # Build CSS based on settings
+    css_styles = []
+    
+    # Font size adjustments
+    font_sizes = {
+        'Small': '0.9rem',
+        'Medium': '1rem', 
+        'Large': '1.2rem',
+        'Extra Large': '1.5rem'
+    }
+    base_font_size = font_sizes.get(settings['font_size'], '1rem')
+    css_styles.append(f"""
+        .main .block-container {{
+            font-size: {base_font_size};
+        }}
+        .stSelectbox label, .stTextInput label, .stTextArea label {{
+            font-size: {base_font_size};
+            font-weight: 600;
+        }}
+    """)
+    
+    # Contrast and color adjustments
+    if settings['contrast_mode'] == 'High Contrast':
+        css_styles.append("""
+            .main {
+                background-color: #000000 !important;
+                color: #FFFFFF !important;
+            }
+            .stApp > header {
+                background-color: #000000 !important;
+            }
+            .block-container {
+                background-color: #000000 !important;
+                color: #FFFFFF !important;
+            }
+            .stButton button {
+                background-color: #FFFFFF !important;
+                color: #000000 !important;
+                border: 2px solid #FFFFFF !important;
+            }
+        """)
+    elif settings['contrast_mode'] == 'Dark Mode':
+        css_styles.append("""
+            .main {
+                background-color: #1E1E1E !important;
+                color: #E0E0E0 !important;
+            }
+            .stApp > header {
+                background-color: #1E1E1E !important;
+            }
+            .block-container {
+                background-color: #1E1E1E !important;
+                color: #E0E0E0 !important;
+            }
+        """)
+    elif settings['contrast_mode'] == 'Low Light':
+        css_styles.append("""
+            .main {
+                background-color: #2D2D2D !important;
+                color: #D0D0D0 !important;
+            }
+            .stApp > header {
+                background-color: #2D2D2D !important;
+            }
+        """)
+    
+    # Dyslexia-friendly font
+    if settings['dyslexia_support']:
+        css_styles.append("""
+            * {
+                font-family: 'Arial', 'Helvetica', sans-serif !important;
+                letter-spacing: 0.1em !important;
+                line-height: 1.6 !important;
+            }
+        """)
+    
+    # Simplified layout
+    if settings['simple_layout']:
+        css_styles.append("""
+            .main .block-container {
+                max-width: 800px !important;
+                padding-top: 2rem !important;
+            }
+            .stSidebar {
+                display: none !important;
+            }
+            .stTabs [data-baseweb="tab-list"] {
+                gap: 2px;
+            }
+        """)
+    
+    # Focus mode
+    if settings['focus_mode']:
+        css_styles.append("""
+            .main .block-container {
+                max-width: 700px !important;
+                margin: 0 auto !important;
+            }
+            .stSidebar {
+                background-color: #F8F9FA !important;
+                border-right: 3px solid #007BFF !important;
+            }
+            :focus {
+                outline: 3px solid #007BFF !important;
+                outline-offset: 2px !important;
+            }
+        """)
+    
+    # Reduced motion
+    if settings['motion_reduced']:
+        css_styles.append("""
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        """)
+    
+    # Enhanced keyboard navigation
+    if settings['keyboard_nav']:
+        css_styles.append("""
+            .stButton button:focus,
+            .stSelectbox div[role="button"]:focus,
+            .stTextInput input:focus,
+            .stTextArea textarea:focus {
+                outline: 3px solid #FF6B35 !important;
+                outline-offset: 2px !important;
+                box-shadow: 0 0 0 2px white, 0 0 0 5px #FF6B35 !important;
+            }
+            .stTabs [role="tab"]:focus {
+                outline: 3px solid #FF6B35 !important;
+                outline-offset: 2px !important;
+            }
+        """)
+    
+    # Screen reader optimization
+    if settings['screen_reader']:
+        css_styles.append("""
+            .screen-reader-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0,0,0,0);
+                white-space: nowrap;
+                border: 0;
+            }
+        """)
+    
+    # ADHD support - chunked content
+    if settings['adhd_support']:
+        css_styles.append("""
+            .main .block-container > div > div {
+                margin-bottom: 2rem !important;
+                padding: 1rem !important;
+                border-left: 4px solid #28A745 !important;
+                background-color: #F8F9FA !important;
+                border-radius: 0.5rem !important;
+            }
+        """)
+    
+    # Memory support - visual cues
+    if settings['memory_support']:
+        css_styles.append("""
+            h1, h2, h3 {
+                background: linear-gradient(90deg, #007BFF, #28A745) !important;
+                background-clip: text !important;
+                -webkit-background-clip: text !important;
+                -webkit-text-fill-color: transparent !important;
+                font-weight: bold !important;
+            }
+            .stButton button[kind="primary"] {
+                background: linear-gradient(90deg, #007BFF, #28A745) !important;
+                border: none !important;
+                font-weight: bold !important;
+            }
+        """)
+    
+    # Apply all styles
+    if css_styles:
+        st.markdown(f"<style>{''.join(css_styles)}</style>", unsafe_allow_html=True)
+
+def add_accessibility_indicators():
+    """Add accessibility status indicators when relevant settings are enabled"""
+    settings = st.session_state.accessibility_settings
+    indicators = []
+    
+    if settings['screen_reader']:
+        indicators.append("Screen Reader Mode")
+    if settings['focus_mode']:
+        indicators.append("Focus Mode")
+    if settings['simple_layout']:
+        indicators.append("Simplified Layout")
+    if settings['adhd_support']:
+        indicators.append("ADHD Support")
+    if settings['dyslexia_support']:
+        indicators.append("Dyslexia-Friendly")
+    
+    if indicators:
+        st.info(f"🔧 Active Accessibility Features: {', '.join(indicators)}")
+
+def get_accessible_content_format(content, settings):
+    """Format content based on accessibility settings"""
+    if not content:
+        return content
+    
+    # ADHD support - break into smaller chunks
+    if settings.get('adhd_support', False):
+        # Split long paragraphs into smaller chunks
+        paragraphs = content.split('\n\n')
+        formatted_paragraphs = []
+        for para in paragraphs:
+            if len(para) > 200:  # If paragraph is long, break it down
+                sentences = para.split('. ')
+                chunks = []
+                current_chunk = ""
+                for sentence in sentences:
+                    if len(current_chunk + sentence) < 150:
+                        current_chunk += sentence + ". "
+                    else:
+                        if current_chunk:
+                            chunks.append(current_chunk.strip())
+                        current_chunk = sentence + ". "
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                formatted_paragraphs.extend(chunks)
+            else:
+                formatted_paragraphs.append(para)
+        content = '\n\n'.join(formatted_paragraphs)
+    
+    # Reading support - highlight key terms
+    if settings.get('reading_support', False):
+        # Simple keyword highlighting for educational content
+        key_terms = ['objective', 'learning', 'assessment', 'students', 'curriculum', 'development', 'skills', 'knowledge']
+        for term in key_terms:
+            content = content.replace(term, f"**{term}**")
+    
+    # Memory support - add structure cues
+    if settings.get('memory_support', False):
+        lines = content.split('\n')
+        structured_lines = []
+        for line in lines:
+            if line.strip().startswith(('1.', '2.', '3.', '4.', '5.')):
+                structured_lines.append(f"📌 {line}")
+            elif line.strip().startswith('-'):
+                structured_lines.append(f"• {line[1:]}")
+            else:
+                structured_lines.append(line)
+        content = '\n'.join(structured_lines)
+    
+    return content
+
 # Initialize session state and user database  
 init_user_database()
+
+# Apply accessibility styles and indicators will be handled after session state initialization
 
 # Initialize session state safely
 def ensure_session_state():
@@ -393,7 +786,21 @@ def ensure_session_state():
         'cec_competency_data': {},
         'file_processing_cache': {},
         'training_content': "",
-        'feedback_messages': []
+        'feedback_messages': [],
+        'accessibility_settings': {
+            'font_size': 'Medium',
+            'contrast_mode': 'Standard',
+            'reading_support': False,
+            'audio_support': False,
+            'simple_layout': False,
+            'focus_mode': False,
+            'motion_reduced': False,
+            'keyboard_nav': False,
+            'screen_reader': False,
+            'dyslexia_support': False,
+            'adhd_support': False,
+            'memory_support': False
+        }
     }
     
     for key, default_value in defaults.items():
@@ -402,6 +809,13 @@ def ensure_session_state():
 
 # Call ensure_session_state to properly initialize
 ensure_session_state()
+
+# Apply accessibility styles globally after session state is initialized
+apply_accessibility_styles()
+
+# Add accessibility indicators if any are active
+if st.session_state.get('accessibility_settings'):
+    add_accessibility_indicators()
 
 # Helper functions
 def get_system_prompt(curriculum):
@@ -497,7 +911,12 @@ def call_openai_api(messages, system_prompt):
         if response.usage:
             log_api_usage(st.session_state.get('current_user', 'anonymous'), response.usage.total_tokens)
         
-        return response.choices[0].message.content
+        # Apply accessibility formatting to response
+        content = response.choices[0].message.content
+        if 'accessibility_settings' in st.session_state:
+            content = get_accessible_content_format(content, st.session_state.accessibility_settings)
+        
+        return content
     except Exception as e:
         st.error(f"Error calling OpenAI API: {str(e)}")
         return None
@@ -1477,6 +1896,7 @@ else:
             "👥 Student Management", 
             "🤝 Collaboration",
             "📊 All & Advisory", 
+            "♿ Accessibility",
             "💌 Pilot Feedback"
         ])
         
@@ -2479,7 +2899,10 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 else:
                     st.info("No students to analyze yet.")
         
-        with teacher_tabs[5]:  # Pilot Feedback
+        with teacher_tabs[5]:  # Accessibility
+            accessibility_wizard()
+        
+        with teacher_tabs[6]:  # Pilot Feedback
             st.markdown("### Pilot Phase Feedback")
             st.markdown("*Help us improve Guide by sharing your experience*")
             
@@ -2512,7 +2935,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
             "💬 Learning Assistant", 
             "📝 Project Planner", 
             "📁 My Portfolio", 
-            "🌟 My Journey"
+            "🌟 My Journey",
+            "♿ Accessibility"
         ])
         
         with student_tabs[0]:  # Learning Assistant
@@ -2785,6 +3209,9 @@ Format as a clear, usable rubric with table structure where appropriate."""
                         st.markdown(f"📁 **{portfolio_name}** - {total_entries} entries")
             else:
                 st.info("Start exploring and creating to see your learning journey!")
+        
+        with student_tabs[4]:  # Accessibility
+            accessibility_wizard()
         
         st.markdown('</div>', unsafe_allow_html=True)
 

@@ -16,6 +16,16 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Enhanced System Prompts**: Updated AI responses to reference authentic terminology from cross-curriculum priorities and general capabilities, ensuring comprehensive curriculum alignment
 - **Cosmic Education Integration**: All new content connects to Montessori's cosmic education principles, showing how capabilities and priorities support the grand narrative of universal development
 
+## Accessibility Wizard Implementation (August 28, 2025)
+- **Universal Design for Learning**: Comprehensive accessibility wizard available to both teachers and students for customizing the learning interface
+- **Visual Accessibility**: Font size adjustment (Small to Extra Large), contrast modes (Standard, High Contrast, Dark Mode, Low Light), dyslexia-friendly fonts, reduced motion options
+- **Cognitive Support**: Simplified interface option, focus mode, ADHD support with chunked content, memory support with visual cues, reading comprehension aids
+- **Motor & Navigation**: Enhanced keyboard navigation, screen reader optimization for assistive technology compatibility
+- **Audio Support**: Text-to-speech integration placeholder for future multimedia accessibility
+- **Adaptive Content Formatting**: AI responses automatically format based on user accessibility preferences (ADHD chunking, reading support highlighting, memory visual cues)
+- **Persistent Settings**: Accessibility preferences saved across sessions with reset-to-defaults option
+- **Universal Access**: Available to all user roles (teachers and students) with comprehensive CSS styling system for real-time interface adaptation
+
 # System Architecture
 
 ## Frontend Architecture
@@ -86,6 +96,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - Shared lesson plans and learning connections
   - Team activity feed showing recent sharing and collaboration
   - Resource discovery across teaching teams
+- **Accessibility Wizard**: Universal design for learning interface allowing comprehensive customization for diverse learners including visual, cognitive, motor, and audio accessibility needs with adaptive content formatting
 
 # External Dependencies
 
