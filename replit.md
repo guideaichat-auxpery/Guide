@@ -8,6 +8,14 @@ Preferred communication style: Simple, everyday language.
 Philosophy: Montessori Cosmic Education and systems thinking approach - emphasizing interconnections, big ideas, patterns, and the child's place in the universe story.
 Tone: Warm, humble, practical, avoiding jargon while honoring developmental stages and student agency.
 
+# Recent Changes (August 27, 2025)
+
+## Comprehensive Curriculum Integration Enhancement
+- **Cross-Curriculum Priorities V9**: Embedded complete framework for Sustainability, Asia and Australia's Engagement with Asia, and Aboriginal and Torres Strait Islander Histories and Cultures with all organising ideas
+- **General Capabilities V9**: Integrated full learning continuums for all seven capabilities (Literacy, Numeracy, Digital Literacy, Critical and Creative Thinking, Personal and Social Capability, Intercultural Understanding, Ethical Understanding)
+- **Enhanced System Prompts**: Updated AI responses to reference authentic terminology from cross-curriculum priorities and general capabilities, ensuring comprehensive curriculum alignment
+- **Cosmic Education Integration**: All new content connects to Montessori's cosmic education principles, showing how capabilities and priorities support the grand narrative of universal development
+
 # System Architecture
 
 ## Frontend Architecture
@@ -106,6 +114,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - Indonesian Language (Second Language Learner pathway)
   - Health and Physical Education (health and movement focus areas)
   - The Arts - Visual Arts (elements/principles, 2D/3D/4D processes, cultural practices, ICIP protocols)
+  - **Cross-Curriculum Priorities**: Sustainability, Asia and Australia's Engagement with Asia, Aboriginal and Torres Strait Islander Histories and Cultures with full organising ideas and frameworks
+  - **General Capabilities**: Literacy, Numeracy, Digital Literacy, Critical and Creative Thinking, Personal and Social Capability, Intercultural Understanding, Ethical Understanding with complete learning continuums
   Includes authentic terminology, achievement standards, content descriptions, glossaries, and visual learning resources
 - **Montessori National Curriculum (2011)**: Official Montessori Australia Foundation curriculum framework integrated throughout the system, providing authentic reference for the three planes of development, Cosmic Education approach, and developmental characteristics
 - **Montessori Curriculum Australia**: Child-centered educational methodology and developmental stages

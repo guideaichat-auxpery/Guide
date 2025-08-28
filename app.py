@@ -281,6 +281,32 @@ def load_australian_curriculum():
         st.error(f"Error loading Australian curriculum: {str(e)}")
         return ""
 
+@st.cache_data
+def load_cross_curriculum_priorities():
+    """Load Cross-Curriculum Priorities V9 content with caching"""
+    try:
+        with open('cross_curriculum_priorities_v9.txt', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        st.warning("Cross-Curriculum Priorities V9 file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading Cross-Curriculum Priorities: {str(e)}")
+        return ""
+
+@st.cache_data
+def load_general_capabilities():
+    """Load General Capabilities V9 content with caching"""
+    try:
+        with open('general_capabilities_v9.txt', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        st.warning("General Capabilities V9 file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading General Capabilities: {str(e)}")
+        return ""
+
 def save_rubric_to_user_data(username, rubric_data):
     """Save rubric to user data file for persistence"""
     try:
@@ -403,6 +429,16 @@ You respect Montessori principles of freedom within responsibility, hands-on exp
         # Use first 1000 chars for better context while keeping prompt manageable
         uploaded_content += f"\n\nAustralian Curriculum V9 Reference:\n{australian_content[:1000]}..."
     
+    # Load Cross-Curriculum Priorities V9 content
+    priorities_content = load_cross_curriculum_priorities()
+    if priorities_content and len(priorities_content) > 100:
+        uploaded_content += f"\n\nCross-Curriculum Priorities V9:\n{priorities_content[:800]}..."
+    
+    # Load General Capabilities V9 content
+    capabilities_content = load_general_capabilities()
+    if capabilities_content and len(capabilities_content) > 100:
+        uploaded_content += f"\n\nGeneral Capabilities V9:\n{capabilities_content[:800]}..."
+    
     # Include Montessori National Curriculum reference
     montessori_reference = """
 
@@ -420,11 +456,11 @@ Key Montessori principles to incorporate:
 - Observation-based assessment focusing on individual growth"""
 
     if curriculum == "Australian Curriculum V9":
-        return f"{base_prompt}\n\nYou integrate the official Australian Curriculum V9 framework with Cosmic Education principles. Reference the three strands (Language, Literature, Literacy for English), HASS concepts (significance, interconnections, sustainability), and cross-curriculum priorities. Show how learning areas, general capabilities, and achievement standards connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience, using authentic curriculum terminology and content descriptions.{uploaded_content}"
+        return f"{base_prompt}\n\nYou integrate the official Australian Curriculum V9 framework with Cosmic Education principles. Reference learning areas, general capabilities (Literacy, Numeracy, Digital Literacy, Critical and Creative Thinking, Personal and Social Capability, Intercultural Understanding, Ethical Understanding), and cross-curriculum priorities (Sustainability, Asia and Australia's Engagement with Asia, Aboriginal and Torres Strait Islander Histories and Cultures). Show how achievement standards connect to larger systems - historical, ecological, social, and economic. You present learning as threads in the tapestry of human knowledge and experience, using authentic curriculum terminology and content descriptions. Draw connections between subject-specific content and the cosmic story of universal development.{uploaded_content}"
     elif curriculum == "Montessori Curriculum Australia" or ("Montessori" in curriculum):
         return f"{base_prompt}\n\nYou work within the official Montessori National Curriculum (2011) framework, emphasising the three planes of development, prepared environments, and developmental stages. You connect all learning to the 'universe story' through Cosmic Education - showing how each topic fits into the grand narrative of cosmic evolution, human civilisation, and our interconnected world. Reference authentic Montessori principles including human tendencies, practical life, sensorial education, and observation-based assessment.{montessori_reference}{uploaded_content}"
     else:  # Blended approach
-        return f"{base_prompt}\n\nYou masterfully blend Australian Curriculum V9 standards with Montessori National Curriculum principles, creating authentic connections between formal learning outcomes and developmental appropriateness. Reference both frameworks' official terminology and structures. You honour structured achievement standards whilst embracing child-led discovery, showing how curriculum requirements can be met through Montessori's cosmic approach to education. Draw from both authentic curriculum documents to ensure compliance and alignment.{montessori_reference}{uploaded_content}"
+        return f"{base_prompt}\n\nYou masterfully blend Australian Curriculum V9 standards with Montessori National Curriculum principles, creating authentic connections between formal learning outcomes and developmental appropriateness. Reference both frameworks' official terminology and structures, including general capabilities and cross-curriculum priorities. You honour structured achievement standards whilst embracing child-led discovery, showing how curriculum requirements can be met through Montessori's cosmic approach to education. Draw from both authentic curriculum documents to ensure compliance and alignment, always prioritising the cosmic education perspective that connects learning to the grand narrative of the universe.{montessori_reference}{uploaded_content}"
 
 def call_openai_api(messages, system_prompt):
     """Call OpenAI API with error handling"""
