@@ -47,9 +47,10 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **CEC Competency Visualization**: Radar charts for progress across key competencies.
 - **Asset-Based Assessment**: Focus on student strengths.
 - **Learner Profile Generation**: Comprehensive profiles combining academic progress, competencies, and cosmic consciousness.
-- **Portfolio System**: Creation and management of student portfolios with various templates, annotation features, and chronological work timeline tracking. Timestamps all portfolio uploads for My Journey timeline view.
+- **Portfolio System**: Creation and management of student portfolios with various templates, annotation features, and chronological work timeline tracking. Timestamps all portfolio uploads for My Journey timeline view. Enhanced file upload system supporting documents, images, audio, and video files.
 - **Team Collaboration Hub**: Features shared rubrics, lesson plans, and resource discovery.
 - **Accessibility Wizard**: Universal Design for Learning interface with comprehensive customization for diverse visual, cognitive, motor, and audio needs.
+- **Mathematics Hub**: Dedicated mathematics learning tools for teachers and students, featuring cosmic math connections, mathematical investigations, pattern exploration, and inquiry-driven approaches that connect mathematics to the cosmic story and natural phenomena.
 
 # External Dependencies
 

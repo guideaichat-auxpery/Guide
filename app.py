@@ -988,6 +988,18 @@ EMBEDDED CURRICULUM DESIGN COMPONENTS:
     "Description": "Organize curriculum around big concepts that connect across disciplines and promote deep understanding.",
     "Keywords": "concept mapping, interdisciplinary, themes",
     "Use_Case": "Visual concept map interface for designing cross-subject units."
+},
+{
+    "Component": "Mathematical Thinking Patterns",
+    "Description": "Emphasise mathematical patterns, relationships, and cosmic connections in number, space, and data.",
+    "Keywords": "patterns, mathematical modeling, cosmic mathematics, golden ratio, fibonacci, fractals",
+    "Use_Case": "Guide mathematical explorations that connect to natural phenomena and universal patterns."
+},
+{
+    "Component": "Problem-Solving Investigations", 
+    "Description": "Frame mathematics as investigation and discovery rather than procedure memorisation.",
+    "Keywords": "mathematical investigation, problem-solving, inquiry mathematics, real-world applications",
+    "Use_Case": "Create authentic mathematical challenges that connect to students' interests and cosmic themes."
 }
 
 When appropriate, incorporate these components as guardrails to guide curriculum design towards inquiry-based, conceptual approaches that foster deep connections and authentic engagement."""
@@ -2118,7 +2130,8 @@ else:
                 "🌱 Learning Invitations & Connections", 
                 "🕸️ Learning Threads", 
                 "💫 Family Connection",
-                "📏 Assessment Rubrics"
+                "📏 Assessment Rubrics",
+                "🧮 Mathematics Hub"
             ])
             
             with tool_subtabs[0]:  # Enhanced Scope & Sequence
@@ -2754,6 +2767,191 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 st.markdown(rubric['content'])
                     else:
                         st.info("No saved rubrics yet. Create your first rubric above!")
+            
+            with tool_subtabs[5]:  # Mathematics Hub
+                st.markdown("### 🧮 Mathematics Hub")
+                st.markdown("*Transform mathematics learning through cosmic connections and inquiry-driven investigations*")
+                
+                math_hub_tabs = st.tabs([
+                    "🌌 Cosmic Math Connections",
+                    "🔍 Mathematical Investigations", 
+                    "📊 Data & Probability Explorations",
+                    "📐 Geometry in Nature",
+                    "🔢 Number Patterns & Sequences"
+                ])
+                
+                with math_hub_tabs[0]:  # Cosmic Math Connections
+                    st.markdown("#### Connect Mathematics to the Cosmic Story")
+                    st.markdown("*Discover mathematical patterns that govern our universe*")
+                    
+                    cosmic_col1, cosmic_col2 = st.columns(2)
+                    
+                    with cosmic_col1:
+                        cosmic_topic = st.selectbox(
+                            "Select Cosmic Mathematics Topic",
+                            [
+                                "Golden Ratio in Nature",
+                                "Fibonacci Sequences in Biology", 
+                                "Fractals and Self-Similarity",
+                                "Pi and Circular Phenomena",
+                                "Exponential Growth in Populations",
+                                "Trigonometry in Waves and Cycles",
+                                "Probability in Genetics",
+                                "Statistics in Climate Data",
+                                "Geometry in Crystal Structures",
+                                "Mathematical Modeling of Ecosystems"
+                            ]
+                        )
+                        
+                        year_level_math = st.selectbox(
+                            "Year Level",
+                            ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"],
+                            key="math_year_level"
+                        )
+                    
+                    with cosmic_col2:
+                        investigation_focus = st.multiselect(
+                            "Mathematical Focus Areas",
+                            [
+                                "Number and Algebra",
+                                "Measurement and Geometry", 
+                                "Statistics and Probability",
+                                "Mathematical Reasoning",
+                                "Problem Solving",
+                                "Mathematical Modeling"
+                            ],
+                            default=["Number and Algebra"]
+                        )
+                        
+                        learning_context = st.text_area(
+                            "Learning Context",
+                            placeholder="What's the student interest or current learning focus?",
+                            height=80
+                        )
+                    
+                    if st.button("🌟 Generate Cosmic Math Connection", use_container_width=True):
+                        if cosmic_topic and investigation_focus:
+                            with st.spinner("Connecting mathematics to the cosmic story..."):
+                                prompt = f"""Create a cosmic mathematics learning experience connecting {cosmic_topic} to {year_level_math} level mathematics, focusing on {', '.join(investigation_focus)}.
+
+Context: {learning_context}
+
+Please provide:
+
+1. **The Cosmic Connection**: How this mathematics appears in the universe, nature, or human civilization
+2. **Mathematical Investigation**: Hands-on activities that let students discover the mathematical patterns
+3. **Essential Questions**: Big questions that drive mathematical thinking and cosmic awareness
+4. **Real-World Applications**: Where students can observe this mathematics in their daily lives
+5. **Differentiated Approaches**: Ways to explore this for different learning styles and abilities
+6. **Assessment Through Observation**: How to notice mathematical thinking development
+7. **Extension Possibilities**: Connections to other mathematical concepts and cosmic themes
+
+Frame this as an invitation to mathematical discovery that honors both rigorous mathematics learning and cosmic education principles. Emphasize pattern recognition, mathematical reasoning, and the beauty of mathematics in creation."""
+
+                                messages = [{"role": "user", "content": prompt}]
+                                system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                                
+                                response = call_openai_api(messages, system_prompt)
+                                if response:
+                                    st.markdown("### 🌌 Cosmic Mathematics Learning Experience")
+                                    st.markdown(f"**Topic:** {cosmic_topic}")
+                                    st.markdown(f"**Year Level:** {year_level_math}")
+                                    st.markdown(f"**Focus:** {', '.join(investigation_focus)}")
+                                    st.markdown("---")
+                                    st.markdown(response)
+                        else:
+                            st.warning("Please select a topic and focus areas.")
+                
+                with math_hub_tabs[1]:  # Mathematical Investigations
+                    st.markdown("#### Design Problem-Based Mathematical Investigations")
+                    st.markdown("*Create authentic challenges that develop mathematical thinking*")
+                    
+                    invest_col1, invest_col2 = st.columns(2)
+                    
+                    with invest_col1:
+                        investigation_type = st.selectbox(
+                            "Investigation Type",
+                            [
+                                "Real-World Problem Solving",
+                                "Mathematical Modeling Challenge",
+                                "Pattern Discovery Investigation",
+                                "Data Collection & Analysis",
+                                "Geometric Construction Project",
+                                "Number Theory Exploration",
+                                "Probability Experiment",
+                                "Measurement Investigation"
+                            ]
+                        )
+                        
+                        math_strand = st.selectbox(
+                            "Primary Mathematics Strand",
+                            ["Number and Algebra", "Measurement and Geometry", "Statistics and Probability"]
+                        )
+                    
+                    with invest_col2:
+                        student_interest = st.text_input(
+                            "Student Interest/Context",
+                            placeholder="e.g., sport, animals, space, environment, technology"
+                        )
+                        
+                        investigation_duration = st.selectbox(
+                            "Investigation Duration",
+                            ["Single lesson", "2-3 lessons", "One week", "Extended project (2+ weeks)"]
+                        )
+                    
+                    complexity_level = st.slider("Mathematical Complexity", 1, 5, 3, help="1 = Foundational, 5 = Advanced")
+                    
+                    if st.button("🔍 Create Mathematical Investigation", use_container_width=True):
+                        if investigation_type and math_strand:
+                            with st.spinner("Designing mathematical investigation..."):
+                                prompt = f"""Design a {investigation_type} for {year_level_math} students focusing on {math_strand}, incorporating {student_interest} and lasting {investigation_duration}.
+
+Complexity Level: {complexity_level}/5
+
+Create an investigation that includes:
+
+1. **The Challenge**: An authentic, open-ended problem that matters to students
+2. **Mathematical Thinking Required**: What mathematical concepts and processes will students use?
+3. **Investigation Steps**: A flexible pathway for students to explore (not rigid procedures)
+4. **Multiple Entry Points**: How students of different abilities can engage meaningfully
+5. **Tools & Resources**: Materials, technology, or manipulatives needed
+6. **Documentation & Reflection**: How students capture their mathematical thinking
+7. **Sharing & Discussion**: Ways for students to communicate their mathematical discoveries
+8. **Extensions & Connections**: How this investigation connects to broader mathematical concepts
+
+Design this as an inquiry that honors student agency while building genuine mathematical understanding. Include cosmic education connections where natural."""
+
+                                messages = [{"role": "user", "content": prompt}]
+                                system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                                
+                                response = call_openai_api(messages, system_prompt)
+                                if response:
+                                    st.markdown("### 🔍 Mathematical Investigation Design")
+                                    st.markdown(f"**Type:** {investigation_type}")
+                                    st.markdown(f"**Strand:** {math_strand}")
+                                    st.markdown(f"**Duration:** {investigation_duration}")
+                                    st.markdown("---")
+                                    st.markdown(response)
+                        else:
+                            st.warning("Please complete the investigation details.")
+                
+                with math_hub_tabs[2]:  # Data & Probability
+                    st.markdown("#### Data Science & Probability Explorations")
+                    st.markdown("*Make statistics and probability come alive through real data*")
+                    
+                    st.info("🌱 Coming Soon: Interactive data exploration tools, probability simulations, and statistical investigation generators connecting to environmental and social justice data.")
+                
+                with math_hub_tabs[3]:  # Geometry in Nature
+                    st.markdown("#### Discover Geometry in the Natural World")
+                    st.markdown("*Explore shapes, patterns, and spatial relationships in nature*")
+                    
+                    st.info("🌱 Coming Soon: Geometric pattern recognition tools, natural shape analysis, and 3D modeling connections to biological and architectural forms.")
+                
+                with math_hub_tabs[4]:  # Number Patterns
+                    st.markdown("#### Number Patterns & Sequence Explorations")
+                    st.markdown("*Investigate the numerical patterns that underlie natural phenomena*")
+                    
+                    st.info("🌱 Coming Soon: Interactive pattern generators, sequence investigation tools, and connections to mathematical concepts in nature, music, and art.")
         
         with teacher_tabs[2]:  # Student Management
             st.markdown("### Your Students & Their Journey")
@@ -3085,6 +3283,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
             "📊 Learning Profile",
             "📁 My Portfolio", 
             "🌟 My Journey",
+            "🧮 Math Explorer",
             "♿ Accessibility"
         ])
         
@@ -3912,7 +4111,124 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 if st.button("📊 View Learning Profile", use_container_width=True):
                     st.info("Visit the 'Learning Profile' tab for detailed progress tracking!")
         
-        with student_tabs[6]:  # Accessibility
+        with student_tabs[6]:  # Math Explorer
+            st.markdown("### 🧮 Math Explorer")
+            st.markdown("*Discover mathematical patterns in your world*")
+            
+            math_student_tabs = st.tabs([
+                "🌟 Pattern Detective",
+                "🔢 Number Adventures", 
+                "📊 Data Explorer",
+                "🧩 Problem Solver"
+            ])
+            
+            with math_student_tabs[0]:  # Pattern Detective
+                st.markdown("#### 🌟 Pattern Detective")
+                st.markdown("*Find mathematical patterns around you*")
+                
+                pattern_type = st.selectbox(
+                    "What patterns interest you?",
+                    [
+                        "Shapes in nature",
+                        "Numbers in everyday life",
+                        "Repeating patterns",
+                        "Growth patterns",
+                        "Musical patterns",
+                        "Art and symmetry"
+                    ]
+                )
+                
+                student_observation = st.text_area(
+                    "Describe what you've noticed:",
+                    placeholder="Tell me about a pattern you've seen or want to explore...",
+                    height=100
+                )
+                
+                if st.button("🔍 Explore This Pattern"):
+                    if student_observation:
+                        with st.spinner("Finding connections..."):
+                            prompt = f"""A student is interested in {pattern_type} and has observed: "{student_observation}"
+
+Help them explore this mathematical pattern by providing:
+
+1. **What Makes This Special**: Why this pattern is mathematically interesting
+2. **Look Closer**: Simple ways to investigate this pattern further
+3. **Try This**: A hands-on activity they can do to explore more
+4. **Connect It**: How this connects to other mathematical ideas
+5. **Wonder Questions**: Questions that might lead to new discoveries
+
+Keep the language engaging and age-appropriate. Focus on sparking curiosity and wonder about mathematics in their world."""
+
+                            messages = [{"role": "user", "content": prompt}]
+                            system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                            
+                            response = call_openai_api(messages, system_prompt)
+                            if response:
+                                st.markdown("### 🌟 Pattern Exploration")
+                                st.markdown(response)
+                    else:
+                        st.warning("Tell me about a pattern you've noticed!")
+            
+            with math_student_tabs[1]:  # Number Adventures
+                st.markdown("#### 🔢 Number Adventures")
+                st.markdown("*Explore the magic of numbers*")
+                
+                number_interest = st.selectbox(
+                    "What numbers fascinate you?",
+                    [
+                        "My favourite number",
+                        "Big numbers", 
+                        "Small numbers",
+                        "Numbers in my family",
+                        "Numbers in sports",
+                        "Numbers in time",
+                        "Numbers in money"
+                    ]
+                )
+                
+                number_input = st.text_input(
+                    "Share a number that interests you:",
+                    placeholder="e.g., 7, 100, my age, etc."
+                )
+                
+                if st.button("✨ Discover Number Magic"):
+                    if number_input:
+                        with st.spinner("Exploring your number..."):
+                            prompt = f"""A student is interested in {number_interest} and wants to explore the number: {number_input}
+
+Create an engaging number exploration that includes:
+
+1. **Cool Facts**: Interesting things about this number
+2. **Number Stories**: Where this number appears in the world
+3. **Try This**: Simple calculations or investigations they can do
+4. **Pattern Hunt**: Patterns related to this number
+5. **Next Steps**: Ways to explore similar numbers
+
+Make it fun, curious, and connected to their interests. Use simple language and encourage mathematical thinking."""
+
+                            messages = [{"role": "user", "content": prompt}]
+                            system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                            
+                            response = call_openai_api(messages, system_prompt)
+                            if response:
+                                st.markdown("### 🔢 Number Adventure")
+                                st.markdown(response)
+                    else:
+                        st.warning("Share a number you'd like to explore!")
+            
+            with math_student_tabs[2]:  # Data Explorer
+                st.markdown("#### 📊 Data Explorer")
+                st.markdown("*Turn your questions into data investigations*")
+                
+                st.info("🌱 Coming Soon: Tools to collect, organize, and analyze data about things that matter to you!")
+            
+            with math_student_tabs[3]:  # Problem Solver
+                st.markdown("#### 🧩 Problem Solver")
+                st.markdown("*Work through mathematical challenges*")
+                
+                st.info("🌱 Coming Soon: Step-by-step guidance for mathematical problem solving and reasoning!")
+
+        with student_tabs[7]:  # Accessibility
             accessibility_wizard()
         
         st.markdown('</div>', unsafe_allow_html=True)
