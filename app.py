@@ -948,7 +948,8 @@ def ensure_session_state():
             'dyslexia_support': False,
             'adhd_support': False,
             'memory_support': False
-        }
+        },
+        'student_work_timeline': {}
     }
     
     for key, default_value in defaults.items():
@@ -3313,7 +3314,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
                             favorite_types[activity_type] = favorite_types.get(activity_type, 0) + 1
                         
                         if favorite_types:
-                            most_common = max(favorite_types, key=favorite_types.get)
+                            most_common = max(favorite_types.keys(), key=lambda k: favorite_types[k])
                             st.metric("Favorite Activity Type", most_common.replace('_', ' ').title())
                     with col3:
                         # Show streak or consistency
@@ -3578,6 +3579,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 st.markdown("#### My Work Over Time")
                 
                 # Get student's work timeline
+                if 'student_work_timeline' not in st.session_state:
+                    st.session_state.student_work_timeline = {}
                 timeline_data = st.session_state.student_work_timeline.get(current_user, [])
                 
                 if timeline_data:
@@ -3677,7 +3680,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
                         portfolio_counts[portfolio] = portfolio_counts.get(portfolio, 0) + 1
                     
                     if portfolio_counts:
-                        most_active = max(portfolio_counts, key=portfolio_counts.get)
+                        most_active = max(portfolio_counts.keys(), key=lambda k: portfolio_counts[k])
                         st.metric("Most Active Portfolio", f"{most_active} ({portfolio_counts[most_active]} works)")
                 
                 # Link to detailed profile
