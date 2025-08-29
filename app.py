@@ -2454,7 +2454,7 @@ Please provide a thoughtful response that addresses their request while maintain
             with tool_subtabs[2]:  # Big Picture Curriculum Mapping
                 st.markdown("### 🗺️ Big Picture Curriculum Mapping")
                 st.markdown("*Map how knowledge connects across subjects and time*")
-                st.info("💡 **What this does:** Shows how topics connect across different subjects and build on each other. Like a scope & sequence creator that reveals the web of knowledge. Perfect for long-term planning and seeing the bigger picture.")
+                st.info("💡 **What this does:** Shows how topics connect across different subjects and build on each other. Reveals the web of knowledge for long-term planning and seeing the bigger picture.")
                 
                 # Simplified, guided approach
                 st.markdown("#### 🧭 Quick Start: Choose your approach")
