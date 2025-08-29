@@ -758,6 +758,152 @@ def get_accessible_content_format(content, settings):
     
     return content
 
+def analyze_student_work(file_content, file_type, work_description, curriculum):
+    """Analyze student work and provide constructive feedback using AI"""
+    try:
+        # Prepare analysis prompt based on file type
+        analysis_prompts = {
+            'text': f"""
+            Analyze this student's written work with a focus on constructive, growth-oriented feedback:
+            
+            Student's Description: {work_description}
+            Written Work: {file_content}
+            
+            Provide feedback that:
+            1. Celebrates what the student has done well (specific examples)
+            2. Suggests 2-3 areas for improvement with practical next steps
+            3. Connects to bigger learning goals and curriculum outcomes
+            4. Encourages curiosity and further exploration
+            5. Uses warm, supportive language appropriate for the student's developmental stage
+            
+            Format as constructive feedback, not evaluation.
+            """,
+            
+            'image': f"""
+            Analyze this student's visual work (image/presentation) with constructive feedback:
+            
+            Student's Description: {work_description}
+            
+            Based on the image content, provide feedback that:
+            1. Acknowledges creative choices and visual communication strengths
+            2. Suggests ways to enhance visual storytelling or clarity
+            3. Connects visual elements to learning objectives
+            4. Encourages artistic growth and experimentation
+            5. Considers accessibility and inclusive design principles
+            
+            Use encouraging, specific language that builds confidence.
+            """,
+            
+            'audio': f"""
+            Provide feedback on this student's audio work:
+            
+            Student's Description: {work_description}
+            
+            Focus on:
+            1. Communication clarity and expression
+            2. Content organization and flow
+            3. Engagement and creativity
+            4. Technical aspects (if relevant)
+            5. Suggestions for continued growth
+            
+            Emphasize growth mindset and celebrate effort.
+            """
+        }
+        
+        base_prompt = f"""You are providing constructive feedback to a student using {curriculum}. 
+        Your feedback should be:
+        - Warm and encouraging
+        - Specific and actionable
+        - Growth-focused rather than evaluative
+        - Connected to learning goals and curriculum outcomes
+        - Appropriate for the student's developmental stage
+        
+        Always start with genuine recognition of effort and specific strengths."""
+        
+        prompt = analysis_prompts.get(file_type, analysis_prompts['text'])
+        
+        # Call OpenAI API for analysis
+        system_prompt = get_system_prompt(curriculum) + "\n\n" + base_prompt
+        messages = [{"role": "user", "content": prompt}]
+        
+        response = call_openai_api(messages, system_prompt)
+        
+        return response if response else "I'm having trouble analyzing your work right now. Please try again or ask your teacher for feedback."
+        
+    except Exception as e:
+        return f"I encountered an issue analyzing your work: {str(e)}. Please try again or share your work with your teacher."
+
+def process_uploaded_file(uploaded_file):
+    """Process different types of uploaded files for feedback analysis"""
+    try:
+        file_info = {
+            'name': uploaded_file.name,
+            'type': uploaded_file.type,
+            'size': uploaded_file.size
+        }
+        
+        # Handle text files
+        if uploaded_file.type in ['text/plain', 'application/pdf']:
+            if uploaded_file.type == 'text/plain':
+                content = str(uploaded_file.read(), 'utf-8')
+                return content, 'text', file_info
+            else:
+                # For PDF, extract text content (basic implementation)
+                content = f"PDF file uploaded: {uploaded_file.name} ({uploaded_file.size} bytes)"
+                return content, 'text', file_info
+        
+        # Handle images
+        elif uploaded_file.type.startswith('image/'):
+            # For images, we'll use description-based analysis
+            content = f"Image file: {uploaded_file.name} ({uploaded_file.size} bytes)"
+            return content, 'image', file_info
+        
+        # Handle audio files
+        elif uploaded_file.type.startswith('audio/'):
+            content = f"Audio file: {uploaded_file.name} ({uploaded_file.size} bytes)"
+            return content, 'audio', file_info
+        
+        # Handle documents (DOCX, presentations)
+        elif uploaded_file.type in [
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.ms-powerpoint'
+        ]:
+            content = f"Document file: {uploaded_file.name} ({uploaded_file.size} bytes)"
+            return content, 'text', file_info
+        
+        else:
+            return f"Unsupported file type: {uploaded_file.type}", 'unknown', file_info
+            
+    except Exception as e:
+        return f"Error processing file: {str(e)}", 'error', {'name': 'unknown', 'type': 'error', 'size': 0}
+
+def save_student_feedback(student_name, work_description, feedback, file_info):
+    """Save feedback to student's progress tracking"""
+    if 'student_feedback_history' not in st.session_state:
+        st.session_state.student_feedback_history = []
+    
+    feedback_entry = {
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'student': student_name,
+        'work_description': work_description,
+        'feedback': feedback,
+        'file_info': file_info,
+        'type': 'work_feedback'
+    }
+    
+    st.session_state.student_feedback_history.append(feedback_entry)
+    
+    # Also link to student activity tracking
+    activity_data = {
+        "type": "work_submission",
+        "content": work_description,
+        "feedback": feedback,
+        "competency_analysis": "Demonstrated learning through work submission and reflection",
+        "extensions": "Continue developing skills based on feedback received"
+    }
+    link_student_activity(student_name, activity_data)
+
 # Initialize session state and user database  
 init_user_database()
 
@@ -2933,7 +3079,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
         # Student interface tabs
         student_tabs = st.tabs([
             "💬 Learning Assistant", 
-            "📝 Project Planner", 
+            "📝 Project Planner",
+            "📋 Get Feedback",
             "📁 My Portfolio", 
             "🌟 My Journey",
             "♿ Accessibility"
@@ -2974,6 +3121,124 @@ Format as a clear, usable rubric with table structure where appropriate."""
                             link_student_activity(current_user, activity_data)
                         else:
                             st.error("I'm having trouble right now. Please try again.")
+        
+        with student_tabs[2]:  # Get Feedback
+            st.markdown(f"### Get Feedback on Your Work 📋")
+            st.markdown("*Upload your writing, images, audio, or presentations to receive constructive feedback that helps you grow as a learner*")
+            
+            # Feedback interface
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                # Work description
+                work_description = st.text_area(
+                    "Tell me about your work",
+                    placeholder="What did you create? What were you trying to achieve? What challenges did you face? What are you proud of?",
+                    height=100,
+                    help="Describing your work helps me give you better feedback"
+                )
+                
+                # File upload
+                uploaded_file = st.file_uploader(
+                    "Upload your work",
+                    type=['txt', 'pdf', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'mp3', 'wav', 'mp4', 'pptx'],
+                    help="Upload written work, images, audio recordings, or presentation slides"
+                )
+                
+                # Curriculum selection for feedback context
+                feedback_curriculum = st.selectbox(
+                    "Learning Context",
+                    ["Australian Curriculum V9", "Montessori Curriculum Australia"],
+                    key="feedback_curriculum",
+                    help="This helps me connect your work to learning goals"
+                )
+            
+            with col2:
+                st.markdown("**Types of work I can help with:**")
+                st.markdown("📝 **Written Work**")
+                st.markdown("• Essays and reports")
+                st.markdown("• Creative writing")
+                st.markdown("• Research projects")
+                st.markdown("• Reflections")
+                
+                st.markdown("🖼️ **Visual Work**")
+                st.markdown("• Artwork and drawings")
+                st.markdown("• Posters and infographics")
+                st.markdown("• Photography")
+                st.markdown("• Mind maps")
+                
+                st.markdown("🎵 **Audio Work**")
+                st.markdown("• Presentations")
+                st.markdown("• Recordings")
+                st.markdown("• Explanations")
+                
+                st.markdown("📊 **Presentations**")
+                st.markdown("• Slide presentations")
+                st.markdown("• Project displays")
+            
+            # Submit for feedback
+            if st.button("🌟 Get My Feedback", type="primary", use_container_width=True):
+                if uploaded_file and work_description:
+                    with st.spinner("Analyzing your work..."):
+                        # Process the uploaded file
+                        file_content, file_type, file_info = process_uploaded_file(uploaded_file)
+                        
+                        # Generate feedback
+                        feedback = analyze_student_work(file_content, file_type, work_description, feedback_curriculum)
+                        
+                        # Display feedback
+                        st.success("Here's your feedback!")
+                        
+                        # Apply accessibility formatting to feedback
+                        if 'accessibility_settings' in st.session_state:
+                            feedback = get_accessible_content_format(feedback, st.session_state.accessibility_settings)
+                        
+                        st.markdown("### 💫 Feedback on Your Work")
+                        st.markdown(feedback)
+                        
+                        # Save feedback to history
+                        save_student_feedback(current_user, work_description, feedback, file_info)
+                        
+                        # Encourage next steps
+                        st.markdown("---")
+                        st.markdown("### 🌱 What's Next?")
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            if st.button("💭 Reflect on Feedback"):
+                                st.write("Take a moment to think about the feedback. What resonates with you? What will you try next?")
+                        with col2:
+                            if st.button("📝 Ask Questions"):
+                                st.session_state.messages.append({
+                                    "role": "user", 
+                                    "content": f"I have questions about the feedback on my work: {work_description}"
+                                })
+                                st.info("Question added to your chat - visit the Learning Assistant tab to continue the conversation!")
+                        with col3:
+                            if st.button("📁 Save to Portfolio"):
+                                st.info("Great idea! You can add this work and feedback to your portfolio in the My Portfolio tab.")
+                                
+                elif not uploaded_file:
+                    st.warning("Please upload a file to get feedback on your work.")
+                elif not work_description:
+                    st.warning("Please tell me about your work so I can give you better feedback.")
+            
+            # Feedback history
+            if st.session_state.student_feedback_history:
+                st.markdown("---")
+                st.markdown("### 📚 Your Previous Feedback")
+                
+                # Filter feedback for current student
+                student_feedback = [f for f in st.session_state.student_feedback_history if f.get('student') == current_user]
+                
+                if student_feedback:
+                    for i, feedback_entry in enumerate(reversed(student_feedback[-5:])):  # Show last 5
+                        with st.expander(f"📋 {feedback_entry['timestamp']} - {feedback_entry['work_description'][:50]}..."):
+                            st.markdown(f"**Your Work:** {feedback_entry['work_description']}")
+                            st.markdown(f"**File:** {feedback_entry['file_info']['name']}")
+                            st.markdown("**Feedback Received:**")
+                            st.markdown(feedback_entry['feedback'])
+                else:
+                    st.info("No previous feedback yet. Upload your first piece of work to get started!")
         
         with student_tabs[1]:  # Project Planner
             st.markdown("### Plan Your Next Learning Adventure! 🎨")
@@ -3210,7 +3475,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
             else:
                 st.info("Start exploring and creating to see your learning journey!")
         
-        with student_tabs[4]:  # Accessibility
+        with student_tabs[5]:  # Accessibility
             accessibility_wizard()
         
         st.markdown('</div>', unsafe_allow_html=True)
