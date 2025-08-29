@@ -974,7 +974,23 @@ def get_system_prompt(curriculum):
 
 You honour the adolescent developmental plane: curiosity, belonging, purpose, and independence. You emphasise interconnections across disciplines rather than siloed subjects, drawing attention to big ideas and patterns (cycles, cause-and-effect, networks) rather than isolated facts. 
 
-You respect Montessori principles of freedom within responsibility, hands-on experience, and student agency. You help teachers, students, and parents understand not only what to learn, but why it matters in the bigger picture of life and the world."""
+You respect Montessori principles of freedom within responsibility, hands-on experience, and student agency. You help teachers, students, and parents understand not only what to learn, but why it matters in the bigger picture of life and the world.
+
+EMBEDDED CURRICULUM DESIGN COMPONENTS:
+{
+    "Component": "Inquiry-Driven Questions",
+    "Description": "Use open-ended, essential questions to guide interdisciplinary learning and spark student engagement.",
+    "Keywords": "big questions, inquiry-based, thematic learning",
+    "Use_Case": "Anchor question generator that prompts users to define unit themes."
+},
+{
+    "Component": "Conceptual Organizers", 
+    "Description": "Organize curriculum around big concepts that connect across disciplines and promote deep understanding.",
+    "Keywords": "concept mapping, interdisciplinary, themes",
+    "Use_Case": "Visual concept map interface for designing cross-subject units."
+}
+
+When appropriate, incorporate these components as guardrails to guide curriculum design towards inquiry-based, conceptual approaches that foster deep connections and authentic engagement."""
     
     # Add uploaded curriculum content if available
     uploaded_content = ""
@@ -3392,37 +3408,60 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 st.success("Portfolio reflection saved!")
                                 st.rerun()
                         
-                        # Add new work to portfolio
+                        # Add new work to portfolio with enhanced file upload
                         st.markdown("---")
                         st.markdown("#### ➕ Add New Work")
                         
-                        add_col1, add_col2 = st.columns([2, 1])
+                        # Enhanced file upload section
+                        st.markdown("##### 📎 Upload Your Work")
+                        upload_col1, upload_col2 = st.columns(2)
                         
-                        with add_col1:
-                            work_title = st.text_input("Work title:", key=f"work_title_{selected_portfolio}")
-                            work_description = st.text_area(
-                                "Describe your work:",
-                                placeholder="What did you create? What was your process?",
-                                height=80,
-                                key=f"work_desc_{selected_portfolio}"
+                        with upload_col1:
+                            st.markdown("**Documents & Images:**")
+                            doc_file = st.file_uploader(
+                                "Documents, PDFs, Images",
+                                type=['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'],
+                                key=f"doc_upload_{selected_portfolio}",
+                                help="Upload documents, PDFs, or images of your work"
+                            )
+                        
+                        with upload_col2:
+                            st.markdown("**Audio & Video:**")
+                            media_file = st.file_uploader(
+                                "Audio & Video Files",
+                                type=['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'avi', 'mov', 'mkv', 'webm'],
+                                key=f"media_upload_{selected_portfolio}",
+                                help="Upload audio recordings or video presentations"
+                            )
+                        
+                        # Work details section
+                        st.markdown("##### 📝 Work Details")
+                        detail_col1, detail_col2 = st.columns([2, 1])
+                        
+                        with detail_col1:
+                            work_title = st.text_input(
+                                "📌 Title of your work:",
+                                placeholder="Give your work a meaningful title",
+                                key=f"work_title_{selected_portfolio}"
                             )
                             
-                            # File upload for portfolio entry
-                            uploaded_file = st.file_uploader(
-                                "Upload your work (optional):",
-                                type=['pdf', 'doc', 'docx', 'jpg', 'png', 'mp3', 'mp4', 'txt'],
-                                key=f"upload_{selected_portfolio}"
+                            work_description = st.text_area(
+                                "📝 Describe your work:",
+                                placeholder="What did you create? What was your process? What challenges did you face?",
+                                height=100,
+                                key=f"work_desc_{selected_portfolio}"
                             )
                         
-                        with add_col2:
+                        with detail_col2:
                             work_annotation = st.text_area(
                                 "📝 Annotate your work:",
                                 placeholder="What did you learn? What was challenging? What would you do differently next time?",
-                                height=120,
+                                height=140,
                                 key=f"annotation_{selected_portfolio}"
                             )
                         
                         if st.button("📥 Add to Portfolio", key=f"add_work_{selected_portfolio}"):
+                            uploaded_file = doc_file or media_file  # Use either document or media file
                             if work_title and (work_description or uploaded_file):
                                 # Add work to portfolio with annotation and detailed timestamp
                                 current_time = datetime.now()
@@ -3438,7 +3477,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                     'file_info': {
                                         'name': uploaded_file.name if uploaded_file else None,
                                         'type': uploaded_file.type if uploaded_file else None,
-                                        'size': uploaded_file.size if uploaded_file else None
+                                        'size': uploaded_file.size if uploaded_file else None,
+                                        'category': 'document' if doc_file else 'media' if media_file else None
                                     } if uploaded_file else None
                                 }
                                 
@@ -3489,7 +3529,12 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                             if entry.get('annotation'):
                                                 st.markdown(f"**My Annotation:** {entry['annotation']}")
                                             if entry.get('file_info') and entry['file_info']:
-                                                st.markdown(f"**File:** {entry['file_info']['name']}")
+                                                file_category = entry['file_info'].get('category', 'file')
+                                                file_icon = "📄" if file_category == 'document' else "🎵" if file_category == 'media' else "📎"
+                                                st.markdown(f"**{file_icon} File:** {entry['file_info']['name']}")
+                                                if entry['file_info'].get('size'):
+                                                    size_mb = entry['file_info']['size'] / (1024 * 1024)
+                                                    st.caption(f"Size: {size_mb:.2f} MB")
                                             
                                             # Allow editing annotations
                                             new_annotation = st.text_area(
