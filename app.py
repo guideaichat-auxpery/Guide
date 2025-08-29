@@ -2296,9 +2296,23 @@ Honor both rigorous curriculum standards and cosmic education principles of inte
                         if uploaded_lesson.type == "text/plain":
                             lesson_content = str(uploaded_lesson.read(), "utf-8")
                             st.session_state.uploaded_lesson_content = lesson_content
+                            st.session_state.uploaded_lesson_name = uploaded_lesson.name
                             st.success(f"✓ Loaded {uploaded_lesson.name}")
                             
-                            if st.button("🔍 Analyze My Lesson", use_container_width=True):
+                            # Show delete option for uploaded lesson
+                            col_analyze, col_delete = st.columns([3, 1])
+                            with col_analyze:
+                                analyze_button = st.button("🔍 Analyze My Lesson", use_container_width=True)
+                            with col_delete:
+                                if st.button("🗑️ Delete", use_container_width=True, type="secondary"):
+                                    if hasattr(st.session_state, 'uploaded_lesson_content'):
+                                        del st.session_state.uploaded_lesson_content
+                                    if hasattr(st.session_state, 'uploaded_lesson_name'):
+                                        del st.session_state.uploaded_lesson_name
+                                    st.success("Lesson content deleted!")
+                                    st.rerun()
+                            
+                            if analyze_button:
                                 with st.spinner("Analyzing your lesson..."):
                                     feedback_prompt = f"""Please analyze this lesson plan and provide {lesson_feedback_type.lower()}:
 
@@ -2592,6 +2606,11 @@ Please provide a thoughtful response that addresses their request while maintain
                                 'type': uploaded_photo.type,
                                 'size': uploaded_photo.size
                             })
+                    
+                    # Add clear all photos button
+                    if st.button("🗑️ Clear All Photos", type="secondary"):
+                        st.success("✅ All photos permanently cleared! Upload new photos if needed.")
+                        st.rerun()
                 
                 st.markdown("---")
                 st.markdown("#### 📝 Communication Content")
@@ -3126,7 +3145,7 @@ Design this as an inquiry that honors student agency while building genuine math
                         st.markdown(f"### Progress Report for {student_name}")
                         
                         if st.button("Generate Progress Report"):
-                            progress_report = generate_progress_report(selected_student, curriculum)
+                            progress_report = generate_progress_report(selected_student, "Blended (Cosmic Education Priority)")
                             st.markdown(progress_report)
                 else:
                     st.info("No students created yet. Use the 'Create Student' tab to add students.")
@@ -3844,18 +3863,40 @@ Design this as an inquiry that honors student agency while building genuine math
                                                     size_mb = entry['file_info']['size'] / (1024 * 1024)
                                                     st.caption(f"Size: {size_mb:.2f} MB")
                                             
-                                            # Allow editing annotations
-                                            new_annotation = st.text_area(
-                                                "Edit annotation:",
-                                                value=entry.get('annotation', ''),
-                                                placeholder="Add or update your annotation...",
-                                                key=f"edit_annotation_{selected_portfolio}_{entry_type}_{i}"
-                                            )
+                                            # Action buttons
+                                            action_col1, action_col2 = st.columns([3, 1])
                                             
-                                            if st.button("💾 Update Annotation", key=f"update_ann_{selected_portfolio}_{entry_type}_{i}"):
-                                                entry['annotation'] = new_annotation
-                                                st.success("Annotation updated!")
-                                                st.rerun()
+                                            with action_col1:
+                                                # Allow editing annotations
+                                                new_annotation = st.text_area(
+                                                    "Edit annotation:",
+                                                    value=entry.get('annotation', ''),
+                                                    placeholder="Add or update your annotation...",
+                                                    key=f"edit_annotation_{selected_portfolio}_{entry_type}_{i}",
+                                                    height=60
+                                                )
+                                            
+                                            with action_col2:
+                                                st.markdown("#### Actions")
+                                                if st.button("💾 Update", key=f"update_ann_{selected_portfolio}_{entry_type}_{i}", use_container_width=True):
+                                                    entry['annotation'] = new_annotation
+                                                    st.success("Annotation updated!")
+                                                    st.rerun()
+                                                
+                                                if st.button("🗑️ Delete", key=f"delete_entry_{selected_portfolio}_{entry_type}_{i}", type="secondary", use_container_width=True):
+                                                    # Remove from portfolio entries
+                                                    entries.pop(i)
+                                                    # Also remove from timeline if it exists
+                                                    if current_user in st.session_state.student_work_timeline:
+                                                        timeline_entries = st.session_state.student_work_timeline[current_user]
+                                                        # Find and remove matching timeline entry
+                                                        for j, timeline_entry in enumerate(timeline_entries):
+                                                            if (timeline_entry.get('title') == entry['title'] and 
+                                                                timeline_entry.get('portfolio') == selected_portfolio):
+                                                                timeline_entries.pop(j)
+                                                                break
+                                                    st.success(f"'{entry['title']}' permanently deleted!")
+                                                    st.rerun()
                         else:
                             st.info("No entries yet. Add your first piece of work above!")
                 else:
@@ -4364,6 +4405,17 @@ if st.session_state.authenticated:
             type=["txt", "csv"],
             help="Upload curriculum notes to enhance AI responses"
         )
+        
+        # Show uploaded content with deletion option
+        if hasattr(st.session_state, 'uploaded_content') and st.session_state.uploaded_content:
+            st.success("✓ Curriculum content uploaded")
+            with st.expander("View uploaded content"):
+                st.text_area("Content", st.session_state.uploaded_content[:500] + "..." if len(st.session_state.uploaded_content) > 500 else st.session_state.uploaded_content, height=100, disabled=True)
+            
+            if st.button("🗑️ Delete Uploaded Content", type="secondary"):
+                del st.session_state.uploaded_content
+                st.success("✅ Uploaded content permanently deleted!")
+                st.rerun()
         
         if uploaded_file is not None:
             try:
