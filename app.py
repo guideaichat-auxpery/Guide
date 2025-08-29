@@ -811,12 +811,14 @@ def analyze_student_work(file_content, file_type, work_description, curriculum):
         }
         
         base_prompt = f"""You are providing constructive feedback to a student using {curriculum}. 
-        Your feedback should be:
-        - Warm and encouraging
-        - Specific and actionable
-        - Growth-focused rather than evaluative
-        - Connected to learning goals and curriculum outcomes
-        - Appropriate for the student's developmental stage
+        Your feedback should integrate both Australian Curriculum V9 outcomes and Montessori cosmic education principles:
+        - Warm and encouraging, honoring the student's natural curiosity
+        - Specific and actionable with practical next steps
+        - Growth-focused rather than evaluative, emphasizing the learning journey
+        - Connected to both curriculum standards and cosmic education themes
+        - Appropriate for the student's developmental stage and agency
+        - Celebrates effort and process over product
+        - Connects learning to bigger patterns and the student's place in the universe
         
         Always start with genuine recognition of effort and specific strengths."""
         
@@ -1305,26 +1307,7 @@ Design these as invitations to explore rather than assignments to complete, hono
     
     return call_openai_api(messages, system_prompt)
 
-def analyze_student_work(work_content, curriculum, work_type="general"):
-    """Analyze student work and provide developmental feedback"""
-    prompt = f"""Analyze this student work with the lens of Montessori's Cosmic Education and systems thinking:
 
-{work_content}
-
-Provide feedback that:
-- Celebrates what the student has discovered and connected
-- Identifies patterns, relationships, and systems thinking evident in their work
-- Suggests gentle next steps that honor their curiosity and developmental readiness
-- Shows how their thinking connects to larger webs of knowledge
-- Offers questions that invite deeper exploration rather than corrections
-- Recognizes their unique perspective and contribution to understanding
-
-Frame feedback as a conversation with a fellow explorer of knowledge, honoring their agency and natural desire to learn."""
-    
-    messages = [{"role": "user", "content": prompt}]
-    system_prompt = get_system_prompt(curriculum)
-    
-    return call_openai_api(messages, system_prompt)
 
 def suggest_skill_extensions(work_content, curriculum, student_interests=""):
     """Suggest ways to extend learning based on student work"""
@@ -3145,13 +3128,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
                     help="Upload written work, images, audio recordings, or presentation slides"
                 )
                 
-                # Curriculum selection for feedback context
-                feedback_curriculum = st.selectbox(
-                    "Learning Context",
-                    ["Australian Curriculum V9", "Montessori Curriculum Australia"],
-                    key="feedback_curriculum",
-                    help="This helps me connect your work to learning goals"
-                )
+                # Always use blended curriculum model for students
+                feedback_curriculum = "Blended Curriculum (AC V9 + Montessori)"
             
             with col2:
                 st.markdown("**Types of work I can help with:**")

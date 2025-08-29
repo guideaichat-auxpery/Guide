@@ -40,7 +40,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Learning Invitations & Connections**: Tool for creating and curating learning experiences.
 - **Learning Threads & Patterns**: Interconnected topic mapping.
 - **Family & Community Connection**: Facilitates parent communication with a cosmic perspective.
-- **Student Work Analysis**: AI-powered multi-modal feedback system focusing on growth and next steps.
+- **Student Work Analysis**: AI-powered multi-modal feedback system focusing on growth and next steps. Always uses blended curriculum approach (AC V9 + Montessori) for consistency.
 - **Skill Development**: Personalized learning pathways.
 - **Assessment Rubrics System**: Advanced, configurable rubric generator supporting multiple curricula and assessment types.
 - **Progress Tracking**: Holistic student monitoring, including Learning Journey Reports and CEC competency tracking.
