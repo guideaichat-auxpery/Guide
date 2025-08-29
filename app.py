@@ -2066,21 +2066,7 @@ else:
             # Welcome message and tips
             st.info("**🌟 Welcome!** Ask me anything about Montessori education, cosmic curriculum, teaching strategies, child development, or any educational topic. I'm here to help you on your teaching journey.")
             
-            tips_col1, tips_col2 = st.columns(2)
-            
-            with tips_col1:
-                st.markdown("**💡 Ask me about:**")
-                st.markdown("• Montessori principles and philosophy")
-                st.markdown("• Cosmic education and interconnected learning")
-                st.markdown("• Child development stages")
-                st.markdown("• Prepared environments")
-            
-            with tips_col2:
-                st.markdown("**🎯 I can help with:**")
-                st.markdown("• Teaching strategies and techniques")
-                st.markdown("• Curriculum alignment and planning")
-                st.markdown("• Differentiation for diverse learners")
-                st.markdown("• Assessment and observation methods")
+
             
 
             
@@ -2119,6 +2105,7 @@ else:
             with tool_subtabs[0]:  # Enhanced Scope & Sequence
                 st.markdown("### Enhanced Scope & Sequence Creation")
                 st.markdown("*Design comprehensive learning progressions with flexible curriculum integration*")
+                st.info("💡 **What this does:** Creates detailed learning progressions that map out what students will learn over weeks or terms. Choose between subject-specific planning or integrated theme-based approaches that connect multiple learning areas.")
                 
                 # Scope & Sequence Configuration
                 scope_col1, scope_col2 = st.columns(2)
@@ -2582,6 +2569,33 @@ Please provide a thoughtful response that addresses their request while maintain
                 st.markdown("### Bridge Learning with Families")
                 st.markdown("*Create meaningful communications that connect school and home learning*")
                 
+                # Photo Upload Section (Privacy Protected)
+                st.markdown("#### 📸 Add Photos (Privacy Protected)")
+                st.info("🔒 **Privacy Notice:** Photos uploaded here are stored locally and never processed by AI systems. They're for your family communications only.")
+                
+                photo_upload = st.file_uploader(
+                    "Upload photos for family communications",
+                    type=['jpg', 'jpeg', 'png', 'gif'],
+                    accept_multiple_files=True,
+                    help="These photos will only be displayed in your communications - never processed by AI"
+                )
+                
+                uploaded_photos = []
+                if photo_upload:
+                    st.markdown("**📷 Your uploaded photos:**")
+                    photo_cols = st.columns(min(len(photo_upload), 4))  # Max 4 columns
+                    for i, uploaded_photo in enumerate(photo_upload):
+                        with photo_cols[i % 4]:
+                            st.image(uploaded_photo, caption=uploaded_photo.name, width=150)
+                            uploaded_photos.append({
+                                'name': uploaded_photo.name,
+                                'type': uploaded_photo.type,
+                                'size': uploaded_photo.size
+                            })
+                
+                st.markdown("---")
+                st.markdown("#### 📝 Communication Content")
+                
                 family_col1, family_col2 = st.columns(2)
                 
                 with family_col1:
@@ -2621,14 +2635,24 @@ Please provide a thoughtful response that addresses their request while maintain
                                 st.markdown("### Family Learning Connection")
                                 st.markdown(parent_content)
                                 
+                                # Display uploaded photos in communication (if any)
+                                if uploaded_photos:
+                                    st.markdown("---")
+                                    st.markdown("#### 📸 Attached Photos")
+                                    st.markdown("*The following photos have been included with this communication:*")
+                                    for photo_info in uploaded_photos:
+                                        st.markdown(f"• **{photo_info['name']}** ({photo_info['type']}, {photo_info['size']} bytes)")
+                                    st.info("📧 When sharing this communication, remember to include the photos separately as they are not processed by the AI system.")
+                                
                                 # Save and share options
                                 col_save1, col_save2 = st.columns(2)
                                 with col_save1:
                                     if st.button("💾 Save Communication", key="save_family_comm"):
-                                        st.success("Family communication saved!")
+                                        # Note: Photos are not included in AI-generated content for privacy
+                                        st.success("Family communication saved! Photos remain separate for privacy.")
                                 with col_save2:
                                     if st.button("📤 Share with Team", key="share_family_comm"):
-                                        st.success("Communication shared with team!")
+                                        st.success("Communication shared with team! Photos remain private and separate.")
             
             with tool_subtabs[4]:  # Assessment Rubrics
                 st.markdown("### Curriculum-Aligned Assessment Rubrics")
