@@ -2050,7 +2050,7 @@ else:
         
         # Main teacher interface tabs
         teacher_tabs = st.tabs([
-            "💬 AI Assistant", 
+            "💬 Ask Maria", 
             "🧠 Learning Tools", 
             "👥 Student Management", 
             "🤝 Collaboration",
@@ -2059,27 +2059,28 @@ else:
             "💌 Pilot Feedback"
         ])
         
-        with teacher_tabs[0]:  # AI Assistant
-            st.markdown("### Your AI Teaching Companion")
-            st.markdown("*Chat with Maria, your cosmic curriculum guide, for teaching inspiration and practical guidance*")
+        with teacher_tabs[0]:  # Ask Maria
+            st.markdown("### 💬 Ask Maria")
+            st.markdown("*Your cosmic curriculum guide for Montessori wisdom, teaching inspiration, and practical guidance*")
             
-            # Curriculum selector and document upload
-            col1, col2 = st.columns([2, 1])
+            # Welcome message and tips
+            st.info("**🌟 Welcome!** Ask me anything about Montessori education, cosmic curriculum, teaching strategies, child development, or any educational topic. I'm here to help you on your teaching journey.")
             
-            with col1:
-                curriculum = st.selectbox(
-                    "📚 Curriculum Framework",
-                    ["Australian Curriculum V9", "Montessori Curriculum Australia"],
-                    key="teacher_curriculum_selector"
-                )
-                st.session_state.curriculum = curriculum
+            tips_col1, tips_col2 = st.columns(2)
             
-            with col2:
-                st.markdown("**💡 Quick Tips:**")
-                st.markdown("• Ask about curriculum alignment")
-                st.markdown("• Request cosmic education connections")
-                st.markdown("• Get differentiation strategies")
-                st.markdown("• Discuss assessment approaches")
+            with tips_col1:
+                st.markdown("**💡 Ask me about:**")
+                st.markdown("• Montessori principles and philosophy")
+                st.markdown("• Cosmic education and interconnected learning")
+                st.markdown("• Child development stages")
+                st.markdown("• Prepared environments")
+            
+            with tips_col2:
+                st.markdown("**🎯 I can help with:**")
+                st.markdown("• Teaching strategies and techniques")
+                st.markdown("• Curriculum alignment and planning")
+                st.markdown("• Differentiation for diverse learners")
+                st.markdown("• Assessment and observation methods")
             
 
             
@@ -2088,15 +2089,15 @@ else:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
             
-            if prompt := st.chat_input("Ask Maria a question about teaching, learning, or cosmic connections..."):
+            if prompt := st.chat_input("Ask me anything about Montessori education, teaching, or learning..."):
                 st.session_state.messages.append({"role": "user", "content": prompt})
                 
                 with st.chat_message("user"):
                     st.markdown(prompt)
                 
                 with st.chat_message("assistant"):
-                    with st.spinner("Reflecting on cosmic connections..."):
-                        system_prompt = get_system_prompt(st.session_state.curriculum)
+                    with st.spinner("Reflecting on your question..."):
+                        system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
                         response = call_openai_api(st.session_state.messages, system_prompt)
                         
                         if response:
