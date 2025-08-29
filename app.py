@@ -3422,12 +3422,17 @@ Format as a clear, usable rubric with table structure where appropriate."""
                         
                         if st.button("📥 Add to Portfolio", key=f"add_work_{selected_portfolio}"):
                             if work_title and (work_description or uploaded_file):
-                                # Add work to portfolio with annotation
+                                # Add work to portfolio with annotation and detailed timestamp
+                                current_time = datetime.now()
                                 entry = {
                                     'title': work_title,
                                     'description': work_description,
                                     'annotation': work_annotation,
-                                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                    'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                                    'date': current_time.strftime("%Y-%m-%d"),
+                                    'time': current_time.strftime("%H:%M"),
+                                    'portfolio_name': selected_portfolio,
+                                    'student': current_user,
                                     'file_info': {
                                         'name': uploaded_file.name if uploaded_file else None,
                                         'type': uploaded_file.type if uploaded_file else None,
@@ -3440,6 +3445,27 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 if entry_type not in portfolio['entries']:
                                     portfolio['entries'][entry_type] = []
                                 portfolio['entries'][entry_type].append(entry)
+                                
+                                # Also add to global student work timeline for My Journey
+                                if 'student_work_timeline' not in st.session_state:
+                                    st.session_state.student_work_timeline = {}
+                                if current_user not in st.session_state.student_work_timeline:
+                                    st.session_state.student_work_timeline[current_user] = []
+                                
+                                # Add timeline entry
+                                timeline_entry = {
+                                    'title': work_title,
+                                    'description': work_description,
+                                    'annotation': work_annotation,
+                                    'portfolio': selected_portfolio,
+                                    'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                                    'date': current_time.strftime("%Y-%m-%d"),
+                                    'month': current_time.strftime("%Y-%m"),
+                                    'year': current_time.strftime("%Y"),
+                                    'type': entry_type,
+                                    'file_info': entry['file_info']
+                                }
+                                st.session_state.student_work_timeline[current_user].append(timeline_entry)
                                 
                                 st.success(f"Added '{work_title}' to your {selected_portfolio} portfolio!")
                                 st.rerun()
@@ -3545,45 +3571,119 @@ Format as a clear, usable rubric with table structure where appropriate."""
             st.markdown("### My Learning Journey 🌟")
             st.markdown("*See how you're growing and learning*")
             
-            # Simple learning journey timeline focused on milestones and achievements
-            progress_data = st.session_state.student_progress.get(current_user, {})
-            if progress_data:
-                activities = progress_data.get('activities', [])
+            # Chronological portfolio work timeline and achievements
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown("#### My Work Over Time")
                 
-                # Show learning milestones and achievements
-                total_activities = len(activities)
-                st.markdown("#### My Learning Milestones")
+                # Get student's work timeline
+                timeline_data = st.session_state.student_work_timeline.get(current_user, [])
                 
-                # Achievement badges
-                achievements = []
-                if total_activities >= 5:
-                    achievements.append("🌱 Learning Sprout (5+ activities)")
-                if total_activities >= 15:
-                    achievements.append("🌿 Growing Learner (15+ activities)")
-                if total_activities >= 30:
-                    achievements.append("🌳 Knowledge Tree (30+ activities)")
+                if timeline_data:
+                    # Sort chronologically (newest first)
+                    sorted_timeline = sorted(timeline_data, key=lambda x: x['timestamp'], reverse=True)
+                    
+                    # Time period selector
+                    time_filter = st.selectbox("View work from:", [
+                        "All time", "This month", "Last 3 months", "This year"
+                    ])
+                    
+                    # Filter timeline based on selection
+                    current_date = datetime.now()
+                    filtered_timeline = []
+                    
+                    for work in sorted_timeline:
+                        work_date = datetime.strptime(work['timestamp'], "%Y-%m-%d %H:%M:%S")
+                        
+                        if time_filter == "All time":
+                            filtered_timeline.append(work)
+                        elif time_filter == "This month" and work_date.month == current_date.month and work_date.year == current_date.year:
+                            filtered_timeline.append(work)
+                        elif time_filter == "Last 3 months" and (current_date - work_date).days <= 90:
+                            filtered_timeline.append(work)
+                        elif time_filter == "This year" and work_date.year == current_date.year:
+                            filtered_timeline.append(work)
+                    
+                    if filtered_timeline:
+                        # Group by date for better organization
+                        work_by_date = {}
+                        for work in filtered_timeline:
+                            date_key = work['date']
+                            if date_key not in work_by_date:
+                                work_by_date[date_key] = []
+                            work_by_date[date_key].append(work)
+                        
+                        # Display chronologically
+                        for date in sorted(work_by_date.keys(), reverse=True):
+                            works_on_date = work_by_date[date]
+                            with st.expander(f"📅 {date} - {len(works_on_date)} work(s) added"):
+                                for work in works_on_date:
+                                    st.markdown(f"**📁 {work['portfolio']}** - {work['title']}")
+                                    st.markdown(f"*{work['description'][:100]}{'...' if len(work['description']) > 100 else ''}*")
+                                    if work['annotation']:
+                                        st.markdown(f"💭 {work['annotation'][:150]}{'...' if len(work['annotation']) > 150 else ''}")
+                                    if work['file_info'] and work['file_info']['name']:
+                                        st.markdown(f"📎 File: {work['file_info']['name']}")
+                                    st.markdown("---")
+                    else:
+                        st.info(f"No work found for {time_filter.lower()}.")
+                else:
+                    st.info("Start adding work to your portfolios to see your learning journey over time!")
+            
+            with col2:
+                st.markdown("#### Learning Milestones")
                 
-                if achievements:
-                    for achievement in achievements:
+                # Calculate achievements based on portfolio work
+                total_works = len(timeline_data) if timeline_data else 0
+                total_portfolios = len(st.session_state.portfolios.get(current_user, {}))
+                
+                # Portfolio-based achievements
+                portfolio_achievements = []
+                if total_works >= 1:
+                    portfolio_achievements.append("🌱 First Work Added")
+                if total_works >= 5:
+                    portfolio_achievements.append("📚 Portfolio Builder (5+ works)")
+                if total_works >= 15:
+                    portfolio_achievements.append("🎨 Creative Collector (15+ works)")
+                if total_works >= 30:
+                    portfolio_achievements.append("🏆 Portfolio Master (30+ works)")
+                if total_portfolios >= 3:
+                    portfolio_achievements.append("📁 Multi-Portfolio Learner")
+                
+                # Monthly consistency check
+                if timeline_data:
+                    months_with_work = set(work['month'] for work in timeline_data)
+                    if len(months_with_work) >= 3:
+                        portfolio_achievements.append("🗓️ Consistent Creator")
+                
+                if portfolio_achievements:
+                    for achievement in portfolio_achievements:
                         st.success(achievement)
                 else:
-                    st.info("Start your learning journey to earn achievement badges!")
+                    st.info("Start creating portfolios to earn achievement badges!")
                 
-                # Recent learning highlights (just titles)
-                if activities:
-                    st.markdown("#### Recent Learning Highlights")
-                    recent_activities = activities[-3:]  # Last 3 activities
-                    for activity in recent_activities[::-1]:
-                        activity_type = activity.get('type', 'learning').replace('_', ' ').title()
-                        date = activity.get('date', 'Recent')[:10]
-                        st.markdown(f"🌟 **{date}**: {activity_type}")
-                
-                # Quick link to detailed profile
+                # Quick stats
                 st.markdown("---")
-                if st.button("📊 View My Complete Learning Profile", use_container_width=True):
-                    st.info("Visit the 'Learning Profile' tab to see detailed progress, competency tracking, and learning insights!")
-            else:
-                st.info("Start exploring and creating to see your learning journey develop!")
+                st.markdown("#### Quick Stats")
+                st.metric("Total Works", total_works)
+                st.metric("Portfolios Created", total_portfolios)
+                
+                if timeline_data:
+                    # Most active portfolio
+                    portfolio_counts = {}
+                    for work in timeline_data:
+                        portfolio = work['portfolio']
+                        portfolio_counts[portfolio] = portfolio_counts.get(portfolio, 0) + 1
+                    
+                    if portfolio_counts:
+                        most_active = max(portfolio_counts, key=portfolio_counts.get)
+                        st.metric("Most Active Portfolio", f"{most_active} ({portfolio_counts[most_active]} works)")
+                
+                # Link to detailed profile
+                st.markdown("---")
+                if st.button("📊 View Learning Profile", use_container_width=True):
+                    st.info("Visit the 'Learning Profile' tab for detailed progress tracking!")
         
         with student_tabs[6]:  # Accessibility
             accessibility_wizard()
