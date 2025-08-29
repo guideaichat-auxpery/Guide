@@ -3352,59 +3352,137 @@ Format as a clear, usable rubric with table structure where appropriate."""
             if current_user not in st.session_state.portfolios:
                 st.session_state.portfolios[current_user] = {}
             
-            portfolio_subtabs = st.tabs(["📝 Share Work", "📁 My Portfolios", "💭 Add Reflection"])
+            portfolio_subtabs = st.tabs(["📁 My Portfolios", "➕ Create New Portfolio"])
             
-            with portfolio_subtabs[0]:  # Share Work
-                st.markdown("### Share Your Learning")
+            with portfolio_subtabs[0]:  # My Portfolios
+                st.markdown("### My Portfolio Collection")
                 
-                work_type = st.selectbox("What type of work would you like to share?", [
-                    "Text/Writing", "Image/Drawing", "Project", "Reflection", "Research"
-                ])
+                user_portfolios = st.session_state.portfolios.get(current_user, {})
                 
-                work_title = st.text_input("Give your work a title")
-                work_content = st.text_area("Describe your work or paste your writing", height=150)
-                
-                # File upload for students
-                uploaded_work = st.file_uploader("Upload a file (optional)", 
-                                               type=['pdf', 'doc', 'docx', 'jpg', 'png', 'mp3', 'mp4'])
-                
-                work_reflection = st.text_area("What did you learn? How do you feel about this work?", 
-                                             height=100,
-                                             placeholder="What was interesting? What was challenging? What would you do differently?")
-                
-                if st.button("📤 Submit My Work"):
-                    if work_title and (work_content or uploaded_work):
-                        # Analyze work for CEC competencies
-                        if work_content:
-                            with st.spinner("Analyzing your learning..."):
-                                cec_analysis = generate_cec_competency_assessment(work_content, st.session_state.curriculum)
+                if user_portfolios:
+                    # Portfolio viewer with annotation and reflection
+                    selected_portfolio = st.selectbox("Select a portfolio to view/edit:", list(user_portfolios.keys()))
+                    
+                    if selected_portfolio:
+                        portfolio = user_portfolios[selected_portfolio]
+                        
+                        # Portfolio header with reflection
+                        col1, col2 = st.columns([2, 1])
+                        with col1:
+                            st.markdown(f"#### 📁 {selected_portfolio}")
+                            st.markdown(f"**Created:** {portfolio['created']}")
+                            st.markdown(f"**Type:** {portfolio['template_type'].title()}")
+                            st.markdown(f"**Description:** {portfolio['description']}")
+                        
+                        with col2:
+                            # Portfolio reflection
+                            st.markdown("**💭 Portfolio Reflection**")
+                            portfolio_reflection = st.text_area(
+                                "Reflect on this portfolio theme/subject:",
+                                value=portfolio.get('reflection', ''),
+                                placeholder="What patterns do you see in your learning? How has your thinking evolved? What connections are you making?",
+                                height=100,
+                                key=f"portfolio_reflection_{selected_portfolio}"
+                            )
+                            
+                            if st.button("💫 Save Portfolio Reflection", key=f"save_reflection_{selected_portfolio}"):
+                                portfolio['reflection'] = portfolio_reflection
+                                st.success("Portfolio reflection saved!")
+                                st.rerun()
+                        
+                        # Add new work to portfolio
+                        st.markdown("---")
+                        st.markdown("#### ➕ Add New Work")
+                        
+                        add_col1, add_col2 = st.columns([2, 1])
+                        
+                        with add_col1:
+                            work_title = st.text_input("Work title:", key=f"work_title_{selected_portfolio}")
+                            work_description = st.text_area(
+                                "Describe your work:",
+                                placeholder="What did you create? What was your process?",
+                                height=80,
+                                key=f"work_desc_{selected_portfolio}"
+                            )
+                            
+                            # File upload for portfolio entry
+                            uploaded_file = st.file_uploader(
+                                "Upload your work (optional):",
+                                type=['pdf', 'doc', 'docx', 'jpg', 'png', 'mp3', 'mp4', 'txt'],
+                                key=f"upload_{selected_portfolio}"
+                            )
+                        
+                        with add_col2:
+                            work_annotation = st.text_area(
+                                "📝 Annotate your work:",
+                                placeholder="What did you learn? What was challenging? What would you do differently next time?",
+                                height=120,
+                                key=f"annotation_{selected_portfolio}"
+                            )
+                        
+                        if st.button("📥 Add to Portfolio", key=f"add_work_{selected_portfolio}"):
+                            if work_title and (work_description or uploaded_file):
+                                # Add work to portfolio with annotation
+                                entry = {
+                                    'title': work_title,
+                                    'description': work_description,
+                                    'annotation': work_annotation,
+                                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                    'file_info': {
+                                        'name': uploaded_file.name if uploaded_file else None,
+                                        'type': uploaded_file.type if uploaded_file else None,
+                                        'size': uploaded_file.size if uploaded_file else None
+                                    } if uploaded_file else None
+                                }
                                 
-                                # Track progress
-                                track_student_progress(
-                                    current_user, 
-                                    f"Submitted {work_type}: {work_title}", 
-                                    "Self-directed learning and reflection",
-                                    {},  # CEC data would be parsed from analysis
-                                    {
-                                        "type": "work_submission",
-                                        "content": f"{work_title}: {work_content[:200]}...",
-                                        "feedback": "Work submitted for review",
-                                        "competency_analysis": cec_analysis,
-                                        "extensions": "Continue exploring and reflecting"
-                                    }
-                                )
+                                # Add to portfolio entries
+                                entry_type = "files" if uploaded_file else "text"
+                                if entry_type not in portfolio['entries']:
+                                    portfolio['entries'][entry_type] = []
+                                portfolio['entries'][entry_type].append(entry)
                                 
-                                st.success("Your work has been submitted! Great job reflecting on your learning.")
-                                if cec_analysis:
-                                    st.markdown("### Learning Skills Analysis")
-                                    st.markdown(cec_analysis)
-                    else:
-                        st.warning("Please provide a title and either content or upload a file.")
+                                st.success(f"Added '{work_title}' to your {selected_portfolio} portfolio!")
+                                st.rerun()
+                            else:
+                                st.warning("Please provide a title and either description or file.")
+                        
+                        # Display existing portfolio entries
+                        st.markdown("---")
+                        st.markdown("#### 📚 Portfolio Contents")
+                        
+                        total_entries = sum(len(entries) for entries in portfolio['entries'].values())
+                        if total_entries > 0:
+                            for entry_type, entries in portfolio['entries'].items():
+                                if entries:
+                                    st.markdown(f"**{entry_type.title()} ({len(entries)} items)**")
+                                    for i, entry in enumerate(entries):
+                                        with st.expander(f"📄 {entry['title']} - {entry['timestamp']}"):
+                                            st.markdown(f"**Description:** {entry['description']}")
+                                            if entry.get('annotation'):
+                                                st.markdown(f"**My Annotation:** {entry['annotation']}")
+                                            if entry.get('file_info') and entry['file_info']:
+                                                st.markdown(f"**File:** {entry['file_info']['name']}")
+                                            
+                                            # Allow editing annotations
+                                            new_annotation = st.text_area(
+                                                "Edit annotation:",
+                                                value=entry.get('annotation', ''),
+                                                placeholder="Add or update your annotation...",
+                                                key=f"edit_annotation_{selected_portfolio}_{entry_type}_{i}"
+                                            )
+                                            
+                                            if st.button("💾 Update Annotation", key=f"update_ann_{selected_portfolio}_{entry_type}_{i}"):
+                                                entry['annotation'] = new_annotation
+                                                st.success("Annotation updated!")
+                                                st.rerun()
+                        else:
+                            st.info("No entries yet. Add your first piece of work above!")
+                else:
+                    st.info("You don't have any portfolios yet. Create your first portfolio in the 'Create New Portfolio' tab!")
             
-            with portfolio_subtabs[1]:  # My Portfolios
-                st.markdown("### Create & Manage Portfolios")
+            with portfolio_subtabs[1]:  # Create New Portfolio
+                st.markdown("### Create New Portfolio")
                 
-                # Portfolio creation
                 col1, col2 = st.columns(2)
                 
                 with col1:
@@ -3446,41 +3524,22 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 
                                 # Quick stats
                                 total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                                total_annotations = len(portfolio.get('annotations', []))
-                                st.markdown(f"**Entries:** {total_entries} | **Reflections:** {total_annotations}")
+                                reflection_status = "✅ Has reflection" if portfolio.get('reflection') else "➕ Add reflection"
+                                st.markdown(f"**Entries:** {total_entries} | **Portfolio Reflection:** {reflection_status}")
                     else:
                         st.info("No portfolios created yet. Create your first one!")
-            
-            with portfolio_subtabs[2]:  # Add Reflection
-                st.markdown("### Learning Reflections")
                 
-                user_portfolios = st.session_state.portfolios.get(current_user, {})
-                if user_portfolios:
-                    portfolio_options = list(user_portfolios.keys())
-                    if portfolio_options:
-                        selected_portfolio = st.selectbox("Select portfolio:", portfolio_options)
-                    else:
-                        st.info("No portfolios found.")
-                        selected_portfolio = None
-                    
-                    if selected_portfolio:
-                        reflection_type = st.selectbox("Type of reflection:", [
-                            "general", "daily_reflection", "project_reflection", "skill_reflection"
-                        ])
-                        
-                        reflection_text = st.text_area("What are you thinking about your learning?", 
-                                                     height=150,
-                                                     placeholder="What patterns do you notice? What connections are you making? How are you growing?")
-                        
-                        if st.button("💭 Add Reflection"):
-                            if reflection_text:
-                                portfolio = user_portfolios[selected_portfolio]
-                                add_portfolio_reflection(portfolio, reflection_text, reflection_type)
-                                st.success("Reflection added to your portfolio!")
-                            else:
-                                st.warning("Please write your reflection.")
-                else:
-                    st.info("Create a portfolio first to add reflections.")
+                # Tips for portfolio creation
+                st.markdown("---")
+                st.markdown("#### 💡 Portfolio Tips")
+                st.info("""
+                **Portfolio Ideas:**
+                - **Subject Portfolio**: Collect work from a specific subject (Math, Science, Art)
+                - **Theme Portfolio**: Focus on a big idea (Systems, Patterns, Connections)
+                - **Term Portfolio**: Document your learning over a school term
+                - **Project Portfolio**: Showcase a major project from start to finish
+                - **Skill Portfolio**: Track development of specific skills over time
+                """)
         
         with student_tabs[5]:  # My Journey
             st.markdown("### My Learning Journey 🌟")
