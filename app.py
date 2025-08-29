@@ -2075,32 +2075,13 @@ else:
                 st.session_state.curriculum = curriculum
             
             with col2:
-                uploaded_file = st.file_uploader(
-                    "📄 Upload Curriculum Documents",
-                    type=['txt', 'csv', 'pdf', 'docx'],
-                    help="Upload curriculum documents, unit plans, or topic notes to enhance AI responses"
-                )
-                
-                if uploaded_file is not None:
-                    try:
-                        if uploaded_file.type == "text/plain":
-                            content = str(uploaded_file.read(), "utf-8")
-                            st.session_state.uploaded_content = content
-                            st.success(f"✓ Loaded {uploaded_file.name}")
-                        elif uploaded_file.type == "text/csv":
-                            import io
-                            content = str(uploaded_file.read(), "utf-8")
-                            st.session_state.uploaded_content = content
-                            st.success(f"✓ Loaded {uploaded_file.name}")
-                        else:
-                            st.info(f"File {uploaded_file.name} uploaded. PDF/Word support coming soon!")
-                    except Exception as e:
-                        st.error(f"Error reading file: {e}")
+                st.markdown("**💡 Quick Tips:**")
+                st.markdown("• Ask about curriculum alignment")
+                st.markdown("• Request cosmic education connections")
+                st.markdown("• Get differentiation strategies")
+                st.markdown("• Discuss assessment approaches")
             
-            # Show uploaded content info
-            if hasattr(st.session_state, 'uploaded_content') and st.session_state.uploaded_content:
-                with st.expander("📄 Uploaded Content Preview"):
-                    st.text_area("Content", st.session_state.uploaded_content[:500] + "..." if len(st.session_state.uploaded_content) > 500 else st.session_state.uploaded_content, height=100, disabled=True)
+
             
             # Chat interface
             for message in st.session_state.messages:
@@ -2304,8 +2285,69 @@ Honor both rigorous curriculum standards and cosmic education principles of inte
                         help="Blended approach connects to the cosmic story while meeting curriculum standards"
                     )
                 
+                # Upload existing lesson for feedback/remodeling
+                st.markdown("---")
+                st.markdown("#### 📄 Upload Existing Lesson for Feedback")
+                st.markdown("*Have an existing lesson you want to improve or get feedback on?*")
+                
+                uploaded_lesson = st.file_uploader(
+                    "Upload your lesson plan",
+                    type=['txt', 'pdf', 'docx', 'doc'],
+                    help="Upload an existing lesson plan to get AI feedback or request remodeling",
+                    key="lesson_upload"
+                )
+                
+                lesson_feedback_type = st.radio(
+                    "What would you like me to do?",
+                    ["💡 Provide feedback and suggestions", "🔄 Remodel with cosmic education approach", "✨ Enhance and expand the lesson"],
+                    help="Choose how you want me to help with your existing lesson"
+                )
+                
+                if uploaded_lesson is not None:
+                    try:
+                        if uploaded_lesson.type == "text/plain":
+                            lesson_content = str(uploaded_lesson.read(), "utf-8")
+                            st.session_state.uploaded_lesson_content = lesson_content
+                            st.success(f"✓ Loaded {uploaded_lesson.name}")
+                            
+                            if st.button("🔍 Analyze My Lesson", use_container_width=True):
+                                with st.spinner("Analyzing your lesson..."):
+                                    feedback_prompt = f"""Please analyze this lesson plan and provide {lesson_feedback_type.lower()}:
+
+LESSON PLAN:
+{lesson_content}
+
+TARGET: {age_group} students
+CURRICULUM APPROACH: {invitation_curriculum}
+
+Based on the selected feedback type "{lesson_feedback_type}", please provide:
+
+1. **Strengths Observed**: What works well in this lesson
+2. **Cosmic Education Connections**: How to enhance connections to the bigger picture
+3. **Specific Improvements**: Concrete suggestions for enhancement
+4. **Age-Appropriateness**: Ensure activities match {age_group} developmental needs
+5. **Differentiation**: Ways to support diverse learners
+6. **Assessment Integration**: Suggestions for observing and documenting learning
+
+If remodeling was requested, provide a complete revised version. If enhancement was requested, provide specific additions and modifications. Always maintain the lesson's core intent while enriching it with cosmic education principles."""
+
+                                    messages = [{"role": "user", "content": feedback_prompt}]
+                                    system_prompt = get_system_prompt(invitation_curriculum.replace("🔄 Blended (Recommended - Cosmic Priority)", "Blended (Cosmic Education Priority)").replace("🇦🇺 ", "").replace("🌱 ", ""))
+                                    
+                                    feedback_response = call_openai_api(messages, system_prompt)
+                                    if feedback_response:
+                                        st.markdown("### 📋 Lesson Analysis & Feedback")
+                                        st.markdown(f"**Original Lesson:** {uploaded_lesson.name}")
+                                        st.markdown(f"**Analysis Type:** {lesson_feedback_type}")
+                                        st.markdown("---")
+                                        st.markdown(feedback_response)
+                        else:
+                            st.info(f"File {uploaded_lesson.name} uploaded. PDF/Word processing coming soon!")
+                    except Exception as e:
+                        st.error(f"Error reading file: {e}")
+                
                 # Advanced options (collapsible)
-                with st.expander("⚙️ Customize Your Lesson (Optional)"):
+                with st.expander("⚙️ Customize Your New Lesson (Optional)"):
                     st.markdown("*Only fill these out if you want to customize further:*")
                     
                     customize_col1, customize_col2 = st.columns(2)

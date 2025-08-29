@@ -51,7 +51,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Team Collaboration Hub**: Features shared rubrics, lesson plans, and resource discovery.
 - **Accessibility Wizard**: Universal Design for Learning interface with comprehensive customization for diverse visual, cognitive, motor, and audio needs.
 - **Mathematics Hub**: Dedicated mathematics learning tools for teachers and students, featuring cosmic math connections, mathematical investigations, pattern exploration, and inquiry-driven approaches that connect mathematics to the cosmic story and natural phenomena.
-- **Enhanced Learning Tools**: Renamed and redesigned tools for clarity: "Lesson Planning Assistant" (creates specific activities and lessons) and "Big Picture Curriculum Mapping" (maps knowledge connections for long-term planning). Both tools feature intuitive, self-directive interfaces with step-by-step guidance.
+- **Enhanced Learning Tools**: Renamed and redesigned tools for clarity: "Lesson Planning Assistant" (creates specific activities and lessons, plus analyzes existing lessons for feedback and remodeling) and "Big Picture Curriculum Mapping" (maps knowledge connections for long-term planning). Both tools feature intuitive, self-directive interfaces with step-by-step guidance.
 
 # External Dependencies
 
