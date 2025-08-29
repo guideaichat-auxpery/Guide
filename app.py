@@ -3064,6 +3064,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
             "💬 Learning Assistant", 
             "📝 Project Planner",
             "📋 Get Feedback",
+            "📊 Learning Profile",
             "📁 My Portfolio", 
             "🌟 My Journey",
             "♿ Accessibility"
@@ -3264,7 +3265,86 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 else:
                     st.warning("Please enter a topic and select a project type.")
         
-        with student_tabs[2]:  # Portfolio
+        with student_tabs[3]:  # Learning Profile
+            st.markdown("### My Learning Profile 📊")
+            st.markdown("*See your progress, strengths, and learning patterns*")
+            
+            # Show CEC competency visualization
+            progress_data = st.session_state.student_progress.get(current_user, {})
+            if progress_data:
+                # CEC competency display
+                cec_data = progress_data.get('cec_competencies', {})
+                if cec_data:
+                    st.markdown("#### My Learning Skills Progress")
+                    
+                    competency_names = {
+                        "knowing_how_to_learn": "Learning How to Learn",
+                        "empirical_reasoning": "Scientific Thinking", 
+                        "quantitative_reasoning": "Mathematical Thinking",
+                        "social_reasoning": "Understanding People & Communities",
+                        "communication": "Sharing Ideas",
+                        "personal_qualities": "Personal Growth"
+                    }
+                    
+                    cols = st.columns(3)
+                    for i, (comp_key, comp_data) in enumerate(cec_data.items()):
+                        with cols[i % 3]:
+                            name = competency_names.get(comp_key, comp_key)
+                            level = comp_data.get('level', 1)
+                            st.metric(name, f"Level {level}", help=f"You're developing skills in {name.lower()}")
+                
+                # Show learning patterns and insights
+                st.markdown("---")
+                st.markdown("#### My Learning Insights")
+                
+                # Activity summary
+                activities = progress_data.get('activities', [])
+                if activities:
+                    total_activities = len(activities)
+                    recent_activities = activities[-5:]  # Last 5 activities
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total Learning Activities", total_activities)
+                    with col2:
+                        favorite_types = {}
+                        for activity in activities:
+                            activity_type = activity.get('type', 'general')
+                            favorite_types[activity_type] = favorite_types.get(activity_type, 0) + 1
+                        
+                        if favorite_types:
+                            most_common = max(favorite_types, key=favorite_types.get)
+                            st.metric("Favorite Activity Type", most_common.replace('_', ' ').title())
+                    with col3:
+                        # Show streak or consistency
+                        st.metric("Active Learning Days", len(set(a.get('date', '')[:10] for a in activities if a.get('date'))))
+                    
+                    # Recent activity timeline
+                    st.markdown("#### Recent Learning Activities")
+                    for activity in recent_activities[::-1]:  # Reverse to show most recent first
+                        with st.expander(f"📅 {activity.get('date', 'Unknown date')} - {activity.get('type', 'Activity').replace('_', ' ').title()}"):
+                            st.markdown(f"**Activity:** {activity.get('content', 'No description')}")
+                            if activity.get('feedback'):
+                                st.markdown(f"**Growth Area:** {activity.get('feedback')}")
+                            if activity.get('competency_analysis'):
+                                st.markdown(f"**Skills Developed:** {activity.get('competency_analysis')}")
+                
+                # Portfolio summary in profile
+                user_portfolios = st.session_state.portfolios.get(current_user, {})
+                if user_portfolios:
+                    st.markdown("---")
+                    st.markdown("#### My Portfolio Summary")
+                    for portfolio_name, portfolio in user_portfolios.items():
+                        total_entries = sum(len(entries) for entries in portfolio['entries'].values())
+                        st.markdown(f"📁 **{portfolio_name}** - {total_entries} entries")
+                        
+                        # Show portfolio growth over time
+                        if total_entries > 0:
+                            st.progress(min(total_entries / 20, 1.0), text=f"Portfolio progress: {total_entries}/20 entries")
+            else:
+                st.info("Start learning and creating to see your personal learning profile develop!")
+        
+        with student_tabs[4]:  # Portfolio
             st.markdown("### My Learning Portfolio 📚")
             st.markdown("*Collect and reflect on your learning journey*")
             
@@ -3402,58 +3482,51 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 else:
                     st.info("Create a portfolio first to add reflections.")
         
-        with student_tabs[3]:  # My Journey
+        with student_tabs[5]:  # My Journey
             st.markdown("### My Learning Journey 🌟")
             st.markdown("*See how you're growing and learning*")
             
-            # Student progress overview
-            if current_user in st.session_state.student_progress:
-                progress_data = st.session_state.student_progress[current_user]
+            # Simple learning journey timeline focused on milestones and achievements
+            progress_data = st.session_state.student_progress.get(current_user, {})
+            if progress_data:
+                activities = progress_data.get('activities', [])
                 
-                # Activity summary
-                activities = progress_data.get('student_activities', [])
+                # Show learning milestones and achievements
+                total_activities = len(activities)
+                st.markdown("#### My Learning Milestones")
+                
+                # Achievement badges
+                achievements = []
+                if total_activities >= 5:
+                    achievements.append("🌱 Learning Sprout (5+ activities)")
+                if total_activities >= 15:
+                    achievements.append("🌿 Growing Learner (15+ activities)")
+                if total_activities >= 30:
+                    achievements.append("🌳 Knowledge Tree (30+ activities)")
+                
+                if achievements:
+                    for achievement in achievements:
+                        st.success(achievement)
+                else:
+                    st.info("Start your learning journey to earn achievement badges!")
+                
+                # Recent learning highlights (just titles)
                 if activities:
-                    st.markdown("#### Recent Learning Activities")
-                    for activity in activities[-5:]:  # Show last 5 activities
-                        with st.expander(f"🌱 {activity['timestamp']} - {activity['activity_type'].replace('_', ' ').title()}"):
-                            st.markdown(f"**What I did:** {activity['content']}")
-                            if activity['feedback_received']:
-                                st.markdown(f"**Feedback:** {activity['feedback_received']}")
-                            if activity['competency_analysis']:
-                                st.markdown(f"**Skills I'm developing:** {activity['competency_analysis']}")
+                    st.markdown("#### Recent Learning Highlights")
+                    recent_activities = activities[-3:]  # Last 3 activities
+                    for activity in recent_activities[::-1]:
+                        activity_type = activity.get('type', 'learning').replace('_', ' ').title()
+                        date = activity.get('date', 'Recent')[:10]
+                        st.markdown(f"🌟 **{date}**: {activity_type}")
                 
-                # CEC competency display
-                cec_data = progress_data.get('cec_competencies', {})
-                if cec_data:
-                    st.markdown("#### My Learning Skills Progress")
-                    
-                    competency_names = {
-                        "knowing_how_to_learn": "Learning How to Learn",
-                        "empirical_reasoning": "Scientific Thinking", 
-                        "quantitative_reasoning": "Mathematical Thinking",
-                        "social_reasoning": "Understanding People & Communities",
-                        "communication": "Sharing Ideas",
-                        "personal_qualities": "Personal Growth"
-                    }
-                    
-                    cols = st.columns(3)
-                    for i, (comp_key, comp_data) in enumerate(cec_data.items()):
-                        with cols[i % 3]:
-                            name = competency_names.get(comp_key, comp_key)
-                            level = comp_data.get('level', 1)
-                            st.metric(name, f"Level {level}", help=f"You're developing skills in {name.lower()}")
-                
-                # Portfolio summary
-                user_portfolios = st.session_state.portfolios.get(current_user, {})
-                if user_portfolios:
-                    st.markdown("#### My Portfolios")
-                    for portfolio_name, portfolio in user_portfolios.items():
-                        total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                        st.markdown(f"📁 **{portfolio_name}** - {total_entries} entries")
+                # Quick link to detailed profile
+                st.markdown("---")
+                if st.button("📊 View My Complete Learning Profile", use_container_width=True):
+                    st.info("Visit the 'Learning Profile' tab to see detailed progress, competency tracking, and learning insights!")
             else:
-                st.info("Start exploring and creating to see your learning journey!")
+                st.info("Start exploring and creating to see your learning journey develop!")
         
-        with student_tabs[5]:  # Accessibility
+        with student_tabs[6]:  # Accessibility
             accessibility_wizard()
         
         st.markdown('</div>', unsafe_allow_html=True)
