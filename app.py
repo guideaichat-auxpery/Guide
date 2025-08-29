@@ -107,13 +107,13 @@ def create_teacher_account(username, password, email, school=""):
         'role': 'teacher',
         'email': email,
         'school': school,
-        'created': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'created': datetime.now().strftime("%d/%m/%Y %H:%M"),
         'students': {},
         'monthly_usage': 0,
         'monthly_limit': 100000,  # 100k tokens per month
         'daily_requests': 0,
         'daily_limit': 200,  # 200 requests per day
-        'last_request_date': datetime.now().strftime("%Y-%m-%d"),
+        'last_request_date': datetime.now().strftime("%d/%m/%Y"),
         'archived': False
     }
     
@@ -133,12 +133,12 @@ def create_student_account(teacher_username, student_name):
         'role': 'student',
         'real_name': student_name,
         'teacher': teacher_username,
-        'created': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'created': datetime.now().strftime("%d/%m/%Y %H:%M"),
         'monthly_usage': 0,
         'monthly_limit': 10000,  # 10k tokens per month for students
         'daily_requests': 0,
         'daily_limit': 50,  # 50 requests per day for students
-        'last_request_date': datetime.now().strftime("%Y-%m-%d"),
+        'last_request_date': datetime.now().strftime("%d/%m/%Y"),
         'archived': False
     }
     
@@ -169,12 +169,12 @@ def create_custom_student_account(username, password, student_name, teacher_user
         'role': 'student',
         'real_name': student_name,
         'teacher': teacher_username,
-        'created': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'created': datetime.now().strftime("%d/%m/%Y %H:%M"),
         'monthly_usage': 0,
         'monthly_limit': 10000,  # 10k tokens per month for students
         'daily_requests': 0,
         'daily_limit': 50,  # 50 requests per day for students
-        'last_request_date': datetime.now().strftime("%Y-%m-%d"),
+        'last_request_date': datetime.now().strftime("%d/%m/%Y"),
         'archived': False
     }
     
@@ -207,7 +207,7 @@ def check_usage_limits(username):
         return False
     
     user = st.session_state.users[username]
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().strftime("%d/%m/%Y")
     
     # Reset daily counter if new day
     if user['last_request_date'] != today:
@@ -232,7 +232,7 @@ def log_api_usage(username, tokens_used):
     user['daily_requests'] += 1
     
     log_entry = {
-        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         'tokens': tokens_used,
         'model': 'gpt-4o-mini'
     }
@@ -246,7 +246,7 @@ def send_feedback_email(teacher_name, feedback_content):
     """Send teacher feedback to guideaichat@gmail.com"""
     try:
         feedback_entry = {
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             'teacher': teacher_name,
             'content': feedback_content
         }
@@ -886,7 +886,7 @@ def save_student_feedback(student_name, work_description, feedback, file_info):
         st.session_state.student_feedback_history = []
     
     feedback_entry = {
-        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M"),
         'student': student_name,
         'work_description': work_description,
         'feedback': feedback,
@@ -1389,10 +1389,10 @@ def track_student_progress(student_name, work_analysis, learning_goals, cec_comp
     
     # Add new progress entry
     progress_entry = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "work_analysis": work_analysis,
         "learning_goals": learning_goals,
-        "date": datetime.now().strftime("%Y-%m-%d"),
+        "date": datetime.now().strftime("%d/%m/%Y"),
         "cec_competencies": cec_competencies or {},
         "student_activity": student_activity or {}
     }
@@ -1412,7 +1412,7 @@ def track_student_progress(student_name, work_analysis, learning_goals, cec_comp
     # Add student activity to activity log
     if student_activity:
         st.session_state.student_progress[student_name]["student_activities"].append({
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "activity_type": student_activity.get("type", "unknown"),
             "content": student_activity.get("content", ""),
             "feedback_received": student_activity.get("feedback", ""),
@@ -1540,7 +1540,7 @@ def link_student_activity(student_name, activity_data):
     else:
         # Add activity to existing profile
         st.session_state.student_progress[student_name]["student_activities"].append({
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "activity_type": activity_data.get("type", "unknown"),
             "content": activity_data.get("content", ""),
             "feedback_received": activity_data.get("feedback", ""),
@@ -1610,7 +1610,7 @@ def create_portfolio_template(template_type, student_name, custom_params=None):
         "title": template["title"],
         "sections": template["sections"],
         "description": template["description"],
-        "created": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "created": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "entries": {section: [] for section in template["sections"]},
         "annotations": [],
         "custom_params": custom_params or {}
@@ -1621,7 +1621,7 @@ def add_portfolio_entry(portfolio, section, entry_data):
     if section in portfolio["entries"]:
         portfolio["entries"][section].append({
             "id": len(portfolio["entries"][section]) + 1,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "content": entry_data.get("content", ""),
             "type": entry_data.get("type", "text"),
             "file_info": entry_data.get("file_info", {}),
@@ -1634,7 +1634,7 @@ def annotate_portfolio_entry(portfolio, section, entry_id, annotation):
     """Add annotation to a specific portfolio entry"""
     portfolio["annotations"].append({
         "id": len(portfolio["annotations"]) + 1,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "section": section,
         "entry_id": entry_id,
         "annotation": annotation,
@@ -1645,7 +1645,7 @@ def add_portfolio_reflection(portfolio, reflection_text, reflection_type="genera
     """Add a learning reflection to the portfolio"""
     portfolio["annotations"].append({
         "id": len(portfolio["annotations"]) + 1,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "reflection": reflection_text,
         "type": reflection_type,
         "section": "general"
@@ -1660,7 +1660,7 @@ def create_shared_lesson(lesson_content, author, curriculum, topic):
         "curriculum": curriculum,
         "topic": topic,
         "content": lesson_content,
-        "created": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "created": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "collaborators": [],
         "comments": [],
         "tags": []
@@ -1677,7 +1677,7 @@ def share_rubric_with_team(rubric_content, teacher_username, topic, curriculum):
     shared_rubric = {
         'id': len(st.session_state.shared_rubrics) + 1,
         'title': f"Assessment Rubric: {topic}",
-        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M"),
         'teacher': teacher_username,
         'topic': topic,
         'curriculum': curriculum,
@@ -1694,7 +1694,7 @@ def add_lesson_comment(lesson_id, commenter, comment):
             lesson["comments"].append({
                 "author": commenter,
                 "content": comment,
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+                "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M")
             })
             break
 
@@ -2681,7 +2681,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                         
                                         rubric_data = {
                                             'id': f"rubric_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                                            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                            'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M"),
                                             'topic': rubric_topic,
                                             'year_level': rubric_year,
                                             'learning_area': learning_area,
@@ -2877,7 +2877,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 if new_comment:
                                     comment = {
                                         'teacher': current_user,
-                                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M"),
                                         'content': new_comment
                                     }
                                     rubric['comments'].append(comment)
@@ -2909,7 +2909,7 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 if new_comment:
                                     comment = {
                                         'teacher': current_user,
-                                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M"),
                                         'content': new_comment
                                     }
                                     lesson['comments'].append(comment)
@@ -3430,8 +3430,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                     'title': work_title,
                                     'description': work_description,
                                     'annotation': work_annotation,
-                                    'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                                    'date': current_time.strftime("%Y-%m-%d"),
+                                    'timestamp': current_time.strftime("%d/%m/%Y %H:%M:%S"),
+                                    'date': current_time.strftime("%d/%m/%Y"),
                                     'time': current_time.strftime("%H:%M"),
                                     'portfolio_name': selected_portfolio,
                                     'student': current_user,
@@ -3460,9 +3460,9 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                     'description': work_description,
                                     'annotation': work_annotation,
                                     'portfolio': selected_portfolio,
-                                    'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                                    'date': current_time.strftime("%Y-%m-%d"),
-                                    'month': current_time.strftime("%Y-%m"),
+                                    'timestamp': current_time.strftime("%d/%m/%Y %H:%M:%S"),
+                                    'date': current_time.strftime("%d/%m/%Y"),
+                                    'month': current_time.strftime("%m/%Y"),
                                     'year': current_time.strftime("%Y"),
                                     'type': entry_type,
                                     'file_info': entry['file_info']
@@ -3628,7 +3628,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                     
                                     # Quick stats
                                     total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                                    st.markdown(f"**{total_entries}** entries • Created: {portfolio['created'][:10]}")
+                                    creation_date = portfolio['created'][:10] if len(portfolio['created']) > 10 else portfolio['created']
+                                    st.markdown(f"**{total_entries}** entries • Created: {creation_date}")
                                     
                                     # Description preview
                                     description = portfolio['description']
@@ -3636,10 +3637,38 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                         description = description[:80] + "..."
                                     st.markdown(f"*{description}*")
                                     
+                                    # Portfolio reflection with interactive editing
                                     if portfolio.get('reflection'):
                                         st.success("✅ Has portfolio reflection")
+                                        if st.button(f"📝 Edit", key=f"edit_refl_{portfolio_name}_col1"):
+                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
                                     else:
-                                        st.info("➕ Add portfolio reflection")
+                                        if st.button(f"➕ Add Reflection", key=f"add_refl_{portfolio_name}_col1"):
+                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
+                                    
+                                    # Show reflection editor if editing
+                                    if st.session_state.get(f'editing_reflection_{portfolio_name}', False):
+                                        current_reflection = portfolio.get('reflection', '')
+                                        new_reflection = st.text_area(
+                                            "Portfolio Reflection:",
+                                            value=current_reflection,
+                                            placeholder="What connections have you discovered? How has your thinking evolved?",
+                                            height=80,
+                                            key=f"refl_text_{portfolio_name}_col1"
+                                        )
+                                        
+                                        btn_col1, btn_col2 = st.columns(2)
+                                        with btn_col1:
+                                            if st.button("💾 Save", key=f"save_refl_{portfolio_name}_col1"):
+                                                portfolio['reflection'] = new_reflection
+                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
+                                                st.success("Reflection saved!")
+                                                st.rerun()
+                                        
+                                        with btn_col2:
+                                            if st.button("❌ Cancel", key=f"cancel_refl_{portfolio_name}_col1"):
+                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
+                                                st.rerun()
                                     
                                     st.markdown("---")
                         
@@ -3655,7 +3684,8 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                     
                                     # Quick stats
                                     total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                                    st.markdown(f"**{total_entries}** entries • Created: {portfolio['created'][:10]}")
+                                    creation_date = portfolio['created'][:10] if len(portfolio['created']) > 10 else portfolio['created']
+                                    st.markdown(f"**{total_entries}** entries • Created: {creation_date}")
                                     
                                     # Description preview
                                     description = portfolio['description']
@@ -3663,10 +3693,38 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                         description = description[:80] + "..."
                                     st.markdown(f"*{description}*")
                                     
+                                    # Portfolio reflection with interactive editing
                                     if portfolio.get('reflection'):
                                         st.success("✅ Has portfolio reflection")
+                                        if st.button(f"📝 Edit", key=f"edit_refl_{portfolio_name}_col2"):
+                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
                                     else:
-                                        st.info("➕ Add portfolio reflection")
+                                        if st.button(f"➕ Add Reflection", key=f"add_refl_{portfolio_name}_col2"):
+                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
+                                    
+                                    # Show reflection editor if editing
+                                    if st.session_state.get(f'editing_reflection_{portfolio_name}', False):
+                                        current_reflection = portfolio.get('reflection', '')
+                                        new_reflection = st.text_area(
+                                            "Portfolio Reflection:",
+                                            value=current_reflection,
+                                            placeholder="What connections have you discovered? How has your thinking evolved?",
+                                            height=80,
+                                            key=f"refl_text_{portfolio_name}_col2"
+                                        )
+                                        
+                                        btn_col1, btn_col2 = st.columns(2)
+                                        with btn_col1:
+                                            if st.button("💾 Save", key=f"save_refl_{portfolio_name}_col2"):
+                                                portfolio['reflection'] = new_reflection
+                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
+                                                st.success("Reflection saved!")
+                                                st.rerun()
+                                        
+                                        with btn_col2:
+                                            if st.button("❌ Cancel", key=f"cancel_refl_{portfolio_name}_col2"):
+                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
+                                                st.rerun()
                                     
                                     st.markdown("---")
                 else:
