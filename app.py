@@ -949,7 +949,8 @@ def ensure_session_state():
             'adhd_support': False,
             'memory_support': False
         },
-        'student_work_timeline': {}
+        'student_work_timeline': {},
+        'show_portfolio_creator': False
     }
     
     for key, default_value in defaults.items():
@@ -3507,66 +3508,186 @@ Format as a clear, usable rubric with table structure where appropriate."""
                 else:
                     st.info("You don't have any portfolios yet. Create your first portfolio in the 'Create New Portfolio' tab!")
             
-            with portfolio_subtabs[1]:  # Create New Portfolio
-                st.markdown("### Create New Portfolio")
+            with portfolio_subtabs[1]:  # Combined Portfolio Hub
+                st.markdown("### My Portfolio Hub")
                 
-                col1, col2 = st.columns(2)
+                # Quick action bar at the top
+                action_col1, action_col2, action_col3 = st.columns([2, 1, 1])
                 
-                with col1:
-                    st.markdown("#### Create New Portfolio")
-                    portfolio_template = st.selectbox("Choose a template:", [
-                        "blank", "themed", "subject", "year_level", "term"
-                    ])
-                    
-                    # Custom parameters based on template
-                    custom_params = {}
-                    if portfolio_template == "year_level":
-                        custom_params["year"] = st.selectbox("Year Level:", 
-                                                           ["Foundation", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
-                    elif portfolio_template == "term":
-                        custom_params["term"] = st.selectbox("Term:", ["Term 1", "Term 2", "Term 3", "Term 4"])
-                    
-                    portfolio_name = st.text_input("Portfolio Name", placeholder="My Amazing Learning Journey")
-                    
-                    if st.button("🎨 Create Portfolio"):
-                        if portfolio_name:
-                            portfolio = create_portfolio_template(portfolio_template, student_name, custom_params)
-                            portfolio["title"] = portfolio_name  # Override with custom name
+                with action_col1:
+                    st.markdown("#### Quick Actions")
+                
+                with action_col2:
+                    if st.button("🎨 Create New Portfolio", use_container_width=True, type="primary"):
+                        st.session_state.show_portfolio_creator = True
+                
+                with action_col3:
+                    show_tips = st.button("💡 Portfolio Tips", use_container_width=True)
+                
+                # Show portfolio creator if button was clicked
+                if st.session_state.get('show_portfolio_creator', False):
+                    st.markdown("---")
+                    with st.container():
+                        st.markdown("#### Create New Portfolio")
+                        
+                        create_col1, create_col2 = st.columns([2, 1])
+                        
+                        with create_col1:
+                            portfolio_name = st.text_input("Portfolio Name", placeholder="My Amazing Learning Journey", key="new_portfolio_name")
+                            portfolio_template = st.selectbox("Choose a template:", [
+                                "blank", "themed", "subject", "year_level", "term"
+                            ], key="portfolio_template_select")
                             
-                            st.session_state.portfolios[current_user][portfolio_name] = portfolio
-                            st.success(f"Portfolio '{portfolio_name}' created!")
-                        else:
-                            st.warning("Please enter a portfolio name.")
+                            # Custom parameters based on template
+                            custom_params = {}
+                            if portfolio_template == "year_level":
+                                custom_params["year"] = st.selectbox("Year Level:", 
+                                                                   ["Foundation", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+                                                                   key="portfolio_year")
+                            elif portfolio_template == "term":
+                                custom_params["term"] = st.selectbox("Term:", ["Term 1", "Term 2", "Term 3", "Term 4"],
+                                                                   key="portfolio_term")
+                        
+                        with create_col2:
+                            st.markdown("**Template Info:**")
+                            template_descriptions = {
+                                "blank": "Start fresh with no structure",
+                                "themed": "Organize around big ideas",
+                                "subject": "Focus on one learning area",
+                                "year_level": "Track progress through the year",
+                                "term": "Document a specific term"
+                            }
+                            st.info(template_descriptions.get(portfolio_template, "Custom portfolio"))
+                        
+                        button_col1, button_col2 = st.columns(2)
+                        with button_col1:
+                            if st.button("✅ Create Portfolio", use_container_width=True, type="primary"):
+                                if portfolio_name:
+                                    portfolio = create_portfolio_template(portfolio_template, student_name, custom_params)
+                                    portfolio["title"] = portfolio_name
+                                    
+                                    st.session_state.portfolios[current_user][portfolio_name] = portfolio
+                                    st.success(f"Portfolio '{portfolio_name}' created!")
+                                    st.session_state.show_portfolio_creator = False
+                                    st.rerun()
+                                else:
+                                    st.warning("Please enter a portfolio name.")
+                        
+                        with button_col2:
+                            if st.button("❌ Cancel", use_container_width=True):
+                                st.session_state.show_portfolio_creator = False
+                                st.rerun()
                 
-                with col2:
-                    st.markdown("#### My Existing Portfolios")
-                    user_portfolios = st.session_state.portfolios.get(current_user, {})
+                # Portfolio tips section
+                if show_tips:
+                    st.markdown("---")
+                    st.markdown("#### 💡 Portfolio Ideas & Tips")
+                    tip_col1, tip_col2 = st.columns(2)
                     
-                    if user_portfolios:
-                        for portfolio_name, portfolio in user_portfolios.items():
-                            with st.expander(f"📁 {portfolio_name}"):
-                                st.markdown(f"**Created:** {portfolio['created']}")
-                                st.markdown(f"**Type:** {portfolio['template_type'].title()}")
-                                st.markdown(f"**Description:** {portfolio['description']}")
-                                
-                                # Quick stats
-                                total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                                reflection_status = "✅ Has reflection" if portfolio.get('reflection') else "➕ Add reflection"
-                                st.markdown(f"**Entries:** {total_entries} | **Portfolio Reflection:** {reflection_status}")
-                    else:
-                        st.info("No portfolios created yet. Create your first one!")
+                    with tip_col1:
+                        st.markdown("**Portfolio Types:**")
+                        st.markdown("""
+                        - **Subject Portfolio**: Math, Science, Art, English
+                        - **Theme Portfolio**: Systems, Patterns, Connections
+                        - **Project Portfolio**: Document a major project
+                        - **Skill Portfolio**: Track specific skills over time
+                        """)
+                    
+                    with tip_col2:
+                        st.markdown("**Portfolio Tips:**")
+                        st.markdown("""
+                        - Add work regularly to show growth
+                        - Write reflections about your learning
+                        - Include different types of work
+                        - Connect your learning to big ideas
+                        """)
                 
-                # Tips for portfolio creation
+                # My Portfolios Grid
                 st.markdown("---")
-                st.markdown("#### 💡 Portfolio Tips")
-                st.info("""
-                **Portfolio Ideas:**
-                - **Subject Portfolio**: Collect work from a specific subject (Math, Science, Art)
-                - **Theme Portfolio**: Focus on a big idea (Systems, Patterns, Connections)
-                - **Term Portfolio**: Document your learning over a school term
-                - **Project Portfolio**: Showcase a major project from start to finish
-                - **Skill Portfolio**: Track development of specific skills over time
-                """)
+                st.markdown("#### My Portfolios")
+                
+                user_portfolios = st.session_state.portfolios.get(current_user, {})
+                
+                if user_portfolios:
+                    # Display portfolios in a grid layout
+                    portfolio_items = list(user_portfolios.items())
+                    
+                    # Create grid layout (2 columns)
+                    for i in range(0, len(portfolio_items), 2):
+                        grid_col1, grid_col2 = st.columns(2)
+                        
+                        # First portfolio in row
+                        with grid_col1:
+                            if i < len(portfolio_items):
+                                portfolio_name, portfolio = portfolio_items[i]
+                                
+                                # Portfolio card
+                                with st.container():
+                                    st.markdown(f"**📁 {portfolio_name}**")
+                                    st.markdown(f"*{portfolio['template_type'].title()} Portfolio*")
+                                    
+                                    # Quick stats
+                                    total_entries = sum(len(entries) for entries in portfolio['entries'].values())
+                                    st.markdown(f"**{total_entries}** entries • Created: {portfolio['created'][:10]}")
+                                    
+                                    # Description preview
+                                    description = portfolio['description']
+                                    if len(description) > 80:
+                                        description = description[:80] + "..."
+                                    st.markdown(f"*{description}*")
+                                    
+                                    if portfolio.get('reflection'):
+                                        st.success("✅ Has portfolio reflection")
+                                    else:
+                                        st.info("➕ Add portfolio reflection")
+                                    
+                                    st.markdown("---")
+                        
+                        # Second portfolio in row (if exists)
+                        with grid_col2:
+                            if i + 1 < len(portfolio_items):
+                                portfolio_name, portfolio = portfolio_items[i + 1]
+                                
+                                # Portfolio card
+                                with st.container():
+                                    st.markdown(f"**📁 {portfolio_name}**")
+                                    st.markdown(f"*{portfolio['template_type'].title()} Portfolio*")
+                                    
+                                    # Quick stats
+                                    total_entries = sum(len(entries) for entries in portfolio['entries'].values())
+                                    st.markdown(f"**{total_entries}** entries • Created: {portfolio['created'][:10]}")
+                                    
+                                    # Description preview
+                                    description = portfolio['description']
+                                    if len(description) > 80:
+                                        description = description[:80] + "..."
+                                    st.markdown(f"*{description}*")
+                                    
+                                    if portfolio.get('reflection'):
+                                        st.success("✅ Has portfolio reflection")
+                                    else:
+                                        st.info("➕ Add portfolio reflection")
+                                    
+                                    st.markdown("---")
+                else:
+                    st.markdown("### 🌱 Start Your Portfolio Journey")
+                    st.info("No portfolios yet! Click 'Create New Portfolio' above to begin documenting your learning journey.")
+                    
+                    # Show example portfolios for inspiration
+                    st.markdown("#### Portfolio Inspiration")
+                    inspiration_col1, inspiration_col2, inspiration_col3 = st.columns(3)
+                    
+                    with inspiration_col1:
+                        st.markdown("**📐 Math Journey**")
+                        st.markdown("Track your problem-solving adventures and mathematical discoveries")
+                    
+                    with inspiration_col2:
+                        st.markdown("**🌍 Systems Thinking**")
+                        st.markdown("Explore connections and patterns across different subjects")
+                    
+                    with inspiration_col3:
+                        st.markdown("**🎨 Creative Projects**")
+                        st.markdown("Showcase your artistic and creative expressions")
         
         with student_tabs[5]:  # My Journey
             st.markdown("### My Learning Journey 🌟")
