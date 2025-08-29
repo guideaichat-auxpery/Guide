@@ -180,6 +180,8 @@ def create_custom_student_account(username, password, student_name, teacher_user
     
     # Add student to teacher's student list if teacher is specified
     if teacher_username and teacher_username in st.session_state.users:
+        if 'students' not in st.session_state.users[teacher_username]:
+            st.session_state.users[teacher_username]['students'] = {}
         st.session_state.users[teacher_username]['students'][username] = student_name
     
     st.session_state.usage_logs[username] = []
@@ -325,13 +327,7 @@ def save_rubric_to_user_data(username, rubric_data):
             with open('users.json', 'w', encoding='utf-8') as f:
                 json.dump(users, f, indent=2, ensure_ascii=False)
             
-            # Verify the save worked by reading it back
-            with open('users.json', 'r', encoding='utf-8') as f:
-                verify_users = json.load(f)
-                if username in verify_users and 'saved_rubrics' in verify_users[username]:
-                    return True
-            
-            return False
+            return True
         else:
             st.error(f"Username {username} not found in users database")
             return False
@@ -1230,15 +1226,18 @@ def create_student_planner(project_type, topic, curriculum):
     
     planner = planners.get(project_type, planners["poster"])
     
+    planning_steps = '\n'.join([f"{i+1}. {step}" for i, step in enumerate(planner['steps'])])
+    reflection_questions = '\n'.join([f"• {q}" for q in planner['questions']])
+    
     prompt = f"""Create detailed scaffolding guidance for a {project_type} project on '{topic}' following this planning structure:
 
 {planner['title']}
 
 Planning Steps:
-{chr(10).join([f"{i+1}. {step}" for i, step in enumerate(planner['steps'])])}
+{planning_steps}
 
 Reflection Questions:
-{chr(10).join([f"• {q}" for q in planner['questions']])}
+{reflection_questions}
 
 Provide specific, practical guidance for each step that helps the student think through their approach while maintaining their independence and creativity. Include cosmic education connections where appropriate."""
     
@@ -1538,8 +1537,15 @@ Create this as a personalized cosmic learner profile that honors individual lear
 
 def create_cec_learner_profile(student_name, curriculum):
     """Create Cosmic Education Competency learner profile"""
-    if student_name not in st.session_state.student_progress:
-        return "No profile data available."
+    if 'student_progress' not in st.session_state or student_name not in st.session_state.student_progress:
+        return {
+            "student": student_name,
+            "competency_levels": {},
+            "real_world_experiences": [],
+            "exhibitions": [],
+            "learning_journey": [],
+            "student_activities": []
+        }
     
     student_data = st.session_state.student_progress[student_name]
     
@@ -4439,8 +4445,12 @@ if st.session_state.authenticated:
                 st.error("File encoding error. Please ensure your file is UTF-8 encoded.")
             except pd.errors.EmptyDataError:
                 st.error("The CSV file appears to be empty.")
+            except pd.errors.ParserError as e:
+                st.error(f"CSV parsing error: {str(e)}. Please check your file format.")
+            except IOError as e:
+                st.error(f"File reading error: {str(e)}. Please try uploading again.")
             except Exception as e:
-                st.error(f"Error reading file: {str(e)}")
+                st.error(f"Unexpected error reading file: {str(e)}. Please contact support if this persists.")
         
         st.markdown("---")
         
