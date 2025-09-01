@@ -2201,7 +2201,12 @@ else:
                             key="contributing_areas_integrated"
                         )
                     
-                    year_level = st.selectbox("Year Level", ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"])
+                    year_level = st.multiselect(
+                        "Year Level(s)",
+                        ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"],
+                        default=["Year 3"],
+                        help="Select one or more year levels for your scope and sequence"
+                    )
                     duration = st.selectbox("Sequence Duration", ["1 cycle", "1-2 weeks", "3-4 weeks", "5-6 weeks", "7-8 weeks", "One term", "One semester"])
                 
                 sequence_context = st.text_area(
@@ -2225,8 +2230,8 @@ else:
                         concept_theme = st.session_state.get('concept_theme_integrated', '')
                         contributing_areas = st.session_state.get('contributing_areas_integrated', [])
                     
-                    if (planning_approach == "🏛️ Explicit Learning Areas (Siloed)" and learning_area and sequence_topic) or \
-                       (planning_approach == "🌐 Concept/Theme-Based Integration" and concept_theme and contributing_areas):
+                    if (planning_approach == "🏛️ Explicit Learning Areas (Siloed)" and learning_area and sequence_topic and year_level) or \
+                       (planning_approach == "🌐 Concept/Theme-Based Integration" and concept_theme and contributing_areas and year_level):
                         
                         with st.spinner("Creating comprehensive scope & sequence..."):
                             # Determine curriculum reference for API call
@@ -2237,27 +2242,59 @@ else:
                             else:
                                 curriculum_ref = "Blended (Cosmic Education Priority)"
                             
-                            # Build enhanced prompt for scope & sequence
+                            # Format year levels for display
+                            year_levels_str = ", ".join(year_level) if isinstance(year_level, list) else str(year_level)
+                            
+                            # Special handling for 1 cycle duration
+                            if duration == "1 cycle":
+                                duration_detail = "1 cycle (12 terms across 3 years: 4 terms 1st year, 4 terms 2nd year, 4 terms 3rd year)"
+                                cycle_instruction = """
+IMPORTANT: This is a 1 CYCLE sequence spanning 3 years. Structure your response as:
+- **Year 1 (Terms 1-4)**: [detailed term-by-term breakdown]
+- **Year 2 (Terms 1-4)**: [detailed term-by-term breakdown] 
+- **Year 3 (Terms 1-4)**: [detailed term-by-term breakdown]
+
+Each term should show clear progression and skill development across the three-year cycle."""
+                            else:
+                                duration_detail = duration
+                                cycle_instruction = ""
+                            
+                            # Build enhanced prompt for scope & sequence with curriculum integration
                             if planning_approach == "🏛️ Explicit Learning Areas (Siloed)":
-                                sequence_prompt = f"""Create a comprehensive scope and sequence for {learning_area} focusing on {sequence_topic} for {year_level} students over {duration}.
+                                sequence_prompt = f"""Create a comprehensive scope and sequence for {learning_area} focusing on {sequence_topic} for {year_levels_str} students over {duration_detail}.
 
 Framework: {curriculum_blend}
 Context: {sequence_context}
+{cycle_instruction}
+
+CURRICULUM INTEGRATION REQUIREMENTS:
+- Reference specific Australian Curriculum V9 content descriptors and achievement standards with codes (e.g., ACELY1234)
+- Include relevant Montessori National Curriculum elements and developmental considerations
+- Use authentic curriculum language and terminology throughout
+- Align assessment with official curriculum standards and progressions
 
 Please provide:
-1. **Learning Overview & Big Ideas**: Connect this topic to larger patterns and cosmic story
-2. **Weekly Breakdown**: Detailed progression showing skill/knowledge building
-3. **Assessment Checkpoints**: Authentic assessment opportunities aligned with curriculum standards
-4. **Cross-Curricular Connections**: Links to other learning areas where relevant
-5. **Differentiation Strategies**: Support for diverse learners and developmental stages
-6. **Resources & Materials**: Essential and optional resources needed
-7. **Reflection Questions**: Deep thinking prompts for students and teachers
+1. **Learning Overview & Big Ideas**: Connect this topic to larger patterns and cosmic story, referencing curriculum frameworks
+2. **Detailed Progression**: {'Term-by-term breakdown across 3 years' if duration == '1 cycle' else 'Weekly/periodic breakdown'} showing skill/knowledge building with curriculum codes
+3. **Curriculum Alignment**: Explicit links to AC V9 content descriptors and achievement standards with codes
+4. **Assessment Checkpoints**: Authentic assessment opportunities aligned with curriculum standards and progressions
+5. **Cross-Curricular Connections**: Links to other learning areas with specific curriculum references
+6. **Differentiation Strategies**: Support for diverse learners aligned with curriculum guidance
+7. **Resources & Materials**: Essential and optional resources that support curriculum objectives
+8. **Reflection Questions**: Deep thinking prompts aligned with curriculum capabilities
 
-Ensure authentic curriculum language and achievement standards are referenced appropriately."""
+Ensure all content descriptors, achievement standards, and progression points are accurately referenced with official codes and language."""
                             else:
-                                sequence_prompt = f"""Create a concept/theme-based scope and sequence centered on "{concept_theme}" integrating {', '.join(contributing_areas or [])} for {year_level} students over {duration}.
+                                sequence_prompt = f"""Create a concept/theme-based scope and sequence centered on "{concept_theme}" integrating {', '.join(contributing_areas or [])} for {year_levels_str} students over {duration_detail}.
 
 Framework: {curriculum_blend}
+{cycle_instruction}
+
+CURRICULUM INTEGRATION REQUIREMENTS:
+- Reference specific Australian Curriculum V9 content descriptors and achievement standards with codes across all learning areas
+- Include relevant Montessori National Curriculum cosmic education principles and developmental stages
+- Use authentic curriculum language and cross-curricular connections
+- Align assessment with official curriculum standards and progressions
 Context: {sequence_context}
 
 Please provide:
@@ -2280,7 +2317,7 @@ Honor both rigorous curriculum standards and cosmic education principles of inte
                                 st.markdown("### 📚 Enhanced Scope & Sequence")
                                 st.markdown(f"**Approach:** {planning_approach}")
                                 st.markdown(f"**Framework:** {curriculum_blend}")
-                                st.markdown(f"**Year Level:** {year_level} | **Duration:** {duration}")
+                                st.markdown(f"**Year Level(s):** {year_levels_str} | **Duration:** {duration_detail if duration == '1 cycle' else duration}")
                                 st.markdown("---")
                                 st.markdown(scope_sequence)
                                 
