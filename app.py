@@ -2102,6 +2102,7 @@ else:
         with teacher_tabs[1]:  # Learning Tools
             # MVP Learning Tools - Core features only
             tool_subtabs = st.tabs([
+                "⚡ Quick Planning",
                 "📚 Enhanced Scope & Sequence", 
                 "📝 Lesson Planning Assistant", 
                 "🗺️ Big Picture Curriculum Mapping", 
@@ -2110,7 +2111,48 @@ else:
             
             # Hidden MVP features: "💫 Family Connection", "🧮 Mathematics Hub"
             
-            with tool_subtabs[0]:  # Enhanced Scope & Sequence
+            with tool_subtabs[0]:  # Quick Planning
+                st.markdown("### ⚡ Quick Planning Assistant")
+                st.markdown("*Your instant AI teaching companion - create resources, generate ideas, and get quick answers*")
+                
+                # Quick Planning chat interface
+                st.markdown("#### 💬 Ask me to help you create anything:")
+                st.markdown("*Examples: Write a lesson plan for fractions, Create a reading comprehension activity, Generate discussion questions about the solar system, Write parent communication about our science unit...*")
+                
+                # Initialize quick planning messages if not exists
+                if 'quick_planning_messages' not in st.session_state:
+                    st.session_state.quick_planning_messages = []
+                
+                # Display chat history for quick planning
+                for message in st.session_state.quick_planning_messages:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+                
+                # Quick planning input
+                if quick_prompt := st.chat_input("What would you like me to create or help you with?"):
+                    st.session_state.quick_planning_messages.append({"role": "user", "content": quick_prompt})
+                    
+                    with st.chat_message("user"):
+                        st.markdown(quick_prompt)
+                    
+                    with st.chat_message("assistant"):
+                        with st.spinner("Creating your teaching resource..."):
+                            # Use blended cosmic education approach for quick planning
+                            system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                            response = call_openai_api(st.session_state.quick_planning_messages, system_prompt)
+                            
+                            if response:
+                                st.markdown(response)
+                                st.session_state.quick_planning_messages.append({"role": "assistant", "content": response})
+                            else:
+                                st.error("Unable to generate response. Please try again.")
+                
+                # Clear quick planning chat
+                if st.button("🗑️ Clear Quick Planning Chat", key="clear_quick_planning"):
+                    st.session_state.quick_planning_messages = []
+                    st.rerun()
+            
+            with tool_subtabs[1]:  # Enhanced Scope & Sequence
                 st.markdown("### Enhanced Scope & Sequence Creation")
                 st.markdown("*Design comprehensive learning progressions with flexible curriculum integration*")
                 st.info("💡 **What this does:** Creates detailed learning progressions that map out what students will learn over weeks or terms. Choose between subject-specific planning or integrated theme-based approaches that connect multiple learning areas.")
@@ -2155,7 +2197,7 @@ else:
                         )
                     
                     year_level = st.selectbox("Year Level", ["Foundation", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6", "Year 7", "Year 8", "Year 9", "Year 10"])
-                    duration = st.selectbox("Sequence Duration", ["1-2 weeks", "3-4 weeks", "5-6 weeks", "7-8 weeks", "One term", "One semester"])
+                    duration = st.selectbox("Sequence Duration", ["1 cycle", "1-2 weeks", "3-4 weeks", "5-6 weeks", "7-8 weeks", "One term", "One semester"])
                 
                 sequence_context = st.text_area(
                     "Additional Context & Goals",
@@ -2250,7 +2292,7 @@ Honor both rigorous curriculum standards and cosmic education principles of inte
                     else:
                         st.warning("Please complete all required fields before generating.")
             
-            with tool_subtabs[1]:  # Lesson Planning Assistant
+            with tool_subtabs[2]:  # Lesson Planning Assistant
                 st.markdown("### 📝 Lesson Planning Assistant")
                 st.markdown("*Create engaging lessons, activities, and learning experiences*")
                 st.info("💡 **What this does:** Designs specific lessons and activities for your students. Perfect for planning what your students will actually do in class or at home.")
@@ -2503,7 +2545,7 @@ Please provide a thoughtful response that addresses their request while maintain
                     else:
                         st.warning("Please provide a learning topic and select an age group.")
             
-            with tool_subtabs[2]:  # Big Picture Curriculum Mapping
+            with tool_subtabs[3]:  # Big Picture Curriculum Mapping
                 st.markdown("### 🗺️ Big Picture Curriculum Mapping")
                 st.markdown("*Map how knowledge connects across subjects and time*")
                 st.info("💡 **What this does:** Shows how topics connect across different subjects and build on each other. Reveals the web of knowledge for long-term planning and seeing the bigger picture.")
@@ -2587,9 +2629,9 @@ Please provide a thoughtful response that addresses their request while maintain
                             if fig:
                                 st.plotly_chart(fig, use_container_width=True)
             
-            with tool_subtabs[3]:  # Family Connection
-                st.markdown("### Bridge Learning with Families")
-                st.markdown("*Create meaningful communications that connect school and home learning*")
+            with tool_subtabs[4]:  # Assessment Rubrics
+                st.markdown("### Curriculum-Aligned Assessment Rubrics")
+                st.markdown("*Create growth-focused rubrics aligned to curriculum standards*")
                 
                 # Photo Upload Section (Privacy Protected)
                 st.markdown("#### 📸 Add Photos (Privacy Protected)")
