@@ -2055,15 +2055,16 @@ else:
             """, unsafe_allow_html=True)
         
         # Main teacher interface tabs
+        # MVP Version - Hide advanced features for simplicity
         teacher_tabs = st.tabs([
             "💬 Ask Maria", 
             "🧠 Learning Tools", 
             "👥 Student Management", 
-            "🤝 Collaboration",
-            "📊 All & Advisory", 
-            "♿ Accessibility",
-            "💌 Pilot Feedback"
+            "♿ Accessibility"
         ])
+        
+        # Features hidden in MVP (available in full version):
+        # "🤝 Collaboration", "📊 All & Advisory", "🧮 Mathematics Hub", "🏡 Family Connections"
         
         with teacher_tabs[0]:  # Ask Maria
             st.markdown("### 💬 Ask Maria")
@@ -2099,14 +2100,15 @@ else:
                             st.error("I'm having trouble connecting right now. Please try again.")
         
         with teacher_tabs[1]:  # Learning Tools
+            # MVP Learning Tools - Core features only
             tool_subtabs = st.tabs([
                 "📚 Enhanced Scope & Sequence", 
                 "📝 Lesson Planning Assistant", 
                 "🗺️ Big Picture Curriculum Mapping", 
-                "💫 Family Connection",
-                "📏 Assessment Rubrics",
-                "🧮 Mathematics Hub"
+                "📏 Assessment Rubrics"
             ])
+            
+            # Hidden MVP features: "💫 Family Connection", "🧮 Mathematics Hub"
             
             with tool_subtabs[0]:  # Enhanced Scope & Sequence
                 st.markdown("### Enhanced Scope & Sequence Creation")
@@ -3197,209 +3199,8 @@ Design this as an inquiry that honors student agency while building genuine math
                 else:
                     st.info("No students created yet.")
         
-        with teacher_tabs[3]:  # Collaboration
-            st.markdown("### Team Collaboration & Resource Sharing")
-            st.markdown("*Share and discover teaching resources with your team*")
-            
-            collab_tabs = st.tabs(["📤 Shared Rubrics", "📝 Shared Lessons", "💬 Team Comments"])
-            
-            with collab_tabs[0]:  # Shared Rubrics
-                st.markdown("#### Assessment Rubrics from Your Team")
-                
-                if st.session_state.shared_rubrics:
-                    for rubric in reversed(st.session_state.shared_rubrics[-10:]):  # Show last 10
-                        with st.expander(f"📏 {rubric['topic']} by {rubric['teacher']} ({rubric['timestamp']})"):
-                            st.markdown(f"**Curriculum:** {rubric['curriculum']}")
-                            st.markdown("---")
-                            st.markdown(rubric['content'])
-                            
-                            # Comment section
-                            st.markdown("**Team Comments:**")
-                            if rubric['comments']:
-                                for comment in rubric['comments']:
-                                    st.markdown(f"*{comment['teacher']}* ({comment['timestamp']}): {comment['content']}")
-                            
-                            # Add comment
-                            new_comment = st.text_input(f"Add comment", key=f"comment_rubric_{rubric['id']}")
-                            if st.button(f"💬 Comment", key=f"btn_comment_rubric_{rubric['id']}"):
-                                if new_comment:
-                                    comment = {
-                                        'teacher': current_user,
-                                        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M"),
-                                        'content': new_comment
-                                    }
-                                    rubric['comments'].append(comment)
-                                    st.success("Comment added!")
-                                    st.rerun()
-                else:
-                    st.info("No rubrics have been shared by the team yet. Share your first rubric from the Assessment Rubrics tool!")
-            
-            with collab_tabs[1]:  # Shared Lessons
-                st.markdown("#### Learning Connections from Your Team")
-                
-                if st.session_state.shared_lessons:
-                    for lesson in reversed(st.session_state.shared_lessons[-10:]):  # Show last 10
-                        with st.expander(f"🌱 {lesson['title']} by {lesson['author']} ({lesson['created']})"):
-                            st.markdown(f"**Topic:** {lesson['topic']}")
-                            st.markdown(f"**Curriculum:** {lesson['curriculum']}")
-                            st.markdown("---")
-                            st.markdown(lesson['content'])
-                            
-                            # Comment section
-                            st.markdown("**Team Comments:**")
-                            if lesson['comments']:
-                                for comment in lesson['comments']:
-                                    st.markdown(f"*{comment['teacher']}* ({comment['timestamp']}): {comment['content']}")
-                            
-                            # Add comment
-                            new_comment = st.text_input(f"Add comment", key=f"comment_lesson_{lesson['id']}")
-                            if st.button(f"💬 Comment", key=f"btn_comment_lesson_{lesson['id']}"):
-                                if new_comment:
-                                    comment = {
-                                        'teacher': current_user,
-                                        'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M"),
-                                        'content': new_comment
-                                    }
-                                    lesson['comments'].append(comment)
-                                    st.success("Comment added!")
-                                    st.rerun()
-                else:
-                    st.info("No lessons have been shared by the team yet. Share your first lesson from Learning Connections!")
-            
-            with collab_tabs[2]:  # Team Comments
-                st.markdown("#### Recent Team Activity")
-                
-                # Combine recent activity from rubrics and lessons
-                all_activity = []
-                
-                # Add rubric activities
-                for rubric in st.session_state.shared_rubrics[-5:]:
-                    all_activity.append({
-                        'type': 'rubric',
-                        'title': f"Rubric: {rubric['topic']}",
-                        'teacher': rubric['teacher'],
-                        'timestamp': rubric['timestamp'],
-                        'comments': len(rubric['comments'])
-                    })
-                
-                # Add lesson activities
-                for lesson in st.session_state.shared_lessons[-5:]:
-                    all_activity.append({
-                        'type': 'lesson',
-                        'title': lesson['title'],
-                        'teacher': lesson['author'],
-                        'timestamp': lesson['created'],
-                        'comments': len(lesson['comments'])
-                    })
-                
-                # Sort by timestamp
-                all_activity.sort(key=lambda x: x['timestamp'], reverse=True)
-                
-                if all_activity:
-                    st.markdown("**Recent Sharing Activity:**")
-                    for activity in all_activity[:10]:
-                        icon = "📏" if activity['type'] == 'rubric' else "🌱"
-                        st.markdown(f"{icon} **{activity['title']}** by {activity['teacher']} ({activity['timestamp']}) - {activity['comments']} comments")
-                else:
-                    st.info("No team activity yet. Start sharing resources to see activity here!")
-        
-        with teacher_tabs[4]:  # All & Advisory (CEC Organization)
-            st.markdown("### All & Advisory - CEC Organization")
-            
-            advisory_tabs = st.tabs(["📊 All Students Overview", "🎯 Advisory Groups", "📈 CEC Analytics"])
-            
-            with advisory_tabs[0]:  # All Students
-                st.markdown("### All Students - Cosmic Education Competencies")
-                
-                teacher_students = user_data.get('students', {})
-                if teacher_students:
-                    # Display CEC overview for all students
-                    st.markdown("#### CEC Competency Overview")
-                    
-                    competency_data = []
-                    for student_id, student_name in teacher_students.items():
-                        if student_id in st.session_state.student_progress:
-                            cec_data = st.session_state.student_progress[student_id].get('cec_competencies', {})
-                            row = {'Student': student_name}
-                            for comp, data in cec_data.items():
-                                comp_name = comp.replace('_', ' ').title()
-                                row[comp_name] = data.get('level', 1)
-                            competency_data.append(row)
-                    
-                    if competency_data:
-                        df = pd.DataFrame(competency_data)
-                        st.dataframe(df, use_container_width=True)
-                        
-                        # Visualization
-                        if len(df) > 1:
-                            fig = px.bar(df.melt(id_vars='Student', var_name='Competency', value_name='Level'),
-                                       x='Competency', y='Level', color='Student',
-                                       title='CEC Competency Levels Across Students')
-                            st.plotly_chart(fig, use_container_width=True)
-                    else:
-                        st.info("No CEC data available yet.")
-                else:
-                    st.info("No students created yet.")
-            
-            with advisory_tabs[1]:  # Advisory Groups
-                st.markdown("### Advisory Group Management")
-                st.markdown("*Organize students into advisory groups for personalized support*")
-                
-                # Simple advisory group management
-                if teacher_students:
-                    group_name = st.text_input("Advisory Group Name")
-                    selected_students = st.multiselect("Select Students", 
-                                                     [f"{name} ({id})" for id, name in teacher_students.items()])
-                    
-                    if st.button("Create Advisory Group"):
-                        if group_name and selected_students:
-                            st.success(f"Advisory group '{group_name}' created with {len(selected_students)} students.")
-                        else:
-                            st.warning("Please enter group name and select students.")
-                else:
-                    st.info("Create students first to organize advisory groups.")
-            
-            with advisory_tabs[2]:  # CEC Analytics
-                st.markdown("### CEC Analytics & Insights")
-                st.markdown("*Track Cosmic Education Competency development across your students*")
-                
-                if teacher_students:
-                    # Aggregate analytics
-                    total_students = len(teacher_students)
-                    active_students = len([s for s in teacher_students.keys() if s in st.session_state.student_progress])
-                    
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric("Total Students", total_students)
-                    col2.metric("Active Learners", active_students)
-                    col3.metric("Portfolio Entries", sum(len(st.session_state.portfolios.get(s, {})) for s in teacher_students.keys()))
-                    
-                    st.markdown("#### Competency Development Trends")
-                    st.info("Advanced analytics coming soon in the next update!")
-                else:
-                    st.info("No students to analyze yet.")
-        
-        with teacher_tabs[5]:  # Accessibility
+        with teacher_tabs[3]:  # Accessibility
             accessibility_wizard()
-        
-        with teacher_tabs[6]:  # Pilot Feedback
-            st.markdown("### Pilot Phase Feedback")
-            st.markdown("*Help us improve Guide by sharing your experience*")
-            
-            feedback_text = st.text_area(
-                "Share your feedback, suggestions, or any issues you've encountered:",
-                height=150,
-                placeholder="How has Guide helped your teaching? What features would you like to see? Any problems or suggestions?"
-            )
-            
-            if st.button("📤 Send Feedback to Development Team"):
-                if feedback_text:
-                    success, message = send_feedback_email(current_user, feedback_text)
-                    if success:
-                        st.success("Thank you! Your feedback has been sent to guideaichat@gmail.com")
-                    else:
-                        st.error(message)
-                else:
-                    st.warning("Please enter your feedback before sending.")
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -3409,7 +3210,7 @@ Design this as an inquiry that honors student agency while building genuine math
         
         student_name = user_data.get('real_name', current_user)
         
-        # Student interface tabs
+        # Student interface tabs (MVP Version)
         student_tabs = st.tabs([
             "💬 Learning Assistant", 
             "📝 Project Planner",
@@ -3417,9 +3218,10 @@ Design this as an inquiry that honors student agency while building genuine math
             "📊 Learning Profile",
             "📁 My Portfolio", 
             "🌟 My Journey",
-            "🧮 Math Explorer",
             "♿ Accessibility"
         ])
+        
+        # Hidden MVP features: "🧮 Math Explorer" (available in full version)
         
         with student_tabs[0]:  # Learning Assistant
             st.markdown(f"### Hello {student_name}! Your Learning Companion is Here 🌱")
@@ -3453,168 +3255,94 @@ Design this as an inquiry that honors student agency while building genuine math
                                 "competency_analysis": "Engaged in learning dialogue",
                                 "extensions": "Continued questioning and exploration"
                             }
-                            link_student_activity(current_user, activity_data)
+                            link_student_activity(student_name, activity_data)
                         else:
                             st.error("I'm having trouble right now. Please try again.")
         
-        with student_tabs[2]:  # Get Feedback
-            st.markdown(f"### Get Feedback on Your Work 📋")
-            st.markdown("*Upload your writing, images, audio, or presentations to receive constructive feedback that helps you grow as a learner*")
-            
-            # Feedback interface
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                # Work description
-                work_description = st.text_area(
-                    "Tell me about your work",
-                    placeholder="What did you create? What were you trying to achieve? What challenges did you face? What are you proud of?",
-                    height=100,
-                    help="Describing your work helps me give you better feedback"
-                )
-                
-                # File upload
-                uploaded_file = st.file_uploader(
-                    "Upload your work",
-                    type=['txt', 'pdf', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'mp3', 'wav', 'mp4', 'pptx'],
-                    help="Upload written work, images, audio recordings, or presentation slides"
-                )
-                
-                # Always use blended curriculum model for students
-                feedback_curriculum = "Blended Curriculum (AC V9 + Montessori)"
-            
-            with col2:
-                st.markdown("**Types of work I can help with:**")
-                st.markdown("📝 **Written Work**")
-                st.markdown("• Essays and reports")
-                st.markdown("• Creative writing")
-                st.markdown("• Research projects")
-                st.markdown("• Reflections")
-                
-                st.markdown("🖼️ **Visual Work**")
-                st.markdown("• Artwork and drawings")
-                st.markdown("• Posters and infographics")
-                st.markdown("• Photography")
-                st.markdown("• Mind maps")
-                
-                st.markdown("🎵 **Audio Work**")
-                st.markdown("• Presentations")
-                st.markdown("• Recordings")
-                st.markdown("• Explanations")
-                
-                st.markdown("📊 **Presentations**")
-                st.markdown("• Slide presentations")
-                st.markdown("• Project displays")
-            
-            # Submit for feedback
-            if st.button("🌟 Get My Feedback", type="primary", use_container_width=True):
-                if uploaded_file and work_description:
-                    with st.spinner("Analyzing your work..."):
-                        # Process the uploaded file
-                        file_content, file_type, file_info = process_uploaded_file(uploaded_file)
-                        
-                        # Generate feedback
-                        feedback = analyze_student_work(file_content, file_type, work_description, feedback_curriculum)
-                        
-                        # Display feedback
-                        st.success("Here's your feedback!")
-                        
-                        # Apply accessibility formatting to feedback
-                        if 'accessibility_settings' in st.session_state:
-                            feedback = get_accessible_content_format(feedback, st.session_state.accessibility_settings)
-                        
-                        st.markdown("### 💫 Feedback on Your Work")
-                        st.markdown(feedback)
-                        
-                        # Save feedback to history
-                        save_student_feedback(current_user, work_description, feedback, file_info)
-                        
-                        # Encourage next steps
-                        st.markdown("---")
-                        st.markdown("### 🌱 What's Next?")
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            if st.button("💭 Reflect on Feedback"):
-                                st.write("Take a moment to think about the feedback. What resonates with you? What will you try next?")
-                        with col2:
-                            if st.button("📝 Ask Questions"):
-                                st.session_state.messages.append({
-                                    "role": "user", 
-                                    "content": f"I have questions about the feedback on my work: {work_description}"
-                                })
-                                st.info("Question added to your chat - visit the Learning Assistant tab to continue the conversation!")
-                        with col3:
-                            if st.button("📁 Save to Portfolio"):
-                                st.info("Great idea! You can add this work and feedback to your portfolio in the My Portfolio tab.")
-                                
-                elif not uploaded_file:
-                    st.warning("Please upload a file to get feedback on your work.")
-                elif not work_description:
-                    st.warning("Please tell me about your work so I can give you better feedback.")
-            
-            # Feedback history
-            if st.session_state.student_feedback_history:
-                st.markdown("---")
-                st.markdown("### 📚 Your Previous Feedback")
-                
-                # Filter feedback for current student
-                student_feedback = [f for f in st.session_state.student_feedback_history if f.get('student') == current_user]
-                
-                if student_feedback:
-                    for i, feedback_entry in enumerate(reversed(student_feedback[-5:])):  # Show last 5
-                        with st.expander(f"📋 {feedback_entry['timestamp']} - {feedback_entry['work_description'][:50]}..."):
-                            st.markdown(f"**Your Work:** {feedback_entry['work_description']}")
-                            st.markdown(f"**File:** {feedback_entry['file_info']['name']}")
-                            st.markdown("**Feedback Received:**")
-                            st.markdown(feedback_entry['feedback'])
-                else:
-                    st.info("No previous feedback yet. Upload your first piece of work to get started!")
-        
         with student_tabs[1]:  # Project Planner
-            st.markdown("### Plan Your Next Learning Adventure! 🎨")
-            st.markdown("*Choose a project type and let's create a plan together*")
+            st.markdown("### Project Planning & Organization 📝")
+            st.markdown("*Break down your ideas into manageable steps with guided planning tools*")
             
-            col1, col2 = st.columns(2)
+            # Project planning interface
+            planning_col1, planning_col2 = st.columns([2, 1])
             
-            with col1:
-                project_topic = st.text_input("What topic are you exploring?", 
-                                            placeholder="e.g., Solar system, Local history, Plant life cycles...")
+            with planning_col1:
+                topic_input = st.text_input("What would you like to work on?", placeholder="Enter your project topic or idea...")
+            
+            with planning_col2:
+                project_type = st.selectbox(
+                    "Project Type:",
+                    ["poster", "model", "presentation", "experiment", "research", "artwork"]
+                )
+            
+            if topic_input and st.button("🚀 Create Project Plan", use_container_width=True):
+                with st.spinner("Creating your personalized project plan..."):
+                    guidance = create_student_scaffolding(topic_input, project_type, "Blended (Cosmic Education Priority)")
+                    if guidance:
+                        st.markdown("### Your Project Plan")
+                        st.markdown(guidance)
+                        
+                        # Log the activity
+                        activity_data = {
+                            "type": "project_planning",
+                            "content": f"{project_type.title()} project on {topic_input}",
+                            "feedback": "Generated personalized project scaffold",
+                            "competency_analysis": "Independent project planning",
+                            "extensions": "Ready to begin project implementation"
+                        }
+                        link_student_activity(student_name, activity_data)
+        
+        with student_tabs[2]:  # Get Feedback
+            st.markdown("### Get Feedback on Your Work 📋")
+            st.markdown("*Share your work with your teacher for personalized feedback and next steps*")
+            
+            # Work submission interface
+            feedback_col1, feedback_col2 = st.columns([2, 1])
+            
+            with feedback_col1:
+                work_description = st.text_area(
+                    "Describe your work:",
+                    placeholder="Tell me about what you created, what you learned, or what you'd like feedback on...",
+                    height=100
+                )
+            
+            with feedback_col2:
+                work_type = st.selectbox(
+                    "Work Type:",
+                    ["Writing", "Project", "Art", "Presentation", "Research", "Other"]
+                )
                 
-                project_type = st.selectbox("What type of project would you like to create?", [
-                    "poster", "essay", "diorama", "video", "music", "role-play", "model"
-                ])
+                submitted_file = st.file_uploader(
+                    "Upload your work (optional)",
+                    type=["txt", "docx", "pdf", "jpg", "jpeg", "png", "mp3", "wav", "mp4"],
+                    help="Share files, images, or recordings of your work"
+                )
             
-            with col2:
-                st.markdown("#### Project Types")
-                st.markdown("""
-                - **Poster**: Visual display with information
-                - **Essay**: Written exploration of ideas  
-                - **Diorama**: 3D scene or model
-                - **Video**: Film or presentation
-                - **Music**: Song or musical piece
-                - **Role-play**: Acting or performance
-                - **Model**: Physical or digital representation
-                """)
-            
-            if st.button("🚀 Create My Project Plan"):
-                if project_topic and project_type:
-                    with st.spinner("Creating your personalized project plan..."):
-                        planner = create_student_planner(project_type, project_topic, st.session_state.curriculum)
-                        if planner:
-                            st.markdown("### Your Project Planning Guide")
-                            st.markdown(planner)
-                            
-                            # Log student activity
-                            activity_data = {
-                                "type": "project_planning",
-                                "content": f"{project_type} project on {project_topic}",
-                                "feedback": "Project planning guidance provided",
-                                "competency_analysis": "Demonstrated planning and organization skills",
-                                "extensions": "Ready to begin project implementation"
-                            }
-                            link_student_activity(current_user, activity_data)
-                else:
-                    st.warning("Please enter a topic and select a project type.")
+            if st.button("📤 Request Feedback", use_container_width=True) and work_description:
+                with st.spinner("Preparing your feedback..."):
+                    # Process the work for feedback
+                    feedback_response = analyze_student_work(
+                        work_description=work_description,
+                        work_type=work_type.lower(),
+                        uploaded_file=submitted_file,
+                        curriculum="Blended (Cosmic Education Priority)"
+                    )
+                    
+                    if feedback_response:
+                        st.markdown("### Your Personalized Feedback")
+                        st.markdown(feedback_response)
+                        
+                        # Log the feedback activity
+                        activity_data = {
+                            "type": "feedback_request",
+                            "content": f"{work_type} work: {work_description[:100]}...",
+                            "feedback": feedback_response,
+                            "competency_analysis": "Seeks feedback for growth",
+                            "extensions": "Apply feedback to improve work"
+                        }
+                        link_student_activity(student_name, activity_data)
+            elif st.session_state.get('feedback_submitted'):
+                st.warning("Please describe your work to receive feedback.")
         
         with student_tabs[3]:  # Learning Profile
             st.markdown("### My Learning Profile 📊")
@@ -3631,32 +3359,28 @@ Design this as an inquiry that honors student agency while building genuine math
                     competency_names = {
                         "knowing_how_to_learn": "Learning How to Learn",
                         "empirical_reasoning": "Scientific Thinking", 
-                        "quantitative_reasoning": "Mathematical Thinking",
-                        "social_reasoning": "Understanding People & Communities",
-                        "communication": "Sharing Ideas",
-                        "personal_qualities": "Personal Growth"
+                        "systems_thinking": "Systems Thinking",
+                        "mathematical_reasoning": "Mathematical Reasoning",
+                        "creative_design": "Creative Design",
+                        "communication": "Communication",
+                        "collaboration": "Collaboration"
                     }
                     
-                    cols = st.columns(3)
-                    for i, (comp_key, comp_data) in enumerate(cec_data.items()):
-                        with cols[i % 3]:
-                            name = competency_names.get(comp_key, comp_key)
-                            level = comp_data.get('level', 1)
-                            st.metric(name, f"Level {level}", help=f"You're developing skills in {name.lower()}")
+                    # Create simple progress bars
+                    for comp_key, comp_data in cec_data.items():
+                        comp_name = competency_names.get(comp_key, comp_key.replace('_', ' ').title())
+                        level = comp_data.get('level', 1)
+                        st.progress(level / 5, text=f"{comp_name}: Level {level}/5")
                 
-                # Show learning patterns and insights
-                st.markdown("---")
-                st.markdown("#### My Learning Insights")
-                
-                # Activity summary
-                activities = progress_data.get('activities', [])
+                # Learning activities summary
+                activities = progress_data.get('student_activities', [])
                 if activities:
-                    total_activities = len(activities)
+                    st.markdown("#### Recent Learning Activities")
                     recent_activities = activities[-5:]  # Last 5 activities
                     
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.metric("Total Learning Activities", total_activities)
+                        st.metric("Total Learning Activities", len(activities))
                     with col2:
                         favorite_types = {}
                         for activity in activities:
@@ -3679,712 +3403,22 @@ Design this as an inquiry that honors student agency while building genuine math
                                 st.markdown(f"**Growth Area:** {activity.get('feedback')}")
                             if activity.get('competency_analysis'):
                                 st.markdown(f"**Skills Developed:** {activity.get('competency_analysis')}")
-                
-                # Portfolio summary in profile
-                user_portfolios = st.session_state.portfolios.get(current_user, {})
-                if user_portfolios:
-                    st.markdown("---")
-                    st.markdown("#### My Portfolio Summary")
-                    for portfolio_name, portfolio in user_portfolios.items():
-                        total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                        st.markdown(f"📁 **{portfolio_name}** - {total_entries} entries")
-                        
-                        # Show portfolio growth over time
-                        if total_entries > 0:
-                            st.progress(min(total_entries / 20, 1.0), text=f"Portfolio progress: {total_entries}/20 entries")
             else:
                 st.info("Start learning and creating to see your personal learning profile develop!")
         
-        with student_tabs[4]:  # Portfolio
-            st.markdown("### My Learning Portfolio 📚")
+        # Portfolio and accessibility tabs would be implemented here in the full version
+        
+        with student_tabs[4]:  # My Portfolio
+            st.markdown("### My Learning Portfolio 📁")
             st.markdown("*Collect and reflect on your learning journey*")
-            
-            # Initialize student portfolios if not exists
-            if current_user not in st.session_state.portfolios:
-                st.session_state.portfolios[current_user] = {}
-            
-            portfolio_subtabs = st.tabs(["📁 My Portfolios", "➕ Create New Portfolio"])
-            
-            with portfolio_subtabs[0]:  # My Portfolios
-                st.markdown("### My Portfolio Collection")
-                
-                user_portfolios = st.session_state.portfolios.get(current_user, {})
-                
-                if user_portfolios:
-                    # Portfolio viewer with annotation and reflection
-                    selected_portfolio = st.selectbox("Select a portfolio to view/edit:", list(user_portfolios.keys()))
-                    
-                    if selected_portfolio:
-                        portfolio = user_portfolios[selected_portfolio]
-                        
-                        # Portfolio header with reflection
-                        col1, col2 = st.columns([2, 1])
-                        with col1:
-                            st.markdown(f"#### 📁 {selected_portfolio}")
-                            st.markdown(f"**Created:** {portfolio['created']}")
-                            st.markdown(f"**Type:** {portfolio['template_type'].title()}")
-                            st.markdown(f"**Description:** {portfolio['description']}")
-                        
-                        with col2:
-                            # Portfolio reflection
-                            st.markdown("**💭 Portfolio Reflection**")
-                            portfolio_reflection = st.text_area(
-                                "Reflect on this portfolio theme/subject:",
-                                value=portfolio.get('reflection', ''),
-                                placeholder="What patterns do you see in your learning? How has your thinking evolved? What connections are you making?",
-                                height=100,
-                                key=f"portfolio_reflection_{selected_portfolio}"
-                            )
-                            
-                            if st.button("💫 Save Portfolio Reflection", key=f"save_reflection_{selected_portfolio}"):
-                                portfolio['reflection'] = portfolio_reflection
-                                st.success("Portfolio reflection saved!")
-                                st.rerun()
-                        
-                        # Add new work to portfolio with enhanced file upload
-                        st.markdown("---")
-                        st.markdown("#### ➕ Add New Work")
-                        
-                        # Enhanced file upload section
-                        st.markdown("##### 📎 Upload Your Work")
-                        upload_col1, upload_col2 = st.columns(2)
-                        
-                        with upload_col1:
-                            st.markdown("**Documents & Images:**")
-                            doc_file = st.file_uploader(
-                                "Documents, PDFs, Images",
-                                type=['pdf', 'doc', 'docx', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'],
-                                key=f"doc_upload_{selected_portfolio}",
-                                help="Upload documents, PDFs, or images of your work"
-                            )
-                        
-                        with upload_col2:
-                            st.markdown("**Audio & Video:**")
-                            media_file = st.file_uploader(
-                                "Audio & Video Files",
-                                type=['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'avi', 'mov', 'mkv', 'webm'],
-                                key=f"media_upload_{selected_portfolio}",
-                                help="Upload audio recordings or video presentations"
-                            )
-                        
-                        # Work details section
-                        st.markdown("##### 📝 Work Details")
-                        detail_col1, detail_col2 = st.columns([2, 1])
-                        
-                        with detail_col1:
-                            work_title = st.text_input(
-                                "📌 Title of your work:",
-                                placeholder="Give your work a meaningful title",
-                                key=f"work_title_{selected_portfolio}"
-                            )
-                            
-                            work_description = st.text_area(
-                                "📝 Describe your work:",
-                                placeholder="What did you create? What was your process? What challenges did you face?",
-                                height=100,
-                                key=f"work_desc_{selected_portfolio}"
-                            )
-                        
-                        with detail_col2:
-                            work_annotation = st.text_area(
-                                "📝 Annotate your work:",
-                                placeholder="What did you learn? What was challenging? What would you do differently next time?",
-                                height=140,
-                                key=f"annotation_{selected_portfolio}"
-                            )
-                        
-                        if st.button("📥 Add to Portfolio", key=f"add_work_{selected_portfolio}"):
-                            uploaded_file = doc_file or media_file  # Use either document or media file
-                            if work_title and (work_description or uploaded_file):
-                                # Add work to portfolio with annotation and detailed timestamp
-                                current_time = datetime.now()
-                                entry = {
-                                    'title': work_title,
-                                    'description': work_description,
-                                    'annotation': work_annotation,
-                                    'timestamp': current_time.strftime("%d/%m/%Y %H:%M:%S"),
-                                    'date': current_time.strftime("%d/%m/%Y"),
-                                    'time': current_time.strftime("%H:%M"),
-                                    'portfolio_name': selected_portfolio,
-                                    'student': current_user,
-                                    'file_info': {
-                                        'name': uploaded_file.name if uploaded_file else None,
-                                        'type': uploaded_file.type if uploaded_file else None,
-                                        'size': uploaded_file.size if uploaded_file else None,
-                                        'category': 'document' if doc_file else 'media' if media_file else None
-                                    } if uploaded_file else None
-                                }
-                                
-                                # Add to portfolio entries
-                                entry_type = "files" if uploaded_file else "text"
-                                if entry_type not in portfolio['entries']:
-                                    portfolio['entries'][entry_type] = []
-                                portfolio['entries'][entry_type].append(entry)
-                                
-                                # Also add to global student work timeline for My Journey
-                                if 'student_work_timeline' not in st.session_state:
-                                    st.session_state.student_work_timeline = {}
-                                if current_user not in st.session_state.student_work_timeline:
-                                    st.session_state.student_work_timeline[current_user] = []
-                                
-                                # Add timeline entry
-                                timeline_entry = {
-                                    'title': work_title,
-                                    'description': work_description,
-                                    'annotation': work_annotation,
-                                    'portfolio': selected_portfolio,
-                                    'timestamp': current_time.strftime("%d/%m/%Y %H:%M:%S"),
-                                    'date': current_time.strftime("%d/%m/%Y"),
-                                    'month': current_time.strftime("%m/%Y"),
-                                    'year': current_time.strftime("%Y"),
-                                    'type': entry_type,
-                                    'file_info': entry['file_info']
-                                }
-                                st.session_state.student_work_timeline[current_user].append(timeline_entry)
-                                
-                                st.success(f"Added '{work_title}' to your {selected_portfolio} portfolio!")
-                                st.rerun()
-                            else:
-                                st.warning("Please provide a title and either description or file.")
-                        
-                        # Display existing portfolio entries
-                        st.markdown("---")
-                        st.markdown("#### 📚 Portfolio Contents")
-                        
-                        total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                        if total_entries > 0:
-                            for entry_type, entries in portfolio['entries'].items():
-                                if entries:
-                                    st.markdown(f"**{entry_type.title()} ({len(entries)} items)**")
-                                    for i, entry in enumerate(entries):
-                                        with st.expander(f"📄 {entry['title']} - {entry['timestamp']}"):
-                                            st.markdown(f"**Description:** {entry['description']}")
-                                            if entry.get('annotation'):
-                                                st.markdown(f"**My Annotation:** {entry['annotation']}")
-                                            if entry.get('file_info') and entry['file_info']:
-                                                file_category = entry['file_info'].get('category', 'file')
-                                                file_icon = "📄" if file_category == 'document' else "🎵" if file_category == 'media' else "📎"
-                                                st.markdown(f"**{file_icon} File:** {entry['file_info']['name']}")
-                                                if entry['file_info'].get('size'):
-                                                    size_mb = entry['file_info']['size'] / (1024 * 1024)
-                                                    st.caption(f"Size: {size_mb:.2f} MB")
-                                            
-                                            # Action buttons
-                                            action_col1, action_col2 = st.columns([3, 1])
-                                            
-                                            with action_col1:
-                                                # Allow editing annotations
-                                                new_annotation = st.text_area(
-                                                    "Edit annotation:",
-                                                    value=entry.get('annotation', ''),
-                                                    placeholder="Add or update your annotation...",
-                                                    key=f"edit_annotation_{selected_portfolio}_{entry_type}_{i}",
-                                                    height=60
-                                                )
-                                            
-                                            with action_col2:
-                                                st.markdown("#### Actions")
-                                                if st.button("💾 Update", key=f"update_ann_{selected_portfolio}_{entry_type}_{i}", use_container_width=True):
-                                                    entry['annotation'] = new_annotation
-                                                    st.success("Annotation updated!")
-                                                    st.rerun()
-                                                
-                                                if st.button("🗑️ Delete", key=f"delete_entry_{selected_portfolio}_{entry_type}_{i}", type="secondary", use_container_width=True):
-                                                    # Remove from portfolio entries
-                                                    entries.pop(i)
-                                                    # Also remove from timeline if it exists
-                                                    if current_user in st.session_state.student_work_timeline:
-                                                        timeline_entries = st.session_state.student_work_timeline[current_user]
-                                                        # Find and remove matching timeline entry
-                                                        for j, timeline_entry in enumerate(timeline_entries):
-                                                            if (timeline_entry.get('title') == entry['title'] and 
-                                                                timeline_entry.get('portfolio') == selected_portfolio):
-                                                                timeline_entries.pop(j)
-                                                                break
-                                                    st.success(f"'{entry['title']}' permanently deleted!")
-                                                    st.rerun()
-                        else:
-                            st.info("No entries yet. Add your first piece of work above!")
-                else:
-                    st.info("You don't have any portfolios yet. Create your first portfolio in the 'Create New Portfolio' tab!")
-            
-            with portfolio_subtabs[1]:  # Combined Portfolio Hub
-                st.markdown("### My Portfolio Hub")
-                
-                # Quick action bar at the top
-                action_col1, action_col2, action_col3 = st.columns([2, 1, 1])
-                
-                with action_col1:
-                    st.markdown("#### Quick Actions")
-                
-                with action_col2:
-                    if st.button("🎨 Create New Portfolio", use_container_width=True, type="primary"):
-                        st.session_state.show_portfolio_creator = True
-                
-                with action_col3:
-                    show_tips = st.button("💡 Portfolio Tips", use_container_width=True)
-                
-                # Show portfolio creator if button was clicked
-                if st.session_state.get('show_portfolio_creator', False):
-                    st.markdown("---")
-                    with st.container():
-                        st.markdown("#### Create New Portfolio")
-                        
-                        create_col1, create_col2 = st.columns([2, 1])
-                        
-                        with create_col1:
-                            portfolio_name = st.text_input("Portfolio Name", placeholder="My Amazing Learning Journey", key="new_portfolio_name")
-                            portfolio_template = st.selectbox("Choose a template:", [
-                                "blank", "themed", "subject", "year_level", "term"
-                            ], key="portfolio_template_select")
-                            
-                            # Custom parameters based on template
-                            custom_params = {}
-                            if portfolio_template == "year_level":
-                                custom_params["year"] = st.selectbox("Year Level:", 
-                                                                   ["Foundation", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-                                                                   key="portfolio_year")
-                            elif portfolio_template == "term":
-                                custom_params["term"] = st.selectbox("Term:", ["Term 1", "Term 2", "Term 3", "Term 4"],
-                                                                   key="portfolio_term")
-                        
-                        with create_col2:
-                            st.markdown("**Template Info:**")
-                            template_descriptions = {
-                                "blank": "Start fresh with no structure",
-                                "themed": "Organize around big ideas",
-                                "subject": "Focus on one learning area",
-                                "year_level": "Track progress through the year",
-                                "term": "Document a specific term"
-                            }
-                            st.info(template_descriptions.get(portfolio_template, "Custom portfolio"))
-                        
-                        button_col1, button_col2 = st.columns(2)
-                        with button_col1:
-                            if st.button("✅ Create Portfolio", use_container_width=True, type="primary"):
-                                if portfolio_name:
-                                    portfolio = create_portfolio_template(portfolio_template, student_name, custom_params)
-                                    portfolio["title"] = portfolio_name
-                                    
-                                    st.session_state.portfolios[current_user][portfolio_name] = portfolio
-                                    st.success(f"Portfolio '{portfolio_name}' created!")
-                                    st.session_state.show_portfolio_creator = False
-                                    st.rerun()
-                                else:
-                                    st.warning("Please enter a portfolio name.")
-                        
-                        with button_col2:
-                            if st.button("❌ Cancel", use_container_width=True):
-                                st.session_state.show_portfolio_creator = False
-                                st.rerun()
-                
-                # Portfolio tips section
-                if show_tips:
-                    st.markdown("---")
-                    st.markdown("#### 💡 Portfolio Ideas & Tips")
-                    tip_col1, tip_col2 = st.columns(2)
-                    
-                    with tip_col1:
-                        st.markdown("**Portfolio Types:**")
-                        st.markdown("""
-                        - **Subject Portfolio**: Math, Science, Art, English
-                        - **Theme Portfolio**: Systems, Patterns, Connections
-                        - **Project Portfolio**: Document a major project
-                        - **Skill Portfolio**: Track specific skills over time
-                        """)
-                    
-                    with tip_col2:
-                        st.markdown("**Portfolio Tips:**")
-                        st.markdown("""
-                        - Add work regularly to show growth
-                        - Write reflections about your learning
-                        - Include different types of work
-                        - Connect your learning to big ideas
-                        """)
-                
-                # My Portfolios Grid
-                st.markdown("---")
-                st.markdown("#### My Portfolios")
-                
-                user_portfolios = st.session_state.portfolios.get(current_user, {})
-                
-                if user_portfolios:
-                    # Display portfolios in a grid layout
-                    portfolio_items = list(user_portfolios.items())
-                    
-                    # Create grid layout (2 columns)
-                    for i in range(0, len(portfolio_items), 2):
-                        grid_col1, grid_col2 = st.columns(2)
-                        
-                        # First portfolio in row
-                        with grid_col1:
-                            if i < len(portfolio_items):
-                                portfolio_name, portfolio = portfolio_items[i]
-                                
-                                # Portfolio card
-                                with st.container():
-                                    st.markdown(f"**📁 {portfolio_name}**")
-                                    st.markdown(f"*{portfolio['template_type'].title()} Portfolio*")
-                                    
-                                    # Quick stats
-                                    total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                                    creation_date = portfolio['created'][:10] if len(portfolio['created']) > 10 else portfolio['created']
-                                    st.markdown(f"**{total_entries}** entries • Created: {creation_date}")
-                                    
-                                    # Description preview
-                                    description = portfolio['description']
-                                    if len(description) > 80:
-                                        description = description[:80] + "..."
-                                    st.markdown(f"*{description}*")
-                                    
-                                    # Portfolio reflection with interactive editing
-                                    if portfolio.get('reflection'):
-                                        st.success("✅ Has portfolio reflection")
-                                        if st.button(f"📝 Edit", key=f"edit_refl_{portfolio_name}_col1"):
-                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
-                                    else:
-                                        if st.button(f"➕ Add Reflection", key=f"add_refl_{portfolio_name}_col1"):
-                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
-                                    
-                                    # Show reflection editor if editing
-                                    if st.session_state.get(f'editing_reflection_{portfolio_name}', False):
-                                        current_reflection = portfolio.get('reflection', '')
-                                        new_reflection = st.text_area(
-                                            "Portfolio Reflection:",
-                                            value=current_reflection,
-                                            placeholder="What connections have you discovered? How has your thinking evolved?",
-                                            height=80,
-                                            key=f"refl_text_{portfolio_name}_col1"
-                                        )
-                                        
-                                        btn_col1, btn_col2 = st.columns(2)
-                                        with btn_col1:
-                                            if st.button("💾 Save", key=f"save_refl_{portfolio_name}_col1"):
-                                                portfolio['reflection'] = new_reflection
-                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
-                                                st.success("Reflection saved!")
-                                                st.rerun()
-                                        
-                                        with btn_col2:
-                                            if st.button("❌ Cancel", key=f"cancel_refl_{portfolio_name}_col1"):
-                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
-                                                st.rerun()
-                                    
-                                    st.markdown("---")
-                        
-                        # Second portfolio in row (if exists)
-                        with grid_col2:
-                            if i + 1 < len(portfolio_items):
-                                portfolio_name, portfolio = portfolio_items[i + 1]
-                                
-                                # Portfolio card
-                                with st.container():
-                                    st.markdown(f"**📁 {portfolio_name}**")
-                                    st.markdown(f"*{portfolio['template_type'].title()} Portfolio*")
-                                    
-                                    # Quick stats
-                                    total_entries = sum(len(entries) for entries in portfolio['entries'].values())
-                                    creation_date = portfolio['created'][:10] if len(portfolio['created']) > 10 else portfolio['created']
-                                    st.markdown(f"**{total_entries}** entries • Created: {creation_date}")
-                                    
-                                    # Description preview
-                                    description = portfolio['description']
-                                    if len(description) > 80:
-                                        description = description[:80] + "..."
-                                    st.markdown(f"*{description}*")
-                                    
-                                    # Portfolio reflection with interactive editing
-                                    if portfolio.get('reflection'):
-                                        st.success("✅ Has portfolio reflection")
-                                        if st.button(f"📝 Edit", key=f"edit_refl_{portfolio_name}_col2"):
-                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
-                                    else:
-                                        if st.button(f"➕ Add Reflection", key=f"add_refl_{portfolio_name}_col2"):
-                                            st.session_state[f'editing_reflection_{portfolio_name}'] = True
-                                    
-                                    # Show reflection editor if editing
-                                    if st.session_state.get(f'editing_reflection_{portfolio_name}', False):
-                                        current_reflection = portfolio.get('reflection', '')
-                                        new_reflection = st.text_area(
-                                            "Portfolio Reflection:",
-                                            value=current_reflection,
-                                            placeholder="What connections have you discovered? How has your thinking evolved?",
-                                            height=80,
-                                            key=f"refl_text_{portfolio_name}_col2"
-                                        )
-                                        
-                                        btn_col1, btn_col2 = st.columns(2)
-                                        with btn_col1:
-                                            if st.button("💾 Save", key=f"save_refl_{portfolio_name}_col2"):
-                                                portfolio['reflection'] = new_reflection
-                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
-                                                st.success("Reflection saved!")
-                                                st.rerun()
-                                        
-                                        with btn_col2:
-                                            if st.button("❌ Cancel", key=f"cancel_refl_{portfolio_name}_col2"):
-                                                st.session_state[f'editing_reflection_{portfolio_name}'] = False
-                                                st.rerun()
-                                    
-                                    st.markdown("---")
-                else:
-                    st.markdown("### 🌱 Start Your Portfolio Journey")
-                    st.info("No portfolios yet! Click 'Create New Portfolio' above to begin documenting your learning journey.")
-                    
-                    # Show example portfolios for inspiration
-                    st.markdown("#### Portfolio Inspiration")
-                    inspiration_col1, inspiration_col2, inspiration_col3 = st.columns(3)
-                    
-                    with inspiration_col1:
-                        st.markdown("**📐 Math Journey**")
-                        st.markdown("Track your problem-solving adventures and mathematical discoveries")
-                    
-                    with inspiration_col2:
-                        st.markdown("**🌍 Systems Thinking**")
-                        st.markdown("Explore connections and patterns across different subjects")
-                    
-                    with inspiration_col3:
-                        st.markdown("**🎨 Creative Projects**")
-                        st.markdown("Showcase your artistic and creative expressions")
+            st.info("Portfolio features available in full version of Guide.")
         
         with student_tabs[5]:  # My Journey
             st.markdown("### My Learning Journey 🌟")
-            st.markdown("*See how you're growing and learning*")
-            
-            # Chronological portfolio work timeline and achievements
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                st.markdown("#### My Work Over Time")
-                
-                # Get student's work timeline
-                if 'student_work_timeline' not in st.session_state:
-                    st.session_state.student_work_timeline = {}
-                timeline_data = st.session_state.student_work_timeline.get(current_user, [])
-                
-                if timeline_data:
-                    # Sort chronologically (newest first)
-                    sorted_timeline = sorted(timeline_data, key=lambda x: x['timestamp'], reverse=True)
-                    
-                    # Time period selector
-                    time_filter = st.selectbox("View work from:", [
-                        "All time", "This month", "Last 3 months", "This year"
-                    ])
-                    
-                    # Filter timeline based on selection
-                    current_date = datetime.now()
-                    filtered_timeline = []
-                    
-                    for work in sorted_timeline:
-                        work_date = datetime.strptime(work['timestamp'], "%Y-%m-%d %H:%M:%S")
-                        
-                        if time_filter == "All time":
-                            filtered_timeline.append(work)
-                        elif time_filter == "This month" and work_date.month == current_date.month and work_date.year == current_date.year:
-                            filtered_timeline.append(work)
-                        elif time_filter == "Last 3 months" and (current_date - work_date).days <= 90:
-                            filtered_timeline.append(work)
-                        elif time_filter == "This year" and work_date.year == current_date.year:
-                            filtered_timeline.append(work)
-                    
-                    if filtered_timeline:
-                        # Group by date for better organization
-                        work_by_date = {}
-                        for work in filtered_timeline:
-                            date_key = work['date']
-                            if date_key not in work_by_date:
-                                work_by_date[date_key] = []
-                            work_by_date[date_key].append(work)
-                        
-                        # Display chronologically
-                        for date in sorted(work_by_date.keys(), reverse=True):
-                            works_on_date = work_by_date[date]
-                            with st.expander(f"📅 {date} - {len(works_on_date)} work(s) added"):
-                                for work in works_on_date:
-                                    st.markdown(f"**📁 {work['portfolio']}** - {work['title']}")
-                                    st.markdown(f"*{work['description'][:100]}{'...' if len(work['description']) > 100 else ''}*")
-                                    if work['annotation']:
-                                        st.markdown(f"💭 {work['annotation'][:150]}{'...' if len(work['annotation']) > 150 else ''}")
-                                    if work['file_info'] and work['file_info']['name']:
-                                        st.markdown(f"📎 File: {work['file_info']['name']}")
-                                    st.markdown("---")
-                    else:
-                        st.info(f"No work found for {time_filter.lower()}.")
-                else:
-                    st.info("Start adding work to your portfolios to see your learning journey over time!")
-            
-            with col2:
-                st.markdown("#### Learning Milestones")
-                
-                # Calculate achievements based on portfolio work
-                total_works = len(timeline_data) if timeline_data else 0
-                total_portfolios = len(st.session_state.portfolios.get(current_user, {}))
-                
-                # Portfolio-based achievements
-                portfolio_achievements = []
-                if total_works >= 1:
-                    portfolio_achievements.append("🌱 First Work Added")
-                if total_works >= 5:
-                    portfolio_achievements.append("📚 Portfolio Builder (5+ works)")
-                if total_works >= 15:
-                    portfolio_achievements.append("🎨 Creative Collector (15+ works)")
-                if total_works >= 30:
-                    portfolio_achievements.append("🏆 Portfolio Master (30+ works)")
-                if total_portfolios >= 3:
-                    portfolio_achievements.append("📁 Multi-Portfolio Learner")
-                
-                # Monthly consistency check
-                if timeline_data:
-                    months_with_work = set(work['month'] for work in timeline_data)
-                    if len(months_with_work) >= 3:
-                        portfolio_achievements.append("🗓️ Consistent Creator")
-                
-                if portfolio_achievements:
-                    for achievement in portfolio_achievements:
-                        st.success(achievement)
-                else:
-                    st.info("Start creating portfolios to earn achievement badges!")
-                
-                # Quick stats
-                st.markdown("---")
-                st.markdown("#### Quick Stats")
-                st.metric("Total Works", total_works)
-                st.metric("Portfolios Created", total_portfolios)
-                
-                if timeline_data:
-                    # Most active portfolio
-                    portfolio_counts = {}
-                    for work in timeline_data:
-                        portfolio = work['portfolio']
-                        portfolio_counts[portfolio] = portfolio_counts.get(portfolio, 0) + 1
-                    
-                    if portfolio_counts:
-                        most_active = max(portfolio_counts.keys(), key=lambda k: portfolio_counts[k])
-                        st.metric("Most Active Portfolio", f"{most_active} ({portfolio_counts[most_active]} works)")
-                
-                # Link to detailed profile
-                st.markdown("---")
-                if st.button("📊 View Learning Profile", use_container_width=True):
-                    st.info("Visit the 'Learning Profile' tab for detailed progress tracking!")
+            st.markdown("*Track your progress over time*")
+            st.info("Journey timeline features available in full version of Guide.")
         
-        with student_tabs[6]:  # Math Explorer
-            st.markdown("### 🧮 Math Explorer")
-            st.markdown("*Discover mathematical patterns in your world*")
-            
-            math_student_tabs = st.tabs([
-                "🌟 Pattern Detective",
-                "🔢 Number Adventures", 
-                "📊 Data Explorer",
-                "🧩 Problem Solver"
-            ])
-            
-            with math_student_tabs[0]:  # Pattern Detective
-                st.markdown("#### 🌟 Pattern Detective")
-                st.markdown("*Find mathematical patterns around you*")
-                
-                pattern_type = st.selectbox(
-                    "What patterns interest you?",
-                    [
-                        "Shapes in nature",
-                        "Numbers in everyday life",
-                        "Repeating patterns",
-                        "Growth patterns",
-                        "Musical patterns",
-                        "Art and symmetry"
-                    ]
-                )
-                
-                student_observation = st.text_area(
-                    "Describe what you've noticed:",
-                    placeholder="Tell me about a pattern you've seen or want to explore...",
-                    height=100
-                )
-                
-                if st.button("🔍 Explore This Pattern"):
-                    if student_observation:
-                        with st.spinner("Finding connections..."):
-                            prompt = f"""A student is interested in {pattern_type} and has observed: "{student_observation}"
-
-Help them explore this mathematical pattern by providing:
-
-1. **What Makes This Special**: Why this pattern is mathematically interesting
-2. **Look Closer**: Simple ways to investigate this pattern further
-3. **Try This**: A hands-on activity they can do to explore more
-4. **Connect It**: How this connects to other mathematical ideas
-5. **Wonder Questions**: Questions that might lead to new discoveries
-
-Keep the language engaging and age-appropriate. Focus on sparking curiosity and wonder about mathematics in their world."""
-
-                            messages = [{"role": "user", "content": prompt}]
-                            system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
-                            
-                            response = call_openai_api(messages, system_prompt)
-                            if response:
-                                st.markdown("### 🌟 Pattern Exploration")
-                                st.markdown(response)
-                    else:
-                        st.warning("Tell me about a pattern you've noticed!")
-            
-            with math_student_tabs[1]:  # Number Adventures
-                st.markdown("#### 🔢 Number Adventures")
-                st.markdown("*Explore the magic of numbers*")
-                
-                number_interest = st.selectbox(
-                    "What numbers fascinate you?",
-                    [
-                        "My favourite number",
-                        "Big numbers", 
-                        "Small numbers",
-                        "Numbers in my family",
-                        "Numbers in sports",
-                        "Numbers in time",
-                        "Numbers in money"
-                    ]
-                )
-                
-                number_input = st.text_input(
-                    "Share a number that interests you:",
-                    placeholder="e.g., 7, 100, my age, etc."
-                )
-                
-                if st.button("✨ Discover Number Magic"):
-                    if number_input:
-                        with st.spinner("Exploring your number..."):
-                            prompt = f"""A student is interested in {number_interest} and wants to explore the number: {number_input}
-
-Create an engaging number exploration that includes:
-
-1. **Cool Facts**: Interesting things about this number
-2. **Number Stories**: Where this number appears in the world
-3. **Try This**: Simple calculations or investigations they can do
-4. **Pattern Hunt**: Patterns related to this number
-5. **Next Steps**: Ways to explore similar numbers
-
-Make it fun, curious, and connected to their interests. Use simple language and encourage mathematical thinking."""
-
-                            messages = [{"role": "user", "content": prompt}]
-                            system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
-                            
-                            response = call_openai_api(messages, system_prompt)
-                            if response:
-                                st.markdown("### 🔢 Number Adventure")
-                                st.markdown(response)
-                    else:
-                        st.warning("Share a number you'd like to explore!")
-            
-            with math_student_tabs[2]:  # Data Explorer
-                st.markdown("#### 📊 Data Explorer")
-                st.markdown("*Turn your questions into data investigations*")
-                
-                st.info("🌱 Coming Soon: Tools to collect, organize, and analyze data about things that matter to you!")
-            
-            with math_student_tabs[3]:  # Problem Solver
-                st.markdown("#### 🧩 Problem Solver")
-                st.markdown("*Work through mathematical challenges*")
-                
-                st.info("🌱 Coming Soon: Step-by-step guidance for mathematical problem solving and reasoning!")
-
-        with student_tabs[7]:  # Accessibility
+        with student_tabs[6]:  # Accessibility
             accessibility_wizard()
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -4467,11 +3501,10 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666; font-size: 0.8em;'>
-        Guide - Cosmic Curriculum Companion | Powered by OpenAI GPT-4o Mini<br>
+        Guide - Cosmic Curriculum Companion MVP | Powered by OpenAI GPT-4o Mini<br>
         Bridging Montessori's Cosmic Education with contemporary curriculum frameworks<br>
         <em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em>
     </div>
     """,
     unsafe_allow_html=True
 )
-
