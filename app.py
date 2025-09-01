@@ -1849,10 +1849,15 @@ if not st.session_state.authenticated:
         
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
-            login_username = st.text_input("Username", key="login_username")
-            login_password = st.text_input("Password", type="password", key="login_password")
+            # Use form to enable Enter key submission
+            with st.form("login_form"):
+                login_username = st.text_input("Username", key="login_username")
+                login_password = st.text_input("Password", type="password", key="login_password")
+                
+                # Form submit button - activates on Enter key press
+                login_submitted = st.form_submit_button("🌱 Enter Your Learning Space", use_container_width=True)
             
-            if st.button("🌱 Enter Your Learning Space", use_container_width=True):
+            if login_submitted:
                 if login_username and login_password:
                     success, message = authenticate_user(login_username, login_password)
                     if success:
