@@ -2089,9 +2089,24 @@ else:
             
 
             
-            # Chat input positioned after conversation and follow-up options
+            # Chat input positioned after conversation
             if prompt := st.chat_input("Ask me anything about Montessori education, teaching, or learning..."):
                 st.session_state.messages.append({"role": "user", "content": prompt})
+                
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                
+                with st.chat_message("assistant"):
+                    with st.spinner("Reflecting on your question..."):
+                        system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                        response = call_openai_api(st.session_state.messages, system_prompt)
+                        
+                        if response:
+                            st.markdown(response)
+                            st.session_state.messages.append({"role": "assistant", "content": response})
+                        else:
+                            st.error("I'm having trouble connecting right now. Please try again.")
+                
                 st.rerun()
         
         with teacher_tabs[1]:  # Learning Tools
@@ -2128,6 +2143,22 @@ else:
                 # Quick planning input - positioned after conversation history
                 if quick_prompt := st.chat_input("What would you like me to create or help you with?"):
                     st.session_state.quick_planning_messages.append({"role": "user", "content": quick_prompt})
+                    
+                    with st.chat_message("user"):
+                        st.markdown(quick_prompt)
+                    
+                    with st.chat_message("assistant"):
+                        with st.spinner("Creating your teaching resource..."):
+                            # Use blended cosmic education approach for quick planning
+                            system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                            response = call_openai_api(st.session_state.quick_planning_messages, system_prompt)
+                            
+                            if response:
+                                st.markdown(response)
+                                st.session_state.quick_planning_messages.append({"role": "assistant", "content": response})
+                            else:
+                                st.error("Unable to generate response. Please try again.")
+                    
                     st.rerun()
                 
                 # Clear quick planning chat
@@ -2944,6 +2975,31 @@ Format as a clear, usable rubric with table structure where appropriate."""
             
             if prompt := st.chat_input("What would you like to explore or learn about today?"):
                 st.session_state.messages.append({"role": "user", "content": prompt})
+                
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking about your question..."):
+                        system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                        response = call_openai_api(st.session_state.messages, system_prompt)
+                        
+                        if response:
+                            st.markdown(response)
+                            st.session_state.messages.append({"role": "assistant", "content": response})
+                            
+                            # Log student activity
+                            activity_data = {
+                                "type": "learning_chat",
+                                "content": prompt,
+                                "feedback": response,
+                                "competency_analysis": "Engaged in learning dialogue",
+                                "extensions": "Continued questioning and exploration"
+                            }
+                            link_student_activity(student_name, activity_data)
+                        else:
+                            st.error("I'm having trouble right now. Please try again.")
+                
                 st.rerun()
                     
 
