@@ -2101,31 +2101,31 @@ else:
                         if response:
                             st.markdown(response)
                             st.session_state.messages.append({"role": "assistant", "content": response})
-                            
-                            # Follow-up suggestions for Ask Maria
-                            st.markdown("---")
-                            st.markdown("**💭 Continue exploring:**")
-                            follow_up_col1, follow_up_col2, follow_up_col3 = st.columns(3)
-                            
-                            with follow_up_col1:
-                                if st.button("🤔 Tell me more", key=f"more_maria_{len(st.session_state.messages)}"):
-                                    more_prompt = "Can you tell me more about this? I'd like to understand it better or explore it further."
-                                    st.session_state.messages.append({"role": "user", "content": more_prompt})
-                                    st.rerun()
-                            
-                            with follow_up_col2:
-                                if st.button("💡 Give examples", key=f"examples_maria_{len(st.session_state.messages)}"):
-                                    examples_prompt = "Can you give me some specific examples or practical applications of what you just explained?"
-                                    st.session_state.messages.append({"role": "user", "content": examples_prompt})
-                                    st.rerun()
-                            
-                            with follow_up_col3:
-                                if st.button("🔗 How does this connect?", key=f"connect_maria_{len(st.session_state.messages)}"):
-                                    connect_prompt = "How does this connect to other areas of learning or the bigger picture? What are the cosmic connections?"
-                                    st.session_state.messages.append({"role": "user", "content": connect_prompt})
-                                    st.rerun()
                         else:
                             st.error("I'm having trouble connecting right now. Please try again.")
+            
+            # Follow-up suggestions positioned above input for efficiency
+            if st.session_state.messages:
+                st.markdown("**💭 Continue exploring:**")
+                maria_follow_col1, maria_follow_col2, maria_follow_col3 = st.columns(3)
+                
+                with maria_follow_col1:
+                    if st.button("🤔 Tell me more", key=f"more_maria_{len(st.session_state.messages)}"):
+                        more_prompt = "Can you tell me more about this? I'd like to understand it better or explore it further."
+                        st.session_state.messages.append({"role": "user", "content": more_prompt})
+                        st.rerun()
+                
+                with maria_follow_col2:
+                    if st.button("💡 Give examples", key=f"examples_maria_{len(st.session_state.messages)}"):
+                        examples_prompt = "Can you give me some specific examples or practical applications of what you just explained?"
+                        st.session_state.messages.append({"role": "user", "content": examples_prompt})
+                        st.rerun()
+                
+                with maria_follow_col3:
+                    if st.button("🔗 How does this connect?", key=f"connect_maria_{len(st.session_state.messages)}"):
+                        connect_prompt = "How does this connect to other areas of learning or the bigger picture? What are the cosmic connections?"
+                        st.session_state.messages.append({"role": "user", "content": connect_prompt})
+                        st.rerun()
         
         with teacher_tabs[1]:  # Learning Tools
             # MVP Learning Tools - Core features only
@@ -2156,6 +2156,29 @@ else:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
                 
+                # Follow-up suggestions positioned above input for efficiency
+                if st.session_state.quick_planning_messages:
+                    st.markdown("**💡 Follow up to refine further:**")
+                    follow_up_col1, follow_up_col2, follow_up_col3 = st.columns(3)
+                    
+                    with follow_up_col1:
+                        if st.button("🔄 Modify this", key=f"modify_quick_{len(st.session_state.quick_planning_messages)}"):
+                            modify_prompt = f"Please modify the above response to be different. Consider alternative approaches, additional details, or different perspectives."
+                            st.session_state.quick_planning_messages.append({"role": "user", "content": modify_prompt})
+                            st.rerun()
+                    
+                    with follow_up_col2:
+                        if st.button("➕ Add more ideas", key=f"expand_quick_{len(st.session_state.quick_planning_messages)}"):
+                            expand_prompt = f"Please expand on the above with additional ideas, extensions, or related activities that could complement this."
+                            st.session_state.quick_planning_messages.append({"role": "user", "content": expand_prompt})
+                            st.rerun()
+                    
+                    with follow_up_col3:
+                        if st.button("🎯 Make it specific", key=f"specific_quick_{len(st.session_state.quick_planning_messages)}"):
+                            specific_prompt = f"Please make the above more specific and detailed with concrete examples, step-by-step instructions, or practical implementation ideas."
+                            st.session_state.quick_planning_messages.append({"role": "user", "content": specific_prompt})
+                            st.rerun()
+                
                 # Quick planning input
                 if quick_prompt := st.chat_input("What would you like me to create or help you with?"):
                     st.session_state.quick_planning_messages.append({"role": "user", "content": quick_prompt})
@@ -2172,29 +2195,6 @@ else:
                             if response:
                                 st.markdown(response)
                                 st.session_state.quick_planning_messages.append({"role": "assistant", "content": response})
-                                
-                                # Follow-up suggestions for further refinement
-                                st.markdown("---")
-                                st.markdown("**💡 Follow up to refine further:**")
-                                follow_up_col1, follow_up_col2, follow_up_col3 = st.columns(3)
-                                
-                                with follow_up_col1:
-                                    if st.button("🔄 Modify this", key=f"modify_quick_{len(st.session_state.quick_planning_messages)}"):
-                                        modify_prompt = f"Please modify the above response to be different. Consider alternative approaches, additional details, or different perspectives."
-                                        st.session_state.quick_planning_messages.append({"role": "user", "content": modify_prompt})
-                                        st.rerun()
-                                
-                                with follow_up_col2:
-                                    if st.button("➕ Add more ideas", key=f"expand_quick_{len(st.session_state.quick_planning_messages)}"):
-                                        expand_prompt = f"Please expand on the above with additional ideas, extensions, or related activities that could complement this."
-                                        st.session_state.quick_planning_messages.append({"role": "user", "content": expand_prompt})
-                                        st.rerun()
-                                
-                                with follow_up_col3:
-                                    if st.button("🎯 Make it specific", key=f"specific_quick_{len(st.session_state.quick_planning_messages)}"):
-                                        specific_prompt = f"Please make the above more specific and detailed with concrete examples, step-by-step instructions, or practical implementation ideas."
-                                        st.session_state.quick_planning_messages.append({"role": "user", "content": specific_prompt})
-                                        st.rerun()
                             else:
                                 st.error("Unable to generate response. Please try again.")
                 
@@ -3025,29 +3025,6 @@ Format as a clear, usable rubric with table structure where appropriate."""
                             st.markdown(response)
                             st.session_state.messages.append({"role": "assistant", "content": response})
                             
-                            # Follow-up suggestions for student learning
-                            st.markdown("---")
-                            st.markdown("**🌟 Keep learning:**")
-                            student_follow_col1, student_follow_col2, student_follow_col3 = st.columns(3)
-                            
-                            with student_follow_col1:
-                                if st.button("❓ Ask why", key=f"why_student_{len(st.session_state.messages)}"):
-                                    why_prompt = "Why is this important? Can you help me understand why this matters?"
-                                    st.session_state.messages.append({"role": "user", "content": why_prompt})
-                                    st.rerun()
-                            
-                            with student_follow_col2:
-                                if st.button("🔍 Show me how", key=f"how_student_{len(st.session_state.messages)}"):
-                                    how_prompt = "Can you show me how to do this step by step? I'd like to try it myself."
-                                    st.session_state.messages.append({"role": "user", "content": how_prompt})
-                                    st.rerun()
-                            
-                            with student_follow_col3:
-                                if st.button("🌍 What else connects?", key=f"connects_student_{len(st.session_state.messages)}"):
-                                    connects_prompt = "What else is connected to this? How does this relate to other things I'm learning?"
-                                    st.session_state.messages.append({"role": "user", "content": connects_prompt})
-                                    st.rerun()
-                            
                             # Log student activity
                             activity_data = {
                                 "type": "learning_chat",
@@ -3059,6 +3036,29 @@ Format as a clear, usable rubric with table structure where appropriate."""
                             link_student_activity(student_name, activity_data)
                         else:
                             st.error("I'm having trouble right now. Please try again.")
+                    
+                    # Follow-up suggestions positioned above input for efficiency
+                    if st.session_state.messages:
+                        st.markdown("**🌟 Keep learning:**")
+                        student_follow_col1, student_follow_col2, student_follow_col3 = st.columns(3)
+                        
+                        with student_follow_col1:
+                            if st.button("❓ Ask why", key=f"why_student_{len(st.session_state.messages)}"):
+                                why_prompt = "Why is this important? Can you help me understand why this matters?"
+                                st.session_state.messages.append({"role": "user", "content": why_prompt})
+                                st.rerun()
+                        
+                        with student_follow_col2:
+                            if st.button("🔍 Show me how", key=f"how_student_{len(st.session_state.messages)}"):
+                                how_prompt = "Can you show me how to do this step by step? I'd like to try it myself."
+                                st.session_state.messages.append({"role": "user", "content": how_prompt})
+                                st.rerun()
+                        
+                        with student_follow_col3:
+                            if st.button("🌍 What else connects?", key=f"connects_student_{len(st.session_state.messages)}"):
+                                connects_prompt = "What else is connected to this? How does this relate to other things I'm learning?"
+                                st.session_state.messages.append({"role": "user", "content": connects_prompt})
+                                st.rerun()
         
         with student_tabs[1]:  # Project Planner
             st.markdown("### Project Planning & Organization 📝")
