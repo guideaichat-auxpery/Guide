@@ -2087,24 +2087,7 @@ else:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
             
-            if prompt := st.chat_input("Ask me anything about Montessori education, teaching, or learning..."):
-                st.session_state.messages.append({"role": "user", "content": prompt})
-                
-                with st.chat_message("user"):
-                    st.markdown(prompt)
-                
-                with st.chat_message("assistant"):
-                    with st.spinner("Reflecting on your question..."):
-                        system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
-                        response = call_openai_api(st.session_state.messages, system_prompt)
-                        
-                        if response:
-                            st.markdown(response)
-                            st.session_state.messages.append({"role": "assistant", "content": response})
-                        else:
-                            st.error("I'm having trouble connecting right now. Please try again.")
-            
-            # Follow-up suggestions positioned above input for efficiency
+            # Follow-up suggestions positioned after conversation history
             if st.session_state.messages:
                 st.markdown("**💭 Continue exploring:**")
                 maria_follow_col1, maria_follow_col2, maria_follow_col3 = st.columns(3)
@@ -2126,6 +2109,11 @@ else:
                         connect_prompt = "How does this connect to other areas of learning or the bigger picture? What are the cosmic connections?"
                         st.session_state.messages.append({"role": "user", "content": connect_prompt})
                         st.rerun()
+            
+            # Chat input positioned after conversation and follow-up options
+            if prompt := st.chat_input("Ask me anything about Montessori education, teaching, or learning..."):
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                st.rerun()
         
         with teacher_tabs[1]:  # Learning Tools
             # MVP Learning Tools - Core features only
@@ -2179,24 +2167,10 @@ else:
                             st.session_state.quick_planning_messages.append({"role": "user", "content": specific_prompt})
                             st.rerun()
                 
-                # Quick planning input
+                # Quick planning input - positioned after conversation history
                 if quick_prompt := st.chat_input("What would you like me to create or help you with?"):
                     st.session_state.quick_planning_messages.append({"role": "user", "content": quick_prompt})
-                    
-                    with st.chat_message("user"):
-                        st.markdown(quick_prompt)
-                    
-                    with st.chat_message("assistant"):
-                        with st.spinner("Creating your teaching resource..."):
-                            # Use blended cosmic education approach for quick planning
-                            system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
-                            response = call_openai_api(st.session_state.quick_planning_messages, system_prompt)
-                            
-                            if response:
-                                st.markdown(response)
-                                st.session_state.quick_planning_messages.append({"role": "assistant", "content": response})
-                            else:
-                                st.error("Unable to generate response. Please try again.")
+                    st.rerun()
                 
                 # Clear quick planning chat
                 if st.button("🗑️ Clear Quick Planning Chat", key="clear_quick_planning"):
@@ -3059,6 +3033,10 @@ Format as a clear, usable rubric with table structure where appropriate."""
                                 connects_prompt = "What else is connected to this? How does this relate to other things I'm learning?"
                                 st.session_state.messages.append({"role": "user", "content": connects_prompt})
                                 st.rerun()
+                
+                if prompt := st.chat_input("What would you like to learn about today?"):
+                    st.session_state.messages.append({"role": "user", "content": prompt})
+                    st.rerun()
         
         with student_tabs[1]:  # Project Planner
             st.markdown("### Project Planning & Organization 📝")
