@@ -2101,6 +2101,29 @@ else:
                         if response:
                             st.markdown(response)
                             st.session_state.messages.append({"role": "assistant", "content": response})
+                            
+                            # Follow-up suggestions for Ask Maria
+                            st.markdown("---")
+                            st.markdown("**💭 Continue exploring:**")
+                            follow_up_col1, follow_up_col2, follow_up_col3 = st.columns(3)
+                            
+                            with follow_up_col1:
+                                if st.button("🤔 Tell me more", key=f"more_maria_{len(st.session_state.messages)}"):
+                                    more_prompt = "Can you tell me more about this? I'd like to understand it better or explore it further."
+                                    st.session_state.messages.append({"role": "user", "content": more_prompt})
+                                    st.rerun()
+                            
+                            with follow_up_col2:
+                                if st.button("💡 Give examples", key=f"examples_maria_{len(st.session_state.messages)}"):
+                                    examples_prompt = "Can you give me some specific examples or practical applications of what you just explained?"
+                                    st.session_state.messages.append({"role": "user", "content": examples_prompt})
+                                    st.rerun()
+                            
+                            with follow_up_col3:
+                                if st.button("🔗 How does this connect?", key=f"connect_maria_{len(st.session_state.messages)}"):
+                                    connect_prompt = "How does this connect to other areas of learning or the bigger picture? What are the cosmic connections?"
+                                    st.session_state.messages.append({"role": "user", "content": connect_prompt})
+                                    st.rerun()
                         else:
                             st.error("I'm having trouble connecting right now. Please try again.")
         
@@ -2149,6 +2172,29 @@ else:
                             if response:
                                 st.markdown(response)
                                 st.session_state.quick_planning_messages.append({"role": "assistant", "content": response})
+                                
+                                # Follow-up suggestions for further refinement
+                                st.markdown("---")
+                                st.markdown("**💡 Follow up to refine further:**")
+                                follow_up_col1, follow_up_col2, follow_up_col3 = st.columns(3)
+                                
+                                with follow_up_col1:
+                                    if st.button("🔄 Modify this", key=f"modify_quick_{len(st.session_state.quick_planning_messages)}"):
+                                        modify_prompt = f"Please modify the above response to be different. Consider alternative approaches, additional details, or different perspectives."
+                                        st.session_state.quick_planning_messages.append({"role": "user", "content": modify_prompt})
+                                        st.rerun()
+                                
+                                with follow_up_col2:
+                                    if st.button("➕ Add more ideas", key=f"expand_quick_{len(st.session_state.quick_planning_messages)}"):
+                                        expand_prompt = f"Please expand on the above with additional ideas, extensions, or related activities that could complement this."
+                                        st.session_state.quick_planning_messages.append({"role": "user", "content": expand_prompt})
+                                        st.rerun()
+                                
+                                with follow_up_col3:
+                                    if st.button("🎯 Make it specific", key=f"specific_quick_{len(st.session_state.quick_planning_messages)}"):
+                                        specific_prompt = f"Please make the above more specific and detailed with concrete examples, step-by-step instructions, or practical implementation ideas."
+                                        st.session_state.quick_planning_messages.append({"role": "user", "content": specific_prompt})
+                                        st.rerun()
                             else:
                                 st.error("Unable to generate response. Please try again.")
                 
@@ -2321,7 +2367,40 @@ Honor both rigorous curriculum standards and cosmic education principles of inte
                                 st.markdown("---")
                                 st.markdown(scope_sequence)
                                 
+                                # Follow-up refinement options
+                                st.markdown("---")
+                                st.markdown("**🔧 Refine your scope & sequence:**")
+                                refine_col1, refine_col2, refine_col3 = st.columns(3)
+                                
+                                with refine_col1:
+                                    if st.button("📊 Add assessment details", key="assess_scope"):
+                                        assess_prompt = f"Please enhance this scope & sequence by adding more detailed assessment strategies, rubrics, and evidence collection methods aligned with the curriculum standards."
+                                        messages = [{"role": "user", "content": assess_prompt}]
+                                        enhanced_response = call_openai_api(messages, get_system_prompt(curriculum_ref))
+                                        if enhanced_response:
+                                            st.markdown("### 📊 Enhanced Assessment Details")
+                                            st.markdown(enhanced_response)
+                                
+                                with refine_col2:
+                                    if st.button("🎨 Add activities", key="activities_scope"):
+                                        activities_prompt = f"Please add specific learning activities, hands-on experiences, and engaging tasks for this scope & sequence that align with cosmic education principles."
+                                        messages = [{"role": "user", "content": activities_prompt}]
+                                        enhanced_response = call_openai_api(messages, get_system_prompt(curriculum_ref))
+                                        if enhanced_response:
+                                            st.markdown("### 🎨 Suggested Learning Activities")
+                                            st.markdown(enhanced_response)
+                                
+                                with refine_col3:
+                                    if st.button("🔗 Expand connections", key="connect_scope"):
+                                        connections_prompt = f"Please expand on the cross-curricular connections and cosmic education links for this scope & sequence, showing how it connects to the bigger picture of learning."
+                                        messages = [{"role": "user", "content": connections_prompt}]
+                                        enhanced_response = call_openai_api(messages, get_system_prompt(curriculum_ref))
+                                        if enhanced_response:
+                                            st.markdown("### 🔗 Expanded Connections")
+                                            st.markdown(enhanced_response)
+                                
                                 # Save and share options
+                                st.markdown("---")
                                 col_save1, col_save2 = st.columns(2)
                                 with col_save1:
                                     if st.button("💾 Save Scope & Sequence", key="save_scope_seq"):
@@ -2945,6 +3024,29 @@ Format as a clear, usable rubric with table structure where appropriate."""
                         if response:
                             st.markdown(response)
                             st.session_state.messages.append({"role": "assistant", "content": response})
+                            
+                            # Follow-up suggestions for student learning
+                            st.markdown("---")
+                            st.markdown("**🌟 Keep learning:**")
+                            student_follow_col1, student_follow_col2, student_follow_col3 = st.columns(3)
+                            
+                            with student_follow_col1:
+                                if st.button("❓ Ask why", key=f"why_student_{len(st.session_state.messages)}"):
+                                    why_prompt = "Why is this important? Can you help me understand why this matters?"
+                                    st.session_state.messages.append({"role": "user", "content": why_prompt})
+                                    st.rerun()
+                            
+                            with student_follow_col2:
+                                if st.button("🔍 Show me how", key=f"how_student_{len(st.session_state.messages)}"):
+                                    how_prompt = "Can you show me how to do this step by step? I'd like to try it myself."
+                                    st.session_state.messages.append({"role": "user", "content": how_prompt})
+                                    st.rerun()
+                            
+                            with student_follow_col3:
+                                if st.button("🌍 What else connects?", key=f"connects_student_{len(st.session_state.messages)}"):
+                                    connects_prompt = "What else is connected to this? How does this relate to other things I'm learning?"
+                                    st.session_state.messages.append({"role": "user", "content": connects_prompt})
+                                    st.rerun()
                             
                             # Log student activity
                             activity_data = {
