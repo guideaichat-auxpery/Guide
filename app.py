@@ -322,6 +322,32 @@ def load_montessori_own_handbook():
         st.error(f"Error loading Dr. Montessori's Own Handbook: {str(e)}")
         return ""
 
+@st.cache_data
+def load_the_absorbent_mind():
+    """Load The Absorbent Mind content with caching"""
+    try:
+        with open('the_absorbent_mind_montessori.txt', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        st.warning("The Absorbent Mind file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading The Absorbent Mind: {str(e)}")
+        return ""
+
+@st.cache_data
+def load_the_montessori_method():
+    """Load The Montessori Method content with caching"""
+    try:
+        with open('the_montessori_method.txt', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        st.warning("The Montessori Method file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading The Montessori Method: {str(e)}")
+        return ""
+
 def save_rubric_to_user_data(username, rubric_data):
     """Save rubric to user data file for persistence"""
     try:
@@ -1044,6 +1070,16 @@ When appropriate, incorporate these components as guardrails to guide curriculum
     montessori_handbook = load_montessori_own_handbook()
     if montessori_handbook and len(montessori_handbook) > 100:
         uploaded_content += f"\n\nDr. Montessori's Own Handbook Reference:\n{montessori_handbook[:1000]}..."
+    
+    # Load The Absorbent Mind content
+    absorbent_mind = load_the_absorbent_mind()
+    if absorbent_mind and len(absorbent_mind) > 100:
+        uploaded_content += f"\n\nThe Absorbent Mind by Maria Montessori Reference:\n{absorbent_mind[:1000]}..."
+    
+    # Load The Montessori Method content
+    montessori_method = load_the_montessori_method()
+    if montessori_method and len(montessori_method) > 100:
+        uploaded_content += f"\n\nThe Montessori Method by Maria Montessori Reference:\n{montessori_method[:1000]}..."
     
     # Include Montessori National Curriculum reference
     montessori_reference = """

@@ -70,11 +70,16 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Comprehensive Australian Curriculum V9**: Integrated official government education standards across all major learning areas, including Cross-Curriculum Priorities and General Capabilities.
 - **Montessori National Curriculum (2011)**: Integrated official Montessori Australia Foundation framework.
 - **Dr. Montessori's Own Handbook**: Integrated Maria Montessori's authentic handbook covering sensory education, motor education, writing, arithmetic, and moral factors in child development.
+- **The Absorbent Mind**: Integrated Maria Montessori's foundational work on child development, covering the unique mental powers of young children and their natural learning processes from birth to six years.
+- **The Montessori Method**: Integrated Maria Montessori's seminal work on scientific pedagogy, discipline through liberty, prepared environments, and practical life applications in the Children's Houses.
 - **Montessori Curriculum Australia**: Refers to the broader child-centered educational methodology and developmental stages.
 
 # Recent Changes
 
-## September 10, 2025 - Enhanced Montessori Reference Database
-- **New Integration**: Successfully added "Dr. Montessori's Own Handbook" by Maria Montessori to the curriculum reference database.
-- **Enhanced AI Responses**: All AI interactions now include authentic Montessori methodology directly from Maria Montessori's own writings on sensory education, motor development, writing preparation, arithmetic teaching, and moral education.
-- **Improved Cosmic Education**: Responses are now grounded in both the Montessori National Curriculum and Maria Montessori's original pedagogical insights.
+## September 10, 2025 - Complete Montessori Reference Database Integration
+- **Complete Integration**: Successfully integrated all three foundational Montessori texts into the curriculum reference database:
+  - "Dr. Montessori's Own Handbook" - sensory education, motor education, and moral development
+  - "The Absorbent Mind" - child psychology, developmental stages, and natural learning processes
+  - "The Montessori Method" - scientific pedagogy, practical applications, and prepared environments
+- **Enhanced AI Responses**: All AI interactions now reference authentic Montessori methodology from Maria Montessori's complete foundational works
+- **Comprehensive Cosmic Education**: Responses are deeply grounded in both contemporary Montessori curricula and Maria Montessori's original pedagogical philosophy, ensuring authentic guidance rooted in proven developmental science
