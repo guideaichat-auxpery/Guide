@@ -1,0 +1,2235 @@
+The Project Gutenberg eBook of Dr. Montessori's Own Handbook
+
+This ebook is for the use of anyone anywhere in the United States and
+most other parts of the world at no cost and with almost no restrictions
+whatsoever. You may copy it, give it away or re-use it under the terms
+of the Project Gutenberg License included with this ebook or online
+at www.gutenberg.org. If you are not located in the United States,
+you will have to check the laws of your country where you are located
+before using this eBook.
+
+Title: Dr. Montessori's Own Handbook
+
+Author: Maria Montessori
+
+Release date: August 8, 2009 [eBook #29635]
+
+Language: English
+
+Credits: Produced by Alicia Williams, Dan Horwood and the Online
+        Distributed Proofreading Team at http://www.pgdp.net (This
+        book was produced from scanned images of public domain
+        material from the Google Print project.)
+
+*** START OF THE PROJECT GUTENBERG EBOOK DR. MONTESSORI'S OWN HANDBOOK ***
+
+Produced by Alicia Williams, Dan Horwood and the Online
+Distributed Proofreading Team at http://www.pgdp.net (This
+book was produced from scanned images of public domain
+material from the Google Print project.)
+
+               DR. MONTESSORI'S
+                 OWN HANDBOOK
+
+                      BY
+
+               MARIA MONTESSORI
+
+    AUTHOR OF "THE MONTESSORI METHOD" AND
+          "PEDAGOGICAL ANTHROPOLOGY"
+
+       _WITH FORTY-THREE ILLUSTRATIONS_
+
+                   NEW YORK
+         FREDERICK A. STOKES COMPANY
+                  PUBLISHERS
+
+            _Copyright, 1914, by_
+         FREDERICK A. STOKES COMPANY
+
+   _All rights reserved, including that of
+     translation into foreign languages_
+
+              TO MY DEAR FRIEND
+
+             DONNA MARIA MARAINI
+        MARCHIONESS GUERRIERI-GONZAGA
+
+                     WHO
+         DEVOTEDLY AND WITH SACRIFICE
+            HAS GENEROUSLY UPHELD
+  THIS WORK OF EDUCATION BROUGHT TO BIRTH IN
+             OUR BELOVED COUNTRY
+                 BUT OFFERED
+         TO THE CHILDREN OF HUMANITY
+
+NOTE BY THE AUTHOR
+
+  As a result of the widespread interest that has been taken
+  in my method of child education, certain books have been
+  issued, which may appear to the general reader to be
+  authoritative expositions of the Montessori system. I wish
+  to state definitely that the present work, the English
+  translation of which has been authorised and approved by
+  me, is the only authentic manual of the Montessori method,
+  and that the only other authentic or authorised works of
+  mine in the English language are "The Montessori Method,"
+  and "Pedagogical Anthropology."
+
+                                  [Signed: Maria Montessori]
+
+PREFACE
+
+If a preface is a light which should serve to illumine the contents of
+a volume, I choose, not words, but human figures to illustrate this
+little book intended to enter families where children are growing up.
+I therefore recall here, as an eloquent symbol, Helen Keller and Mrs.
+Anne Sullivan Macy, who are, by their example, both teachers to
+myself--and, before the world, living documents of the miracle in
+education.
+
+In fact, Helen Keller is a marvelous example of the phenomenon common
+to all human beings: the possibility of the liberation of the
+imprisoned spirit of man by the education of the senses. Here lies the
+basis of the method of education of which the book gives a succinct
+idea.
+
+If one only of the senses sufficed to make of Helen Keller a woman of
+exceptional culture and a writer, who better than she proves the
+potency of that method of education which builds on the senses? If
+Helen Keller attained through exquisite natural gifts to an elevated
+conception of the world, who better than she proves that in the
+inmost self of man lies the spirit ready to reveal itself?
+
+Helen, clasp to your heart these little children, since they, above
+all others, will understand you. They are your younger brothers: when,
+with bandaged eyes and in silence, they touch with their little hands,
+profound impressions rise in their consciousness, and they exclaim
+with a new form of happiness: "I see with my hands." They alone, then,
+can fully understand the drama of the mysterious privilege your soul
+has known. When, in darkness and in silence, their spirit left free to
+expand, their intellectual energy redoubled, they become able to read
+and write without having learnt, almost as it were by intuition, they,
+only they, can understand in part the ecstasy which God granted you on
+the luminous path of learning.
+
+MARIA MONTESSORI.
+
+CONTENTS
+
+                                                                  PAGE
+ PREFACE                                                           vii
+ INTRODUCTORY REMARKS                                                1
+ A "CHILDREN'S HOUSE"                                                9
+ THE METHOD                                                         17
+     Didactic Material for the Education of the Senses              18
+     Didactic Material for the Preparation of Writing
+         and Arithmetic                                             19
+ MOTOR EDUCATION                                                    20
+ SENSORY EDUCATION                                                  29
+ LANGUAGE AND KNOWLEDGE OF THE WORLD                                69
+ FREEDOM                                                            77
+ WRITING                                                            80
+     Exercises for the Management of the Instrument of
+         Writing                                                    86
+     Exercises for the Writing of Alphabetical Signs                92
+ THE READING OF MUSIC                                               98
+ ARITHMETIC                                                        102
+ MORAL FACTORS                                                     114
+
+ILLUSTRATIONS
+
+ Dr. Maria Montessori                                   _Frontispiece_
+
+ FIG.                                                      FACING PAGE
+  1.  Cupboard with Apparatus                                       12
+  2.  The Montessori Pædometer                                      13
+  3.  Frames for Lacing and Buttoning                               22
+  4.  Child Buttoning On Frame                                      23
+  5.  Cylinders Decreasing in Diameter only                         30
+  6.  Cylinders Decreasing in Diameter and Height                   30
+  7.  Cylinders Decreasing in Height only                           30
+  8.  Child using Case of Cylinders                                 31
+  9.  The Tower                                                     31
+ 10.  Child Playing with Tower                                      31
+ 11.  The Broad Stair                                               36
+ 12.  The Long Stair                                                36
+ 13.  Board with Rough and Smooth Surfaces                          37
+ 14.  Board with Gummed Strips of Paper                             37
+ 15.  Wood Tablets Differing in Weight                              47
+      Color Spools                                                  42
+ 16.  Cabinet with Drawers to hold Geometrical Insets               44
+ 17.  Set of Six Circles                                            44
+ 18.  Set of Six Rectangles                                         45
+ 19.  Set of Six Triangles                                          45
+ 20.  Set of Six Polygons                                           46
+ 21.  Set of Six Irregular Figures                                  46
+ 22.  Set of Four Blanks and Two Irregular Figures                  47
+ 23.  Frame to hold Geometrical Insets                              48
+ 24.  Child Touching the Insets                                     49
+ 25.  Series of Cards with Geometrical Forms                        54
+ 26.  Sound Boxes                                                   55
+ 27.  Musical Bells                                                 60
+ 28.  Sloping Boards to Display Set of Metal Insets                 90
+ 29.  Single Sandpaper Letter                                       90
+ 30.  Groups of Sandpaper Letters                                   91
+ 31.  Box of Movable Letters                                        94
+ 32.  The Musical Staff                                             98
+ 33.  Didactic Material for Musical Reading                        100
+ 34.  Didactic Material for Musical Reading                        100
+ 35.  Didactic Material for Musical Reading                        100
+ 36.  Didactic Material for Musical Reading                        101
+ 37.  Didactic Material for Musical Reading                        101
+ 38.  Didactic Material for Musical Reading                        101
+ 39.  Dumb Keyboard                                                102
+ 40.  Diagram Illustrating Use of Numerical Rods                   107
+ 41.  Counting Boxes                                               110
+ 42.  Arithmetic Frame                                             110
+
+DR. MONTESSORI'S OWN HANDBOOK
+
+Recent years have seen a remarkable improvement in the conditions of
+child life. In all civilized countries, but especially in England,
+statistics show a decrease in infant mortality.
+
+Related to this decrease in mortality a corresponding improvement is
+to be seen in the physical development of children; they are
+physically finer and more vigorous. It has been the diffusion, the
+popularization of science, which has brought about such notable
+advantages. Mothers have learned to welcome the dictates of modern
+hygiene and to put them into practice in bringing up their children.
+Many new social institutions have sprung up and have been perfected
+with the object of assisting children and protecting them during the
+period of physical growth.
+
+In this way what is practically a new race is coming into being, a
+race more highly developed, finer and more robust; a race which will
+be capable of offering resistance to insidious disease.
+
+What has science done to effect this? Science has suggested for us
+certain very simple rules by which the child has been restored as
+nearly as possible to conditions of a natural life, and an order and a
+guiding law have been given to the functions of the body. For example,
+it is science which suggested maternal feeding, the abolition of
+swaddling clothes, baths, life in the open air, exercise, simple short
+clothing, quiet and plenty of sleep. Rules were also laid down for the
+measurement of food adapting it rationally to the physiological needs
+of the child's life.
+
+Yet with all this, science made no contribution that was entirely new.
+Mothers had always nursed their children, children had always been
+clothed, they had breathed and eaten before.
+
+The point is, that the same physical acts which, performed blindly and
+without order, led to disease and death, when ordered _rationally_
+were the means of giving strength and life.
+
+                  *       *       *       *       *
+
+The great progress made may perhaps deceive us into thinking that
+everything possible has been done for children.
+
+We have only to weigh the matter carefully, however, to reflect: Are
+our children only those healthy little bodies which to-day are growing
+and developing so vigorously under our eyes? Is their destiny
+fulfilled in the production of beautiful human bodies?
+
+In that case there would be little difference between their lot and
+that of the animals which we raise that we may have good meat or
+beasts of burden.
+
+Man's destiny is evidently other than this, and the care due to the
+child covers a field wider than that which is considered by physical
+hygiene. The mother who has given her child his bath and sent him in
+his perambulator to the park has not fulfilled the mission of the
+"mother of humanity." The hen which gathers her chickens together, and
+the cat which licks her kittens and lavishes on them such tender care,
+differ in no wise from the human mother in the services they render.
+
+No, the human mother if reduced to such limits devotes herself in
+vain, feels that a higher aspiration has been stifled within her. She
+is yet the mother of man.
+
+Children must grow not only in the body but in the spirit, and the
+mother longs to follow the mysterious spiritual journey of the
+beloved one who to-morrow will be the intelligent, divine creation,
+man.
+
+Science evidently has not finished its progress. On the contrary, it
+has scarcely taken the first step in advance, for it has hitherto
+stopped at the welfare of the body. It must continue, however, to
+advance; on the same positive lines along which it has improved the
+health and saved the physical life of the children, it is bound in the
+future to benefit and to reenforce their inner life, which is the real
+_human life_. On the same positive lines science will proceed to
+direct the development of the intelligence, of character, and of those
+latent creative forces which lie hidden in the marvelous embryo of
+man's spirit.
+
+                  *       *       *       *       *
+
+As the child's body must draw nourishment and oxygen from its external
+environment, in order to accomplish a great physiological work, the
+_work of growth_, so also the spirit must take from its environment
+the nourishment which it needs to develop according to its own "laws
+of growth." It cannot be denied that the phenomena of development are
+a great work in themselves. The consolidation of the bones, the
+growth of the whole body, the completion of the minute construction of
+the brain, the formation of the teeth, all these are very real labors
+of the physiological organism, as is also the transformation which the
+organism undergoes during the period of puberty.
+
+These exertions are very different from those put forth by mankind in
+so-called _external work_, that is to say, in "social production,"
+whether in the schools where man is taught, or in the world where, by
+the activity of his intelligence, he produces wealth and transforms
+his environment.
+
+It is none the less true, however, that they are both "work." In fact,
+the organism during these periods of greatest physiological work is
+least capable of performing external tasks, and sometimes the work of
+growth is of such a character as to diminish notably the external
+energies. This is clearly to be seen in the second period of growth,
+at puberty. At this age the child is noted for certain characteristics
+which might easily be mistaken for laziness: he is sleepy, inert, and
+appears to be inactive and slow. Instead of all this being laziness,
+it is a most intense internal work which absorbs the energies, since
+nature has fixed all the forces of the organism in the great work of
+the physiological transformation.
+
+What conclusion must we draw from this?
+
+The conclusion is this: that man's life must be considered, and
+conducted, and helped, as a great work of nature, like the growth of
+the world, the rising and setting of stars, like wind and rain; man
+is a part of nature and his life is a natural phenomenon.
+
+                  *       *       *       *       *
+
+This conclusion opens to us a new way of understanding childhood, and
+reveals to us children as human beings whose souls contain energies
+which enable them to develop by means of their own efforts. These
+energies are often of so marvelous a character as to call to our minds
+the hidden germs enclosed in the body of the plant, which will
+develop, by means of their own vital force, into the flower and the
+fruit.
+
+The child is truly a miraculous being, and this should be felt deeply
+by the educator.
+
+But let us proceed to another order of considerations.
+
+The woman who is about to become a mother should have a higher
+education--not the ordinary superficial instruction in woman's "
+accomplishments," but a really deep culture, which will make her
+thoughtful, and fit her to understand and follow the natural
+phenomena of child's development. The mothers of our children are
+today too superficial and too frivolous; it is they above all who
+would be able really to help the natural development of the child if
+they understood its requirements.
+
+Education is a natural process carried out by the human individual,
+and is acquired not by listening to words, but by experiences in the
+environment.
+
+                  *       *       *       *       *
+
+A "CHILDREN'S HOUSE"
+
+The "Children's House" is the environment which is offered to the
+child that he may be given the opportunity of developing his
+activities. This kind of school is not of a fixed type, but may vary
+according to the financial resources at disposal and to the
+opportunities afforded by the environment. It ought to be a real
+house; that is to say, a set of rooms with a garden of which the
+children are the masters. A garden which contains sheltered trees
+and flowering plants cared for by the children.
+
+In this way the children live in a small world that is theirs, where
+they meet with obstacles and overcome them, where they enjoy real
+triumph and experience real failure, where they are happy through
+their own efforts and because they have done their duty and fulfilled
+their aim.
+
+The central and principal room of the building, often also the only
+room at the disposal of the children, is the room for "intellectual
+work." The walls are decorated with simple pictures, which are
+changed from time to time as circumstances suggest. The only
+essential furniture of this room are little tables; some square and
+rather large, others small and oval, and little chairs.
+
+The pictures, the vases for flowers, all the gay and pleasant
+furnishings, are at the height of the children, within easy reach of
+their little hands.
+
+Around the room low cupboards, which the children can easily reach,
+contain the didactic material with which they work.
+
+[Illustration: FIG. 1.--Cupboard with Apparatus.]
+
+The didactic material for the education of the senses consists of:
+
+   _The tower of cubes._
+
+Ten cubes the edges of which vary by one centimetre.
+(1 centimetre, 2 centimetres, 3 centimetres, etc.)
+
+   _Three sets of solid insets._
+
+   _The long stair._
+
+Ten prisms, varying from one centimetre square to ten centimetres
+square in section, all of the same length (20 centimetres).
+
+   _The broad stair._
+
+Ten prisms of the same height and length, but of decreasing breadth.
+
+   _The didactic material for the chromatic sense._
+
+   _The cabinet for the geometrical insets._
+
+   _The series of cards upon which geometrical forms are drawn._
+
+   _The collection of fabrics._
+
+   _The set of tablets for testing the thermic sense._
+
+   _The set of tablets for testing the baric sense._
+
+   _The collection of little boxes containing substances to test the
+   olfactory sense._
+
+   _The collection of little boxes containing substances to test the
+   gustatory sense._
+
+   _The double series of musical bells._
+
+[Illustration: FIG. 2.--The Montessori Pædometer.]
+
+In addition to this material, others may be added according to the
+opportunities and the means at disposal, such as a collection of
+stuffs and of coloured silks.
+
+The didactic material for the preparation of intellectual activity
+consists of:
+
+   _Solid insets in the geometric forms._
+
+   _Frames, in which are set pieces of cloth to be buttoned, laced,
+   hooked, etc._
+
+   _Small wooden tablets upon which are pasted sandpaper letters._
+
+   _A box containing wooden letters._
+
+   _A series of cards upon which single words are printed._
+
+   _A series of cards upon which sentences are printed._
+
+   _A series of cards upon which little stories are printed._
+
+Besides these there are a series of wooden tablets with the numbers on
+them, and a quantity of little sticks for counting.
+
+The teacher observes the children, and when she perceives that one of
+them shows an interest in some object, she approaches, sits down beside
+him, and gives him the lesson corresponding to the object which has
+attracted his attention.
+
+For example, the teacher sees that a child is attracted by the cubes.
+She then seats herself by his side and puts the cubes on the table.
+
+"This," she says, taking the largest cube, "is large."
+
+"This," she says, taking the smallest, "is small."
+
+She then places the large cube in the child's right hand, and the
+small one in his left hand, and slowly repeats: "Large... small,
+large... small, large... small," etc.
+
+She asks the child: "Which is large?" and "Which is small?"
+
+If the child makes an error she does not insist; she smiles and puts
+the material in order, saying: "I see you like this work. You may play
+with it as long as you like."
+
+If, however, the child has responded well to the lesson, she proceeds
+to the second lesson.
+
+She takes three cubes, one large, one small, and one intermediate, and
+teaches the child the word for the intermediate size:
+
+"This is large, this is small, this is medium."
+
+And then: "Show me the large one, show me the small one, show me the
+medium one."
+
+When the child responds readily to this lesson, she proceeds to the
+third.
+
+She places all the cubes upon the table in no particular order, and says
+to the child: "Now build a tower; put the largest cube at the bottom
+and the smallest at the top."
+
+The child builds the tower.
+
+In this lesson with the cubes, which is repeated in the same way with
+all the didactic material, the child learns:
+
+1. To distinguish between large and small.
+
+2. To discriminate between gradations of the same quality.
+
+3. To use his reason.
+
+4. A number of words.
+
+When the child has completed an exercise he restores all of the
+material to the cupboard, each piece in its own place; and this may be
+considered as a lesson in setting things in order.
+
+The education of the movements is very complex, as it has to correspond
+to all the movements which the children have to learn to make. In my
+book, "The Montessori Method," I have described the exercises on the
+line for the education of equilibrium, and a number of exercises for
+the education of the hands and fingers.
+
+Here I shall limit myself to mentioning the exercises that can be done
+with the frames mentioned above, as they are very popular with the
+children.
+
+[Illustration: FIG. 3.--Frames for Lacing and Buttoning.]
+
+These exercises for the education of the movements are very important,
+and they correspond to the need which the children feel to learn how
+to dress themselves and to perform many actions of everyday life.
+
+[Illustration: FIG. 4.--Child Buttoning On Frame.]
+
+The exercises are the following:
+
+   _To learn to button clothes._
+
+The frame carries pieces of cloth which can be buttoned together. The
+buttons are large, and everything is constructed in such a way as to
+offer points of interest and also of difficulty to be overcome, but all
+in relation to the particular capacity for development possessed by
+children from three to six years of age.
+
+   _To learn to tie bows._
+
+   _To learn to lace._
+
+   _To learn to buckle._
+
+   _To learn to hook and eye._
+
+These last obstacles, like the first, are all mounted upon square wooden
+frames of the same size, so that they can be placed upon little tables
+or can be hung upon little hooks against the wall.
+
+The children choose freely which they will use, and change from one to
+the other as often as they wish.
+
+When the child knows how to button, lace, tie bows, etc., he applies
+this knowledge every day to the dressing and undressing of himself,
+and so he gradually becomes independent of the help of others in the
+ordinary acts of life. And in learning to dress himself, he is
+preparing for that far more complex form of independence which consists
+in being able to choose his own way in life.
+
+This is the point of view from which all these exercises should be
+considered. They are, furthermore, the first steps in what I have
+called the education of the movements.
+
+Now, just as the education which tends to fit the body for life ought
+to be commenced from birth (as, for example, in the case of
+nourishment, clothing, and the care of the skin), so also the
+education of the movements ought to be begun at a very early period.
+
+For the movements are the means by which the intelligence comes into
+contact with its environment and establishes itself in relation to it.
+
+If a parallel be drawn between the function of movement in the child
+and in the adult, it will be found that in the adult the movements
+serve the intelligence, whereas in the child the movements serve to
+create the intelligence.
+
+In fact, it is largely by means of movement that the child explores
+his environment, and so forms for himself a knowledge of his
+surroundings. It is by touching objects, by reaching towards them and
+taking hold of them, that the child comes to know them and to
+understand the world about him.
+
+Ability to move is therefore essential to the education of childhood.
+
+Hence the little child should be free to move about and to handle
+things as he has need, and the education of his movements should be
+carefully provided for as one of the principal elements in the
+formation of his intelligence.
+
+                  *       *       *       *       *
+
+MOTOR EDUCATION
+
+The education of the movements is of great importance, and presents
+difficulties and complexities which are not met with in the education
+of the senses.
+
+In the education of the senses there exists a control of error--that
+is to say, the child working with the didactic material will himself
+perceive if he makes a mistake. If, for example, with the solid insets
+he has placed a large cylinder in the cavity meant for a small one, he
+will see that it will not go down, and if he has placed the little
+cylinder in a large cavity he will see that it rattles about
+irregularly when touched. In the same way, with the cubes of the tower,
+if he places a large cube upon a small one, or if he leaves out one of
+the intermediate cubes, he will no longer be able to build a regular
+diminishing tower, and the irregularity will strike his eye. In most
+of the material for the education of the senses the errors become
+evident through the automatic control of the material itself.
+
+But in the education of the movements it is far more difficult to
+establish such a control. How can the child know if the movement which
+he makes in walking is or is not the most perfect one possible? How
+can he tell if he gets up from his chair and sits down again in the
+most composed and graceful manner possible?
+
+The control of the muscular movements is one of the conquests to be
+made by the child. But while he is making this conquest the child will
+find great pleasure in the acquisition, and will of his own accord
+repeat an infinite number of times the movements whose mechanism he is
+establishing.
+
+The aim of education is not perfection, but it is to put the child in
+communication with his environment in such a way that the child finds
+satisfaction and happiness in his work.
+
+If the aim of physical education is to perfect the body as a
+magnificent instrument of the spirit, this does not mean that every
+child must become a gymnast. It means that his body shall be so
+developed and so trained that it shall be able at any moment to be the
+perfect vehicle for the expression of the individual spirit and
+intelligence which he possesses.
+
+In the same way, if one of the aims of education is to develop the
+movements, this does not mean that the children must all move in
+exactly the same manner. On the contrary, the movements should be
+developed in the most natural manner for each individual child, so
+that his personality shall be enabled to express itself through
+movements which are truly his own.
+
+For that matter, if we watch children of the same age, we shall
+observe great individual differences in their movements, and it is
+these differences which should be fostered and developed.
+
+The fundamental principle in the education of movement is that the
+child should be free. The movements should never be repressed, and the
+child should never be forced to make movements.
+
+The education of the movements should be, like all education,
+"auto-education."
+
+The child should be helped to move, but he should not be made to move.
+
+One of the most important things in the education of movement is to
+offer to the child the means for exercising his activities.
+
+For example, if a child shows a desire to walk, he should be given the
+opportunity to walk. If he shows a desire to carry things, he should
+be provided with things to carry which are suited to his strength.
+
+If he shows an interest in the care of his person--in washing himself,
+in brushing his hair, in cleaning his nails, etc., he should be
+provided with the means for satisfying these desires, and with
+objects proportioned to his size and his strength.
+
+For the care of the person there should be provided washstands of the
+height suitable for the children, with little pitchers and basins,
+soap, nail-brushes, tooth-brushes, etc.
+
+The furniture throughout should be light, so that the children can
+move it easily; and it should be low, so that they can dust it and
+take care of it themselves.
+
+In "The Montessori Method" I have described a large number of
+exercises, some of which are taken from the common actions of everyday
+life, such as the laying and clearing of tables, the washing of
+crockery, etc., and others which are specially designed for the
+development of muscular control, such as the exercises on the line.
+
+All such exercises should be performed by the children spontaneously
+and with enjoyment.
+
+One important particular in connection with these exercises is that
+the children should perform them in the most perfect manner possible.
+Not perfect in any absolute sense, but perfect according to their
+individual capacity for the time being.
+
+In other words, the children should put the greatest possible amount
+of attention and care into whatever they do, so that they shall
+succeed in really _controlling their movements._
+
+It is for this reason that a number of actions of everyday life are
+"analyzed," that is to say, they are divided up into a series of
+simple movements, and the children are taught to carry out, one by one
+and with great care, these elementary movements of which the
+complete action is composed.
+
+For example, the laying of the table becomes a series of deliberate
+and separate acts: the child first fetches the little mats and sets
+one in each place where a person is to sit; then he fetches the plates
+and sets one on each mat; then the glasses; then the knives; then the
+forks; then the spoons; then the napkins.
+
+At each journey he carries only one object (or one set of similar
+objects), and sets it in its place with care and attention.
+
+In this way the child is concentrating his whole attention upon the
+perfect control of his own movements.
+
+Or, to take another example: in dusting a table, the child's attention
+is directed first to the holding of the duster, then to the light but
+thorough spreading of the dust-cloth over the surface, then to the
+movements from left to right by which the dust is removed, and,
+finally, to the folding and putting away of the duster.
+
+By such exercises the child becomes master of his movements and
+acquires a muscular control which he could not gain in any other way.
+
+This is a considerable help to the child in all the other activities
+of his life. Through the carrying out of actions of practical life
+the child learns to move well, and so he is better prepared for those
+physical exercises which have no practical aim, but which help to
+perfect his bodily development.
+
+But there is another very important side to this education through
+practical life, and it is this: the child, by taking part in the work
+going on about him, becomes a real member of the social community.
+
+He is no longer a useless little being, incapable of performing any
+service and always in need of care, but he becomes capable of helping
+others and of fulfilling a useful function in the environment. And he
+gains enormously in self-respect, in independence, and in that
+understanding of life which comes to those who are in actual contact
+with real things.
+
+This point of view opens an almost unlimited field of activity for the
+child, since all the actions of life may become means of education.
+
+Care of the person, care of animals, care of plants and flowers, and
+the general care of the immediate environment, may all become sources
+of activity and learning.
+
+If to this we add the fact that the child takes intense pleasure in
+these activities, and that through them he is put into communication
+with all the most interesting things of his environment, it will be
+understood that we have here one of the most important sides of the
+education of little children.
+
+The education of the senses and the education of movement have as their
+foundation the satisfaction of the child's need for activity. They are
+founded upon the principle that the child develops through the
+exercise of his faculties and through experience.
+
+But, in order that this exercise may truly educate, it is necessary
+that it should be carried out according to certain principles.
+
+In the first place, it is necessary that the child shall perform the
+exercises by himself and of his own free will.
+
+Secondly, the material upon which the child works should be
+scientifically organized with a definite educative aim.
+
+A haphazard collection of objects will not serve this purpose. The
+material should be graded, so that there shall be a series of
+experiences, each one of which is slightly more difficult than the one
+which went before.
+
+Thirdly, there should be freedom of choice. The child should be free
+to choose for himself the occupations which interest him, and he should
+be allowed to continue an occupation for as long as it continues to
+interest him.
+
+As the child cannot be considered educatively as an isolated being,
+but must be thought of in his relation to the social environment, it
+is necessary to provide also for the development of social life.
+
+For this reason the "Children's House" should contain children of
+various ages. In every family there are little children and older
+children, and it is the relationship between children of different
+ages which stimulates development and contributes to the education of
+social feeling.
+
+Moreover, the care of the little children on the part of the older
+ones develops a feeling of responsibility and affords many
+opportunities for the growth of moral sentiments.
+
+The development of social life is also favoured if the children are
+allowed to work together and to help one another.
+
+Two children may work together at the same exercise, or one child may
+help another to carry on an exercise which proves too difficult for
+him when working alone.
+
+Such cooperation among the children is not forced, but, when it
+occurs spontaneously, it is permitted and encouraged.
+
+Moreover, the children should be allowed to communicate freely among
+themselves. They should not be unnecessarily restricted in their
+conversation, but should be allowed to exchange ideas, to share their
+observations, and to ask for explanations.
+
+By such means the social instincts are developed, and the children
+learn to live in harmony with their companions.
+
+It is evident that in such a community of little ones there must be
+rules of social life, but these rules should be limited to what is
+necessary for the maintenance of order, and for teaching the child
+habits of grace and courtesy which will help him in his social
+relationships.
+
+For example, a child should be taught to say "Excuse me" when he
+passes in front of another person, to say "Thank you" when any service
+is performed for him, and so forth.
+
+Such rules of courtesy, if they are taught at the right time and in
+the right way, are very easily learned by little children, and will
+be of service to them all their lives.
+
+But rules should never be multiplied beyond what is necessary, and the
+freedom of the child should never be restricted unless such
+restriction is required either for the child's own welfare or for the
+welfare of the community.
+
+If such principles as these are followed, it will be found that little
+children are capable of developing a considerable amount of social
+feeling, and that they can live together in harmony in a way which is
+often very surprising to those who have thought of childhood as
+necessarily a period of unlimited egoism.
+
+Through such community life the children learn to be members of a
+society, and they develop those social sentiments which will be of the
+utmost importance to them throughout their lives.
+
+                  *       *       *       *       *
+
+SENSORY EDUCATION
+
+The education of the senses has, as its aim, the refinement of the
+differential perception of stimuli by means of repeated exercises.
+
+There is no more difficult question in experimental psychology than
+that of determining to what extent the education of the senses is
+possible.
+
+The researches of the experimental psychologists (Fechner, Weber,
+etc.) have given us very exact information as to the minimum
+perceptible differences in the matter of weight, color, sound, etc.
+That is to say, they have determined how slight a difference in weight
+the tactile-muscular sense can distinguish; how slight a difference in
+color the chromatic sense will respond to; what is the smallest
+difference in the length of two lines which the eye can detect, etc.
+
+But the opinion of to-day is that the capacity of perceiving these
+minimum differences is fixed and cannot be educated.
+
+Certainly, no one would expect that an individual whose ear is only
+capable of distinguishing sounds separated by a tone could educate his
+ear so far as to distinguish quarter-tones.
+
+But, while the sensory capacity as limited by the individual structure
+cannot be exceeded, it is nevertheless true that the senses, left to
+themselves, do not attain the maximum development of which they are
+capable.
+
+For example, it is certain that most people do not know how to use
+their eyes to observe; they do not know how to use their ears to hear
+sounds and noises; they do not know how to use the sense of touch to
+recognize objects.
+
+An experimental proof of this is to be found in the well-known fact
+that if an adult who has been born blind recovers his sight through
+an operation, he is not able immediately to distinguish by sight
+between such things as a cube and a sphere, which he has always
+distinguished easily by touch, but he must learn to see them. This
+proves that the eye is not perfectly educated merely because the
+visual sense is developed.
+
+The same truth can be observed in regard to the muscular sense. For
+example, a person who is beginning to learn to write cannot control
+his muscular movements sufficiently to make regular letters. His
+muscular sense in regard to the pen is not educated, although he has
+long had the ability to control the greater number of his muscular
+movements and to use his hands for many purposes.
+
+The fact is that each set of stimuli, even though it involve the same
+sense, demands its own special education.
+
+It is necessary to educate the eye to see minute differences of form;
+it is necessary to educate the sense of touch to perceive through the
+finger-tips the roughness and smoothness of surfaces; and it is
+necessary to educate the auditory perception to recognize sounds and
+noises.
+
+This education of the senses is not only possible, but it is also
+necessary.
+
+And the time to begin this education is in the period of childhood,
+when the nervous system is still in process of development.
+
+In my schools the education of the senses has always given most
+satisfactory results. The children acquire a fineness of perception
+which is often surprising.
+
+For example, many of the children, by touching the tablets which I use
+for the education of the tactile sense, can distinguish differences
+which the untrained adult cannot perceive.
+
+This education of the senses, then, is not only possible, but it is
+the foundation of all the higher education of the child.
+
+It is upon the accuracy of perception that the accuracy of judgment
+depends.
+
+If the child does not learn to observe, and to see the minute
+differences and the delicate similarities which exist between objects,
+how will he ever become capable of making those fine distinctions
+which are necessary to the classification of things according to their
+qualities?
+
+And if he is not capable of making accurate distinctions, how will his
+mind ever become systematized and logical?
+
+The education of the senses, therefore, is the preparation for
+intellectual education, and the careful and systematic education of
+the senses thus becomes one of the most important phases of education.
+
+The didactic material by means of which this education is carried out
+consists, as I have said, of objects so made that each series contains
+pieces which are exactly alike except in respect to the one quality
+which it is desired to bring to the child's consciousness.
+
+For example, the cubes of the "tower" are all exactly alike except in
+respect to size; they are all pink in color, all made of the same
+wood, and all have the same degree of smoothness, weight, etc. The
+only difference between them is the difference in size.
+
+In the same way, the tablets for the education of the chromatic sense
+are all exactly alike except in respect to color. They are identical
+in size, in shape, in the quality of the surface, in weight, in
+material, etc.
+
+By means of such material the child's attention is concentrated upon
+the one quality which differentiates the objects, and his
+consciousness of that particular quality is greatly intensified.
+
+[Illustration: FIG. 5.--Cylinders Decreasing in Diameter only.]
+
+[Illustration: FIG. 6.--Cylinders Decreasing in Diameter and Height.]
+
+[Illustration: FIG. 7.--Cylinders Decreasing in Height only.]
+
+Moreover, the fact that the differences are scientifically graded and
+proceed by regular steps makes it possible for the child to educate
+his powers of distinction in a systematic way.
+
+[Illustration: FIG. 8.--Child using Case of Cylinders.]
+
+[Illustration: FIG. 9.--The Tower.]
+
+[Illustration: FIG. 10.--Child Playing with Tower.]
+
+The child begins by learning to distinguish between stimuli which are
+very different, and, as his power of distinction develops, he becomes
+able to distinguish between objects in which the difference is slight.
+
+In this way the power of observation is cultivated and refined.
+
+The didactic material is limited in quantity, and the child is given
+only what he can use to advantage.
+
+There is never any confusion of objects, never any overwhelming of the
+child with more material than he can master.
+
+Each piece of the material has its own special place, and the child
+knows where to find it and where to put it away when his work is done.
+
+In this way habits of order are formed, and the child learns to be
+systematic in his use of material.
+
+I will now describe briefly the principal pieces of material used for
+the education of the various senses.
+
+_The Visual Sense._
+
+The education of the visual sense is of the greatest importance, since
+a large proportion of all our knowledge of the external world comes to
+us through the medium of sight.
+
+There are several different aspects of visual education, and for each
+aspect I have prepared special didactic material.
+
+_Dimension._ The material for the education of the visual sense with
+regard to dimension consists of three sets of objects:
+
+1. The tower of cubes.
+
+2. The broad stair.
+
+3. The long stair.
+
+These objects have already been mentioned. The cubes of the tower are
+ten in number, and they are colored pink. The smallest cube has an
+edge of one centimetre, and each of the others has an edge one
+centimetre greater than the preceding, so that the largest cube has an
+edge of ten centimetres.
+
+The child builds the cubes up into a tower, placing the largest at the
+bottom and the others in order, each upon the one next in size, with
+the smallest at the top.
+
+The broad stair consists of ten prisms, colored brown. They are all of
+the same length (twenty centimetres), but they differ in their other
+dimensions. The thickest prism is ten centimetres high and ten
+centimetres broad. The others diminish in thickness, but not in
+length, so that the thinnest prism is ten centimetres long and one
+centimetre square in section.
+
+These prisms can be arranged like the steps of a stair, with the
+thickest forming the bottom step.
+
+[Illustration: FIG. 11.--The Broad Stair.]
+
+[Illustration: FIG. 12.--The Long Stair.]
+
+The long stair consists of ten rods colored red. These rods are all one
+centimetre square in section, but they differ in length. The shortest
+rod is one decimetre long, and each of the others is one decimetre
+longer than the preceding, so that the longest rod is one metre in
+length.
+
+The rods are arranged in order of length, so as to form an uneven
+figure like a stair.
+
+The use of this three-fold material gives the child a clear
+comprehension of the three dimensions of space.
+
+_Form._ The education of the sense of form is accomplished by means of
+the following material:
+
+1. Three series of solid insets.
+
+2. A cabinet containing the plane geometric insets.
+
+The three series of solid insets consist of three blocks of wood, each
+of which is provided with ten holes, and ten cylinders which fit
+exactly into the holes.
+
+In the first block all the cylinders are the same height, but they
+differ in diameter.
+
+In the second block the cylinders differ both in height and in
+diameter, in such a way that the cylinder which has the largest
+diameter is also the highest, and the cylinder which has the smallest
+diameter is also the lowest.
+
+In the third block all the cylinders have the same diameter, but they
+differ in height.
+
+The child takes the cylinders out of the holes and then seeks to put
+them back, each one in its right place.
+
+It is evident that there is a control of error, since the cylinders
+can be put into their right holes only.
+
+The second part of the material for the education of the sense of form
+is the cabinet of plane geometric insets.
+
+This consists of a little cupboard containing six drawers. In the
+drawers are six series of plane geometric figures.
+
+Each figure is mounted upon a little square board, and is provided
+with a little button by means of which it can be taken hold of and
+removed from its frame.
+
+[Illustration: FIG. 13.--Board with Rough and Smooth Surfaces.]
+
+[Illustration: FIG. 14.--Board with Gummed Strips of Paper.]
+
+The six series are the following:
+
+I. Six circles, differing in diameter.
+
+II. Six rectangles, differing in length and breadth.
+
+III. Six triangles of different forms and sizes.
+
+IV. Six polygons (pentagon, hexagon, heptagon, octagon, enneagon,
+decagon).
+
+V. Six irregular curvilinear figures, all different.
+
+VI. Two figures identical in form with two of the preceding, and four
+blanks (i.e., frames with no insets).
+
+By the use of this material the child learns to recognize the
+differences of geometric form.
+
+[Illustration: FIG. 15.--Wood Tablets Differing in Weight.]
+
+[Illustration: Color Spools.]
+
+_Color._ The education of the chromatic sense is provided for by
+material consisting of two series of tablets.
+
+In the first series there are eight pairs of color tablets. The colors
+are the fundamental colors and some intermediate tints: red, blue,
+yellow, green, orange, violet, brown, black.
+
+Each color is represented by two tablets exactly alike, and the child's
+exercise consists in grouping the tablets in pairs, matching each
+tablet with its fellow.
+
+This exercise is often done blindfold, the child depending upon his
+memory of colors.
+
+The second series consists of eight boxes, each one containing a number
+of gradations of one particular color.
+
+For example, there is one box containing seven different tints of red,
+passing from the lightest pink to the deepest red.
+
+Another box contains seven gradations of blue; another, seven
+gradations of green; and so on.
+
+The child's exercise with this material consists in arranging the
+different shades of each color in gradation.
+
+As the child becomes skilled in this exercise, the gradations may be
+mixed, and he may be asked to sort out the different shades and
+arrange them in order.
+
+[Illustration: FIG. 16.--Cabinet with Drawers to hold Geometrical
+Insets.]
+
+[Illustration: FIG. 17.--Set of Six Circles.]
+
+All this work with colors gives a remarkable education of the
+chromatic sense, and it often happens that children who have worked
+with this material become capable of distinguishing shades of
+difference in colors which are indistinguishable to the ordinary adult
+eye.
+
+[Illustration: FIG. 18.--Set of Six Rectangles.]
+
+[Illustration: FIG. 19.--Set of Six Triangles.]
+
+[Illustration: FIG. 20.--Set of Six Polygons.]
+
+[Illustration: FIG. 21.--Set of Six Irregular Figures.]
+
+_The Tactile Sense._
+
+For the education of the tactile sense I make use of:
+
+1. Surfaces of different degrees of roughness.
+
+2. Fabrics of different quality and texture.
+
+3. Tablets of different temperatures.
+
+4. Tablets of different weights.
+
+The surfaces consist of rectangular pieces of wood, cardboard, or
+glass, upon which are pasted or fastened materials having different
+degrees of roughness and smoothness.
+
+For example, there may be a series consisting of very smooth glass,
+cardboard, fine sandpaper, coarse sandpaper, and very coarse
+sandpaper.
+
+Or there may be a piece of polished wood placed next to a piece of the
+finest sandpaper; then, again, two other pieces offering a less marked
+contrast; and so on.
+
+The exercise consists in feeling these surfaces and appreciating their
+differences and gradations in smoothness and roughness.
+
+A good exercise for sensitizing the finger-tips is to have the child,
+while blindfolded, feel surfaces and put together those that are
+alike.
+
+The fabrics consist of small pieces of various textures: velvet, satin,
+silk, cotton, linen, canvas, etc.
+
+The exercise consists in feeling the fabrics while blindfolded and in
+grouping together those pieces which are of the same quality.
+
+For the education of the thermic sense I use a set of tablets made of
+different materials: metal, wood, glass, woolen cloth, cotton cloth,
+sandpaper, etc.
+
+When these tablets, all of the same size and thickness, are placed
+upon the table for a few moments, they take on the temperature of the
+surrounding air, but, because of the different conductivity of the
+various materials, they feel warmer or cooler to the touch.
+
+The exercise consists in distinguishing between the tablets and in
+grouping together those which give the same sensation of temperature.
+
+[Illustration: FIG. 22.--Set of Four Blanks and Two Irregular Figures.]
+
+[Illustration: FIG. 23.--Frame to hold Geometrical Insets.]
+
+[Illustration: FIG. 24.--Child Touching the Insets.]
+
+The series of tablets for the education of the baric sense consists of
+small tablets of different woods. The tablets are all of the same
+size, but, because of the differences in the specific weight of the
+woods, they differ notably in weight.
+
+The exercise consists in taking the tablets in the hand (or better,
+placing them upon the palm and lifting them slightly upon the extended
+hand) and distinguishing the differences in weight.
+
+At first the child learns to distinguish only between heavy and light,
+taking into his two hands the two tablets which offer the greatest
+contrast.
+
+Later, he learns to distinguish slight differences, and, finally, to
+arrange all the tablets in order from the heaviest to the lightest.
+
+The exercises with these various materials constitute a real education
+of the several tactile senses, and render the child's hand intelligent
+and ready to appreciate those tactile impressions which will be of
+such assistance to him when he undertakes the exercises preparatory to
+writing.
+
+_The Auditory Sense._
+
+For the education of the auditory sense I use two series of bells and
+also a set of cylinders, closed and filled with various materials.
+
+The first series of bells consists of one set arranged upon a stand in
+the manner of a keyboard. These bells are tuned according to the
+diatonic scale of C major.
+
+The child strikes these bells with a little hammer, and learns to
+distinguish the differences in pitch and to recognize the tones of the
+scale.
+
+The second series consists of eight pairs of bells, like the first
+series, but not arranged upon a stand. Of each pair, one bell has a
+white support and one has a brown support, but the two bells of each
+pair give exactly the same tone.
+
+The exercise consists in taking one of the bells with brown support,
+sounding it, and then searching among the bells with white supports
+for the bell which gives the same tone.
+
+[Illustration: FIG. 25.--Series of Cards with Geometrical Forms.]
+
+[Illustration: FIG. 26.--Sound Boxes.]
+
+In this way the child learns to recognize identity and difference in
+musical tones, and his sense of pitch is greatly refined.
+
+The exercise may be made more difficult by increasing the number of
+the bells, and so making smaller the intervals between the sounds.
+
+The series of cylinders for sound consists of six pairs of cylinders.
+All the cylinders are alike externally, but each pair contains a
+different material--such as salt, rice, peas, etc.--and gives a
+different sound when shaken.
+
+The exercise is similar to that with the musical bells. The child
+takes one cylinder, listens to the sound which it makes when shaken,
+and then searches among the cylinders for the one which makes a sound
+exactly like it.
+
+A development of this exercise consists in arranging the cylinders in a
+series according to the intensity of sound, from the softest to the
+loudest.
+
+_The Olfactory Sense._
+
+The education of the sense of smell is provided for by a double series
+of small boxes or bottles containing different odoriferous substances.
+
+The exercise consists in smelling the contents of one box, and then
+searching among the others for the box which contains the same odor.
+
+_The Gustatory Sense._
+
+For the education of taste there is a double series of little bottles
+containing solutions of the four fundamental tastes: sweet, bitter,
+acid, and salty.
+
+The exercise consists in tasting the contents of one bottle and then
+finding, among the others, the bottle which contains the same taste.
+
+_Conclusions._
+
+The education of the senses, conducted by means of the didactic
+materials which I have described, leads to many very important
+results.
+
+In the first place, the child's powers of observation are notably
+increased and refined.
+
+The child who has been educated by this method observes his
+environment with an attention and an accuracy which are surprising.
+He notices details which escape the observation of others, and he
+groups his observations in a logical and intelligent manner.
+
+Secondly, the child acquires a real aesthetic sense. The training in
+the recognition of form, color, musical pitch, etc., leads to a
+genuine appreciation of beautiful things, and the child shows pleasure
+in harmonious surroundings and displeasure when harmony is lacking.
+
+Thirdly, the education of the hand, through the tactile exercises,
+prepares for all those abilities which depend upon the skillful use of
+the hand.
+
+And, finally, the education of the senses forms a sound foundation for
+intellectual development.
+
+The child learns to observe, to compare, to judge. His mind acquires
+exactness, his intelligence becomes acute and ready. And when, later,
+he undertakes the abstract study of number, of reading, of writing,
+etc., he brings to these studies faculties which have been well
+trained and developed, and his progress is much more rapid and much
+more intelligent than would otherwise be possible.
+
+                  *       *       *       *       *
+
+[Illustration: FIG. 27.--Musical Bells.]
+
+LANGUAGE AND KNOWLEDGE OF THE WORLD
+
+While the child is developing his senses, and through them his powers
+of observation and his intelligence, he is also extending his
+knowledge of the world about him and adding to his vocabulary.
+
+The nomenclature relating to the sense exercises is taught in the
+manner I have already described.
+
+That is to say, the teacher gives the child the names of the
+different qualities which he is learning to distinguish. She teaches
+him "rough" and "smooth" when he is working with the tactile tablets;
+"long" and "short" when he is arranging the rods; "light" and "dark"
+when he is working with the color tablets; "loud" and "soft" when he
+is comparing sounds; etc.
+
+But a great deal of other information is also given to the child, both
+through the lessons of the teacher and through his own spontaneous
+activity.
+
+The teacher talks to the children as opportunity offers, teaching them
+the names of the objects in their environment, explaining their uses,
+giving them information which interests them, and leading them to make
+their own investigations and discoveries.
+
+For example, while the children are working in the garden, the teacher
+tells them the names of the flowers, of the vegetables, of the
+implements used; she explains how plants grow, how they must be cared
+for, how some plants are useful to man, etc.
+
+While the children are engaged in the care of animals (rabbits,
+chickens, etc.), she gives them information about the habits of these
+animals, their uses, the care they require, etc.
+
+If a child shows an interest in any particular subject, the teacher
+follows up this interest, giving more detailed information and helping
+the child to observe intelligently and to understand what he observes.
+
+In this way the child acquires a great deal of information about the
+world in which he lives.
+
+He learns the names and uses of the objects in his immediate
+environment. He learns about the materials of which things are made
+and about the processes by which they are manufactured. He learns
+about plants and animals and their life. He learns about the earth,
+the sky, the weather, etc.
+
+All this information is acquired not through tedious lessons which
+mean little to the child, but in response to his own interest and as
+an explanation of the things which he observes in his daily
+experience.
+
+The result is that the child really assimilates what he learns. It
+becomes a part of his mental equipment, and forms a basis for further
+learning and development.
+
+In most schools, children are expected to learn a great many facts
+which have no connection with their own experience and which,
+therefore, mean very little to them.
+
+Such learning is necessarily superficial and temporary. The child may
+repeat the facts for the purpose of passing an examination, but he
+does not assimilate them, and they do not become a real part of his
+mental equipment.
+
+The method of teaching facts through the child's own experience and in
+response to his own interest ensures that the learning shall be real
+and permanent.
+
+                  *       *       *       *       *
+
+FREEDOM
+
+The principal agent in the child's development is the child himself.
+But in order that the child may be able to develop in the most natural
+way, he must be given freedom--freedom to act, to move, to express
+himself, to carry out his spontaneous activities.
+
+Most educators have a mistaken notion of what freedom in education
+means. They think that if the child is to be free he must be allowed
+to do anything he pleases, and that the teacher must never interfere
+with him or place any restriction upon him.
+
+Such a conception of freedom would lead to license, and license is
+always harmful to the child.
+
+The true freedom which the child should have is freedom to develop his
+own activities, but along the lines of social development. That is to
+say, the child should be free to do anything which is useful either to
+himself or to the community, but he should not be allowed to do
+anything which is useless or harmful.
+
+For example, the child should be free to move about, to choose his own
+occupations, to carry out his work in his own way and at his own pace.
+
+But he should not be free to disturb other children who are at work,
+to handle the materials carelessly so as to damage them, or to waste
+time in idle and purposeless activity.
+
+In my schools I have found that children, if they are given the right
+kind of freedom, show a spontaneous disposition toward discipline and
+order.
+
+When the children have once become interested in some form of work,
+and when they realize that this work is helping them to grow and to
+develop, they show the greatest care in carrying out the work properly
+and the greatest respect for the materials which they use.
+
+The freedom and the discipline do not stand in opposition to each
+other. On the contrary, discipline is the result of freedom.
+
+When the child is free to choose work which interests him, and when he
+is free to carry out this work in his own way, he develops powers of
+concentration, habits of order, and respect for the rights of others.
+
+The discipline which results from this freedom is not imposed from
+without; it springs from within the child himself, and is therefore
+far more genuine and far more valuable than any discipline which could
+be imposed by force.
+
+                  *       *       *       *       *
+
+WRITING
+
+The exercises for the senses are followed by the exercises which
+prepare directly for instruction in the elementary school subjects.
+
+And here I must explain that the instruction in reading, writing, and
+arithmetic is not given because these subjects are thought to be
+necessary parts of the education of children between the ages of three
+and six years.
+
+On the contrary, the instruction in these subjects is given simply
+because the children show a spontaneous interest in the written and
+printed symbols which they see about them, and because, when the
+interest is present, the children learn these subjects with an ease
+and rapidity which is impossible at a later period.
+
+The child of four or five years is in a sensitive period for the
+acquisition of written language. If this sensitivity is utilized, the
+child learns to read and write almost without effort, and with a
+degree of perfection which is surprising.
+
+If, on the other hand, the teaching of reading and writing is
+postponed until the child is six or seven years old, the task becomes
+much more difficult, both for the child and for the teacher.
+
+The method by which writing is taught consists of a series of exercises
+which prepare the hand for the formation of the letters and the mind
+for their recognition.
+
+The preparation of the hand is accomplished through all the sense
+exercises which I have described, and especially through the exercises
+in which the child handles the geometric insets and learns to follow
+their outlines with his finger.
+
+The direct preparation for writing consists of exercises with
+materials especially designed for this purpose.
+
+The materials for the preparation of writing consist of:
+
+1. Metal insets.
+
+2. Cards upon which sandpaper letters are mounted.
+
+3. A large box containing movable letters.
+
+4. Simple reading cards.
+
+The metal insets consist of a series of geometric figures--square,
+rectangle, circle, ellipse, triangle, etc.--cut out of metal plates.
+
+Each figure is cut out of a metal frame, so that there are two metal
+plates for each figure: one, the frame, which shows the figure as an
+opening; and one, the inset, which is the figure itself.
+
+[Illustration: FIG. 28.--Sloping Boards to Display Set of Metal
+Insets.]
+
+[Illustration: FIG. 29.--Single Sandpaper Letter.]
+
+The child places the frame upon a piece of paper and, with a colored
+pencil, traces around the opening. He thus obtains an outline of the
+geometric figure upon his paper.
+
+He then takes the inset, places it exactly over the outline which he
+has drawn, and traces around it with a colored pencil of a different
+color.
+
+In this way he learns to handle a pencil and to control his muscular
+movements in drawing.
+
+When the child has become skilled in this exercise with the geometric
+forms, he may make more elaborate designs by placing the insets in
+various positions and tracing around them with colored pencils.
+
+These exercises give the child great pleasure, and, at the same time,
+they are preparing his hand for the muscular movements which will be
+necessary in writing.
+
+[Illustration: FIG. 30.--Groups of Sandpaper Letters.]
+
+The sandpaper letters are made by cutting letters of the alphabet out
+of sandpaper and mounting them upon cards.
+
+The vowels are mounted upon pink cards, and the consonants upon blue
+cards.
+
+The child learns the letters by touching them. The teacher takes the
+child's index finger and traces with it the sandpaper letter, showing
+the child the direction and the sequence of the movements which are
+used in writing the letter.
+
+At the same time she pronounces the sound of the letter.
+
+The child thus learns the letter through three of his senses: through
+sight, since he sees the letter; through touch, since he feels its
+shape with his finger; and through hearing, since he hears its sound.
+
+This triple sense impression makes the learning very rapid and very
+secure.
+
+Moreover, by tracing the letter with his finger, the child is preparing
+his hand for the movements which he will later make with the pencil in
+writing the letter.
+
+When the child knows a number of letters, he begins to put them
+together to form words.
+
+For this purpose there is provided a large box of movable letters. The
+letters are cut out of cardboard and are of the same size and shape as
+the sandpaper letters.
+
+The vowels are pink and the consonants are blue, as in the case of the
+sandpaper letters.
+
+[Illustration: FIG. 31.--Box of Movable Letters.]
+
+The teacher pronounces a word slowly and distinctly, and the child
+listens for the component sounds. He then hunts among the movable
+letters for the letters representing these sounds, and places them
+together in the proper order to form the word.
+
+For example, the teacher says "_m-a-m-a_," pronouncing the word very
+slowly and separating the sounds.
+
+The child recognizes the sound "m" and finds the letter "m." He
+recognizes the sound "a" and finds the letter "a." He places the
+letters in the proper order and thus builds up the word "_mama_."
+
+In this exercise the child is learning to think of words as made up of
+separate sounds, and to recognize the letters which represent these
+sounds.
+
+This is really the beginning of writing, since writing is nothing more
+than the representation of sounds by means of signs.
+
+When the child has become fairly skilled in the building up of words
+with the movable letters, it often happens that he suddenly discovers
+that he can write.
+
+He takes a pencil, and, to his great delight, finds that he can trace
+upon paper the same letters which he has been building up with the
+movable types.
+
+This discovery of the power to write is generally a moment of intense
+joy for the child.
+
+Usually it is entirely unexpected, both by the child and by the
+teacher. The child's hand has been prepared by the tracing exercises;
+his mind knows the letters and knows how letters are combined into
+words; and suddenly the two kinds of preparation unite, and the child
+finds that he can write.
+
+From this moment the development is very rapid. The child writes words,
+then sentences, then stories.
+
+His writing is not, of course, perfect from the beginning. But it
+shows a steadily improvement, and, if the child has been properly
+prepared, his writing soon becomes clear and well-formed.
+
+The reading follows the writing, or rather develops parallel with it.
+
+As soon as the child can form a word with the movable letters, he can
+also read that word.
+
+Reading, in its initial stages, is simply the reverse of the process
+of word-building. In word-building the child listens to a word and
+analyzes it into its component sounds. In reading he sees the written
+word and synthesizes the component sounds into the word.
+
+At first this synthesis is accomplished very slowly and with effort.
+The child looks at a word, recognizes the separate letters, recalls
+the sound of each letter, and pronounces these sounds in succession
+until he recognizes the word which they form.
+
+Gradually the process becomes more rapid, until, finally, the child
+reads as easily and as fluently as an adult.
+
+It is surprising how rapidly children learn to read and write by this
+method. Children of four and five years often learn to read and write
+in a few months, and their reading and writing is often more accurate
+and more beautiful than that of children who have been taught by the
+ordinary methods.
+
+Moreover, the children take the greatest pleasure in these exercises.
+To them, learning to read and write is not a tedious task imposed
+upon them by the teacher; it is a delightful discovery which they make
+for themselves.
+
+                  *       *       *       *       *
+
+[Illustration: FIG. 32.--The Musical Staff.]
+
+THE READING OF MUSIC
+
+After the children have learned to read words, they easily learn to
+read music by a method which is analogous to that employed in teaching
+the reading of words.
+
+The didactic material for the teaching of musical reading consists of
+a large staff drawn upon a blackboard, and a collection of large
+wooden discs which may be placed upon the lines and in the spaces of
+the staff.
+
+Some of the discs are colored to represent the different values of
+notes (whole notes, half notes, quarter notes, etc.), and some are
+left plain to be used simply for position.
+
+[Illustration: FIG. 33.--Didactic Material for Musical Reading.]
+
+[Illustration: FIG. 34.--Didactic Material for Musical Reading.]
+
+[Illustration: FIG. 35.--Didactic Material for Musical Reading.]
+
+The child learns the positions of the notes upon the staff by placing
+the discs upon the lines and spaces.
+
+At the same time he learns the names of the notes by means of the
+first series of bells described in the chapter on "Sensory Education."
+
+When he can place the discs correctly upon the staff, and when he knows
+the names of the notes, he begins to read simple melodies.
+
+[Illustration: FIG. 36.--Didactic Material for Musical Reading.]
+
+[Illustration: FIG. 37.--Didactic Material for Musical Reading.]
+
+[Illustration: FIG. 38.--Didactic Material for Musical Reading.]
+
+[Illustration: FIG. 39.--Dumb Keyboard.]
+
+The process is exactly analogous to reading words. Just as in reading
+words the child recognizes the written letters, recalls the sounds
+which they represent, and pronounces these sounds in succession until
+he recognizes the word, so in reading music the child recognizes the
+written notes, recalls the tones which they represent, and produces
+these tones in succession until he recognizes the melody.
+
+With children who know how to read words, the process of learning to
+read music is very rapid.
+
+                  *       *       *       *       *
+
+ARITHMETIC
+
+The teaching of number is begun by means of exercises with concrete
+materials, in which the child actually handles the quantities which
+the numbers represent.
+
+The first exercise consists in teaching the child to count from one to
+ten by means of a series of rods.
+
+These rods are similar to those used in the education of the visual
+sense for length, but they are painted with red and blue sections to
+show the units of which they are composed.
+
+The first rod is painted entirely red, and represents one.
+
+The second rod is painted with one red section and one blue section,
+and represents two.
+
+The third rod is painted with two red sections and one blue section
+(red, blue, red), and represents three.
+
+And so on up to the tenth rod, which has five red and five blue
+sections, and represents ten.
+
+[Illustration: FIG. 40.--Diagram Illustrating Use of Numerical Rods.]
+
+The child learns to count by touching the sections on the rods and
+counting, "one, two, three," etc.
+
+He also learns to recognize the rods by their length, so that he can
+tell at a glance which rod represents six, which represents eight, etc.
+
+When the child has learned to count to ten, and to recognize the
+quantities which the numbers from one to ten represent, he is taught
+the figures.
+
+The figures are made of sandpaper, like the sandpaper letters, and
+they are learned in the same way.
+
+The child traces the figure with his finger, following the same
+movements which he will later make with his pencil, and at the same
+time he hears the name of the figure.
+
+As soon as the child knows a few figures, he begins to associate them
+with the quantities which they represent.
+
+For this purpose the teacher places one of the rods before the child,
+and asks him to place beside it the figure which shows how many units
+the rod contains.
+
+In this way the child learns that the rod with three sections is
+represented by the figure 3, that the rod with seven sections is
+represented by the figure 7, etc.
+
+The next step is to teach the formation of numbers above ten.
+
+For this purpose there is provided a supply of golden beads, arranged
+as follows:
+
+Units: single beads.
+
+Tens: bars, each containing ten beads.
+
+Hundreds: squares, each containing ten bars (i.e., 100 beads).
+
+Thousands: cubes, each containing ten squares (i.e., 1,000 beads).
+
+By means of this material the child learns concretely the meaning of
+units, tens, hundreds, and thousands.
+
+He learns that ten units make one ten; that ten tens make one hundred;
+that ten hundreds make one thousand.
+
+Moreover, by handling the concrete materials, he learns to recognize
+these quantities, so that he can tell at a glance the difference
+between, let us say, 200 and 400, or between 1,000 and 3,000.
+
+The decimal system thus becomes a concrete reality to the child
+instead of a meaningless abstraction.
+
+With this material the child learns to count beyond 1,000, and to form
+any number up to 9,999.
+
+For example, if the teacher asks the child to form the number 2,746,
+the child takes two thousand-cubes, seven hundred-squares, four
+ten-bars, and six unit-beads, and places them together.
+
+He can then count the beads, if necessary, to verify the result, and
+he sees clearly what the number 2,746 means.
+
+When the child understands the formation of numbers, he begins to
+learn the processes of arithmetic.
+
+Addition is taught by placing quantities together. For example, if the
+child is to add 2,546 and 1,321, he first forms the number 2,546 with
+the golden beads, then forms the number 1,321, and then puts the two
+quantities together and counts the result.
+
+Subtraction is taught by taking away. To subtract 1,321 from 2,546,
+the child forms the number 2,546, then takes away from it 1,321, and
+counts what remains.
+
+Multiplication is taught as repeated addition. To multiply 23 by 4, the
+child forms the quantity 23 four times, puts the four quantities
+together, and counts the result.
+
+Division is taught by actual division of a quantity into equal parts.
+To divide 84 by 4, the child forms the quantity 84, separates it into
+four equal groups, and counts the number in each group.
+
+All of the arithmetic is thus learned with concrete materials, and the
+child sees clearly what each process means and why it gives the result
+which it does.
+
+Only after the child thoroughly understands the processes with
+concrete materials does he learn to carry out the same processes with
+figures on paper.
+
+But when this step is taken, the transition is very easy, because the
+child already understands what the processes mean.
+
+[Illustration: FIG. 41.--Counting Boxes.]
+
+[Illustration: FIG. 42.--Arithmetic Frame.]
+
+The results obtained by this method of teaching arithmetic are very
+remarkable. Children of five and six years often learn to add, subtract,
+multiply, and divide numbers of four figures, and they do this work
+with an understanding and an accuracy which is surprising.
+
+Moreover, they take great pleasure in the work. To them arithmetic is
+not a series of meaningless operations with figures; it is an
+interesting game with concrete materials.
+
+This pleasure in arithmetic often persists throughout the child's
+school life. Children who have learned arithmetic by this method show
+a continued interest in number work, and they usually excel in
+mathematics in their later schooling.
+
+                  *       *       *       *       *
+
+MORAL FACTORS
+
+There is one more aspect of education in the "Children's House" which
+should not be overlooked, and that is the moral education of the
+children.
+
+This moral education is not given by means of sermons or moral
+lessons. It comes about naturally as a result of the child's
+experiences in the social life of the school.
+
+When little children are placed together in a environment which has
+been prepared for them, and when they are given freedom to develop
+their own activities, they spontaneously develop many admirable moral
+characteristics.
+
+They learn to help one another, to be considerate of each other's
+rights, to be generous and unselfish.
+
+For example, if a little child is trying to carry a pitcher of water
+and is in danger of spilling it, an older child will come to his aid
+without being asked.
+
+If a child has completed a piece of work and is pleased with it, he
+will often show it to the other children, not boastfully, but with
+the simple pleasure of sharing his joy.
+
+If a child is ill, or sad, or in trouble, the other children show
+sympathy and try to help him.
+
+These characteristics are not taught; they develop naturally in an
+environment where children are free and happy and engaged in
+interesting work.
+
+Moreover, the children learn to take care of their own possessions and
+to respect the possessions of others.
+
+They learn to keep the schoolroom neat and clean and to take care of
+the materials which they use.
+
+They learn to be punctual, to be responsible, to finish the work which
+they begin.
+
+All these moral lessons come to the children not as imposed duties,
+but as natural consequences of their life in the school community.
+
+The child who is free to choose his own work, and who finds joy and
+satisfaction in his work, develops naturally those characteristics
+which we call moral.
+
+He becomes industrious, because he enjoys industry.
+
+He becomes careful, because carelessness interferes with his success.
+
+He becomes considerate of others, because he appreciates the
+consideration which others show to him.
+
+He becomes honest, because honesty is the natural attitude of a child
+who has not been forced to be deceitful.
+
+In short, the child develops a moral character not through moral
+lessons, but through moral experiences.
+
+And these experiences come to him naturally when he is placed in an
+environment which encourages the development of his best
+characteristics and which gives him the freedom to be his natural self.
+
+It is in this way that the "Children's House" contributes not only to
+the intellectual development of the child, but also to his moral and
+social development.
+
+The children who are educated by this method do not merely learn to
+read and write and calculate; they learn to live.
+
+They develop characters which are independent, responsible,
+considerate, and happy.
+
+And these character traits, which are developed in early childhood,
+persist throughout life and contribute to the formation of good
+citizens and valuable members of society.
+
+*** END OF THE PROJECT GUTENBERG EBOOK DR. MONTESSORI'S OWN HANDBOOK ***
+
+Updated editions will replace the previous one—the old editions will
+be renamed.
+
+Creating the works from print editions not protected by U.S. copyright
+law means that no one owns a United States copyright in these works,
+so the Foundation (and you!) can copy and distribute it in the United
+States without permission and without paying copyright
+royalties. Special rules, set forth in the General Terms of Use part
+of this license, apply to copying and distributing Project
+Gutenberg™ electronic works to protect the PROJECT GUTENBERG™
+concept and trademark. Project Gutenberg is a registered trademark,
+and may not be used if you charge for an eBook, except by following
+the terms of the trademark license, including paying royalties for use
+of the Project Gutenberg trademark. If you do not charge anything for
+copies of this eBook, complying with the trademark license is very
+easy. You may use this eBook for nearly any purpose such as creation
+of derivative works, reports, performances and research. Project
+Gutenberg eBooks may be modified and printed and given away—you may
+do practically ANYTHING in the United States with eBooks not protected
+by U.S. copyright law. Redistribution is subject to the trademark
+license, especially commercial redistribution.
+
+START: FULL LICENSE
+
+THE FULL PROJECT GUTENBERG LICENSE
+
+PLEASE READ THIS BEFORE YOU DISTRIBUTE OR USE THIS WORK
+
+To protect the Project Gutenberg™ mission of promoting the free
+distribution of electronic works, by using or distributing this work
+(or any other work associated in any way with the phrase "Project
+Gutenberg"), you agree to comply with all the terms of the Full
+Project Gutenberg™ License available with this file or online at
+www.gutenberg.org/license.
+
+Section 1. General Terms of Use and Redistributing Project
+Gutenberg™ electronic works
+
+1.A. By reading or using any part of this Project Gutenberg™
+electronic work, you indicate that you have read, understand, agree to
+and accept all the terms of this license and intellectual property
+(trademark/copyright) agreement. If you do not agree to abide by all
+the terms of this agreement, you must cease using and return or
+destroy all copies of Project Gutenberg™ electronic works in your
+possession. If you paid a fee for obtaining a copy of or access to a
+Project Gutenberg™ electronic work and you do not agree to be bound
+by the terms of this agreement, you may obtain a refund from the
+person or entity to whom you paid the fee as set forth in paragraph
+1.E.8.
+
+1.B. "Project Gutenberg" is a registered trademark. It may only be
+used on or associated with electronic works, if you follow the terms
+of this agreement and help preserve free future access to Project
+Gutenberg™ electronic works. See paragraph 1.E below.
+
+1.C. The Project Gutenberg Literary Archive Foundation ("the
+Foundation" or PGLAF), owns a compilation copyright in the collection
+of Project Gutenberg™ electronic works. Nearly all the individual
+works in the collection are in the public domain in the United
+States. If an individual work is unprotected by copyright law in the
+United States and you are located in the United States, we do not
+claim a right to prevent you from copying, distributing, performing,
+displaying or creating derivative works based on the work as long as
+all references to Project Gutenberg are removed. Of course, we hope
+that you will support the Project Gutenberg™ mission of promoting
+free access to electronic works by freely sharing Project
+Gutenberg™ works in compliance with the terms of this agreement for
+keeping the Project Gutenberg™ name associated with the work. You can
+easily comply with the terms of this agreement by keeping this work in
+the same format with its attached full Project Gutenberg™ License
+when you share it without charge with others.
+
+1.D. The copyright laws of the place where you are located also govern
+what you can do with this work. Copyright laws in most countries are
+in a constant state of change. If you are outside the United States,
+check the laws of your country in addition to the terms of this
+agreement before downloading, copying, displaying, performing,
+distributing or creating derivative works based on this work or any
+other Project Gutenberg™ work. The Foundation makes no
+representations concerning the copyright status of any work in any
+country other than the United States.
+
+1.E. Unless you have removed all references to Project Gutenberg:
+
+1.E.1. The following sentence, with active links to, or other
+immediate access to, the full Project Gutenberg™ License must appear
+prominently whenever any copy of a Project Gutenberg™ work (any work
+on which the phrase "Project Gutenberg" appears, or with which the
+phrase "Project Gutenberg" is associated) is accessed, displayed,
+performed, viewed, copied or distributed:
+
+  This eBook is for the use of anyone anywhere in the United States and
+  most other parts of the world at no cost and with almost no
+  restrictions whatsoever. You may copy it, give it away or re-use it
+  under the terms of the Project Gutenberg License included with this
+  eBook or online at www.gutenberg.org. If you are not located in the
+  United States, you will have to check the laws of the country where
+  you are located before using this eBook.
+
+1.E.2. If an individual Project Gutenberg™ electronic work is
+derived from texts not protected by U.S. copyright law (does not
+contain a notice indicating that it is posted with permission of the
+copyright holder), the work can be copied and distributed to anyone in
+the United States without paying any fees or charges. If you are
+redistributing or providing access to a work with the phrase "Project
+Gutenberg" associated with or appearing on the work, you must comply
+either with the requirements of paragraphs 1.E.1 through 1.E.7 or
+obtain permission for the use of the work and the Project Gutenberg™
+trademark as set forth in paragraphs 1.E.8 or 1.E.9.
+
+1.E.3. If an individual Project Gutenberg™ electronic work is posted
+with the permission of the copyright holder, your use and distribution
+must comply with both paragraphs 1.E.1 through 1.E.7 and any
+additional terms imposed by the copyright holder. Additional terms
+will be linked to the Project Gutenberg™ License for all works
+posted with the permission of the copyright holder found at the
+beginning of this work.
+
+1.E.4. Do not unlink or detach or remove the full Project Gutenberg™
+License terms from this work, or any files containing a part of this
+work or any other work associated with Project Gutenberg™.
+
+1.E.5. Do not copy, display, perform, distribute or redistribute this
+electronic work, or any part of this electronic work, without
+prominently displaying the sentence set forth in paragraph 1.E.1 with
+active links or immediate access to the full terms of the Project
+Gutenberg™ License.
+
+1.E.6. You may convert to and distribute this work in any binary,
+compressed, marked up, nonproprietary or proprietary form, including
+any word processing or hypertext form. However, if you provide access
+to or distribute copies of a Project Gutenberg™ work in a format
+other than "Plain Vanilla ASCII" or other format used in the official
+version posted on the official Project Gutenberg™ website
+(www.gutenberg.org), you must, at no additional cost, fee or expense
+to the user, provide a copy, a means of exporting a copy, or a means
+of obtaining a copy upon request, of the work in its original "Plain
+Vanilla ASCII" or other form. Any alternate format must include the
+full Project Gutenberg™ License as specified in paragraph 1.E.1.
+
+1.E.7. Do not charge a fee for access to, viewing, displaying,
+performing, copying or distributing any Project Gutenberg™ works
+unless you comply with paragraph 1.E.8 or 1.E.9.
+
+1.E.8. You may charge a reasonable fee for copies of or providing
+access to or distributing Project Gutenberg™ electronic works
+provided that:
+
+• You pay a royalty fee of 20% of the gross profits you derive from
+  the use of Project Gutenberg™ works calculated using the method
+  you already use to calculate your applicable taxes. The fee is owed
+  to the owner of the Project Gutenberg™ trademark, but he has
+  agreed to donate royalties under this paragraph to the Project
+  Gutenberg Literary Archive Foundation. Royalty payments must be paid
+  within 60 days following each date on which you prepare (or are
+  legally required to prepare) your periodic tax returns. Royalty
+  payments should be clearly marked as such and sent to the Project
+  Gutenberg Literary Archive Foundation at the address specified in
+  Section 4, "Information about donations to the Project Gutenberg
+  Literary Archive Foundation."
+
+• You provide a full refund of any money paid by a user who notifies
+  you in writing (or by e-mail) within 30 days of receipt that s/he
+  does not agree to the terms of the full Project Gutenberg™
+  License. You must require such a user to return or destroy all
+  copies of the works possessed in a physical medium and discontinue
+  all use of and all access to other copies of Project Gutenberg™
+  works.
+
+• You provide, in accordance with paragraph 1.F.3, a full refund of
+  any money paid for a work or a replacement copy, if a defect in the
+  electronic work is discovered and reported to you within 90 days of
+  receipt of the work.
+
+• You comply with all other terms of this agreement for free
+  distribution of Project Gutenberg™ works.
+
+1.E.9. If you wish to charge a fee or distribute a Project
+Gutenberg™ electronic work or group of works on different terms than
+are set forth in this agreement, you must obtain permission in writing
+from the Project Gutenberg Literary Archive Foundation, the manager of
+the Project Gutenberg™ trademark. Contact the Foundation as set
+forth in Section 3 below.
+
+1.F.
+
+1.F.1. Project Gutenberg volunteers and employees expend considerable
+effort to identify, do copyright research on, transcribe and proofread
+works not protected by U.S. copyright law in creating the Project
+Gutenberg™ collection. Despite these efforts, Project Gutenberg™
+electronic works, and the medium on which they may be stored, may
+contain "Defects," such as, but not limited to, incomplete, inaccurate
+or corrupt data, transcription errors, a copyright or other
+intellectual property infringement, a defective or damaged disk or
+other medium, a computer virus, or computer codes that damage or
+cannot be read by your equipment.
+
+1.F.2. LIMITED WARRANTY, DISCLAIMER OF DAMAGES - Except for the "Right
+of Replacement or Refund" described in paragraph 1.F.3, the Project
+Gutenberg Literary Archive Foundation, the owner of the Project
+Gutenberg™ trademark, and any other party distributing a Project
+Gutenberg™ electronic work under this agreement, disclaim all
+liability to you for damages, costs and expenses, including legal
+fees. YOU AGREE THAT YOU HAVE NO REMEDIES FOR NEGLIGENCE, STRICT
+LIABILITY, BREACH OF WARRANTY OR BREACH OF CONTRACT EXCEPT THOSE
+PROVIDED IN PARAGRAPH 1.F.3. YOU AGREE THAT THE FOUNDATION, THE
+TRADEMARK OWNER, AND ANY DISTRIBUTOR UNDER THIS AGREEMENT WILL NOT BE
+LIABLE TO YOU FOR ACTUAL, DIRECT, INDIRECT, CONSEQUENTIAL, PUNITIVE OR
+INCIDENTAL DAMAGES EVEN IF YOU GIVE NOTICE OF THE POSSIBILITY OF SUCH
+DAMAGE.
+
+1.F.3. LIMITED RIGHT OF REPLACEMENT OR REFUND - If you discover a
+defect in this electronic work within 90 days of receiving it, you can
+receive a refund of the money (if any) you paid for it by sending a
+written explanation to the person you received the work from. If you
+received the work on a physical medium, you must return the medium
+with your written explanation. The person or entity that provided you
+with the defective work may elect to provide a replacement copy in
+lieu of a refund. If you received the work electronically, the person
+or entity providing it to you may choose to give you a second
+opportunity to receive the work electronically in lieu of a refund. If
+the second copy is also defective, you may demand a refund in writing
+without further opportunities to fix the problem.
+
+1.F.4. Except for the limited right of replacement or refund set forth
+in paragraph 1.F.3, this work is provided to you 'AS-IS', WITH NO
+OTHER WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY PURPOSE.
+
+1.F.5. Some states do not allow disclaimers of certain implied
+warranties or the exclusion or limitation of certain types of
+damages. If any disclaimer or limitation set forth in this agreement
+violates the law of the state applicable to this agreement, the
+agreement shall be interpreted to make the maximum disclaimer or
+limitation permitted by the applicable state law. The invalidity or
+unenforceability of any provision of this agreement shall not void the
+remaining provisions.
+
+1.F.6. INDEMNITY - You agree to indemnify and hold the Foundation, the
+trademark owner, any agent or employee of the Foundation, anyone
+providing copies of Project Gutenberg™ electronic works in
+accordance with this agreement, and any volunteers associated with the
+production, promotion and distribution of Project Gutenberg™
+electronic works, harmless from all liability, costs and expenses,
+including legal fees, that arise directly or indirectly from any of
+the following which you do or cause to occur: (a) distribution of this
+or any Project Gutenberg™ work, (b) alteration, modification, or
+additions or deletions to any Project Gutenberg™ work, and (c) any
+Defect you cause.
+
+Section 2. Information about the Mission of Project Gutenberg™
+
+Project Gutenberg™ is synonymous with the free distribution of
+electronic works in formats readable by the widest variety of
+computers including obsolete, old, middle-aged and new computers. It
+exists because of the efforts of hundreds of volunteers and donations
+from people in all walks of life.
+
+Volunteers and financial support to provide volunteers with the
+assistance they need are critical to reaching Project Gutenberg™'s
+goals and ensuring that the Project Gutenberg™ collection will
+remain freely available for generations to come. In 2001, the Project
+Gutenberg Literary Archive Foundation was created to provide a secure
+and permanent future for Project Gutenberg™ and future
+generations. To learn more about the Project Gutenberg Literary
+Archive Foundation and how your efforts and donations can help, see
+Sections 3 and 4 and the Foundation information page at
+www.gutenberg.org.
+
+Section 3. Information about the Project Gutenberg Literary Archive Foundation
+
+The Project Gutenberg Literary Archive Foundation is a non-profit
+501(c)(3) educational corporation organized under the laws of the
+state of Mississippi and granted tax exempt status by the Internal
+Revenue Service. The Foundation's EIN or federal tax identification
+number is 64-6221541. Contributions to the Project Gutenberg Literary
+Archive Foundation are tax deductible to the full extent permitted by
+U.S. federal laws and your state's laws.
+
+The Foundation's business office is located at 809 North 1500 West,
+Salt Lake City, UT 84116, (801) 596-1887. Email contact links and up
+to date contact information can be found at the Foundation's website
+and official page at www.gutenberg.org/contact
+
+Section 4. Information about Donations to the Project Gutenberg
+Literary Archive Foundation
+
+Project Gutenberg™ depends upon and cannot survive without
+widespread public support and donations to carry out its mission of
+increasing the number of public domain and licensed works that can be
+freely distributed in machine-readable form accessible by the widest
+array of equipment including outdated equipment. Many small donations
+($1 to $5,000) are particularly important to maintaining tax exempt
+status with the IRS.
+
+The Foundation is committed to complying with the laws regulating
+charities and charitable donations in all 50 states of the United
+States. Compliance requirements are not uniform and it takes a
+considerable effort, much paperwork and many fees to meet and keep up
+with these requirements. We do not solicit donations in locations
+where we have not received written confirmation of compliance. To SEND
+DONATIONS or determine the status of compliance for any particular
+state visit www.gutenberg.org/donate.
+
+While we cannot and do not solicit contributions from states where we
+have not met the solicitation requirements, we know of no prohibition
+against accepting unsolicited donations from donors in such states who
+approach us with offers to donate.
+
+International donations are gratefully accepted, but we cannot make
+any statements concerning tax treatment of donations received from
+outside the United States. U.S. laws alone swamp our small staff.
+
+Please check the Project Gutenberg web pages for current donation
+methods and addresses. Donations are accepted in a number of other
+ways including checks, online payments and credit card donations. To
+donate, please visit: www.gutenberg.org/donate.
+
+Section 5. General Information About Project Gutenberg™ electronic works
+
+Professor Michael S. Hart was the originator of the Project
+Gutenberg™ concept of a library of electronic works that could be
+freely shared with anyone. For forty years, he produced and
+distributed Project Gutenberg™ eBooks with only a loose network of
+volunteer support.
+
+Project Gutenberg™ eBooks are often created from several printed
+editions, all of which are confirmed as not protected by copyright in
+the U.S. unless a copyright notice is included. Thus, we do not
+necessarily keep eBooks in compliance with any particular paper
+edition.
+
+Most people start at our website which has the main PG search
+facility: www.gutenberg.org.
+
+This website includes information about Project Gutenberg™,
+including how to make donations to the Project Gutenberg Literary
+Archive Foundation, how to help produce our new eBooks, and how to
+subscribe to our email newsletter to hear about new eBooks.

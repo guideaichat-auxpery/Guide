@@ -309,6 +309,19 @@ def load_general_capabilities():
         st.error(f"Error loading General Capabilities: {str(e)}")
         return ""
 
+@st.cache_data
+def load_montessori_own_handbook():
+    """Load Dr. Montessori's Own Handbook content with caching"""
+    try:
+        with open('montessori_own_handbook.txt', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        st.warning("Dr. Montessori's Own Handbook file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading Dr. Montessori's Own Handbook: {str(e)}")
+        return ""
+
 def save_rubric_to_user_data(username, rubric_data):
     """Save rubric to user data file for persistence"""
     try:
@@ -1026,6 +1039,11 @@ When appropriate, incorporate these components as guardrails to guide curriculum
     capabilities_content = load_general_capabilities()
     if capabilities_content and len(capabilities_content) > 100:
         uploaded_content += f"\n\nGeneral Capabilities V9:\n{capabilities_content[:800]}..."
+    
+    # Load Dr. Montessori's Own Handbook content
+    montessori_handbook = load_montessori_own_handbook()
+    if montessori_handbook and len(montessori_handbook) > 100:
+        uploaded_content += f"\n\nDr. Montessori's Own Handbook Reference:\n{montessori_handbook[:1000]}..."
     
     # Include Montessori National Curriculum reference
     montessori_reference = """
