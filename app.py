@@ -2270,7 +2270,7 @@ else:
                         default=["Year 3"],
                         help="Select one or more year levels for your scope and sequence"
                     )
-                    duration = st.selectbox("Sequence Duration", ["1 cycle", "1-2 weeks", "3-4 weeks", "5-6 weeks", "7-8 weeks", "One term", "One semester"])
+                    duration = st.selectbox("Sequence Duration", ["1 Cycle (3 years)", "1 Term (10 weeks)", "1 Year (4 terms, 40 weeks)"])
                 
                 sequence_context = st.text_area(
                     "Additional Context & Goals",
@@ -2308,8 +2308,8 @@ else:
                             # Format year levels for display
                             year_levels_str = ", ".join(year_level) if isinstance(year_level, list) else str(year_level)
                             
-                            # Special handling for 1 cycle duration
-                            if duration == "1 cycle":
+                            # Special handling for different duration options
+                            if duration == "1 Cycle (3 years)":
                                 duration_detail = "1 cycle (12 terms across 3 years: 4 terms 1st year, 4 terms 2nd year, 4 terms 3rd year)"
                                 cycle_instruction = """
 IMPORTANT: This is a 1 CYCLE sequence spanning 3 years. Structure your response as:
@@ -2318,6 +2318,27 @@ IMPORTANT: This is a 1 CYCLE sequence spanning 3 years. Structure your response 
 - **Year 3 (Terms 1-4)**: [detailed term-by-term breakdown]
 
 Each term should show clear progression and skill development across the three-year cycle."""
+                            elif duration == "1 Year (4 terms, 40 weeks)":
+                                duration_detail = "1 year (4 terms, 40 weeks total)"
+                                cycle_instruction = """
+IMPORTANT: This is a 1 YEAR sequence spanning 4 terms (40 weeks). Structure your response as:
+- **Term 1 (10 weeks)**: [detailed weekly breakdown]
+- **Term 2 (10 weeks)**: [detailed weekly breakdown]
+- **Term 3 (10 weeks)**: [detailed weekly breakdown]
+- **Term 4 (10 weeks)**: [detailed weekly breakdown]
+
+Each term should show progressive skill development and clear learning outcomes across the academic year."""
+                            elif duration == "1 Term (10 weeks)":
+                                duration_detail = "1 term (10 weeks)"
+                                cycle_instruction = """
+IMPORTANT: This is a 1 TERM sequence spanning 10 weeks. Structure your response as:
+- **Weeks 1-2**: [foundational concepts and introduction]
+- **Weeks 3-4**: [skill building and exploration]
+- **Weeks 5-6**: [deeper investigation and practice]
+- **Weeks 7-8**: [consolidation and application]
+- **Weeks 9-10**: [assessment and reflection]
+
+Show clear weekly progression and skill development throughout the term."""
                             else:
                                 duration_detail = duration
                                 cycle_instruction = ""
@@ -2338,7 +2359,7 @@ CURRICULUM INTEGRATION REQUIREMENTS:
 
 Please provide:
 1. **Learning Overview & Big Ideas**: Connect this topic to larger patterns and cosmic story, referencing curriculum frameworks
-2. **Detailed Progression**: {'Term-by-term breakdown across 3 years' if duration == '1 cycle' else 'Weekly/periodic breakdown'} showing skill/knowledge building with curriculum codes
+2. **Detailed Progression**: {'Term-by-term breakdown across 3 years' if duration == '1 Cycle (3 years)' else 'Weekly/periodic breakdown'} showing skill/knowledge building with curriculum codes
 3. **Curriculum Alignment**: Explicit links to AC V9 content descriptors and achievement standards with codes
 4. **Assessment Checkpoints**: Authentic assessment opportunities aligned with curriculum standards and progressions
 5. **Cross-Curricular Connections**: Links to other learning areas with specific curriculum references
