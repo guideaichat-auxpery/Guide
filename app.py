@@ -2187,10 +2187,69 @@ else:
                 if 'quick_planning_messages' not in st.session_state:
                     st.session_state.quick_planning_messages = []
                 
+                # Handle follow-up button clicks
+                if st.session_state.get('qp_followup'):
+                    followup_type = st.session_state.qp_followup
+                    followup_prompt = ""
+                    enhanced_title = ""
+                    
+                    if followup_type == "assessment":
+                        followup_prompt = "Please enhance this response by adding detailed assessment strategies, success criteria, and ways to measure student progress aligned with curriculum standards."
+                        enhanced_title = "### 📊 Enhanced with Assessment"
+                    elif followup_type == "activities":
+                        followup_prompt = "Please enhance this response by adding specific learning activities, hands-on experiences, and engaging tasks that align with cosmic education principles."
+                        enhanced_title = "### 🎨 Enhanced with Activities"
+                    elif followup_type == "connections":
+                        followup_prompt = "Please enhance this response by expanding on cross-curricular connections and cosmic education links, showing how this connects to the bigger picture of learning."
+                        enhanced_title = "### 🔗 Enhanced with Connections"
+                    
+                    # Only proceed if we have a valid followup_prompt
+                    if followup_prompt:
+                        # Add the follow-up prompt and get response
+                        st.session_state.quick_planning_messages.append({"role": "user", "content": followup_prompt})
+                        
+                        system_prompt = get_system_prompt("Blended (Cosmic Education Priority)")
+                        enhanced_response = call_openai_api(st.session_state.quick_planning_messages, system_prompt)
+                        
+                        if enhanced_response:
+                            enhanced_content = f"{enhanced_title}\n{enhanced_response}"
+                            st.session_state.quick_planning_messages.append({"role": "assistant", "content": enhanced_content})
+                    
+                    # Clear the follow-up flag
+                    del st.session_state.qp_followup
+                
                 # Display chat history for quick planning
-                for message in st.session_state.quick_planning_messages:
+                for i, message in enumerate(st.session_state.quick_planning_messages):
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
+                        
+                        # Show follow-up buttons after the last assistant message
+                        if (message["role"] == "assistant" and 
+                            i == len(st.session_state.quick_planning_messages) - 1 and 
+                            st.session_state.get('qp_show_buttons', False)):
+                            
+                            st.markdown("---")
+                            st.markdown("**✨ Refine this response:**")
+                            
+                            refine_col1, refine_col2, refine_col3 = st.columns(3)
+                            
+                            with refine_col1:
+                                if st.button("📊 Add assessment", key="qp_assess_btn"):
+                                    st.session_state.qp_followup = "assessment"
+                                    st.session_state.qp_show_buttons = False
+                                    st.rerun()
+                            
+                            with refine_col2:
+                                if st.button("🎨 Add activities", key="qp_activities_btn"):
+                                    st.session_state.qp_followup = "activities"
+                                    st.session_state.qp_show_buttons = False
+                                    st.rerun()
+                            
+                            with refine_col3:
+                                if st.button("🔗 Expand connections", key="qp_expand_btn"):
+                                    st.session_state.qp_followup = "connections"
+                                    st.session_state.qp_show_buttons = False
+                                    st.rerun()
                 
 
                 
@@ -2210,6 +2269,8 @@ else:
                             if response:
                                 st.markdown(response)
                                 st.session_state.quick_planning_messages.append({"role": "assistant", "content": response})
+                                # Set flag to show buttons and rerun
+                                st.session_state.qp_show_buttons = True
                             else:
                                 st.error("Unable to generate response. Please try again.")
                     
@@ -2218,6 +2279,9 @@ else:
                 # Clear quick planning chat
                 if st.button("🗑️ Clear Quick Planning Chat", key="clear_quick_planning"):
                     st.session_state.quick_planning_messages = []
+                    st.session_state.qp_show_buttons = False
+                    if 'qp_followup' in st.session_state:
+                        del st.session_state.qp_followup
                     st.rerun()
             
             with tool_subtabs[1]:  # Enhanced Scope & Sequence
