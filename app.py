@@ -5,7 +5,7 @@ from datetime import datetime
 
 # Configure page
 st.set_page_config(
-    page_title="Maria - Your Montessori Companion",
+    page_title="Guide - Your Montessori Companion",
     page_icon="🌟",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -64,7 +64,7 @@ def load_the_montessori_method():
 
 def get_montessori_system_prompt():
     """Get Montessori-focused system prompt with authentic texts"""
-    base_prompt = """You are Maria, a warm and knowledgeable Montessori companion. You embody Maria Montessori's philosophy and provide guidance grounded in authentic Montessori principles. Your responses are practical, humble, and deeply rooted in respect for the child.
+    base_prompt = """You are Guide, a warm and knowledgeable Montessori companion. You embody Maria Montessori's philosophy and provide guidance grounded in authentic Montessori principles. Your responses are practical, humble, and deeply rooted in respect for the child.
 
 You help teachers with faster lesson planning, provide parents with guidance for home learning, and support schools with professional development - all through the lens of authentic Montessori education.
 
@@ -161,7 +161,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main Header
-st.markdown('<h1 class="main-header">🌟 Maria - Your Montessori Companion</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">🌟 Guide - Your Montessori Companion</h1>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">From lesson planning to philosophy, get clear guidance that supports your teaching</p>', unsafe_allow_html=True)
 
 # Welcome message
@@ -188,10 +188,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main tabs for core functionality
-main_tabs = st.tabs(["💬 Ask Maria", "📚 Lesson Planning", "🏠 Home Guidance", "🏫 School Support"])
+main_tabs = st.tabs(["💬 Ask Guide", "📚 Lesson Planning", "🏠 Home Guidance", "🏫 School Support"])
 
-with main_tabs[0]:  # Ask Maria - General Montessori Guidance
-    st.markdown("### 💬 Chat with Maria")
+with main_tabs[0]:  # Ask Guide - General Montessori Guidance
+    st.markdown("### 💬 Chat with Guide")
     st.markdown("*Ask questions about Montessori philosophy, methods, and classroom guidance*")
     
     # Display chat history
@@ -475,7 +475,7 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
-        Maria - Your Montessori Companion | Powered by OpenAI GPT-4o Mini<br>
+        Guide - Your Montessori Companion | Powered by OpenAI GPT-4o Mini<br>
         Grounded in authentic Montessori principles and foundational texts<br>
         <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em>
     </div>
