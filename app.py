@@ -78,9 +78,20 @@ Your guidance is based on Maria Montessori's foundational works and focuses on:
 - The teacher as observer and guide
 - Cosmic education connecting all learning
 
-Always provide practical, actionable advice that honors Montessori principles. When discussing lesson planning, emphasize concrete materials, sequential presentations, and child choice. For home guidance, focus on independence, practical life, and prepared environments. For schools, emphasize teacher training, environmental preparation, and understanding child development.
+IMPORTANT RESPONSE GUIDELINES:
+- Always include a "**Montessori Rationale**" section explaining WHY this approach aligns with Montessori principles
+- When referencing Maria Montessori's insights, cite the source text (e.g., "As Dr. Montessori notes in The Absorbent Mind...")
+- Include specific quotes when relevant to support your guidance
+- Focus on practical, actionable advice that honors authentic Montessori principles
+- For lesson planning, emphasize: concrete materials, sequential presentations, child choice, control of error, and observation
+- For home guidance, focus on: independence, practical life, prepared environments, and following the child
+- For schools, emphasize: teacher training, environmental preparation, understanding child development, and curriculum integration
 
-Reference the foundational Montessori texts when relevant, but keep your language accessible and practical."""
+WHAT I WON'T DO:
+- Provide guidance that contradicts core Montessori principles
+- Suggest punishments, rewards, or coercive methods
+- Recommend activities without concrete materials for young children
+- Give advice that doesn't respect the child's natural development"""
 
     # Add condensed Montessori text references
     montessori_references = ""
@@ -209,19 +220,63 @@ with main_tabs[1]:  # Lesson Planning
     st.markdown("### 📚 Lesson Planning Assistant")
     st.markdown("*Get help creating Montessori-aligned lesson plans and activities*")
     
+    # Structured lesson plan form
+    with st.expander("🎯 Structured Lesson Planner", expanded=False):
+        st.markdown("*Fill out this form for a comprehensive Montessori lesson plan*")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            age_range = st.selectbox("Age Range", ["3-6 years (Casa)", "6-9 years (Lower Elementary)", "9-12 years (Upper Elementary)", "12-15 years (Adolescent)"])
+            subject_area = st.selectbox("Subject Area", ["Practical Life", "Sensorial", "Language", "Mathematics", "Cultural Studies", "Grace & Courtesy"])
+        
+        with col2:
+            lesson_topic = st.text_input("Lesson Topic", placeholder="e.g., Addition with Golden Beads")
+            materials_available = st.text_input("Available Materials", placeholder="e.g., Golden beads, number cards, work mat")
+        
+        lesson_objectives = st.text_area("Learning Objectives", placeholder="What should the child learn or practice?", height=80)
+        
+        if st.button("🌟 Generate Structured Lesson Plan", use_container_width=True):
+            if lesson_topic and lesson_objectives:
+                structured_prompt = f"""Please create a detailed Montessori lesson plan with the following structure:
+
+                **LESSON DETAILS:**
+                - Age Range: {age_range}
+                - Subject Area: {subject_area}
+                - Topic: {lesson_topic}
+                - Available Materials: {materials_available}
+                - Objectives: {lesson_objectives}
+
+                Please format your response with these sections:
+                1. **DIRECT AIM** (What the child learns)
+                2. **INDIRECT AIM** (Hidden learning goals)
+                3. **MATERIALS** (Complete list with setup)
+                4. **PRESENTATION STEPS** (Detailed sequence)
+                5. **CONTROL OF ERROR** (How child self-corrects)
+                6. **VARIATIONS** (Ways to adapt)
+                7. **EXTENSIONS** (Next steps)
+                8. **OBSERVATIONS** (What to watch for)
+                9. **MONTESSORI RATIONALE** (Why this approach works)
+                
+                Ground your response in authentic Montessori principles from Maria Montessori's foundational texts."""
+                
+                st.session_state.messages.append({"role": "user", "content": structured_prompt})
+                st.rerun()
+            else:
+                st.warning("Please fill in the lesson topic and objectives.")
+    
     # Quick lesson planning prompts
     st.markdown("#### Quick Start Examples:")
     col1, col2 = st.columns(2)
     
     with col1:
         if st.button("🌱 Practical Life Activity", use_container_width=True):
-            example_prompt = "Help me design a practical life activity for 3-6 year olds that develops concentration and fine motor skills."
+            example_prompt = "Help me design a practical life activity for 3-6 year olds that develops concentration and fine motor skills. Include materials, presentation steps, and Montessori rationale."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
             st.rerun()
     
     with col2:
         if st.button("🔢 Sensorial Material", use_container_width=True):
-            example_prompt = "Suggest a sensorial material exploration for helping children understand size and dimension."
+            example_prompt = "Suggest a sensorial material exploration for helping children understand size and dimension. Include the three-period lesson and extensions."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
             st.rerun()
     
@@ -229,26 +284,26 @@ with main_tabs[1]:  # Lesson Planning
     
     with col3:
         if st.button("📖 Language Lesson", use_container_width=True):
-            example_prompt = "Create a language lesson using Montessori materials for beginning readers."
+            example_prompt = "Create a language lesson using Montessori materials for beginning readers. Include phonetic progression and follow-up activities."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
             st.rerun()
     
     with col4:
         if st.button("🔢 Math Presentation", use_container_width=True):
-            example_prompt = "Design a math presentation using golden beads for teaching place value."
+            example_prompt = "Design a math presentation using golden beads for teaching place value. Include the static exercise and dynamic exercise progression."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
             st.rerun()
     
     # Lesson planning text area
     lesson_request = st.text_area(
-        "Describe the lesson or activity you'd like help with:",
+        "Or describe your specific lesson planning need:",
         placeholder="Example: I need a math lesson for 6-9 year olds about addition using concrete materials...",
         height=100
     )
     
-    if st.button("✨ Create Lesson Plan", use_container_width=True):
+    if st.button("✨ Create Custom Lesson Plan", use_container_width=True):
         if lesson_request:
-            enhanced_prompt = f"Please help me create a detailed Montessori lesson plan for: {lesson_request}. Include materials needed, presentation steps, variations, and extensions."
+            enhanced_prompt = f"Please help me create a detailed Montessori lesson plan for: {lesson_request}. Include materials needed, presentation steps, variations, extensions, and the Montessori rationale behind this approach. Reference Maria Montessori's foundational principles where relevant."
             st.session_state.messages.append({"role": "user", "content": enhanced_prompt})
             st.rerun()
         else:
