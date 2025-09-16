@@ -260,7 +260,21 @@ with main_tabs[1]:  # Lesson Planning
                 Ground your response in authentic Montessori principles from Maria Montessori's foundational texts."""
                 
                 st.session_state.messages.append({"role": "user", "content": structured_prompt})
-                st.rerun()
+                
+                # Generate immediate response
+                with st.spinner("Creating your Montessori lesson plan..."):
+                    response = call_openai_api(st.session_state.messages)
+                    
+                    if response:
+                        st.markdown("### 📋 Your Structured Lesson Plan")
+                        st.markdown(response)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+                        
+                        # Add regenerate button
+                        if st.button("🔄 Regenerate Plan", key="regen_structured"):
+                            st.rerun()
+                    else:
+                        st.error("I'm having trouble generating your lesson plan. Please try again.")
             else:
                 st.warning("Please fill in the lesson topic and objectives.")
     
@@ -272,13 +286,29 @@ with main_tabs[1]:  # Lesson Planning
         if st.button("🌱 Practical Life Activity", use_container_width=True):
             example_prompt = "Help me design a practical life activity for 3-6 year olds that develops concentration and fine motor skills. Include materials, presentation steps, and Montessori rationale."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
-            st.rerun()
+            
+            with st.spinner("Creating practical life activity..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 🌱 Practical Life Activity Plan")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating the activity. Please try again.")
     
     with col2:
         if st.button("🔢 Sensorial Material", use_container_width=True):
             example_prompt = "Suggest a sensorial material exploration for helping children understand size and dimension. Include the three-period lesson and extensions."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
-            st.rerun()
+            
+            with st.spinner("Creating sensorial lesson..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 🔢 Sensorial Material Lesson")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating the lesson. Please try again.")
     
     col3, col4 = st.columns(2)
     
@@ -286,13 +316,29 @@ with main_tabs[1]:  # Lesson Planning
         if st.button("📖 Language Lesson", use_container_width=True):
             example_prompt = "Create a language lesson using Montessori materials for beginning readers. Include phonetic progression and follow-up activities."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
-            st.rerun()
+            
+            with st.spinner("Creating language lesson..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 📖 Language Lesson Plan")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating the lesson. Please try again.")
     
     with col4:
         if st.button("🔢 Math Presentation", use_container_width=True):
             example_prompt = "Design a math presentation using golden beads for teaching place value. Include the static exercise and dynamic exercise progression."
             st.session_state.messages.append({"role": "user", "content": example_prompt})
-            st.rerun()
+            
+            with st.spinner("Creating math presentation..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 🔢 Math Presentation Plan")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating the presentation. Please try again.")
     
     # Lesson planning text area
     lesson_request = st.text_area(
@@ -305,7 +351,15 @@ with main_tabs[1]:  # Lesson Planning
         if lesson_request:
             enhanced_prompt = f"Please help me create a detailed Montessori lesson plan for: {lesson_request}. Include materials needed, presentation steps, variations, extensions, and the Montessori rationale behind this approach. Reference Maria Montessori's foundational principles where relevant."
             st.session_state.messages.append({"role": "user", "content": enhanced_prompt})
-            st.rerun()
+            
+            with st.spinner("Creating your custom lesson plan..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### ✨ Your Custom Lesson Plan")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating your lesson plan. Please try again.")
         else:
             st.warning("Please describe what lesson you'd like help with.")
 
@@ -326,7 +380,15 @@ with main_tabs[2]:  # Home Guidance
     for scenario in home_scenarios:
         if st.button(f"💡 {scenario}", key=f"home_{scenario[:20]}", use_container_width=True):
             st.session_state.messages.append({"role": "user", "content": scenario})
-            st.rerun()
+            
+            with st.spinner("Gathering Montessori home guidance..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 🏠 Home Guidance")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating guidance. Please try again.")
     
     # Custom home question
     home_question = st.text_area(
@@ -338,7 +400,15 @@ with main_tabs[2]:  # Home Guidance
     if st.button("🌟 Get Home Guidance", use_container_width=True):
         if home_question:
             st.session_state.messages.append({"role": "user", "content": home_question})
-            st.rerun()
+            
+            with st.spinner("Providing Montessori home guidance..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 🌟 Personalized Home Guidance")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating guidance. Please try again.")
         else:
             st.warning("Please ask your question about Montessori at home.")
 
@@ -360,7 +430,15 @@ with main_tabs[3]:  # School Support
     for topic in professional_topics:
         if st.button(f"📖 {topic}", key=f"prof_{topic[:20]}", use_container_width=True):
             st.session_state.messages.append({"role": "user", "content": topic})
-            st.rerun()
+            
+            with st.spinner("Providing professional development guidance..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 🏫 Professional Development Guidance")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating guidance. Please try again.")
     
     # Custom professional question
     professional_question = st.text_area(
@@ -372,7 +450,15 @@ with main_tabs[3]:  # School Support
     if st.button("🎓 Get Professional Guidance", use_container_width=True):
         if professional_question:
             st.session_state.messages.append({"role": "user", "content": professional_question})
-            st.rerun()
+            
+            with st.spinner("Providing professional guidance..."):
+                response = call_openai_api(st.session_state.messages)
+                if response:
+                    st.markdown("### 🎓 Professional Development Response")
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                else:
+                    st.error("I'm having trouble generating guidance. Please try again.")
         else:
             st.warning("Please ask your professional development question.")
 
