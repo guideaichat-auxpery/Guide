@@ -4,9 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "bcrypt>=4.3.0",
     "openai>=1.100.2",
     "pandas>=2.3.2",
     "plotly>=6.3.0",
+    "psycopg2-binary>=2.9.10",
+    "sqlalchemy>=2.0.43",
     "streamlit>=1.48.1",
     "trafilatura>=2.0.0",
 ]
