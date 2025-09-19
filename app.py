@@ -67,8 +67,8 @@ if not st.session_state.authenticated:
         <h3>✨ Welcome to Guide - Your Montessori Educational Planning Tool</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
-        <p style="text-align: center; margin: 2rem 0;"><strong>Grounded in Maria Montessori's foundational texts:</strong><br>
-        <em>The Montessori Method</em> • <em>The Absorbent Mind</em> • <em>Dr. Montessori's Own Handbook</em></p>
+        <p style="text-align: center; margin: 2rem 0;"><strong>Comprehensive Educational Planning with:</strong><br>
+        <em>Montessori Principles</em> • <em>Australian Curriculum V.9 Alignment</em> • <em>Scope & Sequence Creation</em></p>
     </div>
     """, unsafe_allow_html=True)
     
