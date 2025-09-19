@@ -11,6 +11,7 @@ import streamlit as st
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     st.error("Database URL not found. Please ensure the database is configured.")
+    st.info("Please check your environment variables or contact support.")
     st.stop()
 
 engine = create_engine(DATABASE_URL)

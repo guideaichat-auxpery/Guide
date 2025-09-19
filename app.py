@@ -150,14 +150,7 @@ else:
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
     
-# Clear conversation button (moved to interface functions)
-def show_clear_conversation_button():
-    st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🗑️ Clear Conversation", use_container_width=True):
-            st.session_state.messages = []
-            st.rerun()
+# Main app logic continues here
 
 # Footer
 st.markdown("---")
