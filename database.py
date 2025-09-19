@@ -62,8 +62,14 @@ class LessonPlan(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def create_tables():
-    """Create all database tables"""
-    Base.metadata.create_all(bind=engine)
+    """Create all database tables with error handling"""
+    try:
+        Base.metadata.create_all(bind=engine)
+        return True
+    except Exception as e:
+        st.error(f"Database initialization error: {str(e)}")
+        st.info("Please check your database connection and try refreshing the page.")
+        return False
 
 def get_db():
     """Get database session"""

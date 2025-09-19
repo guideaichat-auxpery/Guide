@@ -12,7 +12,9 @@ st.set_page_config(
 )
 
 # Initialize database
-create_tables()
+if not create_tables():
+    st.warning("Some features may not work properly due to database connection issues.")
+    st.info("You can still explore the companion features while we resolve this.")
 
 # Initialize session state
 if 'messages' not in st.session_state:
@@ -62,11 +64,11 @@ if not st.session_state.authenticated:
     # Welcome section
     st.markdown("""
     <div class="welcome-box">
-        <h3>✨ Welcome to Your Montessori Educational Planning Tool</h3>
+        <h3>✨ Welcome to Guide - Your Montessori Educational Planning Tool</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
-        <p style="text-align: center; margin: 2rem 0;"><strong>Comprehensive Educational Planning with:</strong><br>
-        <em>Montessori Principles</em> • <em>Australian Curriculum V.9 Alignment</em> • <em>Scope & Sequence Creation</em></p>
+        <p style="text-align: center; margin: 2rem 0;"><strong>Grounded in Maria Montessori's foundational texts:</strong><br>
+        <em>The Montessori Method</em> • <em>The Absorbent Mind</em> • <em>Dr. Montessori's Own Handbook</em></p>
     </div>
     """, unsafe_allow_html=True)
     
