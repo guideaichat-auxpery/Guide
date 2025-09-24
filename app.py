@@ -1,7 +1,7 @@
 import streamlit as st
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
-from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_clear_conversation_button
+from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_clear_conversation_button, show_student_dashboard_interface
 
 # Configure page
 st.set_page_config(
@@ -121,25 +121,28 @@ else:
     # Navigation menu for authenticated users
     if not st.session_state.get('is_student'):
         # Educator interface
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         
         with col1:
             if st.button("📚 Lesson Planning", use_container_width=True):
                 st.session_state.auth_mode = "lesson_planning"
+                st.rerun()
+            
+            if st.button("🗨️ Montessori Companion", use_container_width=True):
+                st.session_state.auth_mode = "companion"
                 st.rerun()
         
         with col2:
             if st.button("👨‍🎓 Create Student Account", use_container_width=True):
                 st.session_state.auth_mode = "create_student"
                 st.rerun()
-        
-        with col3:
-            if st.button("🗨️ Montessori Companion", use_container_width=True):
-                st.session_state.auth_mode = "companion"
+            
+            if st.button("📊 Student Dashboard", use_container_width=True):
+                st.session_state.auth_mode = "student_dashboard"
                 st.rerun()
         
         # Default to lesson planning for educators
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion']:
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard']:
             st.session_state.auth_mode = 'lesson_planning'
     else:
         # Student interface
@@ -152,6 +155,8 @@ else:
         show_lesson_planning_interface()
     elif st.session_state.auth_mode == "companion":
         show_companion_interface()
+    elif st.session_state.auth_mode == "student_dashboard":
+        show_student_dashboard_interface()
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
     

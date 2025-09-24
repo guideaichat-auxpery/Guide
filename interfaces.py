@@ -5,6 +5,9 @@ from docx import Document
 from PIL import Image
 import pytesseract
 import io
+import uuid
+import json
+from database import get_db, log_student_activity, database_available
 
 def show_lesson_planning_interface():
     """Educational planning interface for educators with Australian Curriculum alignment"""
@@ -304,11 +307,36 @@ def show_companion_interface():
     
     show_clear_conversation_button()
 
+def log_student_interaction(activity_type, prompt_text, response_text=None, session_id=None):
+    """Log student activity to database if available"""
+    if not database_available or not st.session_state.get('is_student'):
+        return
+    
+    try:
+        db = get_db()
+        if db and st.session_state.get('user_id'):
+            log_student_activity(
+                db=db,
+                student_id=st.session_state.user_id,
+                activity_type=activity_type,
+                prompt_text=prompt_text,
+                response_text=response_text,
+                session_id=session_id
+            )
+            db.close()
+    except Exception as e:
+        # Silent logging failure - don't disrupt student experience
+        print(f"Failed to log student activity: {str(e)}")
+
 def show_student_interface():
     """Student interface for all age groups with age-appropriate guidance"""
     # Ensure messages are initialized
     if 'messages' not in st.session_state:
         st.session_state.messages = []
+    
+    # Initialize session ID for tracking related interactions
+    if 'current_session_id' not in st.session_state:
+        st.session_state.current_session_id = str(uuid.uuid4())
         
     age_group = st.session_state.get('age_group', '6-9')
     
@@ -385,6 +413,13 @@ def show_student_interface():
             5. Uses language and examples suitable for {age_group} learners
             """
             
+            # Log the prompt
+            log_student_interaction(
+                activity_type="prompt",
+                prompt_text=topic,
+                session_id=st.session_state.current_session_id
+            )
+            
             st.session_state.messages.append({"role": "user", "content": age_appropriate_prompt})
             
             with st.spinner("Exploring your question..."):
@@ -394,6 +429,14 @@ def show_student_interface():
                     st.markdown("### 🌟 Learning Discovery")
                     st.markdown(response)
                     st.session_state.planning_messages.append({"role": "assistant", "content": response})
+                    
+                    # Log the response
+                    log_student_interaction(
+                        activity_type="response",
+                        prompt_text=topic,
+                        response_text=response,
+                        session_id=st.session_state.current_session_id
+                    )
                 else:
                     st.error("I'm having trouble answering. Please try again.")
     
@@ -405,6 +448,13 @@ def show_student_interface():
         Please provide an age-appropriate response that encourages exploration, 
         independence, and follows Montessori principles for {age_group} learners.
         """
+        
+        # Log the prompt
+        log_student_interaction(
+            activity_type="prompt",
+            prompt_text=prompt,
+            session_id=st.session_state.current_session_id
+        )
         
         st.session_state.messages.append({"role": "user", "content": age_appropriate_prompt})
         
@@ -419,6 +469,14 @@ def show_student_interface():
                 if response:
                     st.markdown(response)
                     st.session_state.planning_messages.append({"role": "assistant", "content": response})
+                    
+                    # Log the response
+                    log_student_interaction(
+                        activity_type="response",
+                        prompt_text=prompt,
+                        response_text=response,
+                        session_id=st.session_state.current_session_id
+                    )
                 else:
                     st.error("I'm having trouble right now. Please try again.")
     
@@ -430,5 +488,185 @@ def show_clear_conversation_button():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🗑️ Clear Conversation", use_container_width=True):
+            # Log the clear action for students
+            if st.session_state.get('is_student'):
+                log_student_interaction(
+                    activity_type="clear_conversation",
+                    prompt_text="Student cleared conversation",
+                    session_id=st.session_state.get('current_session_id')
+                )
+                # Start new session
+                st.session_state.current_session_id = str(uuid.uuid4())
+            
             st.session_state.messages = []
             st.rerun()
+
+def show_student_dashboard_interface():
+    """Educator interface to view student activities and engagement"""
+    st.markdown("### 📊 Student Activity Dashboard")
+    st.markdown("*Monitor student engagement and learning patterns*")
+    
+    if not database_available:
+        st.warning("Student dashboard is not available without database connection.")
+        st.info("This feature requires database access to view student activities.")
+        return
+    
+    # Get educator's accessible students
+    db = get_db()
+    if not db:
+        st.error("Database connection error. Cannot load student data.")
+        return
+    
+    try:
+        from database import get_educator_accessible_students, get_student_activities
+        
+        educator_id = st.session_state.get('user_id')
+        if not educator_id:
+            st.error("User session error. Please log in again.")
+            return
+        
+        students = get_educator_accessible_students(db, educator_id)
+        
+        if not students:
+            st.info("No students found. Create student accounts to begin monitoring their activities.")
+            return
+        
+        # Student selector
+        st.markdown("#### Select Student")
+        selected_student = st.selectbox(
+            "Choose a student to view their activities:",
+            students,
+            format_func=lambda s: f"{s.full_name} (@{s.username}) - {s.age_group or 'No age group'}"
+        )
+        
+        if selected_student:
+            # Check if current educator is primary educator for access management
+            is_primary_educator = (selected_student.educator_id == educator_id)
+            
+            # Tabs for activities and access management
+            tab1, tab2 = st.tabs(["📊 Student Activities", "🔑 Access Management"])
+            
+            with tab1:
+                st.markdown(f"### Activities for {selected_student.full_name}")
+                
+                # Get student activities
+                activities = get_student_activities(db, selected_student.id, limit=50)
+                
+                if not activities:
+                    st.info(f"{selected_student.full_name} hasn't started any learning activities yet.")
+                else:
+                    # Activity summary
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        total_prompts = len([a for a in activities if a.activity_type == "prompt"])
+                        st.metric("Total Questions Asked", total_prompts)
+                    
+                    with col2:
+                        total_responses = len([a for a in activities if a.activity_type == "response"])
+                        st.metric("AI Responses Received", total_responses)
+                    
+                    with col3:
+                        sessions = len(set([a.session_id for a in activities if a.session_id]))
+                        st.metric("Learning Sessions", sessions)
+                    
+                    # Activity timeline
+                    st.markdown("#### Recent Activity Timeline")
+                    
+                    for activity in activities:
+                        with st.expander(
+                            f"📝 {activity.activity_type.replace('_', ' ').title()} - {activity.created_at.strftime('%Y-%m-%d %H:%M')}",
+                            expanded=False
+                        ):
+                            if activity.activity_type == "prompt":
+                                st.markdown("**Student Question:**")
+                                st.info(activity.prompt_text)
+                                
+                            elif activity.activity_type == "response":
+                                st.markdown("**Student Question:**")
+                                st.info(activity.prompt_text)
+                                st.markdown("**AI Response:**")
+                                st.success(activity.response_text)
+                                
+                            elif activity.activity_type == "clear_conversation":
+                                st.markdown("🗑️ Student cleared conversation and started a new session")
+                            
+                            # Show session info if available
+                            if activity.session_id:
+                                st.caption(f"Session ID: {activity.session_id}")
+            
+            with tab2:
+                st.markdown(f"### Access Management for {selected_student.full_name}")
+                
+                if not is_primary_educator:
+                    st.info("You have viewing access to this student. Only the primary educator can manage access permissions.")
+                else:
+                    # Show current access list
+                    st.markdown("#### Educators with Access")
+                    
+                    # Get all accessible educators for this student using the new function
+                    from database import get_student_access_educators
+                    accessible_educators = get_student_access_educators(db, selected_student.id)
+                    
+                    if accessible_educators:
+                        for educator in accessible_educators:
+                            if educator.id != educator_id:  # Don't show primary educator
+                                col1, col2 = st.columns([3, 1])
+                                with col1:
+                                    st.write(f"📧 {educator.full_name} ({educator.email})")
+                                with col2:
+                                    if st.button(f"Remove", key=f"remove_{educator.id}"):
+                                        from database import revoke_educator_access
+                                        if revoke_educator_access(db, educator.id, selected_student.id, educator_id):
+                                            st.success(f"Access removed for {educator.full_name}")
+                                            st.rerun()
+                                        else:
+                                            st.error("Failed to remove access")
+                    else:
+                        st.info("No additional educators have access to this student.")
+                    
+                    # Add new educator access
+                    st.markdown("#### Grant Access to Another Educator")
+                    
+                    # Get all educators except current one
+                    from database import User
+                    all_educators = db.query(User).filter(
+                        User.user_type == "educator",
+                        User.id != educator_id,
+                        User.is_active == True
+                    ).all()
+                    
+                    if all_educators:
+                        # Filter out educators who already have access
+                        accessible_educator_ids = [edu.id for edu in accessible_educators]
+                        available_educators = [
+                            edu for edu in all_educators 
+                            if edu.id not in accessible_educator_ids
+                        ]
+                        
+                        if available_educators:
+                            selected_educator = st.selectbox(
+                                "Select educator to grant access:",
+                                available_educators,
+                                format_func=lambda e: f"{e.full_name} ({e.email})"
+                            )
+                            
+                            if st.button("Grant Access", key="grant_access"):
+                                from database import grant_educator_access
+                                if grant_educator_access(db, selected_educator.id, selected_student.id, educator_id):
+                                    st.success(f"Access granted to {selected_educator.full_name}")
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to grant access")
+                        else:
+                            st.info("All educators already have access to this student.")
+                    else:
+                        st.info("No other educators available to grant access to.")
+            
+    except Exception as e:
+        st.error(f"Error loading student data: {str(e)}")
+        print(f"Dashboard error: {str(e)}")
+    
+    finally:
+        if db:
+            db.close()
