@@ -289,7 +289,10 @@ def get_educator_accessible_students(db, educator_id: int):
 
 def get_student_access_educators(db, student_id: int):
     """Get all educators who have access to view a student's activities (excluding primary)"""
-    return db.query(User).join(EducatorStudentAccess).filter(
+    return db.query(User).join(
+        EducatorStudentAccess, 
+        User.id == EducatorStudentAccess.educator_id
+    ).filter(
         EducatorStudentAccess.student_id == student_id,
         User.is_active == True
     ).all()
