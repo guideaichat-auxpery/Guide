@@ -34,6 +34,9 @@ def login_page():
                     st.error("Please enter a valid email address")
                 else:
                     db = get_db()
+                    if not db:
+                        st.error("Authentication is not available. Database connection required.")
+                        return
                     try:
                         user = authenticate_user(db, email, password)
                         if user:
@@ -48,7 +51,8 @@ def login_page():
                         else:
                             st.error("Invalid email or password")
                     finally:
-                        db.close()
+                        if db:
+                            db.close()
     
     else:  # Student login
         with st.form("student_login"):
@@ -62,6 +66,9 @@ def login_page():
                     st.error("Please enter both username and password")
                 else:
                     db = get_db()
+                    if not db:
+                        st.error("Authentication is not available. Database connection required.")
+                        return
                     try:
                         student = authenticate_student(db, username, password)
                         if student:
@@ -78,7 +85,8 @@ def login_page():
                         else:
                             st.error("Invalid username or password")
                     finally:
-                        db.close()
+                        if db:
+                            db.close()
 
 def signup_page():
     """Display signup page for new educators"""
@@ -110,6 +118,9 @@ def signup_page():
                     st.error(password_message)
                 else:
                     db = get_db()
+                    if not db:
+                        st.error("Account creation is not available. Database connection required.")
+                        return
                     try:
                         # Check if user already exists
                         existing_user = get_user_by_email(db, email)
@@ -127,7 +138,8 @@ def signup_page():
                             st.session_state.is_student = False
                             st.rerun()
                     finally:
-                        db.close()
+                        if db:
+                            db.close()
 
 def create_student_page():
     """Allow educators to create student accounts"""
@@ -164,6 +176,9 @@ def create_student_page():
                     st.error(password_message)
                 else:
                     db = get_db()
+                    if not db:
+                        st.error("Student account creation is not available. Database connection required.")
+                        return
                     try:
                         # Check if username already exists
                         existing_student = get_student_by_username(db, username)
@@ -183,7 +198,8 @@ def create_student_page():
                             st.info(f"Username: {username}")
                             st.info("The student can now log in using their username and password.")
                     finally:
-                        db.close()
+                        if db:
+                            db.close()
 
 def logout():
     """Log out current user"""

@@ -9,13 +9,20 @@ import streamlit as st
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    st.error("Database URL not found. Please ensure the database is configured.")
-    st.info("Please check your environment variables or contact support.")
-    st.stop()
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Optional database configuration - app can run without database
+engine = None
+SessionLocal = None
+
+if DATABASE_URL:
+    try:
+        engine = create_engine(DATABASE_URL)
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    except Exception as e:
+        st.warning(f"Database connection failed: {str(e)}")
+        st.info("Some features may not be available. The app will continue in limited mode.")
+else:
+    st.info("Database not configured. Running in limited mode without persistent storage.")
 Base = declarative_base()
 
 class User(Base):
@@ -63,16 +70,20 @@ class LessonPlan(Base):
 
 def create_tables():
     """Create all database tables with error handling"""
+    if not engine:
+        return False
     try:
         Base.metadata.create_all(bind=engine)
         return True
     except Exception as e:
-        st.error(f"Database initialization error: {str(e)}")
-        st.info("Please check your database connection and try refreshing the page.")
+        st.warning(f"Database initialization error: {str(e)}")
+        st.info("Running in limited mode without persistent storage.")
         return False
 
 def get_db():
     """Get database session"""
+    if not SessionLocal:
+        return None
     db = SessionLocal()
     try:
         return db
