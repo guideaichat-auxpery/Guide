@@ -7,7 +7,7 @@ import pytesseract
 import io
 
 def show_lesson_planning_interface():
-    """Educational planning interface for teachers and parents with Australian Curriculum alignment"""
+    """Educational planning interface for educators with Australian Curriculum alignment"""
     # Ensure planning messages are initialized separately
     if 'planning_messages' not in st.session_state:
         st.session_state.planning_messages = []
@@ -98,7 +98,7 @@ def show_lesson_planning_interface():
             4. Include assessment strategies and observation points
             5. Add extension activities and differentiation options
             6. Consider mixed-age learning opportunities where appropriate
-            7. Include parent/family engagement suggestions for home-school families
+            7. Include family engagement suggestions for home-school families
             
             Format the response with clear sections and practical implementation guidance.
             """

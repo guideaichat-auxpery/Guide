@@ -98,11 +98,11 @@ if not st.session_state.authenticated:
     st.markdown("""
     <div style="margin-top: 3rem;">
         <div class="user-type">
-            <strong>🏠 Home-School Parents:</strong> Create comprehensive educational plans, lesson sequences, and demonstrate curriculum alignment for auditing authorities.
+            <strong>🏠 Home-School Educators:</strong> Create comprehensive educational plans, lesson sequences, and demonstrate curriculum alignment for auditing authorities.
         </div>
         
         <div class="user-type">
-            <strong>👩‍🏫 Teachers:</strong> Develop Montessori-aligned lesson plans with Australian Curriculum codes, scope and sequence planning, and professional development resources.
+            <strong>👩‍🏫 Educators:</strong> Develop Montessori-aligned lesson plans with Australian Curriculum codes, scope and sequence planning, and professional development resources.
         </div>
         
         <div class="user-type">
@@ -117,7 +117,7 @@ else:
     
     # Navigation menu for authenticated users
     if not st.session_state.get('is_student'):
-        # Educator interface (teachers and parents)
+        # Educator interface
         col1, col2, col3 = st.columns(3)
         
         with col1:

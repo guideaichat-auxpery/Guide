@@ -18,9 +18,9 @@ def login_page():
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
     # Choose login type
-    login_type = st.selectbox("I am a:", ["Teacher/Parent", "Student"])
+    login_type = st.selectbox("I am a:", ["Educator", "Student"])
     
-    if login_type == "Teacher/Parent":
+    if login_type == "Educator":
         with st.form("educator_login"):
             st.markdown("### Educator Login")
             email = st.text_input("Email", placeholder="your.email@example.com")
@@ -89,7 +89,8 @@ def signup_page():
         st.markdown("### Create New Account")
         full_name = st.text_input("Full Name", placeholder="Your full name")
         email = st.text_input("Email", placeholder="your.email@example.com")
-        user_type = st.selectbox("I am a:", ["teacher", "parent"])
+        user_type = st.selectbox("I am a:", ["Educator"])
+        user_type = "educator"  # Normalize to single type
         password = st.text_input("Password", type="password", help="Minimum 6 characters")
         confirm_password = st.text_input("Confirm Password", type="password")
         
@@ -131,7 +132,7 @@ def signup_page():
 def create_student_page():
     """Allow educators to create student accounts"""
     if not st.session_state.get('authenticated') or st.session_state.get('is_student'):
-        st.error("Access denied. Only teachers and parents can create student accounts.")
+        st.error("Access denied. Only educators can create student accounts.")
         return
     
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">👨‍🎓 Create Student Account</h2>', unsafe_allow_html=True)

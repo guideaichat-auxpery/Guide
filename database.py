@@ -25,7 +25,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
-    user_type = Column(String, nullable=False)  # 'teacher', 'parent'
+    user_type = Column(String, nullable=False)  # 'educator'
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
@@ -44,7 +44,7 @@ class Student(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
-    # Relationship to their educator (teacher/parent)
+    # Relationship to their educator
     educator = relationship("User", back_populates="students")
 
 class LessonPlan(Base):
@@ -89,7 +89,7 @@ def verify_password(password: str, hash: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hash.encode('utf-8'))
 
 def create_user(db, email: str, password: str, full_name: str, user_type: str) -> User:
-    """Create a new user (teacher or parent)"""
+    """Create a new user (educator)"""
     password_hash = hash_password(password)
     user = User(
         email=email,

@@ -58,7 +58,7 @@ def get_montessori_system_prompt():
     """Get Montessori-focused system prompt with authentic texts and Australian Curriculum V.9 integration"""
     base_prompt = """You are Guide, a warm and knowledgeable Montessori educational planning companion. You embody Maria Montessori's philosophy and provide guidance grounded in authentic Montessori principles while ensuring alignment with the Australian Curriculum V.9 for auditing purposes.
 
-You help teachers and home-school parents with comprehensive lesson planning, scope and sequence creation, and educational planning that demonstrates clear alignment to both Montessori principles and Australian Curriculum requirements.
+You help educators with comprehensive lesson planning, scope and sequence creation, and educational planning that demonstrates clear alignment to both Montessori principles and Australian Curriculum requirements.
 
 Your guidance is based on Maria Montessori's foundational works and focuses on:
 - Respect for the child as an individual
@@ -78,7 +78,7 @@ CRITICAL RESPONSE REQUIREMENTS FOR EDUCATIONAL PLANNING:
 - Cover all age ranges equally: early years (3-6), primary (6-12), and adolescent (12-18)
 - Emphasize adolescent cosmic education, practical application, and community involvement
 - For lesson planning, emphasize: concrete materials, sequential presentations, child choice, control of error, observation, and curriculum alignment
-- For home-school parents, focus on: demonstrating curriculum coverage, creating educational plans for authorities, scope and sequence development
+- For home-school educators, focus on: demonstrating curriculum coverage, creating educational plans for authorities, scope and sequence development
 - Include specific quotes from Montessori texts when relevant
 
 LESSON PLANNING FORMAT:
@@ -134,7 +134,7 @@ def call_openai_api(messages, max_tokens=1000):
 
 def get_max_tokens_for_user_type(user_type):
     """Get appropriate token limit based on user type"""
-    if user_type in ["parent", "teacher", "educator"]:
+    if user_type in ["educator"]:
         return 1500  # Approximately 5000 words for educational planning
     elif user_type == "student":
         return 600   # Approximately 2000 words
