@@ -1,25 +1,20 @@
-When a student account is created, it automatically links to an assigned Educator account. The Educator gains view-only access to the student’s activity within the app, including:
+Create a dedicated section in the educator dashboard for developing Montessori Great Story on a prompted theme or topic for educators to share and spark imagination and curiosity.
+Add a notes or planning page where teachers can copy and paste words, images, materials and type directly in. This should be saved to their account so that it is retrievable each time they log in. Each should have the basic functionality of a word doc or Google doc. including chapter/content organisation.
 
-The prompts the student has submitted.
+Student account needs work:
 
-The responses generated.
-
-The student’s interaction history (e.g. edits, retries, refinements).
-
-Educators cannot send messages through this interface, nor can students contact educators directly within the app. The purpose is solely observational — to allow educators to:
-
-Track how students are engaging with the tool.
-
-Monitor patterns of thinking, problem-solving, and reflection.
-
-Support student learning by reviewing evidence of their approach.
-
-This feature ensures accountability and transparency, while maintaining a clear boundary between student and educator communication.
-
-Multi-Educator Student Access
-
- Each student has a single account.
-
- Multiple educators can be granted access to one or more students. To support a shared education environment.
-
-Changes made by any educator are reflected in real-time across all users with access.
+AttributeError: st.session_state has no attribute "planning_messages". Did you forget to initialize it? More info: https://docs.streamlit.io/develop/concepts/architecture/session-state#initialization
+Traceback:
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 128, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 669, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/app.py", line 143, in <module>
+    show_student_interface()
+File "/home/runner/workspace/interfaces.py", line 467, in show_student_interface
+    response = call_openai_api(st.session_state.planning_messages, max_tokens)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/state/session_state_proxy.py", line 132, in __getattr__
+    raise AttributeError(_missing_attr_error_message(key))
