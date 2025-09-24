@@ -1,6 +1,6 @@
 import streamlit as st
 from auth import login_page, signup_page, create_student_page, show_user_info
-from database import create_tables
+from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_clear_conversation_button
 
 # Configure page
@@ -11,9 +11,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Initialize database
-if not create_tables():
-    st.warning("Some features may not work properly due to database connection issues.")
+# Initialize database and show status
+if not database_available:
+    st.warning("Running in limited mode - authentication and data storage are not available.")
+    st.info("You can still explore the Montessori companion features.")
+elif not create_tables():
+    st.warning("Database initialization failed - some features may not work properly.")
     st.info("You can still explore the companion features while we resolve this.")
 
 # Initialize session state

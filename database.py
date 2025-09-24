@@ -13,16 +13,21 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 # Optional database configuration - app can run without database
 engine = None
 SessionLocal = None
+database_available = False
+database_status_message = ""
 
 if DATABASE_URL:
     try:
         engine = create_engine(DATABASE_URL)
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        database_available = True
+        database_status_message = "Database connected successfully."
     except Exception as e:
-        st.warning(f"Database connection failed: {str(e)}")
-        st.info("Some features may not be available. The app will continue in limited mode.")
+        # Log to console for debugging, don't expose details to users
+        print(f"Database connection failed: {str(e)}")
+        database_status_message = "Database connection failed. Running in limited mode."
 else:
-    st.info("Database not configured. Running in limited mode without persistent storage.")
+    database_status_message = "Database not configured. Running in limited mode without persistent storage."
 Base = declarative_base()
 
 class User(Base):
@@ -76,8 +81,8 @@ def create_tables():
         Base.metadata.create_all(bind=engine)
         return True
     except Exception as e:
-        st.warning(f"Database initialization error: {str(e)}")
-        st.info("Running in limited mode without persistent storage.")
+        # Log to console for debugging, don't expose details to users
+        print(f"Database initialization error: {str(e)}")
         return False
 
 def get_db():
