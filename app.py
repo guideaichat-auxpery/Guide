@@ -70,8 +70,6 @@ if not st.session_state.authenticated:
         <h3>✨ Welcome to Guide - Your Montessori Educational Planning Tool</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
-        <p style="text-align: center; margin: 2rem 0;"><strong>Comprehensive Educational Planning with:</strong><br>
-        <em>Montessori Principles</em> • <em>Australian Curriculum V.9 Alignment</em> • <em>Scope & Sequence Creation</em></p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -97,22 +95,6 @@ if not st.session_state.authenticated:
     elif st.session_state.auth_mode == "signup":
         signup_page()
     
-    # Info about the platform
-    st.markdown("""
-    <div style="margin-top: 3rem;">
-        <div class="user-type">
-            <strong>🏠 Home-School Educators:</strong> Create comprehensive educational plans, lesson sequences, and demonstrate curriculum alignment for auditing authorities.
-        </div>
-        
-        <div class="user-type">
-            <strong>👩‍🏫 Educators:</strong> Develop Montessori-aligned lesson plans with Australian Curriculum codes, scope and sequence planning, and professional development resources.
-        </div>
-        
-        <div class="user-type">
-            <strong>👨‍🎓 Students:</strong> Access age-appropriate learning support from early years through adolescence with Montessori-guided tutoring experiences.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
 else:
     # Authenticated user interface
