@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from openai import OpenAI
 from datetime import datetime
+import json
 
 # Initialize OpenAI client
 @st.cache_resource
@@ -118,30 +119,64 @@ WHAT I WON'T DO:
     
     return base_prompt + montessori_references
 
-def call_openai_api(messages, max_tokens=1000, system_prompt=None, is_student=False, age_group=None):
-    """Call OpenAI API with error handling and configurable token limit
+def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=False, age_group=None, 
+                    subject=None, year_level=None, curriculum_type="Blended", use_conversation_history=True):
+    """Enhanced OpenAI API call with conversation history and curriculum context
     
     Args:
         messages: List of message dictionaries
-        max_tokens: Maximum tokens for response (default 1000)
-        system_prompt: Optional custom system prompt (if None, uses default Montessori prompt)
-        is_student: Whether this is for a student (affects token limit)
+        max_tokens: Maximum tokens for response (if None, auto-determined by user type)
+        system_prompt: Optional custom system prompt (if None, uses enhanced prompts)
+        is_student: Whether this is for a student (affects prompt and token limit)
         age_group: Age group for context (optional)
+        subject: Subject area for curriculum context (optional)
+        year_level: Year level for curriculum context (optional)
+        curriculum_type: Type of curriculum ("AC_V9", "Montessori", "Blended")
+        use_conversation_history: Whether to manage conversation history (default True)
     """
     try:
-        # Use custom system prompt if provided, otherwise use default
+        # Determine max_tokens if not specified
+        if max_tokens is None:
+            max_tokens = get_max_tokens_for_user_type("student" if is_student else "educator")
+        
+        # Use enhanced prompts if no custom system prompt provided
         if system_prompt is None:
-            system_prompt = get_montessori_system_prompt()
+            if is_student:
+                system_prompt = get_enhanced_student_prompt(age_group)
+            else:
+                system_prompt = get_enhanced_educator_prompt()
         
-        # Adjust max_tokens based on user type if not explicitly set
-        if is_student and max_tokens == 1000:
-            max_tokens = 600
+        # Manage conversation history if enabled
+        conversation_messages = messages
+        if use_conversation_history and len(messages) > 0:
+            conversation_messages = get_conversation_context(messages, max_messages=10)
         
+        # Fetch curriculum context if subject and year level provided
+        curriculum_context = ""
+        if subject and year_level:
+            curriculum_context = fetch_curriculum_context(subject, year_level, curriculum_type)
+        
+        # Prepare API messages
+        api_messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add curriculum context as system message if available
+        if curriculum_context:
+            api_messages.append({
+                "role": "system", 
+                "content": f"Curriculum Context:\n{curriculum_context}"
+            })
+        
+        # Add conversation messages
+        api_messages.extend(conversation_messages)
+        
+        # Make API call with enhanced parameters
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[{"role": "system", "content": system_prompt}] + messages,
+            messages=api_messages,
             max_tokens=max_tokens,
-            temperature=0.7
+            temperature=0.75,  # Balanced creativity as per JavaScript implementation
+            presence_penalty=0.3,  # Encourage diverse responses
+            frequency_penalty=0.2  # Reduce repetition
         )
         return response.choices[0].message.content
     except Exception as e:
@@ -151,8 +186,232 @@ def call_openai_api(messages, max_tokens=1000, system_prompt=None, is_student=Fa
 def get_max_tokens_for_user_type(user_type):
     """Get appropriate token limit based on user type"""
     if user_type in ["educator"]:
-        return 1500  # Approximately 5000 words for educational planning
+        return 3000  # Enhanced for ChatGPT-level detail (approximately 10,000 words)
     elif user_type == "student":
-        return 600   # Approximately 2000 words
+        return 800   # Approximately 2,500 words with scaffolding
     else:
-        return 1000  # Default
+        return 1500  # Default
+
+# ---- CONVERSATION HISTORY MANAGEMENT ----
+def manage_conversation_history(messages, max_history=10):
+    """
+    Keep conversation history manageable by limiting to last N messages
+    Args:
+        messages: List of message dictionaries
+        max_history: Maximum number of message pairs to keep (default 10)
+    Returns:
+        Trimmed message list
+    """
+    if len(messages) > max_history:
+        # Keep only the last max_history messages
+        return messages[-max_history:]
+    return messages
+
+def get_conversation_context(messages, max_messages=10):
+    """
+    Get conversation context for API calls with proper history management
+    Args:
+        messages: Full message history
+        max_messages: Maximum messages to include
+    Returns:
+        Formatted message list for API
+    """
+    managed_messages = manage_conversation_history(messages, max_messages)
+    return [{"role": msg["role"], "content": msg["content"]} for msg in managed_messages]
+
+# ---- CURRICULUM CONTEXT FETCHING ----
+@st.cache_data
+def fetch_curriculum_context(subject=None, year_level=None, curriculum_type="AC_V9"):
+    """
+    Fetch curriculum context for a specific subject and year level
+    Args:
+        subject: Subject area (e.g., "Science", "Mathematics", "English")
+        year_level: Year level (e.g., "Year 3", "Year 5")
+        curriculum_type: Type of curriculum ("AC_V9", "Montessori", "Blended")
+    Returns:
+        Formatted curriculum context string
+    """
+    if not subject or not year_level:
+        return ""
+    
+    # Australian Curriculum V9 contexts
+    ac_v9_contexts = {
+        "Science": {
+            "Year 1": """Australian Curriculum V9 — Science (Year 1)
+Strand: Biological Sciences
+Focus: Living things have a variety of external features
+Descriptor: "Observe external features of plants and animals and describe ways they can be grouped based on these features" (AC9S1U01)
+Montessori Connection: Classification activities, nature studies, and sensorial exploration of living things in the prepared environment.""",
+            
+            "Year 2": """Australian Curriculum V9 — Science (Year 2)
+Strand: Physical Sciences
+Focus: Forces and materials
+Descriptor: "Explore the way objects move and how pushing and pulling can change the way objects move" (AC9S2U02)
+Montessori Connection: Practical life activities exploring force, movement materials, and cosmic education connections.""",
+            
+            "Year 3": """Australian Curriculum V9 — Science (Year 3)
+Strand: Physical Sciences
+Focus: Forces and motion
+Descriptor: "Explore how contact and non-contact forces cause changes in the motion and shape of objects" (AC9S3U02)
+Montessori Connection: Students investigate push and pull forces using everyday materials and Montessori apparatus such as weights, ramps, and cosmic education stories about movement and forces in the universe.""",
+            
+            "Year 4": """Australian Curriculum V9 — Science (Year 4)
+Strand: Earth and Space Sciences
+Focus: Earth's surface and natural processes
+Descriptor: "Describe how natural processes and human activity cause changes to Earth's surface" (AC9S4U03)
+Montessori Connection: Cosmic education stories about Earth's formation, geography materials, and outdoor observation studies.""",
+            
+            "Year 5": """Australian Curriculum V9 — Science (Year 5)
+Strand: Biological Sciences
+Focus: Living things have structural features and adaptations
+Descriptor: "Examine how particular structural features and behaviours of living things enable their survival in specific habitats" (AC9S5U01)
+Montessori Connection: Classification work, nature studies, and cosmic education exploring interconnections in ecosystems.""",
+            
+            "Year 6": """Australian Curriculum V9 — Science (Year 6)
+Strand: Physical Sciences
+Focus: Energy transformation
+Descriptor: "Investigate energy transfer and transformation in electrical circuits" (AC9S6U02)
+Montessori Connection: Practical experiments with circuits, cosmic education about energy in the universe, and hands-on investigations."""
+        },
+        
+        "Mathematics": {
+            "Year 1": """Australian Curriculum V9 — Mathematics (Year 1)
+Strand: Number
+Focus: Counting and place value
+Descriptor: "Recognise, represent and order numbers to at least 120 using physical and virtual materials and numerals" (AC9M1N01)
+Montessori Connection: Golden beads, number rods, sandpaper numbers, and sequential counting materials.""",
+            
+            "Year 2": """Australian Curriculum V9 — Mathematics (Year 2)
+Strand: Number
+Focus: Addition and subtraction
+Descriptor: "Add and subtract one- and two-digit numbers, representing problems using number sentences and solve using part-part-whole understanding" (AC9M2N04)
+Montessori Connection: Stamp game, bead frames, and concrete materials for operations.""",
+            
+            "Year 3": """Australian Curriculum V9 — Mathematics (Year 3)
+Strand: Number
+Focus: Multiplication and division
+Descriptor: "Recall and demonstrate proficiency with multiplication facts up to 10; extend and apply facts to develop related division facts" (AC9M3N04)
+Montessori Connection: Multiplication bead board, division materials, and concrete exploration of operations.""",
+            
+            "Year 4": """Australian Curriculum V9 — Mathematics (Year 4)
+Strand: Number
+Focus: Fractions and decimals
+Descriptor: "Recognise and extend the number system to tenths and hundredths and explain the connections to the metric system" (AC9M4N04)
+Montessori Connection: Decimal system materials, fraction insets, and concrete decimal work.""",
+            
+            "Year 5": """Australian Curriculum V9 — Mathematics (Year 5)
+Strand: Measurement
+Focus: Area and volume
+Descriptor: "Choose and use appropriate metric units to measure length, area, capacity and mass; estimate and check measurements" (AC9M5M01)
+Montessori Connection: Geometry cabinet, measurement materials, and practical life applications.""",
+            
+            "Year 6": """Australian Curriculum V9 — Mathematics (Year 6)
+Strand: Statistics
+Focus: Data representation and interpretation
+Descriptor: "Interpret and compare data displays, including displays for two categorical variables" (AC9M6ST01)
+Montessori Connection: Graphing materials, data collection activities, and cosmic education connections."""
+        },
+        
+        "English": {
+            "Year 1": """Australian Curriculum V9 — English (Year 1)
+Strand: Literacy
+Focus: Phonics and word knowledge
+Descriptor: "Use phoneme–grapheme correspondences to read and write words" (AC9E1LY04)
+Montessori Connection: Movable alphabet, sandpaper letters, phonogram work, and language materials.""",
+            
+            "Year 2": """Australian Curriculum V9 — English (Year 2)
+Strand: Literature
+Focus: Narrative structure
+Descriptor: "Create and edit short imaginative, informative and persuasive written texts" (AC9E2LY06)
+Montessori Connection: Students plan, draft, and publish narratives using Montessori movable alphabets, storytelling materials, and command cards.""",
+            
+            "Year 3": """Australian Curriculum V9 — English (Year 3)
+Strand: Literacy
+Focus: Reading comprehension
+Descriptor: "Use comprehension strategies when listening and reading to build understanding" (AC9E3LY05)
+Montessori Connection: Reading analysis work, command cards, and cosmic education story discussions.""",
+            
+            "Year 4": """Australian Curriculum V9 — English (Year 4)
+Strand: Language
+Focus: Text structure and organisation
+Descriptor: "Understand how texts are made cohesive by using personal and possessive pronouns and by using resources for tracking participants" (AC9E4LA03)
+Montessori Connection: Grammar boxes, sentence analysis, and language development materials.""",
+            
+            "Year 5": """Australian Curriculum V9 — English (Year 5)
+Strand: Literacy
+Focus: Creating texts
+Descriptor: "Plan, create, edit and publish written and multimodal texts" (AC9E5LY06)
+Montessori Connection: Research skills, presentation work, and cosmic education project writing.""",
+            
+            "Year 6": """Australian Curriculum V9 — English (Year 6)
+Strand: Literature
+Focus: Literary analysis
+Descriptor: "Identify and explain how analytical images like figures, tables and diagrams contribute to understanding" (AC9E6LA04)
+Montessori Connection: Text analysis, research materials, and integrated cosmic education studies."""
+        }
+    }
+    
+    # Check if we have specific AC V9 context
+    if curriculum_type in ["AC_V9", "Blended"] and subject in ac_v9_contexts:
+        if year_level in ac_v9_contexts[subject]:
+            context = ac_v9_contexts[subject][year_level]
+            if curriculum_type == "Blended":
+                context += "\n\nBlended Approach: Integrate Montessori materials and philosophy with AC V9 descriptors for comprehensive learning."
+            return context
+    
+    # Generic context if specific not found
+    if subject and year_level:
+        return f"""Curriculum Context for {subject}, {year_level}:
+Connect learning to both Australian Curriculum V9 standards and Montessori principles.
+Use concrete materials, follow the child's interests, and emphasize cosmic education connections."""
+    
+    return ""
+
+def get_enhanced_educator_prompt():
+    """Enhanced educator system prompt based on GuideChat JavaScript implementation"""
+    return """You are GuideChat, an advanced AI assistant for Montessori educators.
+
+You help teachers design lessons, assessments, and scaffolds aligned with:
+- Montessori National Curriculum of Australia
+- Maria Montessori's philosophy of self-directed learning and observation
+- Australian Curriculum Version 9 (AC V9)
+
+When responding, provide DETAILED, ChatGPT-level responses that include:
+
+1. **Pedagogical Reasoning**: Explain WHY each suggestion fits Montessori principles
+2. **Detailed Lesson Ideas**: Complete, step-by-step lesson plans with materials and presentations
+3. **Differentiation Strategies**: How to adapt for different developmental levels
+4. **Curriculum Alignment**: Specific AC V9 strands, content descriptors, and achievement standards
+5. **Assessment Methods**: Observation strategies, documentation approaches, and rubrics
+6. **Reflection Prompts**: Questions for teacher reflection and student metacognition
+7. **Montessori Connections**: Direct links to Montessori materials, Great Stories, and cosmic education
+8. **Practical Examples**: Real classroom scenarios and implementation guidance
+
+Use clear headings, bullet points, and structured formatting for easy reading.
+Always ground responses in authentic Montessori philosophy while meeting AC V9 requirements.
+Keep tone professional, warm, supportive, and encouraging."""
+
+def get_enhanced_student_prompt(age_group=None):
+    """Enhanced student system prompt based on GuideChat JavaScript implementation"""
+    age_context = ""
+    if age_group:
+        age_context = f"\n\nStudent Age Group: {age_group}\nAdjust language complexity and scaffolding appropriately for this developmental stage."
+    
+    return f"""You are GuideChat, a supportive AI learning companion for students.
+
+Your goal is to help learners think critically and independently using Montessori principles.
+Provide **scaffolded guidance**, NOT full answers.
+Encourage curiosity, discovery, and reflection.{age_context}
+
+When helping students:
+- Offer hints, guiding questions, or examples that lead to discovery
+- Connect learning to Montessori materials or real-life experiences when possible
+- Break complex problems into smaller, manageable steps
+- Avoid giving complete answers—guide toward understanding
+- Use a warm, encouraging, patient tone
+- End responses with one reflective question to encourage deeper thought
+- Celebrate effort and thinking process, not just correct answers
+- Make connections to the cosmic curriculum and the student's place in the universe
+
+Remember: Your role is to guide, not to do the work for them. 
+Help them develop independence, critical thinking, and a love of learning."""

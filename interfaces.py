@@ -167,13 +167,20 @@ def extract_file_content(file):
         return None
 
 def show_companion_interface():
-    """Montessori companion interface for general educational conversations"""
+    """Enhanced Montessori companion interface with conversation history management"""
+    from utils import manage_conversation_history
+    
     # Ensure companion messages are initialized separately
     if 'companion_messages' not in st.session_state:
         st.session_state.companion_messages = []
     
     st.markdown("### 🗨️ Montessori Companion")
     st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
+    
+    # Manage conversation history (keep last 10 exchanges)
+    st.session_state.companion_messages = manage_conversation_history(
+        st.session_state.companion_messages, max_history=20
+    )
     
     # Display chat history
     for message in st.session_state.companion_messages:
@@ -205,23 +212,13 @@ def show_companion_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Get AI response
-        system_prompt = """You are a warm, humble Montessori educational companion with deep knowledge of:
-        - Maria Montessori's original writings and philosophy
-        - Cosmic education and the Great Stories
-        - Montessori National Curriculum (2011)
-        - Child development across all planes of development
-        - The prepared environment and observation
-        
-        Provide thoughtful, philosophical guidance rooted in Montessori principles. Speak warmly and avoid jargon.
-        Connect big ideas to practical classroom applications. Emphasize the child's place in the universe."""
-        
+        # Get AI response with enhanced features
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 response = call_openai_api(
-                    st.session_state.companion_messages[-1:],
-                    system_prompt,
-                    is_student=False
+                    st.session_state.companion_messages,
+                    is_student=False,
+                    use_conversation_history=True
                 )
                 st.markdown(response)
         
@@ -229,7 +226,9 @@ def show_companion_interface():
         st.session_state.companion_messages.append({"role": "assistant", "content": response})
 
 def show_student_interface():
-    """Student learning interface with Montessori-guided tutoring"""
+    """Enhanced student learning interface with curriculum context and conversation history"""
+    from utils import manage_conversation_history
+    
     # Get student info from session
     student_id = st.session_state.get('user_id')
     student_name = st.session_state.get('user_name', 'Student')
@@ -259,6 +258,29 @@ def show_student_interface():
     
     st.markdown(f"### 🌟 Welcome, {student_name}!")
     st.markdown("*Your Montessori Learning Companion - Ask questions, explore ideas, discover connections*")
+    
+    # Optional: Curriculum context selector for students (collapsed by default)
+    with st.expander("📚 Set Learning Context (Optional)", expanded=False):
+        col1, col2 = st.columns(2)
+        with col1:
+            subject = st.selectbox(
+                "Subject Area:",
+                ["", "Science", "Mathematics", "English"],
+                key="student_subject",
+                help="Select a subject to get curriculum-aligned guidance"
+            )
+        with col2:
+            year_level = st.selectbox(
+                "Year Level:",
+                ["", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"],
+                key="student_year_level",
+                help="Select your year level for age-appropriate support"
+            )
+    
+    # Manage conversation history (keep last 10 exchanges)
+    st.session_state.student_messages = manage_conversation_history(
+        st.session_state.student_messages, max_history=20
+    )
     
     # Display chat history
     for message in st.session_state.student_messages:
@@ -290,26 +312,21 @@ def show_student_interface():
             finally:
                 db.close()
         
-        # Get AI response
-        system_prompt = f"""You are a warm, encouraging Montessori learning companion for a student in the {age_group} age group.
+        # Get curriculum context if selected
+        selected_subject = st.session_state.get('student_subject', '')
+        selected_year = st.session_state.get('student_year_level', '')
         
-        Your role is to:
-        - Guide discovery through questions rather than just providing answers
-        - Connect learning to the cosmic story and the child's place in the universe
-        - Use age-appropriate language and examples
-        - Encourage wonder, curiosity, and independent thinking
-        - Make connections across subject areas
-        - Celebrate the student's questions and observations
-        
-        Keep responses conversational, engaging, and developmentally appropriate for {age_group}."""
-        
+        # Get AI response with enhanced features
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 response = call_openai_api(
-                    st.session_state.student_messages[-1:],
-                    system_prompt,
+                    st.session_state.student_messages,
                     is_student=True,
-                    age_group=age_group
+                    age_group=age_group,
+                    subject=selected_subject if selected_subject else None,
+                    year_level=selected_year if selected_year else None,
+                    curriculum_type="Blended",
+                    use_conversation_history=True
                 )
                 st.markdown(response)
         
