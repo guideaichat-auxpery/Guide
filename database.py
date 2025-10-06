@@ -131,6 +131,48 @@ class PlanningNote(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class ConversationHistory(Base):
+    __tablename__ = "conversation_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # For educators
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # For students
+    session_id = Column(String, nullable=False, index=True)  # Session identifier
+    interface_type = Column(String, nullable=False)  # 'companion', 'student', 'planning'
+    role = Column(String, nullable=False)  # 'user' or 'assistant'
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+class EducatorAnalytics(Base):
+    __tablename__ = "educator_analytics"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    interface_type = Column(String, nullable=False)  # 'companion', 'planning', etc.
+    subject = Column(String, nullable=True)  # Subject area if applicable
+    year_level = Column(String, nullable=True)  # Year level if applicable
+    prompt_text = Column(Text, nullable=False)
+    tokens_used = Column(Integer, nullable=True)  # Estimated tokens
+    model_used = Column(String, default="gpt-4o-mini")
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+class CurriculumContext(Base):
+    __tablename__ = "curriculum_contexts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String, nullable=False, index=True)  # Science, Mathematics, English
+    year_level = Column(String, nullable=False, index=True)  # Year 1, Year 2, etc.
+    curriculum_type = Column(String, default="AC_V9")  # AC_V9, Montessori, Blended
+    strand = Column(String, nullable=True)
+    focus_area = Column(String, nullable=True)
+    descriptor = Column(Text, nullable=False)
+    descriptor_code = Column(String, nullable=True)  # e.g., AC9S3U02
+    montessori_connection = Column(Text, nullable=True)
+    elaboration = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 def create_tables():
     """Create all database tables with error handling"""
     if not engine:
@@ -428,3 +470,169 @@ def delete_planning_note(db, note_id: int):
         db.commit()
         return True
     return False
+
+# Conversation History functions
+def save_conversation_message(db, session_id: str, interface_type: str, role: str, content: str, 
+                              user_id: int = None, student_id: int = None):
+    """Save a conversation message to history"""
+    message = ConversationHistory(
+        user_id=user_id,
+        student_id=student_id,
+        session_id=session_id,
+        interface_type=interface_type,
+        role=role,
+        content=content
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return message
+
+def get_conversation_history(db, session_id: str, interface_type: str, limit: int = 20):
+    """Get conversation history for a session"""
+    return db.query(ConversationHistory).filter(
+        ConversationHistory.session_id == session_id,
+        ConversationHistory.interface_type == interface_type
+    ).order_by(ConversationHistory.created_at.desc()).limit(limit).all()
+
+def get_user_conversation_history(db, user_id: int = None, student_id: int = None, 
+                                  interface_type: str = None, limit: int = 50):
+    """Get conversation history for a user or student across sessions"""
+    query = db.query(ConversationHistory)
+    
+    if user_id:
+        query = query.filter(ConversationHistory.user_id == user_id)
+    if student_id:
+        query = query.filter(ConversationHistory.student_id == student_id)
+    if interface_type:
+        query = query.filter(ConversationHistory.interface_type == interface_type)
+    
+    return query.order_by(ConversationHistory.created_at.desc()).limit(limit).all()
+
+def load_conversation_to_session(db, session_id: str, interface_type: str):
+    """Load conversation history and format for session state"""
+    messages = get_conversation_history(db, session_id, interface_type, limit=20)
+    # Reverse to get chronological order
+    messages.reverse()
+    return [{"role": msg.role, "content": msg.content} for msg in messages]
+
+def clear_conversation_history(db, session_id: str, interface_type: str):
+    """Clear conversation history for a session"""
+    db.query(ConversationHistory).filter(
+        ConversationHistory.session_id == session_id,
+        ConversationHistory.interface_type == interface_type
+    ).delete()
+    db.commit()
+    return True
+
+# Educator Analytics functions
+def log_educator_prompt(db, user_id: int, interface_type: str, prompt_text: str,
+                       subject: str = None, year_level: str = None, tokens_used: int = None):
+    """Log educator prompt for analytics"""
+    analytics = EducatorAnalytics(
+        user_id=user_id,
+        interface_type=interface_type,
+        subject=subject,
+        year_level=year_level,
+        prompt_text=prompt_text,
+        tokens_used=tokens_used
+    )
+    db.add(analytics)
+    db.commit()
+    db.refresh(analytics)
+    return analytics
+
+def get_educator_analytics(db, user_id: int, days: int = 30):
+    """Get educator analytics for the past N days"""
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    return db.query(EducatorAnalytics).filter(
+        EducatorAnalytics.user_id == user_id,
+        EducatorAnalytics.created_at >= cutoff_date
+    ).order_by(EducatorAnalytics.created_at.desc()).all()
+
+def get_analytics_summary(db, user_id: int, days: int = 30):
+    """Get summary statistics for educator analytics"""
+    from sqlalchemy import func
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    summary = db.query(
+        func.count(EducatorAnalytics.id).label('total_prompts'),
+        func.sum(EducatorAnalytics.tokens_used).label('total_tokens'),
+        func.count(func.distinct(EducatorAnalytics.subject)).label('subjects_explored')
+    ).filter(
+        EducatorAnalytics.user_id == user_id,
+        EducatorAnalytics.created_at >= cutoff_date
+    ).first()
+    
+    return {
+        'total_prompts': summary.total_prompts or 0,
+        'total_tokens': summary.total_tokens or 0,
+        'subjects_explored': summary.subjects_explored or 0
+    }
+
+# Curriculum Context functions
+def create_curriculum_context(db, subject: str, year_level: str, descriptor: str,
+                              strand: str = None, focus_area: str = None, descriptor_code: str = None,
+                              montessori_connection: str = None, elaboration: str = None,
+                              curriculum_type: str = "AC_V9"):
+    """Create a new curriculum context entry"""
+    context = CurriculumContext(
+        subject=subject,
+        year_level=year_level,
+        curriculum_type=curriculum_type,
+        strand=strand,
+        focus_area=focus_area,
+        descriptor=descriptor,
+        descriptor_code=descriptor_code,
+        montessori_connection=montessori_connection,
+        elaboration=elaboration
+    )
+    db.add(context)
+    db.commit()
+    db.refresh(context)
+    return context
+
+def get_curriculum_context(db, subject: str, year_level: str, curriculum_type: str = "AC_V9"):
+    """Get curriculum context from database"""
+    return db.query(CurriculumContext).filter(
+        CurriculumContext.subject == subject,
+        CurriculumContext.year_level == year_level,
+        CurriculumContext.curriculum_type == curriculum_type,
+        CurriculumContext.is_active == True
+    ).first()
+
+def get_all_curriculum_contexts(db, subject: str = None, year_level: str = None):
+    """Get all curriculum contexts, optionally filtered"""
+    query = db.query(CurriculumContext).filter(CurriculumContext.is_active == True)
+    
+    if subject:
+        query = query.filter(CurriculumContext.subject == subject)
+    if year_level:
+        query = query.filter(CurriculumContext.year_level == year_level)
+    
+    return query.order_by(CurriculumContext.subject, CurriculumContext.year_level).all()
+
+def update_curriculum_context(db, context_id: int, **kwargs):
+    """Update curriculum context"""
+    context = db.query(CurriculumContext).filter(CurriculumContext.id == context_id).first()
+    if context:
+        for key, value in kwargs.items():
+            if hasattr(context, key) and value is not None:
+                setattr(context, key, value)
+        context.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(context)
+    return context
+
+def seed_curriculum_data(db):
+    """Seed database with initial curriculum data"""
+    # Check if we already have data
+    existing_count = db.query(CurriculumContext).count()
+    if existing_count > 0:
+        return False  # Already seeded
+    
+    # This will be populated from utils.py curriculum data
+    return True

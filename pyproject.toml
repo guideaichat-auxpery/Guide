@@ -5,6 +5,7 @@ description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
     "bcrypt>=4.3.0",
+    "docx>=0.2.4",
     "openai>=1.100.2",
     "pandas>=2.3.2",
     "pillow>=11.3.0",
@@ -13,6 +14,7 @@ dependencies = [
     "pypdf2>=3.0.1",
     "pytesseract>=0.3.13",
     "python-docx>=1.2.0",
+    "reportlab>=4.4.4",
     "sqlalchemy>=2.0.43",
     "streamlit>=1.48.1",
     "trafilatura>=2.0.0",
