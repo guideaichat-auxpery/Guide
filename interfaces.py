@@ -136,7 +136,7 @@ def show_lesson_planning_interface():
             with st.spinner("Thinking..."):
                 response = call_openai_api(
                     st.session_state.planning_messages[-1:],
-                    system_prompt,
+                    system_prompt=system_prompt,
                     is_student=False,
                     age_group=age_group
                 )
