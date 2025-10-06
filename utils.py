@@ -415,3 +415,153 @@ When helping students:
 
 Remember: Your role is to guide, not to do the work for them. 
 Help them develop independence, critical thinking, and a love of learning."""
+
+# ---- LESSON PLAN EXPORT FUNCTIONS ----
+def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_plan.pdf"):
+    """Export lesson plan content to PDF using reportlab"""
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+    import io
+    
+    # Create a BytesIO buffer
+    buffer = io.BytesIO()
+    
+    # Create PDF document
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                           rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=18)
+    
+    # Container for PDF elements
+    story = []
+    
+    # Get stylesheet
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor='#2E8B57',
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=16,
+        textColor='#2E8B57',
+        spaceAfter=12,
+        spaceBefore=12
+    )
+    
+    # Add title
+    story.append(Paragraph(title, title_style))
+    story.append(Spacer(1, 12))
+    
+    # Process content - convert markdown-like formatting to PDF
+    lines = content.split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            story.append(Spacer(1, 12))
+            continue
+            
+        # Handle headings
+        if line.startswith('###'):
+            text = line.replace('###', '').strip()
+            story.append(Paragraph(text, heading_style))
+        elif line.startswith('##'):
+            text = line.replace('##', '').strip()
+            story.append(Paragraph(text, heading_style))
+        elif line.startswith('**') and line.endswith('**'):
+            text = line.replace('**', '<b>').replace('**', '</b>')
+            story.append(Paragraph(text, styles['Normal']))
+        else:
+            # Regular paragraph
+            story.append(Paragraph(line, styles['Normal']))
+    
+    # Build PDF
+    doc.build(story)
+    
+    # Get PDF data
+    pdf_data = buffer.getvalue()
+    buffer.close()
+    
+    return pdf_data, filename
+
+def export_lesson_plan_to_docx(content, title="Lesson Plan", filename="lesson_plan.docx"):
+    """Export lesson plan content to DOCX using python-docx"""
+    from docx import Document
+    from docx.shared import Inches, Pt, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    import io
+    
+    # Create document
+    doc = Document()
+    
+    # Add title
+    title_para = doc.add_heading(title, level=0)
+    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # Set title color
+    for run in title_para.runs:
+        run.font.color.rgb = RGBColor(46, 139, 87)  # SeaGreen
+    
+    # Add spacer
+    doc.add_paragraph()
+    
+    # Process content - convert markdown-like formatting to DOCX
+    lines = content.split('\n')
+    current_paragraph = None
+    
+    for line in lines:
+        line_stripped = line.strip()
+        
+        if not line_stripped:
+            current_paragraph = None
+            doc.add_paragraph()
+            continue
+        
+        # Handle headings
+        if line_stripped.startswith('###'):
+            text = line_stripped.replace('###', '').strip()
+            heading = doc.add_heading(text, level=3)
+            for run in heading.runs:
+                run.font.color.rgb = RGBColor(46, 139, 87)
+        elif line_stripped.startswith('##'):
+            text = line_stripped.replace('##', '').strip()
+            heading = doc.add_heading(text, level=2)
+            for run in heading.runs:
+                run.font.color.rgb = RGBColor(46, 139, 87)
+        elif line_stripped.startswith('**') and '**' in line_stripped[2:]:
+            # Bold text
+            text = line_stripped.replace('**', '')
+            p = doc.add_paragraph()
+            run = p.add_run(text)
+            run.bold = True
+        elif line_stripped.startswith('- ') or line_stripped.startswith('* '):
+            # Bullet point
+            text = line_stripped[2:]
+            doc.add_paragraph(text, style='List Bullet')
+        else:
+            # Regular paragraph
+            doc.add_paragraph(line_stripped)
+    
+    # Save to BytesIO buffer
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    docx_data = buffer.getvalue()
+    buffer.close()
+    
+    return docx_data, filename
+
+def estimate_tokens(text):
+    """Estimate token count for a given text (rough approximation)"""
+    # Rough estimate: ~4 characters per token for English text
+    return len(text) // 4

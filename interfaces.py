@@ -167,12 +167,34 @@ def extract_file_content(file):
         return None
 
 def show_companion_interface():
-    """Enhanced Montessori companion interface with conversation history management"""
-    from utils import manage_conversation_history
+    """Enhanced Montessori companion interface with conversation history management and persistence"""
+    from utils import manage_conversation_history, estimate_tokens
+    from database import save_conversation_message, log_educator_prompt, load_conversation_to_session
     
-    # Ensure companion messages are initialized separately
+    # Get educator info
+    user_id = st.session_state.get('user_id')
+    
+    # Initialize session-specific conversation ID
+    if 'companion_session_id' not in st.session_state:
+        st.session_state.companion_session_id = str(uuid.uuid4())
+    
+    # Ensure companion messages are initialized
     if 'companion_messages' not in st.session_state:
         st.session_state.companion_messages = []
+        # Try to load conversation history from database
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    loaded_messages = load_conversation_to_session(
+                        db, st.session_state.companion_session_id, 'companion'
+                    )
+                    if loaded_messages:
+                        st.session_state.companion_messages = loaded_messages
+                except Exception as e:
+                    print(f"Error loading conversation history: {str(e)}")
+                finally:
+                    db.close()
     
     st.markdown("### 🗨️ Montessori Companion")
     st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
@@ -212,6 +234,20 @@ def show_companion_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
         
+        # Save user message to database
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    save_conversation_message(
+                        db, st.session_state.companion_session_id, 'companion',
+                        'user', prompt, user_id=user_id
+                    )
+                except Exception as e:
+                    print(f"Error saving conversation: {str(e)}")
+                finally:
+                    db.close()
+        
         # Get AI response with enhanced features
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
@@ -224,10 +260,32 @@ def show_companion_interface():
         
         # Add assistant response to chat history
         st.session_state.companion_messages.append({"role": "assistant", "content": response})
+        
+        # Save assistant response and log analytics
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    # Save conversation
+                    save_conversation_message(
+                        db, st.session_state.companion_session_id, 'companion',
+                        'assistant', response, user_id=user_id
+                    )
+                    # Log analytics
+                    tokens_est = estimate_tokens(prompt + response)
+                    log_educator_prompt(
+                        db, user_id, 'companion', prompt, 
+                        tokens_used=tokens_est
+                    )
+                except Exception as e:
+                    print(f"Error saving conversation/analytics: {str(e)}")
+                finally:
+                    db.close()
 
 def show_student_interface():
-    """Enhanced student learning interface with curriculum context and conversation history"""
+    """Enhanced student learning interface with curriculum context, conversation history, and persistence"""
     from utils import manage_conversation_history
+    from database import save_conversation_message, load_conversation_to_session
     
     # Get student info from session
     student_id = st.session_state.get('user_id')
@@ -238,23 +296,30 @@ def show_student_interface():
     if 'student_session_id' not in st.session_state:
         st.session_state.student_session_id = str(uuid.uuid4())
     
-    # Ensure student messages are initialized separately
+    # Ensure student messages are initialized
     if 'student_messages' not in st.session_state:
         st.session_state.student_messages = []
-        # Log session start
-        db = get_db()
-        if db and student_id:
-            try:
-                log_student_activity(
-                    db, 
-                    student_id, 
-                    'session_start', 
-                    session_id=st.session_state.student_session_id
-                )
-            except Exception as e:
-                print(f"Error logging session start: {str(e)}")
-            finally:
-                db.close()
+        # Try to load conversation history from database
+        if database_available and student_id:
+            db = get_db()
+            if db:
+                try:
+                    loaded_messages = load_conversation_to_session(
+                        db, st.session_state.student_session_id, 'student'
+                    )
+                    if loaded_messages:
+                        st.session_state.student_messages = loaded_messages
+                    # Log session start
+                    log_student_activity(
+                        db, 
+                        student_id, 
+                        'session_start', 
+                        session_id=st.session_state.student_session_id
+                    )
+                except Exception as e:
+                    print(f"Error loading conversation/logging session: {str(e)}")
+                finally:
+                    db.close()
     
     st.markdown(f"### 🌟 Welcome, {student_name}!")
     st.markdown("*Your Montessori Learning Companion - Ask questions, explore ideas, discover connections*")
@@ -296,21 +361,28 @@ def show_student_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Log the student's prompt
-        db = get_db()
-        if db and student_id:
-            try:
-                log_student_activity(
-                    db, 
-                    student_id, 
-                    'learning_question', 
-                    prompt_text=prompt,
-                    session_id=st.session_state.student_session_id
-                )
-            except Exception as e:
-                print(f"Error logging prompt: {str(e)}")
-            finally:
-                db.close()
+        # Save and log the student's prompt
+        if database_available and student_id:
+            db = get_db()
+            if db:
+                try:
+                    # Save conversation message
+                    save_conversation_message(
+                        db, st.session_state.student_session_id, 'student',
+                        'user', prompt, student_id=student_id
+                    )
+                    # Log student activity
+                    log_student_activity(
+                        db, 
+                        student_id, 
+                        'learning_question', 
+                        prompt_text=prompt,
+                        session_id=st.session_state.student_session_id
+                    )
+                except Exception as e:
+                    print(f"Error saving conversation/logging prompt: {str(e)}")
+                finally:
+                    db.close()
         
         # Get curriculum context if selected
         selected_subject = st.session_state.get('student_subject', '')
@@ -333,22 +405,29 @@ def show_student_interface():
         # Add assistant response to chat history
         st.session_state.student_messages.append({"role": "assistant", "content": response})
         
-        # Log the AI response
-        db = get_db()
-        if db and student_id:
-            try:
-                log_student_activity(
-                    db, 
-                    student_id, 
-                    'learning_response', 
-                    prompt_text=prompt,
-                    response_text=response,
-                    session_id=st.session_state.student_session_id
-                )
-            except Exception as e:
-                print(f"Error logging response: {str(e)}")
-            finally:
-                db.close()
+        # Save and log the AI response
+        if database_available and student_id:
+            db = get_db()
+            if db:
+                try:
+                    # Save conversation message
+                    save_conversation_message(
+                        db, st.session_state.student_session_id, 'student',
+                        'assistant', response, student_id=student_id
+                    )
+                    # Log student activity
+                    log_student_activity(
+                        db, 
+                        student_id, 
+                        'learning_response', 
+                        prompt_text=prompt,
+                        response_text=response,
+                        session_id=st.session_state.student_session_id
+                    )
+                except Exception as e:
+                    print(f"Error saving conversation/logging response: {str(e)}")
+                finally:
+                    db.close()
 
 def show_student_dashboard_interface():
     """Student observation dashboard for educators"""
