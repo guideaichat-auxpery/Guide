@@ -105,6 +105,32 @@ class LessonPlan(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class GreatStory(Base):
+    __tablename__ = "great_stories"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    theme = Column(String, nullable=False)  # The prompted theme/topic
+    content = Column(Text, nullable=False)  # The story content
+    age_group = Column(String, nullable=True)  # Target age group
+    keywords = Column(Text, nullable=True)  # JSON string of keywords/tags
+    educator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class PlanningNote(Base):
+    __tablename__ = "planning_notes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)  # Rich text content with chapters/sections
+    chapters = Column(Text, nullable=True)  # JSON string for chapter organization
+    images = Column(Text, nullable=True)  # JSON string of image URLs/data
+    materials = Column(Text, nullable=True)  # Text for materials list
+    educator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 def create_tables():
     """Create all database tables with error handling"""
     if not engine:
@@ -300,3 +326,105 @@ def get_student_access_educators(db, student_id: int):
 def get_student_with_activities(db, student_id: int):
     """Get student with their recent activities"""
     return db.query(Student).filter(Student.id == student_id).first()
+
+# Great Story functions
+def create_great_story(db, educator_id: int, title: str, theme: str, content: str, age_group: str = None, keywords: str = None):
+    """Create a new Great Story"""
+    story = GreatStory(
+        educator_id=educator_id,
+        title=title,
+        theme=theme,
+        content=content,
+        age_group=age_group,
+        keywords=keywords
+    )
+    db.add(story)
+    db.commit()
+    db.refresh(story)
+    return story
+
+def update_great_story(db, story_id: int, title: str = None, content: str = None, age_group: str = None, keywords: str = None):
+    """Update an existing Great Story"""
+    story = db.query(GreatStory).filter(GreatStory.id == story_id).first()
+    if story:
+        if title:
+            story.title = title
+        if content:
+            story.content = content
+        if age_group:
+            story.age_group = age_group
+        if keywords:
+            story.keywords = keywords
+        story.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(story)
+    return story
+
+def get_educator_great_stories(db, educator_id: int):
+    """Get all Great Stories created by an educator"""
+    return db.query(GreatStory).filter(GreatStory.educator_id == educator_id).order_by(GreatStory.updated_at.desc()).all()
+
+def get_great_story(db, story_id: int):
+    """Get a specific Great Story by ID"""
+    return db.query(GreatStory).filter(GreatStory.id == story_id).first()
+
+def delete_great_story(db, story_id: int):
+    """Delete a Great Story"""
+    story = db.query(GreatStory).filter(GreatStory.id == story_id).first()
+    if story:
+        db.delete(story)
+        db.commit()
+        return True
+    return False
+
+# Planning Note functions
+def create_planning_note(db, educator_id: int, title: str, content: str = "", chapters: str = None, images: str = None, materials: str = None):
+    """Create a new Planning Note"""
+    note = PlanningNote(
+        educator_id=educator_id,
+        title=title,
+        content=content,
+        chapters=chapters,
+        images=images,
+        materials=materials
+    )
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    return note
+
+def update_planning_note(db, note_id: int, title: str = None, content: str = None, chapters: str = None, images: str = None, materials: str = None):
+    """Update an existing Planning Note"""
+    note = db.query(PlanningNote).filter(PlanningNote.id == note_id).first()
+    if note:
+        if title is not None:
+            note.title = title
+        if content is not None:
+            note.content = content
+        if chapters is not None:
+            note.chapters = chapters
+        if images is not None:
+            note.images = images
+        if materials is not None:
+            note.materials = materials
+        note.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(note)
+    return note
+
+def get_educator_planning_notes(db, educator_id: int):
+    """Get all Planning Notes created by an educator"""
+    return db.query(PlanningNote).filter(PlanningNote.educator_id == educator_id).order_by(PlanningNote.updated_at.desc()).all()
+
+def get_planning_note(db, note_id: int):
+    """Get a specific Planning Note by ID"""
+    return db.query(PlanningNote).filter(PlanningNote.id == note_id).first()
+
+def delete_planning_note(db, note_id: int):
+    """Delete a Planning Note"""
+    note = db.query(PlanningNote).filter(PlanningNote.id == note_id).first()
+    if note:
+        db.delete(note)
+        db.commit()
+        return True
+    return False
