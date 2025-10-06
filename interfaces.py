@@ -74,526 +74,356 @@ def show_lesson_planning_interface():
         ]
     elif age_group == "9-12":
         templates = [
-            f"Create an independent research project with community connections for {planning_type}",
-            f"Design a practical application of mathematical concepts for {planning_type}",
-            f"Plan a collaborative inquiry into Australian history for {planning_type}",
-            f"Develop critical thinking through scientific investigation for {planning_type}"
+            f"Create a cosmic education Great Story extension for {planning_type}",
+            f"Design an independent research project on Australian history for {planning_type}",
+            f"Plan a mathematical exploration of real-world applications for {planning_type}",
+            f"Develop a scientific investigation with hypothesis testing for {planning_type}"
         ]
     else:  # 12-15
         templates = [
-            f"Create a social enterprise project connecting community service for {planning_type}",
-            f"Design a real-world problem-solving investigation for {planning_type}",
-            f"Plan a peer mentoring program with leadership development for {planning_type}",
-            f"Develop a sustainable living project with environmental focus for {planning_type}"
+            f"Create an adolescent community project with real-world impact for {planning_type}",
+            f"Design a micro-economy activity for practical life skills for {planning_type}",
+            f"Plan a leadership and social justice exploration for {planning_type}",
+            f"Develop an interdisciplinary inquiry project for {planning_type}"
         ]
     
-    for template in templates:
-        if st.button(f"📋 {template}", key=f"template_{template[:20]}", use_container_width=True):
-            enhanced_prompt = f"""
-            Please create a comprehensive {planning_type} for {age_group} students with the following requirements:
-            
-            {template}
-            
-            ESSENTIAL REQUIREMENTS:
-            1. Include specific Australian Curriculum V.9 content descriptor codes and achievement standards
-            2. Ensure strong Montessori pedagogical foundation with rationale
-            3. Provide materials list (both traditional Montessori and accessible alternatives)
-            4. Include assessment strategies and observation points
-            5. Add extension activities and differentiation options
-            6. Consider mixed-age learning opportunities where appropriate
-            7. Include family engagement suggestions for home-school families
-            
-            Format the response with clear sections and practical implementation guidance.
-            """
-            
-            st.session_state.planning_messages.append({"role": "user", "content": enhanced_prompt})
-            
-            with st.spinner("Creating comprehensive educational plan..."):
-                max_tokens = get_max_tokens_for_user_type('educator')
-                response = call_openai_api(st.session_state.planning_messages, max_tokens)
-                if response:
-                    st.markdown("### 📚 Educational Planning Guidance")
-                    st.markdown(response)
-                    st.session_state.planning_messages.append({"role": "assistant", "content": response})
-                else:
-                    st.error("I'm having trouble generating the educational plan. Please try again.")
+    # Display templates as clickable buttons
+    cols = st.columns(2)
+    for idx, template in enumerate(templates):
+        with cols[idx % 2]:
+            if st.button(template, key=f"template_{idx}"):
+                st.session_state.planning_prompt = template
+                st.rerun()
     
-    # Handle uploaded documents
-    if uploaded_files:
-        st.markdown("#### 📋 Document Analysis")
-        for uploaded_file in uploaded_files:
-            st.info(f"📄 Analyzing: {uploaded_file.name}")
-            
-            # Read file content based on type
-            file_content = ""
-            try:
-                if uploaded_file.type == "text/plain":
-                    file_content = str(uploaded_file.read(), "utf-8")
-                elif uploaded_file.type in ["image/jpeg", "image/jpg", "image/png"]:
-                    # Read image data once
-                    image_data = uploaded_file.read()
-                    st.image(image_data, caption=f"Uploaded: {uploaded_file.name}", width=300)
-                    # Extract text from image using OCR
-                    try:
-                        # Check if tesseract is available
-                        import shutil
-                        if not shutil.which('tesseract'):
-                            file_content = f"[Image uploaded: {uploaded_file.name} - OCR not available in this environment]"
-                        else:
-                            image_buffer = io.BytesIO(image_data)
-                            image = Image.open(image_buffer)
-                            extracted_text = pytesseract.image_to_string(image)
-                            file_content = f"Image content extracted via OCR:\n{extracted_text[:2000]}"
-                            if len(extracted_text) > 2000:
-                                file_content += "...[truncated]"
-                    except Exception as e:
-                        file_content = f"[Image uploaded: {uploaded_file.name} - OCR extraction failed: {str(e)}]"
-                elif uploaded_file.type == "application/pdf":
-                    # Extract text from PDF
-                    try:
-                        pdf_reader = PyPDF2.PdfReader(uploaded_file)
-                        pdf_text = ""
-                        for page in pdf_reader.pages:
-                            pdf_text += page.extract_text() + "\n"
-                        file_content = f"PDF content:\n{pdf_text[:2000]}"
-                        if len(pdf_text) > 2000:
-                            file_content += "...[truncated]"
-                    except Exception as e:
-                        file_content = f"[PDF uploaded: {uploaded_file.name} - text extraction failed: {str(e)}]"
-                elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                    # Extract text from DOCX
-                    try:
-                        doc = Document(uploaded_file)
-                        doc_text = ""
-                        for paragraph in doc.paragraphs:
-                            doc_text += paragraph.text + "\n"
-                        file_content = f"DOCX content:\n{doc_text[:2000]}"
-                        if len(doc_text) > 2000:
-                            file_content += "...[truncated]"
-                    except Exception as e:
-                        file_content = f"[DOCX uploaded: {uploaded_file.name} - text extraction failed: {str(e)}]"
-                else:
-                    file_content = f"[Document uploaded: {uploaded_file.name} - {uploaded_file.type}]"
-            except Exception as e:
-                file_content = f"[Error reading {uploaded_file.name}: {str(e)}]"
-            
-            # Create analysis prompt
-            analysis_prompt = f"""
-            Please analyze this uploaded document for a {age_group} age group and provide feedback:
-            
-            Document: {uploaded_file.name}
-            Content: {file_content[:1000]}...
-            
-            Please provide:
-            1. **Montessori Alignment**: How well this aligns with Montessori principles for {age_group}
-            2. **Australian Curriculum V.9**: Relevant AC codes and standards addressed
-            3. **Developmental Appropriateness**: Suitability for {age_group} learners
-            4. **Suggestions for Improvement**: Specific recommendations
-            5. **Extension Activities**: Follow-up learning opportunities
-            """
-            
-            if st.button(f"🔍 Analyze {uploaded_file.name}", key=f"analyze_{uploaded_file.name}"):
-                st.session_state.planning_messages.append({"role": "user", "content": analysis_prompt})
-                
-                with st.spinner(f"Analyzing {uploaded_file.name}..."):
-                    max_tokens = get_max_tokens_for_user_type('educator')
-                    response = call_openai_api(st.session_state.planning_messages, max_tokens)
-                    if response:
-                        st.markdown("### 📋 Document Analysis Results")
-                        st.markdown(response)
-                        st.session_state.planning_messages.append({"role": "assistant", "content": response})
-                    else:
-                        st.error("I'm having trouble analyzing the document. Please try again.")
-
-    # Custom planning input chatbox
-    st.markdown("#### 💬 Custom Educational Planning Request")
-    st.markdown("*Describe your specific planning needs, ask questions, or request customized lesson plans*")
-    
-    if prompt := st.chat_input("Describe your educational planning needs, upload documents for feedback, or ask specific questions..."):
-        # Create enhanced prompt based on uploaded files
-        file_context = ""
-        if uploaded_files:
-            file_names = [f.name for f in uploaded_files]
-            file_context = f"\n\nNote: I have uploaded the following documents for context: {', '.join(file_names)}"
+    # Chat input
+    if prompt := st.chat_input("What would you like help planning today?"):
+        # Add user message to chat history
+        st.session_state.planning_messages.append({"role": "user", "content": prompt})
         
-        enhanced_prompt = f"""
-        Educational Planning Request for {age_group} students ({planning_type}):
-        {prompt}{file_context}
-        
-        Please ensure your response includes:
-        1. Relevant Australian Curriculum V.9 codes and achievement standards
-        2. Montessori pedagogical rationale
-        3. Practical implementation steps
-        4. Assessment and observation strategies
-        5. Materials and resources needed
-        6. Extension and differentiation options
-        7. If documents were uploaded, reference them in your response
-        """
-        
-        st.session_state.planning_messages.append({"role": "user", "content": enhanced_prompt})
-        
+        # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
         
+        # Process uploaded documents
+        document_context = ""
+        if uploaded_files:
+            for file in uploaded_files:
+                file_content = extract_file_content(file)
+                if file_content:
+                    document_context += f"\n\n---\nDocument: {file.name}\n{file_content}\n---\n"
+        
+        # Prepare full prompt
+        full_prompt = prompt
+        if document_context:
+            full_prompt = f"{prompt}\n\nRelevant documents:\n{document_context}"
+        
+        # Get AI response
+        system_prompt = f"""You are a Montessori educational planning assistant with deep knowledge of:
+        - Montessori philosophy and cosmic education principles
+        - Australian Curriculum Version 9 (V.9) learning areas and content descriptors
+        - Developmentally appropriate practices for {age_group} year olds
+        - Scope and sequence planning
+        - Assessment rubric design
+        
+        Current planning context:
+        - Age Group: {age_group}
+        - Planning Type: {planning_type}
+        
+        Provide practical, classroom-ready guidance that bridges Montessori principles with Australian Curriculum requirements.
+        Include specific AC V.9 codes when relevant and suggest concrete Montessori materials or activities."""
+        
         with st.chat_message("assistant"):
-            with st.spinner("Creating personalized educational guidance..."):
-                max_tokens = get_max_tokens_for_user_type('educator')
-                response = call_openai_api(st.session_state.planning_messages, max_tokens)
-                
-                if response:
-                    st.markdown(response)
-                    st.session_state.planning_messages.append({"role": "assistant", "content": response})
-                else:
-                    st.error("I'm having trouble right now. Please try again.")
-    
-    show_clear_conversation_button()
+            with st.spinner("Thinking..."):
+                response = call_openai_api(
+                    st.session_state.planning_messages[-1:],
+                    system_prompt,
+                    is_student=False,
+                    age_group=age_group
+                )
+                st.markdown(response)
+        
+        # Add assistant response to chat history
+        st.session_state.planning_messages.append({"role": "assistant", "content": response})
+
+def extract_file_content(file):
+    """Extract text content from uploaded files"""
+    try:
+        if file.type == "text/plain":
+            return file.read().decode('utf-8')
+        elif file.type == "application/pdf":
+            pdf_reader = PyPDF2.PdfReader(io.BytesIO(file.read()))
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() + "\n"
+            return text
+        elif file.type in ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"]:
+            doc = Document(io.BytesIO(file.read()))
+            return "\n".join([para.text for para in doc.paragraphs])
+        elif file.type in ["image/jpeg", "image/png", "image/jpg"]:
+            image = Image.open(file)
+            return pytesseract.image_to_string(image)
+    except Exception as e:
+        st.error(f"Error extracting content from {file.name}: {str(e)}")
+        return None
 
 def show_companion_interface():
-    """Companion interface for general Montessori guidance (secondary feature)"""
-    # Ensure companion messages are initialized
+    """Montessori companion interface for general educational conversations"""
+    # Ensure companion messages are initialized separately
     if 'companion_messages' not in st.session_state:
         st.session_state.companion_messages = []
-        
+    
     st.markdown("### 🗨️ Montessori Companion")
-    st.markdown("*Explore Montessori philosophy and get guidance on educational approaches*")
+    st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
     
     # Display chat history
     for message in st.session_state.companion_messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    # Quick companion topics
-    st.markdown("#### Explore Montessori Concepts:")
-    companion_topics = [
-        "How does cosmic education connect all learning areas?",
-        "What role does the prepared environment play in different age groups?",
-        "How do I observe and follow the child effectively?",
-        "What are the key differences between early years, primary, and adolescent approaches?",
-        "How can I create independence-building activities?",
-        "What is the importance of mixed-age communities?"
+    # Quick conversation starters
+    st.markdown("#### Quick Conversation Starters:")
+    quick_prompts = [
+        "Explain the concept of cosmic education",
+        "How do I introduce a new material?",
+        "What is the prepared environment?",
+        "Help me understand the sensitive periods"
     ]
     
-    for topic in companion_topics:
-        if st.button(f"💭 {topic}", key=f"companion_{topic[:20]}", use_container_width=True):
-            st.session_state.companion_messages.append({"role": "user", "content": topic})
-            
-            with st.spinner("Exploring Montessori philosophy..."):
-                max_tokens = get_max_tokens_for_user_type('educator')
-                response = call_openai_api(st.session_state.companion_messages, max_tokens)
-                if response:
-                    st.markdown("### 🗨️ Montessori Insight")
-                    st.markdown(response)
-                    st.session_state.companion_messages.append({"role": "assistant", "content": response})
-                else:
-                    st.error("I'm having trouble generating guidance. Please try again.")
+    cols = st.columns(2)
+    for idx, quick_prompt in enumerate(quick_prompts):
+        with cols[idx % 2]:
+            if st.button(quick_prompt, key=f"quick_{idx}"):
+                st.session_state.companion_prompt = quick_prompt
+                st.rerun()
     
-    # Chat input for custom questions
-    if prompt := st.chat_input("Ask about Montessori philosophy, approaches, or implementation..."):
+    # Chat input
+    if prompt := st.chat_input("Ask me about Montessori philosophy, cosmic education, or educational approaches..."):
+        # Add user message to chat history
         st.session_state.companion_messages.append({"role": "user", "content": prompt})
         
+        # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
         
+        # Get AI response
+        system_prompt = """You are a warm, humble Montessori educational companion with deep knowledge of:
+        - Maria Montessori's original writings and philosophy
+        - Cosmic education and the Great Stories
+        - Montessori National Curriculum (2011)
+        - Child development across all planes of development
+        - The prepared environment and observation
+        
+        Provide thoughtful, philosophical guidance rooted in Montessori principles. Speak warmly and avoid jargon.
+        Connect big ideas to practical classroom applications. Emphasize the child's place in the universe."""
+        
         with st.chat_message("assistant"):
-            with st.spinner("Providing Montessori guidance..."):
-                max_tokens = get_max_tokens_for_user_type('educator')
-                response = call_openai_api(st.session_state.companion_messages, max_tokens)
-                
-                if response:
-                    st.markdown(response)
-                    st.session_state.companion_messages.append({"role": "assistant", "content": response})
-                else:
-                    st.error("I'm having trouble right now. Please try again.")
-    
-    show_clear_conversation_button()
-
-def log_student_interaction(activity_type, prompt_text, response_text=None, session_id=None):
-    """Log student activity to database if available"""
-    if not database_available or not st.session_state.get('is_student'):
-        return
-    
-    try:
-        db = get_db()
-        if db and st.session_state.get('user_id'):
-            log_student_activity(
-                db=db,
-                student_id=st.session_state.user_id,
-                activity_type=activity_type,
-                prompt_text=prompt_text,
-                response_text=response_text,
-                session_id=session_id
-            )
-            db.close()
-    except Exception as e:
-        # Silent logging failure - don't disrupt student experience
-        print(f"Failed to log student activity: {str(e)}")
+            with st.spinner("Thinking..."):
+                response = call_openai_api(
+                    st.session_state.companion_messages[-1:],
+                    system_prompt,
+                    is_student=False
+                )
+                st.markdown(response)
+        
+        # Add assistant response to chat history
+        st.session_state.companion_messages.append({"role": "assistant", "content": response})
 
 def show_student_interface():
-    """Student interface for all age groups with age-appropriate guidance"""
-    # Ensure messages are initialized
-    if 'messages' not in st.session_state:
-        st.session_state.messages = []
+    """Student learning interface with Montessori-guided tutoring"""
+    # Get student info from session
+    student_id = st.session_state.get('user_id')
+    student_name = st.session_state.get('user_name', 'Student')
+    age_group = st.session_state.get('age_group', 'unknown')
     
-    # Initialize session ID for tracking related interactions
-    if 'current_session_id' not in st.session_state:
-        st.session_state.current_session_id = str(uuid.uuid4())
-        
-    age_group = st.session_state.get('age_group', '6-9')
+    # Initialize student-specific session ID if not exists
+    if 'student_session_id' not in st.session_state:
+        st.session_state.student_session_id = str(uuid.uuid4())
     
-    # Handle legacy age group values
-    legacy_mapping = {
-        "early_years": "3-6",
-        "primary": "6-9", 
-        "adolescent": "12-15"
-    }
-    if age_group in legacy_mapping:
-        age_group = legacy_mapping[age_group]
+    # Ensure student messages are initialized separately
+    if 'student_messages' not in st.session_state:
+        st.session_state.student_messages = []
+        # Log session start
+        db = get_db()
+        if db and student_id:
+            try:
+                log_student_activity(
+                    db, 
+                    student_id, 
+                    'session_start', 
+                    session_id=st.session_state.student_session_id
+                )
+            except Exception as e:
+                print(f"Error logging session start: {str(e)}")
+            finally:
+                db.close()
     
-    age_display = {
-        "3-6": "Early Years (3-6)",
-        "6-9": "Lower Primary (6-9)", 
-        "9-12": "Upper Primary (9-12)",
-        "12-15": "Adolescent (12-15)"
-    }.get(age_group, f"Age Group {age_group}")
-    
-    st.markdown(f"### 👨‍🎓 Student Learning Support ({age_display})")
-    st.markdown("*Discover the joy of self-directed learning with Montessori principles*")
+    st.markdown(f"### 🌟 Welcome, {student_name}!")
+    st.markdown("*Your Montessori Learning Companion - Ask questions, explore ideas, discover connections*")
     
     # Display chat history
-    for message in st.session_state.messages:
+    for message in st.session_state.student_messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    # Age-appropriate learning topics
-    st.markdown("#### Explore Learning:")
-    
-    if age_group == "3-6":
-        topics = [
-            "How can I help with practical life activities at home?",
-            "Why do we use special learning materials?",
-            "How can I be more independent?",
-            "What makes learning fun and interesting?",
-            "How can I help my friends learn too?"
-        ]
-    elif age_group == "6-9":
-        topics = [
-            "How are all subjects connected to the cosmic story?",
-            "Why is hands-on learning so important?",
-            "How can I research topics that interest me?",
-            "What makes a good learning environment?",
-            "How can I help younger students?"
-        ]
-    elif age_group == "9-12":
-        topics = [
-            "How can I do independent research on topics I'm interested in?",
-            "Why is collaboration important in learning?",
-            "How do I connect my learning to the real world?",
-            "What are effective ways to help younger students?",
-            "How can I take responsibility for my own learning?"
-        ]
-    else:  # 12-15
-        topics = [
-            "How can my learning connect to real-world problems?",
-            "What role can I play in my community?",
-            "How do I develop leadership and collaboration skills?",
-            "How can I prepare for my future while learning?",
-            "What are meaningful ways to contribute to society?"
-        ]
-    
-    for topic in topics:
-        if st.button(f"🌟 {topic}", key=f"student_{topic[:15]}", use_container_width=True):
-            age_appropriate_prompt = f"""
-            Question from a {age_group} student: {topic}
-            
-            Please provide an age-appropriate response that:
-            1. Respects the student's natural curiosity and development
-            2. Encourages self-direction and independence
-            3. Connects to Montessori principles appropriate for their age
-            4. Suggests practical ways they can explore this further
-            5. Uses language and examples suitable for {age_group} learners
-            """
-            
-            # Log the prompt
-            log_student_interaction(
-                activity_type="prompt",
-                prompt_text=topic,
-                session_id=st.session_state.current_session_id
-            )
-            
-            st.session_state.messages.append({"role": "user", "content": age_appropriate_prompt})
-            
-            with st.spinner("Exploring your question..."):
-                max_tokens = get_max_tokens_for_user_type('student')
-                response = call_openai_api(st.session_state.planning_messages, max_tokens)
-                if response:
-                    st.markdown("### 🌟 Learning Discovery")
-                    st.markdown(response)
-                    st.session_state.planning_messages.append({"role": "assistant", "content": response})
-                    
-                    # Log the response
-                    log_student_interaction(
-                        activity_type="response",
-                        prompt_text=topic,
-                        response_text=response,
-                        session_id=st.session_state.current_session_id
-                    )
-                else:
-                    st.error("I'm having trouble answering. Please try again.")
-    
-    # Chat input for custom questions
-    if prompt := st.chat_input("Ask me about learning, interests, or how things work..."):
-        age_appropriate_prompt = f"""
-        Question from a {age_group} student: {prompt}
+    # Chat input
+    if prompt := st.chat_input("What would you like to learn about today?"):
+        # Add user message to chat history
+        st.session_state.student_messages.append({"role": "user", "content": prompt})
         
-        Please provide an age-appropriate response that encourages exploration, 
-        independence, and follows Montessori principles for {age_group} learners.
-        """
-        
-        # Log the prompt
-        log_student_interaction(
-            activity_type="prompt",
-            prompt_text=prompt,
-            session_id=st.session_state.current_session_id
-        )
-        
-        st.session_state.messages.append({"role": "user", "content": age_appropriate_prompt})
-        
+        # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking about your question..."):
-                max_tokens = get_max_tokens_for_user_type('student')
-                response = call_openai_api(st.session_state.planning_messages, max_tokens)
-                
-                if response:
-                    st.markdown(response)
-                    st.session_state.planning_messages.append({"role": "assistant", "content": response})
-                    
-                    # Log the response
-                    log_student_interaction(
-                        activity_type="response",
-                        prompt_text=prompt,
-                        response_text=response,
-                        session_id=st.session_state.current_session_id
-                    )
-                else:
-                    st.error("I'm having trouble right now. Please try again.")
-    
-    show_clear_conversation_button()
-
-def show_clear_conversation_button():
-    """Reusable clear conversation button"""
-    st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🗑️ Clear Conversation", use_container_width=True):
-            # Log the clear action for students
-            if st.session_state.get('is_student'):
-                log_student_interaction(
-                    activity_type="clear_conversation",
-                    prompt_text="Student cleared conversation",
-                    session_id=st.session_state.get('current_session_id')
+        # Log the student's prompt
+        db = get_db()
+        if db and student_id:
+            try:
+                log_student_activity(
+                    db, 
+                    student_id, 
+                    'learning_question', 
+                    prompt_text=prompt,
+                    session_id=st.session_state.student_session_id
                 )
-                # Start new session
-                st.session_state.current_session_id = str(uuid.uuid4())
-            
-            st.session_state.messages = []
-            st.rerun()
+            except Exception as e:
+                print(f"Error logging prompt: {str(e)}")
+            finally:
+                db.close()
+        
+        # Get AI response
+        system_prompt = f"""You are a warm, encouraging Montessori learning companion for a student in the {age_group} age group.
+        
+        Your role is to:
+        - Guide discovery through questions rather than just providing answers
+        - Connect learning to the cosmic story and the child's place in the universe
+        - Use age-appropriate language and examples
+        - Encourage wonder, curiosity, and independent thinking
+        - Make connections across subject areas
+        - Celebrate the student's questions and observations
+        
+        Keep responses conversational, engaging, and developmentally appropriate for {age_group}."""
+        
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                response = call_openai_api(
+                    st.session_state.student_messages[-1:],
+                    system_prompt,
+                    is_student=True,
+                    age_group=age_group
+                )
+                st.markdown(response)
+        
+        # Add assistant response to chat history
+        st.session_state.student_messages.append({"role": "assistant", "content": response})
+        
+        # Log the AI response
+        db = get_db()
+        if db and student_id:
+            try:
+                log_student_activity(
+                    db, 
+                    student_id, 
+                    'learning_response', 
+                    prompt_text=prompt,
+                    response_text=response,
+                    session_id=st.session_state.student_session_id
+                )
+            except Exception as e:
+                print(f"Error logging response: {str(e)}")
+            finally:
+                db.close()
 
 def show_student_dashboard_interface():
-    """Educator interface to view student activities and engagement"""
-    st.markdown("### 📊 Student Activity Dashboard")
-    st.markdown("*Monitor student engagement and learning patterns*")
+    """Student observation dashboard for educators"""
+    st.markdown("### 📊 Student Dashboard")
+    st.markdown("*View student learning activities, engagement patterns, and manage access*")
     
     if not database_available:
-        st.warning("Student dashboard is not available without database connection.")
-        st.info("This feature requires database access to view student activities.")
+        st.warning("Student dashboard requires database connection. Please contact support.")
         return
     
-    # Get educator's accessible students
+    # Get educator info
+    educator_id = st.session_state.get('user_id')
+    
     db = get_db()
     if not db:
-        st.error("Database connection error. Cannot load student data.")
+        st.error("Database connection not available")
         return
     
     try:
-        from database import get_educator_accessible_students, get_student_activities
-        
-        educator_id = st.session_state.get('user_id')
-        if not educator_id:
-            st.error("User session error. Please log in again.")
-            return
-        
+        # Get all students accessible to this educator
+        from database import get_educator_accessible_students
         students = get_educator_accessible_students(db, educator_id)
         
         if not students:
-            st.info("No students found. Create student accounts to begin monitoring their activities.")
+            st.info("No students found. Create student accounts to get started.")
             return
         
         # Student selector
-        st.markdown("#### Select Student")
         selected_student = st.selectbox(
-            "Choose a student to view their activities:",
+            "Select Student:",
             students,
-            format_func=lambda s: f"{s.full_name} (@{s.username}) - {s.age_group or 'No age group'}"
+            format_func=lambda s: f"{s.full_name} ({s.age_group})"
         )
         
         if selected_student:
-            # Check if current educator is primary educator for access management
-            is_primary_educator = (selected_student.educator_id == educator_id)
+            # Check if current educator is primary educator
+            is_primary_educator = selected_student.educator_id == educator_id
             
-            # Tabs for activities and access management
-            tab1, tab2 = st.tabs(["📊 Student Activities", "🔑 Access Management"])
+            # Display student info
+            st.markdown(f"## {selected_student.full_name}")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Age Group", selected_student.age_group or "Not specified")
+            with col2:
+                st.metric("Primary Educator", "You" if is_primary_educator else selected_student.educator.full_name)
+            with col3:
+                st.metric("Status", "Active" if selected_student.is_active else "Inactive")
+            
+            # Tabs for different views
+            tab1, tab2 = st.tabs(["📚 Learning Activity", "🔐 Access Management"])
             
             with tab1:
-                st.markdown(f"### Activities for {selected_student.full_name}")
-                
                 # Get student activities
+                from database import get_student_activities
                 activities = get_student_activities(db, selected_student.id, limit=50)
                 
-                if not activities:
-                    st.info(f"{selected_student.full_name} hasn't started any learning activities yet.")
-                else:
-                    # Activity summary
+                if activities:
+                    # Show summary metrics
+                    st.markdown("### 📈 Engagement Summary")
                     col1, col2, col3 = st.columns(3)
                     
+                    questions = [a for a in activities if a.activity_type == 'learning_question']
+                    responses = [a for a in activities if a.activity_type == 'learning_response']
+                    sessions = set([a.session_id for a in activities if a.session_id])
+                    
                     with col1:
-                        total_prompts = len([a for a in activities if a.activity_type == "prompt"])
-                        st.metric("Total Questions Asked", total_prompts)
-                    
+                        st.metric("Questions Asked", len(questions))
                     with col2:
-                        total_responses = len([a for a in activities if a.activity_type == "response"])
-                        st.metric("AI Responses Received", total_responses)
-                    
+                        st.metric("Responses Received", len(responses))
                     with col3:
-                        sessions = len(set([a.session_id for a in activities if a.session_id]))
-                        st.metric("Learning Sessions", sessions)
+                        st.metric("Learning Sessions", len(sessions))
                     
                     # Activity timeline
-                    st.markdown("#### Recent Activity Timeline")
+                    st.markdown("### 📝 Activity Timeline")
                     
                     for activity in activities:
                         with st.expander(
-                            f"📝 {activity.activity_type.replace('_', ' ').title()} - {activity.created_at.strftime('%Y-%m-%d %H:%M')}",
+                            f"{activity.activity_type.replace('_', ' ').title()} - {activity.created_at.strftime('%Y-%m-%d %H:%M')}",
                             expanded=False
                         ):
-                            if activity.activity_type == "prompt":
-                                st.markdown("**Student Question:**")
-                                st.info(activity.prompt_text)
-                                
-                            elif activity.activity_type == "response":
-                                st.markdown("**Student Question:**")
-                                st.info(activity.prompt_text)
-                                st.markdown("**AI Response:**")
-                                st.success(activity.response_text)
-                                
-                            elif activity.activity_type == "clear_conversation":
-                                st.markdown("🗑️ Student cleared conversation and started a new session")
+                            if activity.prompt_text:
+                                st.markdown("**Question:**")
+                                st.write(activity.prompt_text)
                             
-                            # Show session info if available
+                            if activity.response_text:
+                                st.markdown("**Response:**")
+                                st.write(activity.response_text)
+                            
                             if activity.session_id:
                                 st.caption(f"Session ID: {activity.session_id}")
+                else:
+                    st.info("No learning activities recorded yet.")
             
             with tab2:
                 st.markdown(f"### Access Management for {selected_student.full_name}")
@@ -670,3 +500,453 @@ def show_student_dashboard_interface():
     finally:
         if db:
             db.close()
+
+def show_great_story_interface():
+    """Montessori Great Story creator interface for educators"""
+    st.markdown("### 📖 Montessori Great Story Creator")
+    st.markdown("*Develop inspiring cosmic education stories that spark imagination and curiosity*")
+    
+    if not database_available:
+        st.info("Stories will not be saved without database connection. Your stories will be available during this session only.")
+    
+    educator_id = st.session_state.get('user_id')
+    
+    # Tabs for creating new stories and viewing saved stories
+    tab1, tab2 = st.tabs(["✨ Create New Story", "📚 My Saved Stories"])
+    
+    with tab1:
+        st.markdown("#### Theme or Topic")
+        st.markdown("*Enter a theme or topic to develop a Montessori Great Story*")
+        
+        # Theme/topic input
+        theme = st.text_input("Story Theme or Topic:", placeholder="e.g., The Story of Water, The Coming of Life, Ancient Civilizations")
+        
+        # Age group selector
+        age_group = st.selectbox(
+            "Target Age Group:",
+            ["3-6", "6-9", "9-12", "12-15", "All Ages"],
+            format_func=lambda x: {
+                "3-6": "Early Years (3-6)",
+                "6-9": "Lower Primary (6-9)", 
+                "9-12": "Upper Primary (9-12)",
+                "12-15": "Adolescent (12-15)",
+                "All Ages": "All Ages"
+            }[x]
+        )
+        
+        # Story development prompts
+        st.markdown("#### Story Development Assistance")
+        
+        cols = st.columns(2)
+        with cols[0]:
+            if st.button("Generate Story Outline", use_container_width=True):
+                if theme:
+                    system_prompt = f"""You are a Montessori Great Story specialist with deep knowledge of cosmic education principles.
+                    
+                    Create an inspiring story outline for the theme: "{theme}"
+                    Target age group: {age_group}
+                    
+                    The outline should:
+                    - Begin with wonder and capture imagination
+                    - Connect to the cosmic story and the child's place in the universe
+                    - Include sensory details and vivid imagery
+                    - Build toward questions for further exploration
+                    - Follow Montessori Great Story principles
+                    - Be developmentally appropriate for {age_group}
+                    
+                    Provide a detailed outline with key story beats and suggested narrative elements."""
+                    
+                    with st.spinner("Generating story outline..."):
+                        response = call_openai_api(
+                            [{"role": "user", "content": f"Create a Great Story outline for: {theme}"}],
+                            system_prompt,
+                            is_student=False
+                        )
+                        st.session_state.story_outline = response
+                        st.markdown(response)
+                else:
+                    st.warning("Please enter a theme or topic first.")
+        
+        with cols[1]:
+            if st.button("Get Story Ideas", use_container_width=True):
+                if theme:
+                    system_prompt = f"""You are a Montessori Great Story specialist.
+                    
+                    Generate creative ideas and angles for developing a Great Story about: "{theme}"
+                    Target age group: {age_group}
+                    
+                    Provide:
+                    - 3-4 different narrative approaches
+                    - Key cosmic connections to emphasize
+                    - Suggested sensory elements and imagery
+                    - Questions to spark further exploration
+                    - Materials or experiences that could accompany the story"""
+                    
+                    with st.spinner("Generating ideas..."):
+                        response = call_openai_api(
+                            [{"role": "user", "content": f"Generate Great Story ideas for: {theme}"}],
+                            system_prompt,
+                            is_student=False
+                        )
+                        st.markdown(response)
+                else:
+                    st.warning("Please enter a theme or topic first.")
+        
+        # Story content area
+        st.markdown("#### Your Story")
+        story_title = st.text_input("Story Title:", value=theme if theme else "")
+        story_content = st.text_area(
+            "Story Content:",
+            height=400,
+            placeholder="Write or paste your Great Story here...\n\nYou can develop it based on the AI suggestions above, or write your own narrative.",
+            value=st.session_state.get('story_outline', '')
+        )
+        
+        # Keywords/tags
+        keywords = st.text_input("Keywords (comma-separated):", placeholder="e.g., water cycle, cosmic, interconnection")
+        
+        # Save button
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if st.button("💾 Save Story", type="primary", use_container_width=True):
+                if story_title and story_content:
+                    db = get_db()
+                    if db and educator_id:
+                        try:
+                            from database import create_great_story
+                            story = create_great_story(
+                                db,
+                                educator_id=educator_id,
+                                title=story_title,
+                                theme=theme,
+                                content=story_content,
+                                age_group=age_group,
+                                keywords=keywords
+                            )
+                            st.success(f"✅ Story '{story_title}' saved successfully!")
+                            st.session_state.story_outline = ''
+                        except Exception as e:
+                            st.error(f"Error saving story: {str(e)}")
+                        finally:
+                            db.close()
+                    else:
+                        st.warning("Cannot save story - database connection required.")
+                else:
+                    st.warning("Please provide both a title and content for your story.")
+        
+        with col2:
+            if st.button("🗑️ Clear", use_container_width=True):
+                st.session_state.story_outline = ''
+                st.rerun()
+    
+    with tab2:
+        st.markdown("#### Your Saved Great Stories")
+        
+        db = get_db()
+        if db and educator_id:
+            try:
+                from database import get_educator_great_stories, delete_great_story
+                stories = get_educator_great_stories(db, educator_id)
+                
+                if stories:
+                    for story in stories:
+                        with st.expander(f"📖 {story.title} ({story.age_group}) - {story.updated_at.strftime('%Y-%m-%d')}"):
+                            st.markdown(f"**Theme:** {story.theme}")
+                            if story.keywords:
+                                st.markdown(f"**Keywords:** {story.keywords}")
+                            st.markdown("**Story Content:**")
+                            st.write(story.content)
+                            
+                            col1, col2, col3 = st.columns([2, 2, 1])
+                            with col1:
+                                if st.button(f"📋 Copy to Clipboard", key=f"copy_{story.id}"):
+                                    st.code(story.content, language=None)
+                            with col2:
+                                if st.button(f"✏️ Edit", key=f"edit_{story.id}"):
+                                    st.info("Switch to 'Create New Story' tab to edit. Copy the content and modify as needed.")
+                            with col3:
+                                if st.button(f"🗑️ Delete", key=f"delete_{story.id}"):
+                                    if delete_great_story(db, story.id):
+                                        st.success("Story deleted!")
+                                        st.rerun()
+                else:
+                    st.info("No saved stories yet. Create your first Great Story in the 'Create New Story' tab!")
+            except Exception as e:
+                st.error(f"Error loading stories: {str(e)}")
+            finally:
+                db.close()
+        else:
+            st.info("Database connection required to view saved stories.")
+
+def show_planning_notes_interface():
+    """Notes and planning workspace for educators"""
+    st.markdown("### 📝 Planning Notes & Workspace")
+    st.markdown("*Your personal workspace for planning, notes, resources, and materials organization*")
+    
+    if not database_available:
+        st.info("Notes will not be saved without database connection. Your notes will be available during this session only.")
+    
+    educator_id = st.session_state.get('user_id')
+    
+    # Tabs for creating new notes and viewing saved notes
+    tab1, tab2 = st.tabs(["📝 Active Workspace", "📂 My Saved Notes"])
+    
+    with tab1:
+        # Note selection or creation
+        st.markdown("#### Select or Create Note")
+        
+        db = get_db()
+        existing_notes = []
+        if db and educator_id:
+            try:
+                from database import get_educator_planning_notes
+                existing_notes = get_educator_planning_notes(db, educator_id)
+            except Exception as e:
+                print(f"Error loading notes: {str(e)}")
+            finally:
+                db.close()
+        
+        # Create new or select existing
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if existing_notes:
+                note_options = ["-- Create New Note --"] + [f"{note.title}" for note in existing_notes]
+                selected_note_name = st.selectbox("Select Note:", note_options)
+                
+                if selected_note_name != "-- Create New Note --":
+                    # Load selected note
+                    selected_note = next((n for n in existing_notes if n.title == selected_note_name), None)
+                    if selected_note:
+                        st.session_state.active_note_id = selected_note.id
+                        st.session_state.note_title = selected_note.title
+                        st.session_state.note_content = selected_note.content
+                        st.session_state.note_materials = selected_note.materials or ""
+                        try:
+                            st.session_state.note_chapters = json.loads(selected_note.chapters) if selected_note.chapters else []
+                        except:
+                            st.session_state.note_chapters = []
+                else:
+                    # New note
+                    st.session_state.active_note_id = None
+                    if 'note_title' not in st.session_state:
+                        st.session_state.note_title = ""
+                    if 'note_content' not in st.session_state:
+                        st.session_state.note_content = ""
+                    if 'note_materials' not in st.session_state:
+                        st.session_state.note_materials = ""
+                    if 'note_chapters' not in st.session_state:
+                        st.session_state.note_chapters = []
+            else:
+                # No existing notes, create new
+                st.session_state.active_note_id = None
+                if 'note_title' not in st.session_state:
+                    st.session_state.note_title = ""
+                if 'note_content' not in st.session_state:
+                    st.session_state.note_content = ""
+                if 'note_materials' not in st.session_state:
+                    st.session_state.note_materials = ""
+                if 'note_chapters' not in st.session_state:
+                    st.session_state.note_chapters = []
+        
+        with col2:
+            if st.button("🆕 New Note", use_container_width=True):
+                st.session_state.active_note_id = None
+                st.session_state.note_title = ""
+                st.session_state.note_content = ""
+                st.session_state.note_materials = ""
+                st.session_state.note_chapters = []
+                st.rerun()
+        
+        # Note title
+        note_title = st.text_input("Note Title:", value=st.session_state.get('note_title', ''), placeholder="e.g., Week 3 Planning, Science Materials List, Great Lessons Preparation")
+        st.session_state.note_title = note_title
+        
+        # Chapter/Section organization
+        st.markdown("#### Chapters/Sections")
+        chapters = st.session_state.get('note_chapters', [])
+        
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            new_chapter = st.text_input("Add Chapter/Section:", placeholder="e.g., Introduction, Week 1, Materials Needed")
+        with col2:
+            if st.button("➕ Add", use_container_width=True):
+                if new_chapter:
+                    chapters.append(new_chapter)
+                    st.session_state.note_chapters = chapters
+                    st.rerun()
+        
+        # Display chapters
+        if chapters:
+            st.markdown("**Current Chapters:**")
+            for idx, chapter in enumerate(chapters):
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.write(f"{idx + 1}. {chapter}")
+                with col2:
+                    if st.button("🗑️", key=f"del_chapter_{idx}"):
+                        chapters.pop(idx)
+                        st.session_state.note_chapters = chapters
+                        st.rerun()
+        
+        # Main content area
+        st.markdown("#### Content")
+        note_content = st.text_area(
+            "Type, paste, or organize your planning content here:",
+            value=st.session_state.get('note_content', ''),
+            height=300,
+            placeholder="Write your notes, paste resources, organize ideas...\n\nYou can structure your content using the chapters above."
+        )
+        st.session_state.note_content = note_content
+        
+        # Materials list
+        st.markdown("#### Materials & Resources")
+        note_materials = st.text_area(
+            "List materials, resources, links, or equipment needed:",
+            value=st.session_state.get('note_materials', ''),
+            height=150,
+            placeholder="• Montessori pink tower\n• Number rods\n• https://example.com/resource\n• Colored pencils"
+        )
+        st.session_state.note_materials = note_materials
+        
+        # Image upload section
+        st.markdown("#### 📷 Images & Visual Resources")
+        uploaded_images = st.file_uploader(
+            "Upload images, diagrams, or visual resources",
+            accept_multiple_files=True,
+            type=['jpg', 'jpeg', 'png', 'gif']
+        )
+        
+        if uploaded_images:
+            st.markdown("**Uploaded Images:**")
+            cols = st.columns(3)
+            for idx, img in enumerate(uploaded_images):
+                with cols[idx % 3]:
+                    st.image(img, caption=img.name, use_container_width=True)
+        
+        # Save button
+        st.markdown("---")
+        col1, col2, col3 = st.columns([2, 2, 1])
+        
+        with col1:
+            if st.button("💾 Save Note", type="primary", use_container_width=True):
+                if note_title:
+                    db = get_db()
+                    if db and educator_id:
+                        try:
+                            from database import create_planning_note, update_planning_note
+                            
+                            chapters_json = json.dumps(chapters) if chapters else None
+                            
+                            if st.session_state.get('active_note_id'):
+                                # Update existing note
+                                update_planning_note(
+                                    db,
+                                    note_id=st.session_state.active_note_id,
+                                    title=note_title,
+                                    content=note_content,
+                                    chapters=chapters_json,
+                                    materials=note_materials
+                                )
+                                st.success(f"✅ Note '{note_title}' updated successfully!")
+                            else:
+                                # Create new note
+                                note = create_planning_note(
+                                    db,
+                                    educator_id=educator_id,
+                                    title=note_title,
+                                    content=note_content,
+                                    chapters=chapters_json,
+                                    materials=note_materials
+                                )
+                                st.session_state.active_note_id = note.id
+                                st.success(f"✅ Note '{note_title}' saved successfully!")
+                        except Exception as e:
+                            st.error(f"Error saving note: {str(e)}")
+                        finally:
+                            db.close()
+                    else:
+                        st.warning("Cannot save note - database connection required.")
+                else:
+                    st.warning("Please provide a title for your note.")
+        
+        with col2:
+            if st.button("📋 Copy All Content", use_container_width=True):
+                full_content = f"# {note_title}\n\n"
+                if chapters:
+                    full_content += "## Chapters\n" + "\n".join([f"{i+1}. {ch}" for i, ch in enumerate(chapters)]) + "\n\n"
+                full_content += "## Content\n" + note_content + "\n\n"
+                if note_materials:
+                    full_content += "## Materials\n" + note_materials
+                st.code(full_content, language=None)
+        
+        with col3:
+            if st.button("🗑️ Clear", use_container_width=True):
+                st.session_state.active_note_id = None
+                st.session_state.note_title = ""
+                st.session_state.note_content = ""
+                st.session_state.note_materials = ""
+                st.session_state.note_chapters = []
+                st.rerun()
+    
+    with tab2:
+        st.markdown("#### Your Saved Planning Notes")
+        
+        db = get_db()
+        if db and educator_id:
+            try:
+                from database import get_educator_planning_notes, delete_planning_note
+                notes = get_educator_planning_notes(db, educator_id)
+                
+                if notes:
+                    for note in notes:
+                        with st.expander(f"📝 {note.title} - {note.updated_at.strftime('%Y-%m-%d %H:%M')}"):
+                            # Display chapters if available
+                            try:
+                                chapters = json.loads(note.chapters) if note.chapters else []
+                                if chapters:
+                                    st.markdown("**Chapters:**")
+                                    for idx, chapter in enumerate(chapters):
+                                        st.write(f"{idx + 1}. {chapter}")
+                                    st.markdown("---")
+                            except:
+                                pass
+                            
+                            # Display content
+                            if note.content:
+                                st.markdown("**Content:**")
+                                st.write(note.content)
+                            
+                            # Display materials
+                            if note.materials:
+                                st.markdown("**Materials:**")
+                                st.write(note.materials)
+                            
+                            # Actions
+                            col1, col2, col3 = st.columns([2, 2, 1])
+                            with col1:
+                                if st.button(f"✏️ Open in Workspace", key=f"open_{note.id}"):
+                                    st.session_state.active_note_id = note.id
+                                    st.session_state.note_title = note.title
+                                    st.session_state.note_content = note.content
+                                    st.session_state.note_materials = note.materials or ""
+                                    try:
+                                        st.session_state.note_chapters = json.loads(note.chapters) if note.chapters else []
+                                    except:
+                                        st.session_state.note_chapters = []
+                                    st.rerun()
+                            with col2:
+                                if st.button(f"📋 Copy Content", key=f"copy_{note.id}"):
+                                    st.code(note.content, language=None)
+                            with col3:
+                                if st.button(f"🗑️ Delete", key=f"delete_{note.id}"):
+                                    if delete_planning_note(db, note.id):
+                                        st.success("Note deleted!")
+                                        st.rerun()
+                else:
+                    st.info("No saved notes yet. Create your first planning note in the 'Active Workspace' tab!")
+            except Exception as e:
+                st.error(f"Error loading notes: {str(e)}")
+            finally:
+                db.close()
+        else:
+            st.info("Database connection required to view saved notes.")
