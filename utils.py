@@ -118,12 +118,28 @@ WHAT I WON'T DO:
     
     return base_prompt + montessori_references
 
-def call_openai_api(messages, max_tokens=1000):
-    """Call OpenAI API with error handling and configurable token limit"""
+def call_openai_api(messages, max_tokens=1000, system_prompt=None, is_student=False, age_group=None):
+    """Call OpenAI API with error handling and configurable token limit
+    
+    Args:
+        messages: List of message dictionaries
+        max_tokens: Maximum tokens for response (default 1000)
+        system_prompt: Optional custom system prompt (if None, uses default Montessori prompt)
+        is_student: Whether this is for a student (affects token limit)
+        age_group: Age group for context (optional)
+    """
     try:
+        # Use custom system prompt if provided, otherwise use default
+        if system_prompt is None:
+            system_prompt = get_montessori_system_prompt()
+        
+        # Adjust max_tokens based on user type if not explicitly set
+        if is_student and max_tokens == 1000:
+            max_tokens = 600
+        
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[{"role": "system", "content": get_montessori_system_prompt()}] + messages,
+            messages=[{"role": "system", "content": system_prompt}] + messages,
             max_tokens=max_tokens,
             temperature=0.7
         )

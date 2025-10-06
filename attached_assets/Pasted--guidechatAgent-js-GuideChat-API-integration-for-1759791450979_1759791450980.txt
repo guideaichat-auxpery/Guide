@@ -1,0 +1,142 @@
+// guidechatAgent.js
+// -------------------------------------------
+// GuideChat API integration for Montessori-aligned educator & student support
+// with dynamic curriculum injection and detailed, ChatGPT-level responses.
+// -------------------------------------------
+
+import OpenAI from "openai";
+import { marked } from "marked";
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// ---- ROLE-BASED SYSTEM PROMPTS ----
+// These define how the AI behaves depending on whether it's guiding a teacher or a student.
+const systemPrompts = {
+  educator: `
+You are GuideChat, an advanced AI assistant for educators.
+You help teachers design lessons, assessments, and scaffolds aligned with:
+- Montessori National Curriculum of Australia
+- Maria Montessori’s philosophy of self-directed learning and observation
+- Australian Curriculum Version 9
+
+When responding:
+1. Provide detailed lesson ideas and differentiation strategies.
+2. Explain the pedagogical reasoning behind each suggestion.
+3. Include curriculum alignment (specific strands / outcomes).
+4. Suggest assessment methods and reflection prompts.
+5. Keep tone professional, supportive, and grounded in Montessori principles.
+
+Always explain *why* each suggestion fits Montessori principles.
+Use clear headings, bullet points, and practical classroom examples.
+`,
+
+  student: `
+You are GuideChat, a supportive AI mentor for students.
+Your goal is to help learners think critically and independently.
+Provide **scaffolded guidance**, not full answers.
+Encourage curiosity and reflection.
+
+When helping:
+- Offer hints, questions, or examples that lead to discovery.
+- Connect learning to Montessori materials or real-life experiences.
+- Avoid giving full completed responses.
+- End with one reflective question to encourage deeper thought.
+
+Use a warm, encouraging tone.
+`,
+};
+
+// ---- IN-MEMORY CONVERSATION STORAGE ----
+// In production, you could tie this to user sessions (Redis, DB, etc.)
+let conversationHistory = [];
+
+function addMessage(role, content) {
+  conversationHistory.push({ role, content });
+
+  // Keep history short enough to control token usage
+  if (conversationHistory.length > 10) {
+    conversationHistory.shift();
+  }
+}
+
+// ---- DYNAMIC CURRICULUM FETCHER (Simulated) ----
+// In a real system, this might query a local DB or external curriculum API.
+async function fetchCurriculumSection(subject, yearLevel) {
+  // Simulate a dynamic fetch – replace with actual DB/API call if available.
+  const curriculumSnippets = {
+    Science: {
+      "Year 3": `
+Australian Curriculum V9 — Science (Year 3)
+Strand: Physical Sciences
+Focus: Forces and motion
+Descriptor: "Explore how contact and non-contact forces cause changes in the motion and shape of objects."
+Elaboration: "Students investigate push and pull forces using everyday materials and Montessori apparatus such as weights and ramps."
+`,
+    },
+    English: {
+      "Year 2": `
+Australian Curriculum V9 — English (Year 2)
+Strand: Writing
+Focus: Narrative structure
+Descriptor: "Create short imaginative texts that include characters, settings, and key events."
+Elaboration: "Students plan, draft, and publish narratives using Montessori movable alphabets and storytelling materials."
+`,
+    },
+  };
+
+  return (
+    curriculumSnippets[subject]?.[yearLevel] ||
+    `Curriculum context not found for ${subject}, ${yearLevel}.`
+  );
+}
+
+// ---- MAIN COMPLETION FUNCTION ----
+export async function guidechatReply(
+  userInput,
+  userRole = "student",
+  subject = "",
+  yearLevel = ""
+) {
+  try {
+    const systemPrompt = systemPrompts[userRole] || systemPrompts.student;
+
+    // Dynamically fetch Montessori / Curriculum snippet
+    let curriculumContext = "";
+    if (subject && yearLevel) {
+      curriculumContext = await fetchCurriculumSection(subject, yearLevel);
+    }
+
+    // Add the latest user input to the rolling history
+    addMessage("user", userInput);
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini", // can also use gpt-4-turbo if available
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...conversationHistory,
+        {
+          role: "user",
+          content: `
+${curriculumContext ? "Curriculum Context:\n" + curriculumContext + "\n\n" : ""}
+${userInput}
+          `,
+        },
+      ],
+      temperature: 0.75, // balanced creativity
+      max_tokens: 3000,  // 🔥 expanded for ChatGPT-level detail
+      presence_penalty: 0.3,
+      frequency_penalty: 0.2,
+    });
+
+    const aiMessage = response.choices[0].message.content;
+    addMessage("assistant", aiMessage);
+
+    // Render markdown for structured output
+    return marked.parse(aiMessage);
+  } catch (err) {
+    console.error("GuideChat Error:", err);
+    return "⚠️ Sorry, something went wrong while generating a detailed response. Please try again.";
+  }
+}

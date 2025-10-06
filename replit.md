@@ -37,6 +37,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Curriculum Document Upload**: Allows custom curriculum content for enhanced AI responses.
 - **Comprehensive Curriculum Integration**: Embeds official Australian Curriculum V9 (including Cross-Curriculum Priorities and General Capabilities) and Montessori National Curriculum (2011).
 - **Scope & Sequence Creation**: Supports AC V9, MNC, or blended approaches, with cosmic education priority.
+- **Great Story Creator**: AI-assisted Montessori Great Story development with theme-based creation, age-appropriate targeting, story outlines, and narrative suggestions. Persistent storage tied to educator accounts.
+- **Planning Notes Workspace**: Comprehensive word processor-style planning tool with chapter/section organization, materials management, image upload support, and persistent storage.
+- **Educator Observation Dashboard**: Student activity tracking system with multi-educator access control, activity timelines, engagement metrics, and real-time updates.
 - **Learning Invitations & Connections**: Tool for creating and curating learning experiences.
 - **Learning Threads & Patterns**: Interconnected topic mapping.
 - **Family & Community Connection**: Facilitates parent communication with a cosmic perspective.
@@ -75,6 +78,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Montessori Curriculum Australia**: Refers to the broader child-centered educational methodology and developmental stages.
 
 # Recent Changes
+
+## October 6, 2025 - Great Stories & Planning Notes System
+- **Montessori Great Story Creator**: AI-assisted cosmic education story development tool with theme-based creation, age-appropriate targeting, and persistent storage
+- **Planning Notes Workspace**: Comprehensive planning workspace with chapter organization, materials management, image upload support, and word processor functionality
+- **Educator Observation System**: Complete student activity tracking with multi-educator access control, activity timelines, and engagement metrics
+- **Database Enhancements**: Added GreatStory and PlanningNote models with full CRUD operations
+- **Navigation Improvements**: Streamlined educator dashboard with dedicated sections for Great Stories and Planning Notes
+- **Code Optimization**: Fixed import errors, updated API call structure, and improved error handling
 
 ## September 10, 2025 - Complete Montessori Reference Database Integration
 - **Complete Integration**: Successfully integrated all three foundational Montessori texts into the curriculum reference database:
