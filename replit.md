@@ -18,8 +18,11 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 
 ## Backend Architecture
 - **Core Logic**: Single-file Python application (`app.py`) with modular functions.
-- **AI Integration**: OpenAI API client (GPT-4o) for natural language processing.
-- **Prompt Engineering**: Dynamic system prompts based on selected curriculum framework.
+- **AI Integration**: OpenAI API client (GPT-4o-mini) for natural language processing with enhanced parameters.
+- **Prompt Engineering**: Dynamic system prompts based on selected curriculum framework with role-based optimization.
+- **Conversation History**: Intelligent 10-message rolling history management for multi-turn conversations.
+- **Curriculum Context Injection**: Dynamic Australian Curriculum V9 context fetching by subject and year level.
+- **Token Optimization**: Enhanced token limits (3000 for educators, 800 for students) for ChatGPT-level detailed responses.
 - **File Processing**: Supports `.txt`, `.csv`, `.pdf`, `.docx`, images, audio, and presentation files.
 
 ## Data Management
@@ -78,6 +81,15 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Montessori Curriculum Australia**: Refers to the broader child-centered educational methodology and developmental stages.
 
 # Recent Changes
+
+## October 6, 2025 - Enhanced AI Chat System with Curriculum Context
+- **Conversation History Management**: Intelligent rolling history (last 10 exchanges) for natural multi-turn conversations across all chat interfaces
+- **Curriculum Context Injection**: Dynamic AC V9 content descriptor fetching by subject (Science, Mathematics, English) and year level (Years 1-6)
+- **Enhanced Token Limits**: Increased to 3000 tokens for educators and 800 for students, enabling ChatGPT-level detailed responses
+- **Improved System Prompts**: Role-based prompts for educators and students based on GuideChat implementation with structured, detailed guidance
+- **Enhanced API Parameters**: Temperature (0.75), presence penalty (0.3), and frequency penalty (0.2) for balanced, diverse responses
+- **Student Curriculum Selector**: Optional subject/year level selector in student interface for curriculum-aligned learning support
+- **Montessori Integration**: All curriculum contexts include Montessori material connections and cosmic education links
 
 ## October 6, 2025 - Great Stories & Planning Notes System
 - **Montessori Great Story Creator**: AI-assisted cosmic education story development tool with theme-based creation, age-appropriate targeting, and persistent storage
