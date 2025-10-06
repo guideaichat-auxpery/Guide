@@ -19,7 +19,18 @@ database_status_message = ""
 
 if DATABASE_URL:
     try:
-        engine = create_engine(DATABASE_URL)
+        # Configure engine with connection pooling and SSL settings
+        engine = create_engine(
+            DATABASE_URL,
+            pool_pre_ping=True,  # Test connections before using them
+            pool_recycle=3600,   # Recycle connections after 1 hour
+            pool_size=5,         # Limit pool size
+            max_overflow=10,     # Allow overflow connections
+            connect_args={
+                "sslmode": "require",  # Require SSL but don't verify certificate
+                "connect_timeout": 10
+            }
+        )
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         database_available = True
         database_status_message = "Database connected successfully."
@@ -177,12 +188,39 @@ def create_tables():
     """Create all database tables with error handling"""
     if not engine:
         return False
+    
+    # Use Streamlit's session state to cache initialization
     try:
-        Base.metadata.create_all(bind=engine)
+        import streamlit as st
+        if 'db_initialized' in st.session_state and st.session_state.db_initialized:
+            return True
+    except:
+        pass
+    
+    try:
+        # Create a fresh connection for initialization
+        with engine.connect() as conn:
+            Base.metadata.create_all(bind=engine)
+        
+        # Cache success in session state
+        try:
+            import streamlit as st
+            st.session_state.db_initialized = True
+        except:
+            pass
+        
         return True
     except Exception as e:
         # Log to console for debugging, don't expose details to users
         print(f"Database initialization error: {str(e)}")
+        
+        # Cache failure to avoid repeated attempts
+        try:
+            import streamlit as st
+            st.session_state.db_initialized = False
+        except:
+            pass
+        
         return False
 
 def get_db():
