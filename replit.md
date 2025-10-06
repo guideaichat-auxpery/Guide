@@ -27,8 +27,11 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 
 ## Data Management
 - **Session State**: In-memory storage for current session data.
+- **Database Persistence**: PostgreSQL database for storing conversation history, educator analytics, student activities, great stories, planning notes, and curriculum contexts.
+- **Conversation Persistence**: Session-based conversation history stored in database, loaded on session start for continuity.
+- **Analytics Tracking**: Comprehensive logging of educator prompts, token usage, subjects, and timestamps for usage insights.
 - **File Handling**: Upload and processing of various file types for AI integration and portfolio.
-- **Data Persistence**: Session-based (non-persistent across browser sessions).
+- **Export Capabilities**: Lesson plan export to PDF and DOCX formats with custom Montessori-themed templates.
 
 ## Authentication & Security
 - **API Security**: Environment variable-based OpenAI API key management.
@@ -90,6 +93,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Enhanced API Parameters**: Temperature (0.75), presence penalty (0.3), and frequency penalty (0.2) for balanced, diverse responses
 - **Student Curriculum Selector**: Optional subject/year level selector in student interface for curriculum-aligned learning support
 - **Montessori Integration**: All curriculum contexts include Montessori material connections and cosmic education links
+
+## October 6, 2025 - Conversation Persistence, Analytics & Export System
+- **Session-Based Conversation Persistence**: All chat conversations (companion and student) now persist in PostgreSQL database, maintaining history across page refreshes
+- **Educator Analytics Dashboard**: Comprehensive logging system tracking all educator prompts, subjects, year levels, token usage, and timestamps for usage analysis
+- **Curriculum Context Database**: Moved Australian Curriculum V9 contexts from static code to database tables with full CRUD operations (currently uses static fallback with database integration ready)
+- **Lesson Plan Export**: PDF and DOCX export functionality for lesson plans using reportlab and python-docx with custom templates and Montessori-themed formatting
+- **Database Models**: Added ConversationHistory, EducatorAnalytics, and CurriculumContext tables with complete CRUD functions
+- **Enhanced Data Persistence**: Conversation loading on session start, token estimation for analytics, and multi-format export capabilities
 
 ## October 6, 2025 - Great Stories & Planning Notes System
 - **Montessori Great Story Creator**: AI-assisted cosmic education story development tool with theme-based creation, age-appropriate targeting, and persistent storage
