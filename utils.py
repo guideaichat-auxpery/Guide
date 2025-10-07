@@ -514,11 +514,26 @@ AUSTRALIAN CONTEXTUAL DEPTH:
 MANDATORY RESPONSE STRUCTURE:
 ═══════════════════════════════════════════════════════════════════
 
-**🔥 Provocation (Australian Context)**
-[REQUIRED: Authentic quote, statistic, news headline, scenario, or DILEMMA from Australian life/culture/current affairs that creates intellectual tension. Must be specific, verifiable, and frame a real TENSION or PROBLEM with competing values. Not generic topics.]
-Examples:
-- "Australia's cities keep growing — but at what cost to the country that sustains them?"
-- "A local Indigenous group reclaims land for cultural preservation. How should governments respond?"
+**🔥 Provocation & Environmental Setup (Australian Context)**
+[REQUIRED: Create rich intellectual and emotional context with LAYERED SOPHISTICATION. This is not just a hook — it's the foundation for deep inquiry.
+
+STRUCTURE:
+1. **Opening Hook**: Authentic quote, statistic, news headline, or scenario from Australian life (specific, verifiable, recent)
+2. **Contextual Complexity**: Add 2-3 sentences revealing the TENSIONS, COMPETING VALUES, or PARADOXES at play
+3. **Intellectual Framing**: Surface the philosophical/ethical/civic dilemma — show why this matters and why simple answers fail
+
+AVOID simple scenarios or single-perspective framing.
+INSTEAD use MULTI-LAYERED provocations that reveal complexity:
+
+WEAK EXAMPLE: "Many species are going extinct due to habitat loss."
+STRONG EXAMPLE: "Australia leads the world in mammal extinctions — yet we're also a major coal exporter fueling global climate instability. Indigenous rangers protect biodiversity on less than 3% of funding that goes to extractive industries. We ask: Who bears responsibility for extinction — individuals making consumption choices, corporations pursuing profit, or governments balancing economic growth with ecological survival? When these three point fingers at each other, ecosystems continue to collapse. Can a nation built on resource extraction become a leader in ecological restoration — or must we choose?"
+
+Your provocation must:
+- Be rooted in REAL Australian contexts (cite sources, dates, specific places)
+- Reveal COMPETING LEGITIMATE VALUES (not good vs. evil)
+- Show SYSTEMIC COMPLEXITY (interconnected causes, no simple fixes)
+- Create INTELLECTUAL DISCOMFORT (challenge assumptions, surface contradictions)
+- Connect to ADOLESCENT CONCERNS (identity, justice, future, purpose)]
 
 **❓ Big Question (Framed as Dilemma/Tension)**
 [REQUIRED: Open-ended question with NO simple answer that frames a DILEMMA or TENSION. Must demand ethical/philosophical/civic reasoning, multiple perspectives, and genuine debate. NOT "What is X?" but "Who decides? Who benefits? When should we prioritize X over Y?"]
@@ -527,12 +542,22 @@ Examples:
 [REQUIRED: Complex, AUTHENTIC task requiring research, analysis, creation, or argumentation with REAL-WORLD purpose. Must demand higher-order thinking (synthesize, evaluate, design, defend, create). Should involve sustained engagement over days/weeks, not 10 minutes. Encourage: projects, enterprises, debates, community investigations, artistic expression, or social action.]
 
 **🔀 Exploration Pathways (Multiple Perspectives)**
-[REQUIRED: 3-4 genuinely different avenues representing diverse lenses:
-- Pathway 1: [e.g., Environmental/ecological lens]
-- Pathway 2: [e.g., Social justice/equity lens]
-- Pathway 3: [e.g., Economic/practical lens]
-- Pathway 4: [e.g., Cultural/spiritual lens]
-Each pathway must represent a legitimate but different worldview or analytical frame.]
+[REQUIRED: 3-4 genuinely different avenues representing diverse lenses. Frame as SOPHISTICATED INQUIRY LINES with dilemmas/tensions, NOT simple "What/How" questions.
+
+AVOID: "How do narratives shape our understanding?" or "What are the impacts of X?"
+INSTEAD: Frame as philosophical tensions, ethical trade-offs, or competing priorities:
+
+Example for interdisciplinary inquiry:
+- **Literary/Narrative Lens**: "When environmental narratives become mainstream entertainment, do they mobilize action or commodify crisis? Who profits from 'eco-stories'?"
+- **Geographic/Systems Lens**: "Can we pursue economic growth and ecosystem restoration simultaneously — or must we choose? Who gets to decide what 'sustainable development' means?"
+- **Economic/Market Lens**: "If ethical consumption becomes a luxury good, does the market reward virtue or deepen inequality? When does individual choice matter, and when is systemic change required?"
+- **Design/Innovation Lens**: "Does technological innovation solve environmental problems or create new dependencies? When should we design less rather than design better?"
+
+Each pathway must:
+- Frame a DILEMMA or TENSION (not just a topic area)
+- Demand ethical/philosophical reasoning
+- Challenge assumptions
+- Represent a genuinely different analytical frame or worldview]
 
 **👀 Educator Observation Prompts**
 [REQUIRED: What to notice in student thinking - look for evidence of ethical reasoning, perspective-taking, systems thinking, respectful disagreement, evolving understanding]
