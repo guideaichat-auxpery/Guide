@@ -1294,9 +1294,9 @@ def estimate_tokens(text):
 
 # ---- CURRICULUM KEYWORD TRACKING SYSTEM ----
 
-def extract_curriculum_keywords(user_message):
+def detect_trending_keywords(user_message):
     """
-    Extract curriculum keywords from user message.
+    Extract curriculum keywords from user message for trending topic tracking.
     Returns list of {subject, keyword} dictionaries.
     Uses case-insensitive word boundary matching.
     """

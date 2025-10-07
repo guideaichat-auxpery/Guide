@@ -182,7 +182,7 @@ YOU MUST REFERENCE this document in your response with specific quotes, AC V9 co
 """
         
         # Load Montessori literature references
-        from utils import load_montessori_own_handbook, load_the_absorbent_mind, load_the_montessori_method
+        from utils import load_montessori_own_handbook, load_the_absorbent_mind, load_the_montessori_method, map_age_to_year_levels
         montessori_refs = ""
         
         handbook = load_montessori_own_handbook()
@@ -196,6 +196,10 @@ YOU MUST REFERENCE this document in your response with specific quotes, AC V9 co
         method = load_the_montessori_method()
         if method and len(method) > 100:
             montessori_refs += f"\n\nMONTESSORI REFERENCE - The Montessori Method:\n{method[:1000]}...\n"
+        
+        # Get year levels for age group
+        year_levels = map_age_to_year_levels(age_group)
+        year_levels_str = ", ".join(year_levels) if year_levels else "General"
         
         # Enhanced system prompt with document emphasis
         system_prompt = f"""You are GuideChat, an advanced AI planning assistant for educators.
@@ -800,8 +804,8 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
             st.markdown(prompt)
         
         # Extract curriculum keywords from student query
-        from utils import extract_curriculum_keywords, update_trending_keywords
-        detected_keywords = extract_curriculum_keywords(prompt)
+        from utils import detect_trending_keywords, update_trending_keywords
+        detected_keywords = detect_trending_keywords(prompt)
         
         # Save and log the student's prompt with keyword tracking
         if database_available and student_id:

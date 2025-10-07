@@ -430,7 +430,7 @@ def delete_student(db, student_id: int):
         db.query(EducatorStudentAccess).filter(EducatorStudentAccess.student_id == student_id).delete()
         
         # Delete conversation messages
-        db.query(ConversationMessage).filter(ConversationMessage.student_id == student_id).delete()
+        db.query(ConversationHistory).filter(ConversationHistory.student_id == student_id).delete()
         
         # Delete the student (activities will cascade delete automatically)
         db.delete(student)
