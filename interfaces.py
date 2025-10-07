@@ -404,12 +404,12 @@ Be thorough, specific, and reference actual content from the uploaded documents.
     
     return review_response
 
-def generate_student_work_feedback(uploaded_files, rubric_file, age_group, subjects, student_name):
+def generate_student_work_feedback(uploaded_files, rubric_file, year_level, subjects, student_name):
     """
     Generate constructive feedback on student uploaded work using AI.
     References rubric if provided.
     """
-    from utils import call_openai_api, get_primary_year_level
+    from utils import call_openai_api
     
     # Extract student work content
     work_content = ""
@@ -442,14 +442,11 @@ YOU MUST reference this rubric in your feedback, assessing the student's work ag
 ═══════════════════════════════════════════════════════════════════
 """
     
-    # Get year level for age-appropriate feedback
-    target_year_level = get_primary_year_level(age_group)
-    
     # Build feedback prompt
     feedback_prompt = f"""You are a supportive Montessori educator providing constructive feedback on student work.
 
 STUDENT: {student_name}
-AGE GROUP: {age_group} ({target_year_level})
+YEAR LEVEL: {year_level}
 SUBJECTS: {', '.join(subjects) if subjects else 'General'}
 
 {rubric_content}
@@ -478,7 +475,7 @@ For EACH criterion in the rubric:
 Suggest 1-2 concrete actions the student can take to improve this work or build on these skills.
 
 IMPORTANT GUIDELINES:
-- Use age-appropriate language for {target_year_level}
+- Use age-appropriate language for {year_level}
 - Be encouraging and growth-focused (Montessori approach)
 - Provide specific examples from the student's work
 - Ask guiding questions rather than giving all answers
@@ -492,7 +489,7 @@ IMPORTANT GUIDELINES:
     feedback_response = call_openai_api(
         messages=feedback_messages,
         is_student=True,
-        age_group=age_group,
+        year_level=year_level,
         subjects=subjects,
         curriculum_type="Blended",
         use_conversation_history=False
@@ -680,36 +677,23 @@ def show_student_interface():
     st.markdown("*Your Montessori Learning Companion - Ask questions, explore ideas, discover connections*")
     
     # Enhanced learning context selector with age-appropriate subjects
-    from utils import map_age_to_year_levels
     
     with st.expander("📚 Set Learning Context (Optional)", expanded=False):
-        # Age group selector
-        student_age_group = st.selectbox(
-            "Your Age Group:",
-            ["3-6", "6-9", "9-12", "12-15"],
-            index=3 if age_group == "12-15" else (2 if age_group == "9-12" else (1 if age_group == "6-9" else 0)),
-            key="student_age_selector",
-            format_func=lambda x: {
-                "3-6": "Early Years (3-6) → Foundation",
-                "6-9": "Lower Primary (6-9) → Years 1-3", 
-                "9-12": "Upper Primary (9-12) → Years 4-6",
-                "12-15": "Adolescent (12-15) → Years 7-9"
-            }[x]
+        # Year level selector (Year 6-9)
+        student_year_level = st.selectbox(
+            "Your Year Level:",
+            ["Year 6", "Year 7", "Year 8", "Year 9"],
+            index=0,
+            key="student_year_selector"
         )
         
-        # Display year level mapping
-        year_levels = map_age_to_year_levels(student_age_group)
-        if year_levels:
-            year_levels_str = ", ".join(year_levels)
-            st.caption(f"🎯 Australian Curriculum Year Levels: **{year_levels_str}**")
-        
-        # Age-appropriate subject selector
-        if student_age_group in ["3-6", "6-9", "9-12"]:
-            # Foundation to Year 6: Use HASS
+        # Determine subject options based on year level
+        if student_year_level == "Year 6":
+            # Year 6: Use HASS
             subject_options = ["English", "Mathematics", "Science", "HASS (Humanities and Social Sciences)", 
                               "Design and Technologies", "Digital Technologies", "The Arts", 
                               "Health and Physical Education", "Languages"]
-        else:  # 12-15 (Years 7-9)
+        else:  # Years 7-9
             # Years 7-9: Use separate humanities subjects
             subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
                               "Business and Economics", "Civics and Citizenship",
@@ -753,7 +737,7 @@ def show_student_interface():
                 feedback = generate_student_work_feedback(
                     uploaded_files=student_uploaded_files,
                     rubric_file=rubric_file,
-                    age_group=st.session_state.get('student_age_selector', age_group),
+                    year_level=st.session_state.get('student_year_selector', 'Year 6'),
                     subjects=st.session_state.get('student_subjects', []),
                     student_name=student_name
                 )
@@ -834,17 +818,17 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
                 finally:
                     db.close()
         
-        # Get selected subjects and age group
+        # Get selected subjects and year level
         selected_subjects = st.session_state.get('student_subjects', [])
-        selected_age_group = st.session_state.get('student_age_selector', age_group)
+        selected_year_level = st.session_state.get('student_year_selector', 'Year 6')
         
-        # Get AI response with enhanced features and intelligent year level inference
+        # Get AI response with enhanced features and curriculum alignment
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 response = call_openai_api(
                     st.session_state.student_messages,
                     is_student=True,
-                    age_group=selected_age_group,
+                    year_level=selected_year_level,
                     subjects=selected_subjects if selected_subjects else None,
                     curriculum_type="Blended",
                     use_conversation_history=True
