@@ -46,7 +46,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Collaboration**: Team Collaboration Hub for shared resources.
 - **Accessibility**: Universal Design for Learning interface with comprehensive customization.
 - **Mathematics Hub**: Dedicated tools for cosmic math connections and inquiry-driven approaches.
-- **Provocational Framework**: AI responses must self-assess against a 9-point checklist, including mandatory AC V9 codes, General Capabilities, First Nations perspectives, and Montessori third-plane alignment.
+- **Provocational Framework**: Expert-informed design emphasizing adolescent sophistication - responses must frame dilemmas/tensions (not just topics), begin with real Australian provocations, use mature philosophical tone, expect autonomy/real-world engagement, avoid childish activities for adolescents, and self-assess against a 10-point checklist including AC V9 codes, General Capabilities, First Nations perspectives, and Montessori third-plane alignment.
 
 # External Dependencies
 
