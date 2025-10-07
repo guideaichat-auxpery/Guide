@@ -404,6 +404,102 @@ Be thorough, specific, and reference actual content from the uploaded documents.
     
     return review_response
 
+def generate_student_work_feedback(uploaded_files, rubric_file, age_group, subjects, student_name):
+    """
+    Generate constructive feedback on student uploaded work using AI.
+    References rubric if provided.
+    """
+    from utils import call_openai_api, get_primary_year_level
+    
+    # Extract student work content
+    work_content = ""
+    for file in uploaded_files:
+        file_content = extract_file_content(file)
+        if file_content:
+            work_content += f"""
+═══════════════════════════════════════════════════════════════════
+📄 STUDENT WORK FILE: {file.name}
+═══════════════════════════════════════════════════════════════════
+{file_content}
+
+"""
+    
+    if not work_content:
+        return "⚠️ Unable to extract content from your uploaded files. Please try different files."
+    
+    # Extract rubric content if provided
+    rubric_content = ""
+    if rubric_file:
+        rubric_text = extract_file_content(rubric_file)
+        if rubric_text:
+            rubric_content = f"""
+═══════════════════════════════════════════════════════════════════
+📋 ASSESSMENT RUBRIC/MARKING CRITERIA: {rubric_file.name}
+═══════════════════════════════════════════════════════════════════
+{rubric_text}
+
+YOU MUST reference this rubric in your feedback, assessing the student's work against each criterion.
+═══════════════════════════════════════════════════════════════════
+"""
+    
+    # Get year level for age-appropriate feedback
+    target_year_level = get_primary_year_level(age_group)
+    
+    # Build feedback prompt
+    feedback_prompt = f"""You are a supportive Montessori educator providing constructive feedback on student work.
+
+STUDENT: {student_name}
+AGE GROUP: {age_group} ({target_year_level})
+SUBJECTS: {', '.join(subjects) if subjects else 'General'}
+
+{rubric_content}
+
+STUDENT'S SUBMITTED WORK:
+{work_content}
+
+PROVIDE CONSTRUCTIVE FEEDBACK WITH:
+
+### 🌟 Strengths
+Identify 2-3 specific things the student did well. Quote directly from their work.
+
+### 💡 Areas for Growth
+Provide 2-3 specific, actionable suggestions for improvement:
+- What to focus on next
+- How to develop their thinking/skills further
+- Questions to deepen understanding
+
+{f'''### 📋 Rubric Assessment
+For EACH criterion in the rubric:
+- State the criterion
+- Explain how the student's work meets/doesn't meet it (with specific examples)
+- Provide guidance on how to better meet the criterion''' if rubric_content else ''}
+
+### 🎯 Next Steps
+Suggest 1-2 concrete actions the student can take to improve this work or build on these skills.
+
+IMPORTANT GUIDELINES:
+- Use age-appropriate language for {target_year_level}
+- Be encouraging and growth-focused (Montessori approach)
+- Provide specific examples from the student's work
+- Ask guiding questions rather than giving all answers
+- {f'MUST reference the uploaded rubric criteria' if rubric_content else 'Focus on learning process and skill development'}
+- Avoid generic praise - be specific and meaningful
+- Frame feedback as opportunities for growth, not deficiencies"""
+    
+    # Generate feedback using AI
+    feedback_messages = [{"role": "user", "content": feedback_prompt}]
+    
+    feedback_response = call_openai_api(
+        messages=feedback_messages,
+        is_student=True,
+        age_group=age_group,
+        subjects=subjects,
+        curriculum_type="Blended",
+        use_conversation_history=False
+    )
+    
+    return feedback_response
+
 def extract_file_content(file):
     """Extract text content from uploaded files"""
     try:
@@ -630,12 +726,46 @@ def show_student_interface():
     
     # File upload section for student work
     st.markdown("#### 📄 Upload Your Work for Help (Optional)")
-    student_uploaded_files = st.file_uploader(
-        "Upload homework, notes, or questions you need help with",
-        accept_multiple_files=True,
-        type=['txt', 'pdf', 'docx', 'doc', 'jpg', 'jpeg', 'png'],
-        key="student_file_uploader"
-    )
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        student_uploaded_files = st.file_uploader(
+            "Upload your work (homework, assignments, etc.)",
+            accept_multiple_files=True,
+            type=['txt', 'pdf', 'docx', 'doc', 'jpg', 'jpeg', 'png'],
+            key="student_file_uploader"
+        )
+    
+    with col2:
+        rubric_file = st.file_uploader(
+            "Upload rubric/marking criteria (optional)",
+            accept_multiple_files=False,
+            type=['txt', 'pdf', 'docx', 'doc'],
+            key="student_rubric_uploader"
+        )
+    
+    # Show review button when work is uploaded
+    if student_uploaded_files:
+        st.markdown("---")
+        if st.button("🎯 Review for Constructive Feedback", type="primary", use_container_width=True):
+            with st.spinner("📚 Analyzing your work and preparing feedback..."):
+                feedback = generate_student_work_feedback(
+                    uploaded_files=student_uploaded_files,
+                    rubric_file=rubric_file,
+                    age_group=st.session_state.get('student_age_selector', age_group),
+                    subjects=st.session_state.get('student_subjects', []),
+                    student_name=student_name
+                )
+                
+                # Display feedback
+                if feedback:
+                    st.session_state.student_messages.append({
+                        "role": "assistant",
+                        "content": feedback
+                    })
+                    st.rerun()
+        st.markdown("---")
     
     # Manage conversation history (keep last 10 exchanges)
     st.session_state.student_messages = manage_conversation_history(
