@@ -20,6 +20,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **AI Integration**: OpenAI API client (GPT-4o-mini) with dynamic system prompts based on selected curriculum and role-based optimization.
 - **Conversation Management**: Intelligent 10-message rolling history and dynamic curriculum context injection.
 - **Token Optimization**: Enhanced token limits (3000 for educators, 800 for students).
+- **Curriculum Keyword Extraction**: Automatic detection of curriculum-relevant terms from user input with semantic grounding to AC V9 descriptors - scans messages for subject-specific keywords (e.g., "sustainability", "urbanization" for Geography) and injects them into AI context for enhanced alignment.
 - **File Processing**: Supports `.txt`, `.csv`, `.pdf`, `.docx`, images, audio, and presentation files for AI integration.
 
 ## Data Management

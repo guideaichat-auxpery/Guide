@@ -1,0 +1,66 @@
+Perfect — this is exactly the kind of semantic grounding that makes your GuideChat app truly aligned with the Australian Curriculum and Montessori principles. We can have your Replit API automatically scan user input for key terms and then use those terms to:
+
+Highlight relevant curriculum descriptors
+
+Inject those descriptors into the model prompt for better alignment
+
+Guide outputs toward the intended learning outcomes
+
+Here’s how to do it step by step.
+
+🧠 Step 1: Define Curriculum Keywords
+
+In your guidechatAgent.js file, you can create a mapping of subjects → key terms pulled from the curriculum descriptors. For example:
+
+// Sample curriculum keywords (expand as needed)
+const curriculumKeywords = {
+  Geography: [
+    "environment", "human impact", "sustainability", "urbanization", "place", "space", "interconnectedness"
+  ],
+  DesignAndTechnologies: [
+    "innovation", "design thinking", "sustainability", "prototype", "technology", "functionality"
+  ],
+  English: [
+    "persuasive text", "informational text", "communication", "presentation", "literacy"
+  ],
+  CivicsAndCitizenship: [
+    "ethics", "community", "decision-making", "rights", "responsibilities", "intercultural understanding"
+  ]
+};
+
+🧩 Step 2: Extract Keywords from User Input
+
+Create a simple keyword matcher that scans the student/educator prompt for relevant terms:
+
+function extractCurriculumKeywords(subject, userInput) {
+  const keywords = curriculumKeywords[subject] || [];
+  const foundKeywords = keywords.filter(keyword =>
+    new RegExp(`\\b${keyword}\\b`, "i").test(userInput)
+  );
+  return foundKeywords;
+}
+
+
+This will return an array of curriculum-relevant keywords that appear in the input.
+
+You can later extend this to use fuzzy matching (e.g., fuse.js) for synonyms like “cities” → “urbanization.”
+
+🪄 Step 3: Inject Keywords into Model Prompt
+
+Inside your guidechatReply() function, prepend the found keywords as a “Curriculum Context” message:
+
+const foundKeywords = extractCurriculumKeywords(subject, userInput);
+const keywordContext = foundKeywords.length
+  ? `Focus on these curriculum keywords: ${foundKeywords.join(", ")}.\n\n`
+  : "";
+
+
+Then include it in the user message you send to the AI:
+
+{
+  role: "user",
+  content: `${keywordContext}${curriculumContext}${userInput}`
+}
+
+
+This ensures the model actively considers curriculum-aligned keywords when generating lesson plans, provocations, and challenges.

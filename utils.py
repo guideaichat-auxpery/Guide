@@ -3,6 +3,97 @@ import os
 from openai import OpenAI
 from datetime import datetime
 import json
+import re
+
+# ---- CURRICULUM KEYWORD MAPPING ----
+# Maps subjects to key curriculum terms from AC V9 descriptors
+CURRICULUM_KEYWORDS = {
+    "Geography": [
+        "environment", "environmental", "human impact", "sustainability", "sustainable",
+        "urbanization", "urbanisation", "place", "space", "interconnectedness", "interconnected",
+        "landforms", "landscapes", "biomes", "ecosystems", "migration", "food security",
+        "climate", "water", "liveability", "geographical processes", "human-environment"
+    ],
+    "History": [
+        "ancient", "civilisation", "civilization", "heritage", "continuity", "change",
+        "historical", "colonisation", "colonization", "federation", "industrial revolution",
+        "indigenous", "First Nations", "Aboriginal", "Torres Strait Islander", "significance",
+        "cause", "effect", "identity", "cultural exchange", "society", "social groups"
+    ],
+    "Business and Economics": [
+        "innovation", "design thinking", "prototype", "technology", "functionality",
+        "economic", "market", "markets", "consumer", "business", "entrepreneurship", "enterprise",
+        "resource allocation", "decision-making", "trade", "interdependent", "financial",
+        "workplace", "employment", "ethical considerations", "rights", "responsibilities"
+    ],
+    "Civics and Citizenship": [
+        "ethics", "ethical", "community", "decision-making", "rights", "responsibilities",
+        "intercultural understanding", "democracy", "democratic", "government", "constitution",
+        "law", "laws", "justice", "citizenship", "political", "participation", "values",
+        "media", "interest groups", "voting", "elections", "representation", "indigenous governance"
+    ],
+    "English": [
+        "persuasive", "informational", "narrative", "communication", "presentation", "literacy",
+        "text", "texts", "language features", "literary", "analysis", "audience", "purpose",
+        "multimodal", "reading", "writing", "comprehension", "discourse", "argument", "rhetoric"
+    ],
+    "Science": [
+        "investigate", "experiment", "observation", "hypothesis", "evidence", "inquiry",
+        "biological", "physical", "chemical", "earth", "space", "energy", "forces", "motion",
+        "living things", "ecosystems", "adaptation", "conservation", "sustainability",
+        "scientific method", "data", "variables", "prediction"
+    ],
+    "Mathematics": [
+        "number", "algebra", "geometry", "measurement", "statistics", "probability",
+        "problem-solving", "reasoning", "patterns", "relationships", "functions",
+        "data analysis", "spatial", "calculation", "estimation", "mathematical thinking"
+    ],
+    "Design and Technologies": [
+        "innovation", "design thinking", "sustainability", "sustainable", "prototype",
+        "technology", "technologies", "functionality", "materials", "systems",
+        "digital systems", "design process", "iteration", "user-centered", "engineering"
+    ],
+    "Digital Technologies": [
+        "algorithm", "coding", "programming", "data", "digital systems", "computational thinking",
+        "cybersecurity", "networks", "automation", "artificial intelligence", "problem-solving"
+    ],
+    "HASS (Humanities and Social Sciences)": [
+        "community", "history", "geography", "heritage", "culture", "identity", "change",
+        "continuity", "place", "environment", "society", "civic", "economics", "sustainability"
+    ]
+}
+
+def extract_curriculum_keywords(subject, user_input):
+    """
+    Extract curriculum-relevant keywords from user input based on subject area.
+    
+    Args:
+        subject: Subject area (e.g., "Geography", "History")
+        user_input: The user's message or prompt
+        
+    Returns:
+        List of found keywords that match the subject's curriculum terms
+    """
+    if not subject or not user_input:
+        return []
+    
+    # Get keywords for this subject (case-insensitive matching)
+    keywords = CURRICULUM_KEYWORDS.get(subject, [])
+    if not keywords:
+        return []
+    
+    # Find matching keywords using word boundary regex (case-insensitive)
+    found_keywords = []
+    user_input_lower = user_input.lower()
+    
+    for keyword in keywords:
+        # Use word boundary to match whole words/phrases
+        pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
+        if re.search(pattern, user_input_lower):
+            found_keywords.append(keyword)
+    
+    # Remove duplicates and return
+    return list(set(found_keywords))
 
 # Initialize OpenAI client
 @st.cache_resource
@@ -151,6 +242,30 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         if use_conversation_history and len(messages) > 0:
             conversation_messages = get_conversation_context(messages, max_messages=10)
         
+        # Extract curriculum keywords from user input
+        keyword_context = ""
+        if messages and len(messages) > 0:
+            # Get the last user message
+            last_user_message = None
+            for msg in reversed(messages):
+                if msg.get("role") == "user":
+                    last_user_message = msg.get("content", "")
+                    break
+            
+            # Extract keywords for all selected subjects
+            subject_list = subjects if subjects else ([subject] if subject else [])
+            if last_user_message and subject_list:
+                all_keywords = []
+                for subj in subject_list:
+                    found_keywords = extract_curriculum_keywords(subj, last_user_message)
+                    if found_keywords:
+                        all_keywords.extend(found_keywords)
+                
+                # Create keyword context if keywords found
+                if all_keywords:
+                    unique_keywords = list(set(all_keywords))
+                    keyword_context = f"🎯 Curriculum Keywords Detected: {', '.join(unique_keywords)}\nFocus on these curriculum-aligned concepts in your response.\n\n"
+        
         # Fetch curriculum context for all selected subjects
         curriculum_context = ""
         
@@ -176,6 +291,13 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         
         # Prepare API messages
         api_messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add keyword context first (if detected)
+        if keyword_context:
+            api_messages.append({
+                "role": "system",
+                "content": keyword_context
+            })
         
         # Add curriculum context as system message if available
         if curriculum_context:
