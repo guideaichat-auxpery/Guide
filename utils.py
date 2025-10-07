@@ -151,10 +151,15 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         if use_conversation_history and len(messages) > 0:
             conversation_messages = get_conversation_context(messages, max_messages=10)
         
-        # Fetch curriculum context if subject and year level provided
+        # Fetch curriculum context if subject and year level provided, OR if age group provided
         curriculum_context = ""
         if subject and year_level:
             curriculum_context = fetch_curriculum_context(subject, year_level, curriculum_type)
+        elif age_group and subject:
+            # Auto-map age group to year level for curriculum context
+            mapped_year_level = get_primary_year_level(age_group)
+            if mapped_year_level:
+                curriculum_context = fetch_curriculum_context(subject, mapped_year_level, curriculum_type)
         
         # Prepare API messages
         api_messages = [{"role": "system", "content": system_prompt}]
@@ -218,6 +223,29 @@ def get_conversation_context(messages, max_messages=10):
     """
     managed_messages = manage_conversation_history(messages, max_messages)
     return [{"role": msg["role"], "content": msg["content"]} for msg in managed_messages]
+
+# ---- AGE TO YEAR LEVEL MAPPING ----
+def map_age_to_year_levels(age_group):
+    """Map age group to Australian Curriculum year levels"""
+    age_to_year_mapping = {
+        "3-6": ["Foundation"],
+        "6-9": ["Year 1", "Year 2", "Year 3"],
+        "9-12": ["Year 4", "Year 5", "Year 6"],
+        "12-15": ["Year 7", "Year 8", "Year 9"]
+    }
+    return age_to_year_mapping.get(age_group, [])
+
+def get_primary_year_level(age_group):
+    """Get the primary/middle year level for an age group (for curriculum lookup)"""
+    year_levels = map_age_to_year_levels(age_group)
+    if not year_levels:
+        return None
+    # Return the middle year level for the age group
+    if "Foundation" in year_levels:
+        return "Foundation"
+    elif len(year_levels) >= 2:
+        return year_levels[1]  # Return middle year (e.g., Year 2 for 6-9, Year 5 for 9-12)
+    return year_levels[0]
 
 # ---- CURRICULUM CONTEXT FETCHING ----
 @st.cache_data

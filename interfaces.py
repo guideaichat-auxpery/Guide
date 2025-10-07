@@ -18,16 +18,31 @@ def show_lesson_planning_interface():
     st.markdown("### 📚 Montessori Educational Planning Tool")
     st.markdown("*Create comprehensive lesson plans and scope & sequence with Australian Curriculum V.9 alignment*")
     
-    # Age group selector
+    # Age group selector with year level display
+    from utils import map_age_to_year_levels
+    
     age_group = st.selectbox(
         "Select Age Group:",
         ["3-6", "6-9", "9-12", "12-15"],
         format_func=lambda x: {
-            "3-6": "Early Years (3-6)",
-            "6-9": "Lower Primary (6-9)", 
-            "9-12": "Upper Primary (9-12)",
-            "12-15": "Adolescent (12-15)"
+            "3-6": "Early Years (3-6) → Foundation",
+            "6-9": "Lower Primary (6-9) → Years 1-3", 
+            "9-12": "Upper Primary (9-12) → Years 4-6",
+            "12-15": "Adolescent (12-15) → Years 7-9"
         }[x]
+    )
+    
+    # Display year level mapping
+    year_levels = map_age_to_year_levels(age_group)
+    if year_levels:
+        year_levels_str = ", ".join(year_levels)
+        st.caption(f"🎯 Australian Curriculum Year Levels: **{year_levels_str}**")
+    
+    # Subject selector for curriculum alignment
+    subject = st.selectbox(
+        "Subject Area (for AC V9 alignment):",
+        ["", "Science", "Mathematics", "English"],
+        help="Select a subject to get specific Australian Curriculum V9 content descriptors"
     )
     
     # Planning type selector
@@ -104,13 +119,29 @@ def show_lesson_planning_interface():
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Process uploaded documents
+        # Process uploaded documents with enhanced structure
         document_context = ""
         if uploaded_files:
+            st.info(f"📎 Processing {len(uploaded_files)} uploaded document(s)...")
             for file in uploaded_files:
                 file_content = extract_file_content(file)
                 if file_content:
-                    document_context += f"\n\n---\nREFERENCE DOCUMENT: {file.name}\n{file_content}\n---\n"
+                    # Add structured metadata and chunking for better AI reference
+                    lines = file_content.split('\n')
+                    total_lines = len(lines)
+                    document_context += f"""
+═══════════════════════════════════════════════════════════════════
+📄 UPLOADED CURRICULUM DOCUMENT: {file.name}
+Total content: {total_lines} lines
+═══════════════════════════════════════════════════════════════════
+
+{file_content}
+
+═══════════════════════════════════════════════════════════════════
+END OF DOCUMENT: {file.name}
+YOU MUST REFERENCE this document in your response with specific quotes, AC V9 codes, and page/section citations
+═══════════════════════════════════════════════════════════════════
+"""
         
         # Load Montessori literature references
         from utils import load_montessori_own_handbook, load_the_absorbent_mind, load_the_montessori_method
@@ -138,8 +169,9 @@ CRITICAL: You MUST draw from ALL provided reference materials in your response:
 3. **AGE-APPROPRIATE ALIGNMENT** - Tailor ALL suggestions specifically for {age_group} year olds using developmentally appropriate language, materials, and concepts
 
 Current Planning Context:
-- Age Group: {age_group} (THIS IS MANDATORY - all responses must be specifically designed for this age demographic)
+- Age Group: {age_group} → Year Levels: {year_levels_str} (THIS IS MANDATORY - all responses must align with these specific Australian Curriculum year levels)
 - Planning Type: {planning_type}
+- Subject Area: {subject if subject else 'General/Cross-curriculum'}
 
 Base all guidance on:
 - The Montessori National Curriculum of Australia
@@ -183,7 +215,8 @@ YOU MUST cite specific content from these uploaded documents in your response, i
                     st.session_state.planning_messages[-1:],
                     system_prompt=system_prompt,
                     is_student=False,
-                    age_group=age_group
+                    age_group=age_group,
+                    subject=subject if subject else None
                 )
                 st.markdown(response)
         
