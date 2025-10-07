@@ -676,6 +676,9 @@ def show_student_interface():
     st.markdown(f"### 🌟 Welcome, {student_name}!")
     st.markdown("*Your Montessori Learning Companion - Ask questions, explore ideas, discover connections*")
     
+    # Privacy Notice Banner
+    st.warning("⚠️ **Privacy Notice:** Do NOT enter personal information (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.", icon="⚠️")
+    
     # Enhanced learning context selector with age-appropriate subjects
     
     with st.expander("📚 Set Learning Context (Optional)", expanded=False):
