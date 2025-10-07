@@ -184,6 +184,18 @@ class CurriculumContext(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class TrendingKeyword(Base):
+    __tablename__ = "trending_keywords"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String, nullable=False, index=True)  # Geography, History, etc.
+    keyword = Column(String, nullable=False, index=True)  # The curriculum keyword
+    count = Column(Integer, default=1)  # Number of times detected
+    session_id = Column(String, nullable=True, index=True)  # Session that detected it
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # Optional student tracking
+    last_detected = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 def create_tables():
     """Create all database tables with error handling"""
     if not engine:
@@ -693,3 +705,94 @@ def seed_curriculum_data(db):
     
     # This will be populated from utils.py curriculum data
     return True
+
+# ---- TRENDING KEYWORD FUNCTIONS ----
+
+def update_trending_keyword(db, subject: str, keyword: str, session_id: str = None, student_id: int = None):
+    """
+    Update or create trending keyword entry.
+    Increments count if keyword already exists for this subject.
+    """
+    try:
+        # Check if keyword exists for this subject
+        existing = db.query(TrendingKeyword).filter(
+            TrendingKeyword.subject == subject,
+            TrendingKeyword.keyword == keyword
+        ).first()
+        
+        if existing:
+            # Increment count and update last_detected
+            existing.count += 1
+            existing.last_detected = datetime.utcnow()
+            if session_id:
+                existing.session_id = session_id
+            if student_id:
+                existing.student_id = student_id
+        else:
+            # Create new trending keyword entry
+            new_keyword = TrendingKeyword(
+                subject=subject,
+                keyword=keyword,
+                count=1,
+                session_id=session_id,
+                student_id=student_id,
+                last_detected=datetime.utcnow()
+            )
+            db.add(new_keyword)
+        
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating trending keyword: {str(e)}")
+        db.rollback()
+        return False
+
+def get_trending_keywords(db, limit: int = 5):
+    """
+    Get trending keywords grouped by subject.
+    Returns dict: {subject: {keyword: count}}
+    """
+    try:
+        # Query all trending keywords, ordered by count
+        keywords = db.query(TrendingKeyword).order_by(
+            TrendingKeyword.subject,
+            TrendingKeyword.count.desc()
+        ).all()
+        
+        # Group by subject
+        trending_data = {}
+        for kw in keywords:
+            if kw.subject not in trending_data:
+                trending_data[kw.subject] = {}
+            
+            # Only add up to limit per subject
+            if len(trending_data[kw.subject]) < limit:
+                trending_data[kw.subject][kw.keyword] = kw.count
+        
+        return trending_data
+    except Exception as e:
+        print(f"Error getting trending keywords: {str(e)}")
+        return {}
+
+def reset_trending_keywords(db):
+    """Reset all trending keyword counts (for new sessions/days)"""
+    try:
+        db.query(TrendingKeyword).delete()
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"Error resetting trending keywords: {str(e)}")
+        db.rollback()
+        return False
+
+def get_top_keywords_by_subject(db, subject: str, limit: int = 5):
+    """Get top N trending keywords for a specific subject"""
+    try:
+        keywords = db.query(TrendingKeyword).filter(
+            TrendingKeyword.subject == subject
+        ).order_by(TrendingKeyword.count.desc()).limit(limit).all()
+        
+        return [(kw.keyword, kw.count) for kw in keywords]
+    except Exception as e:
+        print(f"Error getting top keywords: {str(e)}")
+        return []

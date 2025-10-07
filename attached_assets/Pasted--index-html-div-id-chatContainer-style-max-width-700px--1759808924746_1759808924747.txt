@@ -1,0 +1,280 @@
+<!-- ---------- index.html ---------- -->
+<div id="chatContainer" style="
+    max-width: 700px;
+    margin: 40px auto;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+">
+
+  <!-- Privacy Banner -->
+  <div id="privacyNotice" style="
+      background-color: #FFF4E0;
+      color: #8A5D3B;
+      border: 1px solid #FFD59E;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  ">
+    ⚠️ Privacy Notice: Do NOT enter personal information (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.
+  </div>
+
+  <!-- Chat Output Area -->
+  <div id="chatOutput" style="
+      background-color: #FAF8F1;
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 320px;
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #E5E0D4;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+  "></div>
+
+  <!-- Chat Input with Tooltip -->
+  <div style="position: relative; display: flex; flex-direction: column; gap: 4px;">
+    <input id="userInput" type="text" placeholder="Type your question here..." style="
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 8px;
+        border: 1px solid #DDD1B0;
+        font-size: 1rem;
+        box-sizing: border-box;
+        outline: none;
+    "/>
+    <span style="
+        visibility: hidden;
+        width: 280px;
+        background-color: #FFF4E0;
+        color: #8A5D3B;
+        text-align: left;
+        border: 1px solid #FFD59E;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 10;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.85rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: visibility 0.2s;
+    ">
+      ⚠️ Privacy Notice: Do NOT enter personal info (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.
+    </span>
+  </div>
+
+  <!-- Send Button -->
+  <button id="sendBtn" style="
+      margin-top: 4px;
+      padding: 12px 24px;
+      background-color: #A7C796;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+  ">Send</button>
+
+</div>
+
+<style>
+/* ---------- Chat Bubble Styles ---------- */
+.chat-bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 80%;
+  animation: fadeIn 0.4s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  position: relative;
+  word-wrap: break-word;
+}
+
+.ai-bubble {
+  background-color: #A7C796;
+  color: white;
+  align-self: flex-start;
+  border-bottom-left-radius: 0;
+  padding-left: 36px; /* space for icon */
+}
+
+.student-bubble {
+  background-color: #FFDFA7;
+  color: #6B4C3B;
+  align-self: flex-end;
+  border-bottom-right-radius: 0;
+  padding-right: 36px; /* space for icon */
+}
+
+/* Icons */
+.chat-bubble::before {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  top: 8px;
+  border-radius: 50%;
+  background-size: cover;
+}
+
+.ai-bubble::before {
+  content: "";
+  background-image: url('https://img.icons8.com/ios-filled/50/ffffff/robot-2.png');
+  left: 8px;
+}
+
+.student-bubble::before {
+  content: "";
+  background-image: url('https://img.icons8.com/ios-filled/50/6B4C3B/user-male-circle.png');
+  right: 8px;
+}
+
+/* Highlight trending keywords */
+.keyword {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  #chatContainer { margin: 20px; }
+  .chat-bubble { max-width: 95%; font-size: 0.95rem; padding-left: 32px; padding-right: 32px; }
+  #userInput { font-size: 0.95rem; padding: 12px 14px; }
+  #sendBtn { padding: 10px 18px; font-size: 0.95rem; }
+}
+</style>
+
+<script type="module">
+import Database from "@replit/database";
+const db = new Database();
+
+const chatOutput = document.getElementById('chatOutput');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const tooltip = document.querySelector('span');
+
+// ---------- Curriculum Keywords ----------
+const curriculumKeywords = {
+  Geography: ["environment", "urbanization", "sustainability", "place", "space", "interconnectedness"],
+  DesignAndTechnologies: ["innovation", "design thinking", "prototype", "technology", "functionality"],
+  English: ["persuasive text", "informational text", "communication", "presentation", "literacy"],
+  CivicsAndCitizenship: ["ethics", "community", "decision-making", "rights", "responsibilities", "intercultural understanding"]
+};
+
+// ---------- Helper Functions ----------
+function extractCurriculumKeywords(userInput) {
+  const foundKeywords = [];
+  for (const [subject, keywords] of Object.entries(curriculumKeywords)) {
+    keywords.forEach(keyword => {
+      if (new RegExp(`\\b${keyword}\\b`, "i").test(userInput)) {
+        foundKeywords.push({subject, keyword});
+      }
+    });
+  }
+  return foundKeywords;
+}
+
+async function updateTrendingKeywords(foundKeywords) {
+  if (!foundKeywords.length) return;
+  const trending = (await db.get("trending_keywords")) || {};
+  foundKeywords.forEach(({subject, keyword}) => {
+    if (!trending[subject]) trending[subject] = {};
+    trending[subject][keyword] = (trending[subject][keyword] || 0) + 1;
+  });
+  await db.set("trending_keywords", trending);
+}
+
+async function generateSystemPrompt() {
+  const trending = (await db.get("trending_keywords")) || {};
+  const trendingList = [];
+  for (const [subject, keywords] of Object.entries(trending)) {
+    const topKeywords = Object.keys(keywords).sort((a,b)=>keywords[b]-keywords[a]).slice(0,3);
+    if (topKeywords.length) trendingList.push(`${subject}: ${topKeywords.join(", ")}`);
+  }
+
+  return `
+You are GuideChat, an advanced AI assistant for educators and adolescents.
+Focus: Adolescent learners (12–18), Montessori Third Plane, open-ended, ethical, socially relevant, interdisciplinary learning.
+
+Trending curriculum topics: ${trendingList.join("; ") || "None"}.
+
+Instructions:
+- Frame lessons as provocations, big questions, and challenges.
+- Include interdisciplinary connections.
+- Scaffold critical reasoning and moral/ethical discussion.
+- Avoid collecting personal data; all queries are anonymized.
+`;
+}
+
+// ---------- Event Listeners ----------
+userInput.addEventListener('mouseenter', () => tooltip.style.visibility = 'visible');
+userInput.addEventListener('mouseleave', () => tooltip.style.visibility = 'hidden');
+
+sendBtn.addEventListener('click', async () => {
+  const message = userInput.value.trim();
+  if (!message) return;
+
+  // Display student message
+  const studentBubble = document.createElement('div');
+  studentBubble.className = 'chat-bubble student-bubble';
+  studentBubble.textContent = message;
+  chatOutput.appendChild(studentBubble);
+  chatOutput.scrollTop = chatOutput.scrollHeight;
+  userInput.value = "";
+
+  // ---------- Session ID ----------
+  const sessionId = crypto.randomUUID();
+
+  // ---------- Keyword Extraction ----------
+  const foundKeywords = extractCurriculumKeywords(message);
+
+  // ---------- Log anonymized query ----------
+  await db.set(`query_${Date.now()}_${sessionId}`, {
+    sessionId,
+    query: message,
+    keywords: foundKeywords.map(f => f.keyword),
+    timestamp: new Date().toISOString()
+  });
+
+  // ---------- Update Trending Keywords ----------
+  await updateTrendingKeywords(foundKeywords);
+
+  // ---------- Generate System Prompt ----------
+  const systemPrompt = await generateSystemPrompt();
+
+  // ---------- Placeholder API Call ----------
+  let aiResponse = `GuideChat AI would respond here.`;
+  if (foundKeywords.length) {
+    // Highlight trending keywords
+    foundKeywords.forEach(({keyword}) => {
+      aiResponse = aiResponse.replace(
+        new RegExp(`(${keyword})`, 'gi'),
+        '<span class="keyword">$1</span>'
+      );
+    });
+  }
+
+  // Display AI message
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'chat-bubble ai-bubble';
+  aiBubble.innerHTML = aiResponse;
+  chatOutput.appendChild(aiBubble);
+  chatOutput.scrollTop = chatOutput.scrollHeight;
+});
+</script>

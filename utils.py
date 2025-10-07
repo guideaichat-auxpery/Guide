@@ -1276,3 +1276,80 @@ def estimate_tokens(text):
     """Estimate token count for a given text (rough approximation)"""
     # Rough estimate: ~4 characters per token for English text
     return len(text) // 4
+
+# ---- CURRICULUM KEYWORD TRACKING SYSTEM ----
+
+def extract_curriculum_keywords(user_message):
+    """
+    Extract curriculum keywords from user message.
+    Returns list of {subject, keyword} dictionaries.
+    Uses case-insensitive word boundary matching.
+    """
+    found_keywords = []
+    message_lower = user_message.lower()
+    
+    for subject, keywords in CURRICULUM_KEYWORDS.items():
+        for keyword in keywords:
+            # Use word boundary regex for accurate matching
+            pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
+            if re.search(pattern, message_lower):
+                found_keywords.append({
+                    'subject': subject,
+                    'keyword': keyword,
+                    'matched_at': datetime.now().isoformat()
+                })
+    
+    return found_keywords
+
+def update_trending_keywords(db, found_keywords, session_id):
+    """
+    Update trending keywords in database.
+    Increments count for each detected keyword by subject.
+    """
+    if not found_keywords or not db:
+        return
+    
+    try:
+        from database import get_trending_keywords, update_trending_keyword
+        
+        for kw in found_keywords:
+            update_trending_keyword(
+                db,
+                subject=kw['subject'],
+                keyword=kw['keyword'],
+                session_id=session_id
+            )
+    except Exception as e:
+        print(f"Error updating trending keywords: {str(e)}")
+
+def get_trending_topics_context(db, limit=3):
+    """
+    Generate context string of trending curriculum topics.
+    Returns formatted string for AI system prompt injection.
+    """
+    if not db:
+        return ""
+    
+    try:
+        from database import get_trending_keywords
+        
+        trending_data = get_trending_keywords(db, limit=limit)
+        
+        if not trending_data:
+            return ""
+        
+        trending_list = []
+        for subject, keywords in trending_data.items():
+            if keywords:
+                # Sort keywords by count, take top N
+                sorted_keywords = sorted(keywords.items(), key=lambda x: x[1], reverse=True)[:limit]
+                keyword_names = [kw[0] for kw in sorted_keywords]
+                trending_list.append(f"{subject}: {', '.join(keyword_names)}")
+        
+        if trending_list:
+            return f"\n\n🔥 TRENDING CURRICULUM TOPICS (Student queries this session):\n" + "\n".join(f"  • {item}" for item in trending_list)
+        
+        return ""
+    except Exception as e:
+        print(f"Error getting trending topics: {str(e)}")
+        return ""
