@@ -94,13 +94,15 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Student Curriculum Selector**: Optional subject/year level selector in student interface for curriculum-aligned learning support
 - **Montessori Integration**: All curriculum contexts include Montessori material connections and cosmic education links
 
-## October 7, 2025 - Inquiry-Based Educator Prompt Redesign
-- **Open-Ended Learning Framework**: Completely redesigned educator system prompt to focus on inquiry-based, curiosity-driven learning experiences
-- **Big Question Methodology**: All educator responses now structured around central inquiries and driving questions rather than prescriptive lesson plans
-- **Student-Centered Design**: Emphasis on student exploration, choice, and reflection with multiple pathways instead of procedural tasks
-- **Structured Response Format**: Consistent output structure: Big Question → Possible Lines of Inquiry → Provocations & Environment Setup → Student-Led Exploration Ideas → Observation Prompts for Educators → Curriculum Connections
-- **Facilitative Tone**: Shift from instructive to reflective, curious, and facilitative language that respects learner autonomy
-- **Montessori Alignment**: Deeper integration of self-direction, prepared environment, and observational practices
+## October 7, 2025 - Provocational & Ethical Inquiry Framework
+- **Provocational Learning Design**: Completely redesigned educator system prompt to focus on ethical, dialectical, and morally complex inquiry experiences
+- **Australian Context Integration**: All responses begin with provocations, quotes, or scenarios grounded in Australian society and First Nations perspectives
+- **Grey Area Questions**: Big Questions designed to have no simple answers, inviting ethical reasoning, empathy, and debate on complex issues
+- **Education for Peace**: Aligns with Montessori's vision of education for social responsibility, human unity, and active citizenship
+- **Multi-Perspective Pathways**: Exploration avenues representing diverse viewpoints (social, environmental, economic, political, cultural)
+- **Structured Provocational Format**: Provocation/Quote (Australian Context) → Big Question → Challenge/Inquiry Task → Possible Pathways → Observation Prompts → Curriculum Connections
+- **Third-Plane Montessori Focus**: Designed for upper primary and adolescent students grappling with ambiguity, perspective, and moral responsibility
+- **Critical Capabilities Emphasis**: Direct integration of AC V9 General Capabilities (ethical understanding, intercultural understanding, civics, sustainability)
 
 ## October 6, 2025 - Conversation Persistence, Analytics & Export System
 - **Session-Based Conversation Persistence**: All chat conversations (companion and student) now persist in PostgreSQL database, maintaining history across page refreshes
