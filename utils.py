@@ -432,6 +432,21 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
                 "content": keyword_context
             })
         
+        # Add trending topics context (for students only)
+        if is_student:
+            from database import get_db
+            db = get_db()
+            if db:
+                try:
+                    trending_context = get_trending_topics_context(db, limit=3)
+                    if trending_context:
+                        api_messages.append({
+                            "role": "system",
+                            "content": trending_context
+                        })
+                finally:
+                    db.close()
+        
         # Add curriculum context as system message if available
         if curriculum_context:
             api_messages.append({
