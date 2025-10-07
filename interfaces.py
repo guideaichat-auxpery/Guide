@@ -110,27 +110,72 @@ def show_lesson_planning_interface():
             for file in uploaded_files:
                 file_content = extract_file_content(file)
                 if file_content:
-                    document_context += f"\n\n---\nDocument: {file.name}\n{file_content}\n---\n"
+                    document_context += f"\n\n---\nREFERENCE DOCUMENT: {file.name}\n{file_content}\n---\n"
         
-        # Prepare full prompt
+        # Load Montessori literature references
+        from utils import load_montessori_own_handbook, load_the_absorbent_mind, load_the_montessori_method
+        montessori_refs = ""
+        
+        handbook = load_montessori_own_handbook()
+        if handbook and len(handbook) > 100:
+            montessori_refs += f"\n\nMONTESSORI REFERENCE - Dr. Montessori's Own Handbook:\n{handbook[:1000]}...\n"
+        
+        absorbent = load_the_absorbent_mind()
+        if absorbent and len(absorbent) > 100:
+            montessori_refs += f"\n\nMONTESSORI REFERENCE - The Absorbent Mind:\n{absorbent[:1000]}...\n"
+        
+        method = load_the_montessori_method()
+        if method and len(method) > 100:
+            montessori_refs += f"\n\nMONTESSORI REFERENCE - The Montessori Method:\n{method[:1000]}...\n"
+        
+        # Enhanced system prompt with document emphasis
+        system_prompt = f"""You are GuideChat, an advanced AI planning assistant for educators.
+Your goal is to help teachers design open-ended, inquiry-driven, and student-centered learning experiences.
+
+CRITICAL: You MUST draw from ALL provided reference materials in your response:
+1. **UPLOADED CURRICULUM DOCUMENTS** - Reference specific content descriptors, codes, and guidelines from uploaded Australian Curriculum V9 documents
+2. **MONTESSORI LITERATURE** - Apply principles from the provided Montessori references
+3. **AGE-APPROPRIATE ALIGNMENT** - Tailor ALL suggestions specifically for {age_group} year olds using developmentally appropriate language, materials, and concepts
+
+Current Planning Context:
+- Age Group: {age_group} (THIS IS MANDATORY - all responses must be specifically designed for this age demographic)
+- Planning Type: {planning_type}
+
+Base all guidance on:
+- The Montessori National Curriculum of Australia
+- Maria Montessori's philosophy (see references below)
+- The Australian Curriculum Version 9 (use uploaded documents as primary reference)
+
+When designing learning experiences:
+1. Focus on **big questions**, provocations, and lines of inquiry
+2. Encourage **student exploration**, **choice**, and **reflection**
+3. Present **conceptual frameworks** and **open challenges**
+4. Offer **teacher prompts** for observation and scaffolding
+5. Use age-appropriate, curiosity-oriented language for {age_group} year olds
+6. **CITE SPECIFIC AC V9 CODES** from uploaded curriculum documents
+
+Response Structure (MANDATORY):
+1. **Big Question** — Central driving inquiry for {age_group} learners
+2. **Possible Lines of Inquiry** — Multiple pathways appropriate for {age_group}
+3. **Provocations & Environment Setup** — Materials and prompts suitable for {age_group}
+4. **Student-Led Exploration Ideas** — Open activities for {age_group} developmental stage
+5. **Observation Prompts for Educators** — What to notice with {age_group} learners
+6. **Curriculum Connections** — Specific AC V9 codes from uploaded documents + Montessori principles
+
+Tone: Reflective, curious, facilitative. Always reference uploaded documents and Montessori literature.{montessori_refs}"""
+        
+        # Prepare comprehensive prompt with document context
         full_prompt = prompt
         if document_context:
-            full_prompt = f"{prompt}\n\nRelevant documents:\n{document_context}"
+            full_prompt = f"""EDUCATOR REQUEST: {prompt}
+
+UPLOADED CURRICULUM DOCUMENTS TO REFERENCE:
+{document_context}
+
+YOU MUST cite specific content from these uploaded documents in your response, including AC V9 codes and descriptors."""
         
-        # Get AI response
-        system_prompt = f"""You are a Montessori educational planning assistant with deep knowledge of:
-        - Montessori philosophy and cosmic education principles
-        - Australian Curriculum Version 9 (V.9) learning areas and content descriptors
-        - Developmentally appropriate practices for {age_group} year olds
-        - Scope and sequence planning
-        - Assessment rubric design
-        
-        Current planning context:
-        - Age Group: {age_group}
-        - Planning Type: {planning_type}
-        
-        Provide practical, classroom-ready guidance that bridges Montessori principles with Australian Curriculum requirements.
-        Include specific AC V.9 codes when relevant and suggest concrete Montessori materials or activities."""
+        # Update the last message with enhanced context
+        st.session_state.planning_messages[-1] = {"role": "user", "content": full_prompt}
         
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
