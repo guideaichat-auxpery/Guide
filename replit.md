@@ -94,6 +94,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Student Curriculum Selector**: Optional subject/year level selector in student interface for curriculum-aligned learning support
 - **Montessori Integration**: All curriculum contexts include Montessori material connections and cosmic education links
 
+## October 7, 2025 - Inquiry-Based Educator Prompt Redesign
+- **Open-Ended Learning Framework**: Completely redesigned educator system prompt to focus on inquiry-based, curiosity-driven learning experiences
+- **Big Question Methodology**: All educator responses now structured around central inquiries and driving questions rather than prescriptive lesson plans
+- **Student-Centered Design**: Emphasis on student exploration, choice, and reflection with multiple pathways instead of procedural tasks
+- **Structured Response Format**: Consistent output structure: Big Question → Possible Lines of Inquiry → Provocations & Environment Setup → Student-Led Exploration Ideas → Observation Prompts for Educators → Curriculum Connections
+- **Facilitative Tone**: Shift from instructive to reflective, curious, and facilitative language that respects learner autonomy
+- **Montessori Alignment**: Deeper integration of self-direction, prepared environment, and observational practices
+
 ## October 6, 2025 - Conversation Persistence, Analytics & Export System
 - **Session-Based Conversation Persistence**: All chat conversations (companion and student) now persist in PostgreSQL database, maintaining history across page refreshes
 - **Educator Analytics Dashboard**: Comprehensive logging system tracking all educator prompts, subjects, year levels, token usage, and timestamps for usage analysis
