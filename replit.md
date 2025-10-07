@@ -22,6 +22,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Token Optimization**: Enhanced token limits (3000 for educators, 800 for students).
 - **Curriculum Keyword Extraction**: Sophisticated multi-word phrase detection system with year-specific topic mapping - recognizes official AC V9 topic names (e.g., "Geographies of Interconnections", "Making a Nation", "Biomes and Food Security") and automatically infers appropriate year levels (Year 7-9) from detected curriculum content. System prioritizes longest phrases first to prevent overlap, supports singular/plural variations, and injects detected keywords into AI context for enhanced alignment.
 - **Intelligent Year Level Inference**: Automatic year level detection based on curriculum topic keywords - when Year 9-specific topics like "Geographies of Interconnections" are mentioned, system overrides default Year 8 and selects Year 9, ensuring age-appropriate content delivery.
+- **Trending Topics System**: Real-time curriculum keyword tracking that detects AC V9 topics in student queries, stores trending keywords by subject in PostgreSQL, and dynamically injects trending topics into AI system prompts to enhance response relevance and curriculum alignment - builds contextual awareness across student sessions.
+- **Anonymous Query Logging**: Privacy-focused student query tracking with UUID session IDs, detected keyword metadata, and anonymized data storage - enables analytics while protecting student privacy.
 - **File Processing**: Supports `.txt`, `.csv`, `.pdf`, `.docx`, images, audio, and presentation files for AI integration.
 
 ## Data Management
@@ -32,7 +34,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 ## Core Features
 - **Dual Interface**: Teacher and student modes with parallel feature sets:
   - **Educator Mode**: Full lesson planning, curriculum alignment review, observation dashboards, and advanced tools
-  - **Student Mode**: AI tutor with curriculum-aligned support, file upload for homework help, multi-subject selection, and intelligent year level inference
+  - **Student Mode**: AI tutor with curriculum-aligned support, file upload for homework help, multi-subject selection, intelligent year level inference (Years 6-9), privacy notice banner, and anonymous query tracking with trending curriculum topics
 - **Curriculum Integration**: Incorporates Australian Curriculum V9 and Montessori National Curriculum (2011), with AI responses rooted in Montessori's Cosmic Education.
 - **Age-to-Year-Level Mapping**: Automatic translation of age groups to AC year levels (6-9→Years 1-3, 9-12→Years 4-6, 12-15→Years 7-9) with visual display.
 - **Comprehensive Subject Coverage**: Age-appropriate multiselect subject selector - HASS (Humanities and Social Sciences) for Foundation-Year 6; separate History, Geography, Business and Economics, Civics and Citizenship for Years 7-9; plus English, Mathematics, Science, Design and Technologies, Digital Technologies, The Arts, Health and Physical Education, Languages for cross-curricular planning.
