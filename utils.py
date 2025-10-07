@@ -9,13 +9,16 @@ import re
 # Maps subjects to key curriculum terms from AC V9 descriptors
 CURRICULUM_KEYWORDS = {
     "Geography": [
-        # Multi-word AC V9 topic names (Year 7-9)
+        # Multi-word AC V9 topic names (Year 7-9) - with singular/plural variations
         "Geographies of Interconnections", "geographies of interconnections",
+        "Geographies of Interconnection", "geographies of interconnection",
+        "Geography of Interconnections", "geography of interconnections",
+        "Geography of Interconnection", "geography of interconnection",
         "Biomes and Food Security", "biomes and food security",
         "Water in the World", "water in the world",
         "Place and Liveability", "place and liveability",
-        "Landforms and Landscapes", "landforms and landscapes",
-        "Changing Nations", "changing nations",
+        "Landforms and Landscapes", "landforms and landscapes", "landform and landscape",
+        "Changing Nations", "changing nations", "changing nation",
         # Content descriptor phrases
         "geographical processes", "geographical phenomena",
         "interconnections between people", "people and environments",
@@ -367,6 +370,7 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         
         # Extract curriculum keywords from user input
         keyword_context = ""
+        all_keywords = []
         if messages and len(messages) > 0:
             # Get the last user message
             last_user_message = None
@@ -378,7 +382,6 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
             # Extract keywords for all selected subjects
             subject_list = subjects if subjects else ([subject] if subject else [])
             if last_user_message and subject_list:
-                all_keywords = []
                 for subj in subject_list:
                     found_keywords = extract_curriculum_keywords(subj, last_user_message)
                     if found_keywords:
@@ -396,10 +399,17 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         subject_list = subjects if subjects else ([subject] if subject else [])
         
         if subject_list:
-            # Get year level (from parameter or auto-map from age)
+            # Get year level (from parameter or auto-map from age with keyword inference)
             target_year_level = year_level
             if not target_year_level and age_group:
-                target_year_level = get_primary_year_level(age_group)
+                # Pass detected keywords to intelligently infer year level
+                target_year_level = get_primary_year_level(age_group, detected_keywords=all_keywords if all_keywords else None)
+                
+                # Add year level inference info to keyword context if keywords were used
+                if all_keywords and target_year_level:
+                    inferred = infer_year_level_from_keywords(all_keywords, age_group)
+                    if inferred:
+                        keyword_context += f"🎓 Inferred Year Level: **{target_year_level}** (based on detected curriculum topics)\n\n"
             
             # Fetch context for each subject and combine
             if target_year_level:
@@ -493,16 +503,106 @@ def map_age_to_year_levels(age_group):
     }
     return age_to_year_mapping.get(age_group, [])
 
-def get_primary_year_level(age_group):
-    """Get the primary/middle year level for an age group (for curriculum lookup)"""
+# ---- YEAR LEVEL SPECIFIC TOPIC MAPPING ----
+# Maps specific topics/keywords to their primary year level in AC V9
+YEAR_SPECIFIC_TOPICS = {
+    "Year 9": [
+        # Geography Year 9
+        "geographies of interconnections", "geographies of interconnection",
+        "geography of interconnections", "geography of interconnection",
+        # History Year 9
+        "making a nation", "australian involvement in world war i",
+        "industrial revolution",
+        # Business and Economics Year 9
+        "personal and financial decision-making",
+        # Civics and Citizenship Year 9
+        "government and democracy",
+    ],
+    "Year 8": [
+        # Geography Year 8
+        "landforms and landscapes", "landform and landscape",
+        "changing nations", "changing nation",
+        # History Year 8
+        "the ancient to modern world", "ancient to modern world",
+        # Business and Economics Year 8
+        "business in the australian economy", "australian economy",
+        # Civics and Citizenship Year 8
+        "laws and citizens",
+    ],
+    "Year 7": [
+        # Geography Year 7
+        "water in the world", "place and liveability",
+        "biomes and food security",
+        # History Year 7
+        "the ancient world", "ancient world",
+        # Business and Economics Year 7
+        "resource allocation and making choices", "resource allocation",
+        # Civics and Citizenship Year 7
+        "democratic values, rights and responsibilities", "democratic values",
+    ],
+}
+
+def infer_year_level_from_keywords(detected_keywords, age_group):
+    """
+    Infer the most appropriate year level based on detected curriculum keywords.
+    
+    Args:
+        detected_keywords: List of detected keywords from user input
+        age_group: Selected age group (e.g., "12-15")
+        
+    Returns:
+        Specific year level (e.g., "Year 9") or None if can't infer
+    """
+    if not detected_keywords or not age_group:
+        return None
+    
+    # Get valid year levels for this age group
+    valid_year_levels = map_age_to_year_levels(age_group)
+    if not valid_year_levels:
+        return None
+    
+    # Convert keywords to lowercase for matching
+    keywords_lower = [k.lower() for k in detected_keywords]
+    
+    # Check each year level from highest to lowest (prioritize higher years)
+    for year in ["Year 9", "Year 8", "Year 7", "Year 6", "Year 5", "Year 4", "Year 3", "Year 2", "Year 1"]:
+        if year not in valid_year_levels:
+            continue
+            
+        # Check if any detected keyword matches this year's specific topics
+        year_topics = [topic.lower() for topic in YEAR_SPECIFIC_TOPICS.get(year, [])]
+        for keyword in keywords_lower:
+            if keyword in year_topics:
+                return year
+    
+    return None
+
+def get_primary_year_level(age_group, detected_keywords=None):
+    """
+    Get the primary year level for an age group, with optional keyword-based inference.
+    
+    Args:
+        age_group: Age group string (e.g., "12-15")
+        detected_keywords: Optional list of detected curriculum keywords
+        
+    Returns:
+        Year level string (e.g., "Year 8")
+    """
     year_levels = map_age_to_year_levels(age_group)
     if not year_levels:
         return None
-    # Return the middle year level for the age group
+    
+    # Try to infer specific year level from keywords first
+    if detected_keywords:
+        inferred_year = infer_year_level_from_keywords(detected_keywords, age_group)
+        if inferred_year:
+            return inferred_year
+    
+    # Default to middle year level for the age group
     if "Foundation" in year_levels:
         return "Foundation"
     elif len(year_levels) >= 2:
-        return year_levels[1]  # Return middle year (e.g., Year 2 for 6-9, Year 5 for 9-12)
+        return year_levels[1]  # Return middle year (e.g., Year 2 for 6-9, Year 5 for 9-12, Year 8 for 12-15)
     return year_levels[0]
 
 # ---- CURRICULUM CONTEXT FETCHING ----
