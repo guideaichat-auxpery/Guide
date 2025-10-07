@@ -907,6 +907,34 @@ def show_student_dashboard_interface():
                             st.info("All educators already have access to this student.")
                     else:
                         st.info("No other educators available to grant access to.")
+                    
+                    # Remove Student Account section (only for primary educator)
+                    st.markdown("---")
+                    st.markdown("### ⚠️ Remove Student Account")
+                    st.warning("**Warning**: Removing a student account will permanently delete all their data, including learning activities, conversations, and progress. This action cannot be undone.")
+                    
+                    # Confirmation checkbox
+                    confirm_delete = st.checkbox(
+                        f"I understand this will permanently delete {selected_student.full_name}'s account and all associated data",
+                        key="confirm_delete_student"
+                    )
+                    
+                    # Delete button (only enabled if confirmed)
+                    if st.button(
+                        f"🗑️ Permanently Remove {selected_student.full_name}",
+                        type="secondary",
+                        disabled=not confirm_delete,
+                        key="delete_student_button"
+                    ):
+                        from database import delete_student
+                        
+                        with st.spinner(f"Removing {selected_student.full_name}..."):
+                            if delete_student(db, selected_student.id):
+                                st.success(f"✅ Successfully removed {selected_student.full_name}'s account")
+                                st.info("Refreshing dashboard...")
+                                st.rerun()
+                            else:
+                                st.error("❌ Failed to remove student account. Please try again.")
             
     except Exception as e:
         st.error(f"Error loading student data: {str(e)}")

@@ -407,6 +407,25 @@ def get_student_with_activities(db, student_id: int):
     """Get student with their recent activities"""
     return db.query(Student).filter(Student.id == student_id).first()
 
+def delete_student(db, student_id: int):
+    """
+    Permanently delete a student account and all associated data.
+    This will cascade delete all student activities, conversations, and access records.
+    """
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if student:
+        # Delete educator-student access records
+        db.query(EducatorStudentAccess).filter(EducatorStudentAccess.student_id == student_id).delete()
+        
+        # Delete conversation messages
+        db.query(ConversationMessage).filter(ConversationMessage.student_id == student_id).delete()
+        
+        # Delete the student (activities will cascade delete automatically)
+        db.delete(student)
+        db.commit()
+        return True
+    return False
+
 # Great Story functions
 def create_great_story(db, educator_id: int, title: str, theme: str, content: str, age_group: str = None, keywords: str = None):
     """Create a new Great Story"""
