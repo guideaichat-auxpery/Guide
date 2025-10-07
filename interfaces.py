@@ -38,12 +38,23 @@ def show_lesson_planning_interface():
         year_levels_str = ", ".join(year_levels)
         st.caption(f"🎯 Australian Curriculum Year Levels: **{year_levels_str}**")
     
-    # Subject multiselect for curriculum alignment
+    # Subject multiselect for curriculum alignment (age-appropriate)
+    # HASS for Foundation-Year 6, separate subjects for Years 7-9
+    if age_group in ["3-6", "6-9", "9-12"]:
+        # Foundation to Year 6: Use HASS
+        subject_options = ["English", "Mathematics", "Science", "HASS (Humanities and Social Sciences)", 
+                          "Design and Technologies", "Digital Technologies", "The Arts", 
+                          "Health and Physical Education", "Languages"]
+    else:  # 12-15 (Years 7-9)
+        # Years 7-9: Use separate humanities subjects
+        subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
+                          "Business and Economics", "Civics and Citizenship",
+                          "Design and Technologies", "Digital Technologies", "The Arts", 
+                          "Health and Physical Education", "Languages"]
+    
     subjects = st.multiselect(
         "Subject Area(s) for AC V9 alignment:",
-        ["English", "Mathematics", "Science", "Humanities and Social Sciences", 
-         "Design and Technologies", "Digital Technologies", "The Arts", 
-         "Health and Physical Education", "Languages"],
+        subject_options,
         help="Select one or more subjects to get specific Australian Curriculum V9 content descriptors"
     )
     

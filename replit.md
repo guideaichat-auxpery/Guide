@@ -31,7 +31,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Dual Interface**: Teacher and student modes.
 - **Curriculum Integration**: Incorporates Australian Curriculum V9 and Montessori National Curriculum (2011), with AI responses rooted in Montessori's Cosmic Education.
 - **Age-to-Year-Level Mapping**: Automatic translation of age groups to AC year levels (6-9→Years 1-3, 9-12→Years 4-6, 12-15→Years 7-9) with visual display.
-- **Comprehensive Subject Coverage**: Multiselect subject selector including English, Mathematics, Science, Humanities and Social Sciences, Design and Technologies, Digital Technologies, The Arts, Health and Physical Education, Languages for cross-curricular planning.
+- **Comprehensive Subject Coverage**: Age-appropriate multiselect subject selector - HASS (Humanities and Social Sciences) for Foundation-Year 6; separate History, Geography, Business and Economics, Civics and Citizenship for Years 7-9; plus English, Mathematics, Science, Design and Technologies, Digital Technologies, The Arts, Health and Physical Education, Languages for cross-curricular planning.
+- **V9 Enforcement**: Explicit Australian Curriculum VERSION 9 enforcement - all codes must start with "AC9" (e.g., AC9S6H01), never V8.4 codes.
+- **Age-Appropriate Outputs**: Mandatory cognitive development matching - Foundation-Year 3 (concrete, simple), Years 4-6 (transitional, guided), Years 7-9 (abstract, independent).
 - **AI-Powered Tools**:
     - **Great Story Creator**: AI-assisted Montessori Great Story development with persistent storage.
     - **Planning Notes Workspace**: Word processor-style planning tool with organization, materials management, and image upload.
