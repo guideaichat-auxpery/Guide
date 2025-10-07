@@ -38,11 +38,13 @@ def show_lesson_planning_interface():
         year_levels_str = ", ".join(year_levels)
         st.caption(f"🎯 Australian Curriculum Year Levels: **{year_levels_str}**")
     
-    # Subject selector for curriculum alignment
-    subject = st.selectbox(
-        "Subject Area (for AC V9 alignment):",
-        ["", "Science", "Mathematics", "English"],
-        help="Select a subject to get specific Australian Curriculum V9 content descriptors"
+    # Subject multiselect for curriculum alignment
+    subjects = st.multiselect(
+        "Subject Area(s) for AC V9 alignment:",
+        ["English", "Mathematics", "Science", "Humanities and Social Sciences", 
+         "Design and Technologies", "Digital Technologies", "The Arts", 
+         "Health and Physical Education", "Languages"],
+        help="Select one or more subjects to get specific Australian Curriculum V9 content descriptors"
     )
     
     # Planning type selector
@@ -171,7 +173,7 @@ CRITICAL: You MUST draw from ALL provided reference materials in your response:
 Current Planning Context:
 - Age Group: {age_group} → Year Levels: {year_levels_str} (THIS IS MANDATORY - all responses must align with these specific Australian Curriculum year levels)
 - Planning Type: {planning_type}
-- Subject Area: {subject if subject else 'General/Cross-curriculum'}
+- Subject Area(s): {', '.join(subjects) if subjects else 'General/Cross-curriculum'}
 
 Base all guidance on:
 - The Montessori National Curriculum of Australia
@@ -216,7 +218,7 @@ YOU MUST cite specific content from these uploaded documents in your response, i
                     system_prompt=system_prompt,
                     is_student=False,
                     age_group=age_group,
-                    subject=subject if subject else None
+                    subject=subjects[0] if subjects else None  # Pass first subject for curriculum context
                 )
                 st.markdown(response)
         

@@ -30,6 +30,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 ## Core Features
 - **Dual Interface**: Teacher and student modes.
 - **Curriculum Integration**: Incorporates Australian Curriculum V9 and Montessori National Curriculum (2011), with AI responses rooted in Montessori's Cosmic Education.
+- **Age-to-Year-Level Mapping**: Automatic translation of age groups to AC year levels (6-9→Years 1-3, 9-12→Years 4-6, 12-15→Years 7-9) with visual display.
+- **Comprehensive Subject Coverage**: Multiselect subject selector including English, Mathematics, Science, Humanities and Social Sciences, Design and Technologies, Digital Technologies, The Arts, Health and Physical Education, Languages for cross-curricular planning.
 - **AI-Powered Tools**:
     - **Great Story Creator**: AI-assisted Montessori Great Story development with persistent storage.
     - **Planning Notes Workspace**: Word processor-style planning tool with organization, materials management, and image upload.
