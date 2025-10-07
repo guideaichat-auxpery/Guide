@@ -798,7 +798,11 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Save and log the student's prompt
+        # Extract curriculum keywords from student query
+        from utils import extract_curriculum_keywords, update_trending_keywords
+        detected_keywords = extract_curriculum_keywords(prompt)
+        
+        # Save and log the student's prompt with keyword tracking
         if database_available and student_id:
             db = get_db()
             if db:
@@ -808,13 +812,31 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
                         db, st.session_state.student_session_id, 'student',
                         'user', prompt, student_id=student_id
                     )
-                    # Log student activity
+                    
+                    # Create extra_data with detected keywords for anonymized tracking
+                    extra_data = {
+                        'detected_keywords': [
+                            {'subject': kw['subject'], 'keyword': kw['keyword']} 
+                            for kw in detected_keywords
+                        ],
+                        'query_id': st.session_state.student_session_id[:8]  # Anonymous query ID
+                    }
+                    
+                    # Log student activity with keyword data
                     log_student_activity(
                         db, 
                         student_id, 
                         'learning_question', 
                         prompt_text=prompt,
-                        session_id=st.session_state.student_session_id
+                        session_id=st.session_state.student_session_id,
+                        extra_data=json.dumps(extra_data)
+                    )
+                    
+                    # Update trending keywords
+                    update_trending_keywords(
+                        db, 
+                        detected_keywords, 
+                        st.session_state.student_session_id
                     )
                 except Exception as e:
                     print(f"Error saving conversation/logging prompt: {str(e)}")
