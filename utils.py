@@ -9,55 +9,156 @@ import re
 # Maps subjects to key curriculum terms from AC V9 descriptors
 CURRICULUM_KEYWORDS = {
     "Geography": [
-        "environment", "environmental", "human impact", "sustainability", "sustainable",
+        # Multi-word AC V9 topic names (Year 7-9)
+        "Geographies of Interconnections", "geographies of interconnections",
+        "Biomes and Food Security", "biomes and food security",
+        "Water in the World", "water in the world",
+        "Place and Liveability", "place and liveability",
+        "Landforms and Landscapes", "landforms and landscapes",
+        "Changing Nations", "changing nations",
+        # Content descriptor phrases
+        "geographical processes", "geographical phenomena",
+        "interconnections between people", "people and environments",
+        "people, places and environments", "characteristics of places",
+        "human activities", "human impact",
+        # Single keywords
+        "environment", "environmental", "sustainability", "sustainable",
         "urbanization", "urbanisation", "place", "space", "interconnectedness", "interconnected",
         "landforms", "landscapes", "biomes", "ecosystems", "migration", "food security",
-        "climate", "water", "liveability", "geographical processes", "human-environment"
+        "climate", "water", "liveability"
     ],
     "History": [
+        # Multi-word AC V9 topic names (Year 7-9)
+        "The Ancient World", "the ancient world",
+        "The Ancient to Modern World", "ancient to modern world",
+        "Making a Nation", "making a nation",
+        "Australian Involvement in World War I", "world war i", "world war 1",
+        # Content descriptor phrases
+        "Industrial Revolution", "industrial revolution",
+        "causes and effects", "significance of events",
+        "historical sources", "cultural exchange",
+        "First Nations Australians", "Aboriginal and Torres Strait Islander",
+        "Aboriginal and Torres Strait Islander Histories and Cultures",
+        "continuity and change", "social groups",
+        # Single keywords
         "ancient", "civilisation", "civilization", "heritage", "continuity", "change",
-        "historical", "colonisation", "colonization", "federation", "industrial revolution",
+        "historical", "colonisation", "colonization", "federation",
         "indigenous", "First Nations", "Aboriginal", "Torres Strait Islander", "significance",
-        "cause", "effect", "identity", "cultural exchange", "society", "social groups"
+        "cause", "effect", "identity", "society"
     ],
     "Business and Economics": [
+        # Multi-word AC V9 topic names (Year 7-9)
+        "Resource Allocation and Making Choices", "resource allocation",
+        "Business in the Australian Economy", "australian economy",
+        "Personal and Financial Decision-Making", "financial decision-making",
+        # Content descriptor phrases
+        "economic decision-making", "consumer choices", "market dynamics",
+        "ethical considerations", "workplace rights", "financial decisions",
+        "businesses and governments", "domestic and international markets",
+        # Single keywords
         "innovation", "design thinking", "prototype", "technology", "functionality",
         "economic", "market", "markets", "consumer", "business", "entrepreneurship", "enterprise",
-        "resource allocation", "decision-making", "trade", "interdependent", "financial",
-        "workplace", "employment", "ethical considerations", "rights", "responsibilities"
+        "trade", "interdependent", "financial", "workplace", "employment", "rights", "responsibilities"
     ],
     "Civics and Citizenship": [
+        # Multi-word AC V9 topic names (Year 7-9)
+        "Democratic Values, Rights and Responsibilities", "democratic values",
+        "Laws and Citizens", "laws and citizens",
+        "Government and Democracy", "government and democracy",
+        # Content descriptor phrases
+        "democratic system of government", "Australian Constitution", "representative democracy",
+        "rule of law", "legal system", "political parties", "independent representatives",
+        "citizen participation", "media and democracy", "interest groups",
+        "rights and responsibilities", "ethical understanding",
+        # Single keywords
         "ethics", "ethical", "community", "decision-making", "rights", "responsibilities",
         "intercultural understanding", "democracy", "democratic", "government", "constitution",
         "law", "laws", "justice", "citizenship", "political", "participation", "values",
-        "media", "interest groups", "voting", "elections", "representation", "indigenous governance"
+        "media", "voting", "elections", "representation"
     ],
     "English": [
+        # Multi-word AC V9 strand names and concepts
+        "language features", "literary devices", "literary texts",
+        "text structure", "persuasive texts", "informative texts", "imaginative texts",
+        "reading comprehension", "multimodal texts", "analytical images",
+        "audience and purpose", "creating texts",
+        # Content descriptor phrases
+        "analyse and evaluate", "create and edit", "structural features",
+        "language features and literary devices", "position readers",
+        # Single keywords
         "persuasive", "informational", "narrative", "communication", "presentation", "literacy",
-        "text", "texts", "language features", "literary", "analysis", "audience", "purpose",
+        "text", "texts", "literary", "analysis", "audience", "purpose",
         "multimodal", "reading", "writing", "comprehension", "discourse", "argument", "rhetoric"
     ],
     "Science": [
+        # Multi-word AC V9 strand names
+        "Biological Sciences", "biological sciences",
+        "Physical Sciences", "physical sciences",
+        "Chemical Sciences", "chemical sciences",
+        "Earth and Space Sciences", "earth and space sciences",
+        # Content descriptor phrases
+        "living things", "external features", "structural features",
+        "energy transformation", "electrical circuits", "forces and motion",
+        "natural processes", "human activity", "habitats and environments",
+        "scientific inquiry", "scientific method",
+        # Single keywords
         "investigate", "experiment", "observation", "hypothesis", "evidence", "inquiry",
         "biological", "physical", "chemical", "earth", "space", "energy", "forces", "motion",
-        "living things", "ecosystems", "adaptation", "conservation", "sustainability",
-        "scientific method", "data", "variables", "prediction"
+        "ecosystems", "adaptation", "conservation", "sustainability",
+        "data", "variables", "prediction"
     ],
     "Mathematics": [
+        # Multi-word AC V9 strand names
+        "Number and Algebra", "number and algebra",
+        "Measurement and Geometry", "measurement and geometry",
+        "Statistics and Probability", "statistics and probability",
+        # Content descriptor phrases
+        "place value", "addition and subtraction", "multiplication and division",
+        "fractions and decimals", "data representation", "data interpretation",
+        "problem solving", "mathematical reasoning",
+        # Single keywords
         "number", "algebra", "geometry", "measurement", "statistics", "probability",
-        "problem-solving", "reasoning", "patterns", "relationships", "functions",
-        "data analysis", "spatial", "calculation", "estimation", "mathematical thinking"
+        "reasoning", "patterns", "relationships", "functions",
+        "data analysis", "spatial", "calculation", "estimation"
     ],
     "Design and Technologies": [
-        "innovation", "design thinking", "sustainability", "sustainable", "prototype",
+        # Multi-word AC V9 concepts
+        "design thinking", "design process", "design iteration",
+        "digital systems", "user-centered design", "sustainable design",
+        "materials and technologies", "technologies and society",
+        # Content descriptor phrases
+        "innovative design", "prototype development", "functionality and aesthetics",
+        "environmental sustainability", "engineering principles",
+        # Single keywords
+        "innovation", "sustainability", "sustainable", "prototype",
         "technology", "technologies", "functionality", "materials", "systems",
-        "digital systems", "design process", "iteration", "user-centered", "engineering"
+        "iteration", "engineering"
     ],
     "Digital Technologies": [
-        "algorithm", "coding", "programming", "data", "digital systems", "computational thinking",
-        "cybersecurity", "networks", "automation", "artificial intelligence", "problem-solving"
+        # Multi-word AC V9 concepts
+        "digital systems", "computational thinking", "data representation",
+        "artificial intelligence", "machine learning", "cybersecurity",
+        "digital solutions", "programming languages", "algorithm design",
+        # Content descriptor phrases
+        "networks and the internet", "data collection and analysis",
+        "automation and control", "problem solving",
+        # Single keywords
+        "algorithm", "coding", "programming", "data", "networks",
+        "automation", "problem-solving"
     ],
     "HASS (Humanities and Social Sciences)": [
+        # Multi-word AC V9 topic names (Foundation-Year 6)
+        "Personal and Family Histories", "personal and family histories",
+        "The Past in the Present", "past in the present",
+        "Community and Remembrance", "community and remembrance",
+        "First Contacts", "first contacts",
+        "The Australian Colonies", "australian colonies",
+        "Australia as a Nation", "australia as a nation",
+        # Content descriptor phrases
+        "continuity and change", "First Nations Australians",
+        "cultural diversity", "community identity",
+        "democracy and citizenship", "Australian democracy",
+        # Single keywords
         "community", "history", "geography", "heritage", "culture", "identity", "change",
         "continuity", "place", "environment", "society", "civic", "economics", "sustainability"
     ]
@@ -66,6 +167,7 @@ CURRICULUM_KEYWORDS = {
 def extract_curriculum_keywords(subject, user_input):
     """
     Extract curriculum-relevant keywords from user input based on subject area.
+    Prioritizes multi-word phrases over single words for better AC V9 topic detection.
     
     Args:
         subject: Subject area (e.g., "Geography", "History")
@@ -77,23 +179,44 @@ def extract_curriculum_keywords(subject, user_input):
     if not subject or not user_input:
         return []
     
-    # Get keywords for this subject (case-insensitive matching)
+    # Get keywords for this subject
     keywords = CURRICULUM_KEYWORDS.get(subject, [])
     if not keywords:
         return []
     
+    # Sort keywords by length (longest first) to prioritize multi-word phrases
+    # This ensures "Geographies of Interconnections" is matched before "interconnections"
+    sorted_keywords = sorted(keywords, key=lambda k: len(k), reverse=True)
+    
     # Find matching keywords using word boundary regex (case-insensitive)
     found_keywords = []
     user_input_lower = user_input.lower()
+    matched_positions = set()  # Track positions to avoid overlapping matches
     
-    for keyword in keywords:
+    for keyword in sorted_keywords:
         # Use word boundary to match whole words/phrases
         pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
-        if re.search(pattern, user_input_lower):
-            found_keywords.append(keyword)
+        match = re.search(pattern, user_input_lower)
+        
+        if match:
+            # Check if this position overlaps with a previously matched phrase
+            start, end = match.span()
+            if not any(start < pos < end or pos == start for pos in matched_positions):
+                found_keywords.append(keyword)
+                # Mark this position range as matched
+                for pos in range(start, end):
+                    matched_positions.add(pos)
     
-    # Remove duplicates and return
-    return list(set(found_keywords))
+    # Remove duplicates while preserving order (prioritize longer phrases)
+    seen = set()
+    unique_keywords = []
+    for keyword in found_keywords:
+        keyword_lower = keyword.lower()
+        if keyword_lower not in seen:
+            seen.add(keyword_lower)
+            unique_keywords.append(keyword)
+    
+    return unique_keywords
 
 # Initialize OpenAI client
 @st.cache_resource
