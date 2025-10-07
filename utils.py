@@ -388,7 +388,157 @@ Montessori Connection: Research skills, presentation work, and cosmic education 
 Strand: Literature
 Focus: Literary analysis
 Descriptor: "Identify and explain how analytical images like figures, tables and diagrams contribute to understanding" (AC9E6LA04)
-Montessori Connection: Text analysis, research materials, and integrated cosmic education studies."""
+Montessori Connection: Text analysis, research materials, and integrated cosmic education studies.""",
+            
+            "Year 7": """Australian Curriculum V9 — English (Year 7)
+Strand: Literacy
+Focus: Analysing and creating texts
+Descriptor: "Create and edit literary texts that experiment with language features and literary devices" (AC9E7LE05)
+Additional: "Analyse and evaluate the ways that language features vary according to audience and purpose" (AC9E7LA06)
+Montessori Connection: Adolescent expression through writing, debate preparation, and cosmic education connections to human communication.""",
+            
+            "Year 8": """Australian Curriculum V9 — English (Year 8)
+Strand: Literature
+Focus: Critical analysis
+Descriptor: "Analyse how texts position readers and viewers through language, structural and presentational devices" (AC9E8LE03)
+Additional: "Create and edit literary texts that adapt plot structure, characters and language" (AC9E8LE05)
+Montessori Connection: Critical thinking, persuasive communication, and adolescent exploration of perspective and voice.""",
+            
+            "Year 9": """Australian Curriculum V9 — English (Year 9)
+Strand: Literacy
+Focus: Complex analysis and argumentation
+Descriptor: "Analyse and evaluate how language features are used to represent ideas and issues in ways that may influence audiences" (AC9E9LA07)
+Additional: "Create and edit texts that respond to written and visual texts, developing original ideas drawn from these texts" (AC9E9LE05)
+Montessori Connection: Adolescent moral reasoning, argumentative discourse, and cosmic education about human communication and social change."""
+        },
+        
+        "History": {
+            "Year 7": """Australian Curriculum V9 — History (Year 7)
+Focus: The Ancient World
+Descriptor: "Identify and describe the causes and effects of significant events that shaped the ancient world" (AC9HH7K01)
+Additional: "Analyse the role of groups and the significance of particular individuals in ancient societies" (AC9HH7K03)
+General Capabilities: Critical & Creative Thinking, Ethical Understanding
+Montessori Connection: Timeline of civilizations, cosmic education exploring human society development, and interdependence of cultures.""",
+            
+            "Year 8": """Australian Curriculum V9 — History (Year 8)
+Focus: The Ancient to Modern World
+Descriptor: "Explain the causes and effects of events and developments in the period from approximately 650 CE (AD) to 1750" (AC9HH8K01)
+Additional: "Analyse how different groups in society experienced and participated in these changes" (AC9HH8K04)
+General Capabilities: Intercultural Understanding, Critical & Creative Thinking
+Montessori Connection: Human tendencies toward exploration and social organization, cosmic education about cultural exchange.""",
+            
+            "Year 9": """Australian Curriculum V9 — History (Year 9)
+Focus: Making a Nation to Australian Involvement in World War I
+Descriptor: "Explain the significance of the Industrial Revolution and the movement of peoples for the development of Australian society" (AC9HH9K02)
+Additional: "Analyse the causes and effects of Federation and how this shaped Australian identity" (AC9HH9K04)
+Cross-Curriculum Priority: Aboriginal & Torres Strait Islander Histories and Cultures
+Montessori Connection: Adolescent exploration of identity, social justice, and cosmic education about Australia's place in world history."""
+        },
+        
+        "Geography": {
+            "Year 7": """Australian Curriculum V9 — Geography (Year 7)
+Focus: Water in the World & Place and Liveability
+Descriptor: "Explain processes that influence the characteristics of places and the interconnections between people, places and environments" (AC9HG7K03)
+Additional: "Analyse the causes and effects of geographical phenomena and challenges" (AC9HG7K04)
+General Capabilities: Critical & Creative Thinking, Sustainability
+Montessori Connection: Earth studies, cosmic education about interconnected systems, and environmental stewardship.""",
+            
+            "Year 8": """Australian Curriculum V9 — Geography (Year 8)
+Focus: Landforms and Landscapes & Changing Nations
+Descriptor: "Explain how geographical processes change the characteristics of places and the interconnections between people and environments" (AC9HG8K03)
+Additional: "Analyse the causes and effects of urbanisation and migration, and the consequences for people, places and environments" (AC9HG8K04)
+Cross-Curriculum Priority: Sustainability, Asia and Australia's Engagement with Asia
+Montessori Connection: Landform studies, cosmic education about Earth's processes, and human adaptation to environments.""",
+            
+            "Year 9": """Australian Curriculum V9 — Geography (Year 9)
+Focus: Biomes and Food Security & Geographies of Interconnections
+Descriptor: "Explain how geographical processes change the characteristics of places and the interconnections between people, places and environments" (AC9HG9K03)
+Additional: "Analyse the causes and effects of challenges facing places and regions, and consequences for sustainability" (AC9HG9K05)
+Cross-Curriculum Priority: Sustainability, Aboriginal & Torres Strait Islander Histories and Cultures
+Montessori Connection: Biome studies, cosmic education about interconnected global systems, and food security as human responsibility."""
+        },
+        
+        "Business and Economics": {
+            "Year 7": """Australian Curriculum V9 — Economics and Business (Year 7)
+Focus: Resource Allocation and Making Choices
+Descriptor: "Explain how markets operate and the role of individuals, businesses and governments in economic decision-making" (AC9HE7K01)
+Additional: "Analyse the factors that influence decisions about work, and characteristics of successful businesses" (AC9HE7K02)
+General Capabilities: Critical & Creative Thinking, Ethical Understanding
+Montessori Connection: Adolescent economic independence, cosmic education about human work and exchange, and enterprise education.""",
+            
+            "Year 8": """Australian Curriculum V9 — Economics and Business (Year 8)
+Focus: Business in the Australian Economy
+Descriptor: "Explain how businesses respond to opportunities and challenges in domestic and international markets" (AC9HE8K01)
+Additional: "Analyse the rights, responsibilities and ethical considerations of participants in the workplace" (AC9HE8K02)
+General Capabilities: Ethical Understanding, Critical & Creative Thinking
+Montessori Connection: Adolescent work exploration, entrepreneurship, and cosmic education about human economic systems.""",
+            
+            "Year 9": """Australian Curriculum V9 — Economics and Business (Year 9)
+Focus: Personal and Financial Decision-Making
+Descriptor: "Explain how participants in the economy are interdependent and how markets enable trade" (AC9HE9K01)
+Additional: "Analyse factors that influence consumer and financial decisions, and consequences for individuals, businesses and the economy" (AC9HE9K02)
+General Capabilities: Critical & Creative Thinking, Ethical Understanding, Literacy, Numeracy
+Montessori Connection: Adolescent financial literacy, cosmic education about economic interdependence, and responsible decision-making."""
+        },
+        
+        "Civics and Citizenship": {
+            "Year 7": """Australian Curriculum V9 — Civics and Citizenship (Year 7)
+Focus: Democratic Values, Rights and Responsibilities
+Descriptor: "Explain the key features of Australia's democratic system of government and how it is shaped by the Australian Constitution" (AC9HC7K01)
+Additional: "Analyse the key ideas that underpin Australia's representative democracy and explain their significance" (AC9HC7K02)
+General Capabilities: Ethical Understanding, Critical & Creative Thinking
+Cross-Curriculum Priority: Aboriginal & Torres Strait Islander Histories and Cultures
+Montessori Connection: Adolescent exploration of justice, cosmic education about human rights, and participatory democracy.""",
+            
+            "Year 8": """Australian Curriculum V9 — Civics and Citizenship (Year 8)
+Focus: Laws and Citizens
+Descriptor: "Explain how Australia's legal system aims to provide justice, including through the rule of law, laws and courts" (AC9HC8K01)
+Additional: "Analyse how citizens can participate in their democracy including through the media, interest groups and political parties" (AC9HC8K03)
+General Capabilities: Ethical Understanding, Critical & Creative Thinking
+Montessori Connection: Adolescent moral independence, cosmic education about justice systems, and active citizenship.""",
+            
+            "Year 9": """Australian Curriculum V9 — Civics and Citizenship (Year 9)
+Focus: Government and Democracy
+Descriptor: "Explain the role of political parties and independent representatives in Australia's system of government" (AC9HC9K01)
+Additional: "Analyse how citizens participate in resolving contemporary issues and how values can influence actions" (AC9HC9K04)
+General Capabilities: Ethical Understanding, Critical & Creative Thinking, Intercultural Understanding
+Cross-Curriculum Priority: Aboriginal & Torres Strait Islander Histories and Cultures
+Montessori Connection: Adolescent social consciousness, cosmic education about human governance, and community contribution."""
+        },
+        
+        "HASS (Humanities and Social Sciences)": {
+            "Year 1": """Australian Curriculum V9 — HASS (Year 1)
+Focus: Personal and Family Histories
+Descriptor: "Explore the past through the experiences of individuals and families" (AC9HS1K01)
+Montessori Connection: Family timeline work, sensorial exploration of history, and cosmic education about continuity and change.""",
+            
+            "Year 2": """Australian Curriculum V9 — HASS (Year 2)
+Focus: The Past in the Present
+Descriptor: "Identify and describe continuity and change in family and local community life over time" (AC9HS2K01)
+Montessori Connection: Community studies, timeline work, and cosmic education about human communities.""",
+            
+            "Year 3": """Australian Curriculum V9 — HASS (Year 3)
+Focus: Community and Remembrance
+Descriptor: "Examine significant events and people in the local community and their contribution to the community's identity" (AC9HS3K02)
+Montessori Connection: Local community exploration, timeline of community, and cosmic education about human belonging.""",
+            
+            "Year 4": """Australian Curriculum V9 — HASS (Year 4)
+Focus: First Contacts
+Descriptor: "Explain the diversity of First Nations Australians' ways of life before and after the arrival of Europeans" (AC9HS4K01)
+Cross-Curriculum Priority: Aboriginal & Torres Strait Islander Histories and Cultures
+Montessori Connection: Timeline of Australian history, cosmic education about cultural diversity, and respect for Indigenous knowledge.""",
+            
+            "Year 5": """Australian Curriculum V9 — HASS (Year 5)
+Focus: The Australian Colonies
+Descriptor: "Explain the economic, political and social causes and effects of colonial settlement on First Nations Australians" (AC9HS5K04)
+Cross-Curriculum Priority: Aboriginal & Torres Strait Islander Histories and Cultures
+Montessori Connection: Timeline work, cosmic education about colonization and impact, and justice education.""",
+            
+            "Year 6": """Australian Curriculum V9 — HASS (Year 6)
+Focus: Australia as a Nation
+Descriptor: "Explain the key features of Australia's democracy including elections, and the role of the Constitution" (AC9HS6K05)
+Additional: "Explain the significance of key events in the development of Australian democracy and citizenship" (AC9HS6K04)
+Montessori Connection: Timeline of Australian democracy, cosmic education about governance systems, and civic participation."""
         }
     }
     
