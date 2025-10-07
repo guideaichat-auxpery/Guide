@@ -677,6 +677,34 @@ def show_student_interface():
                 finally:
                     db.close()
     
+    # Custom CSS for enhanced chat styling
+    st.markdown("""
+    <style>
+    /* Subject-based color themes for chat messages */
+    .subject-geography { background-color: #A7C796 !important; color: white !important; }
+    .subject-history { background-color: #C9A7E3 !important; color: white !important; }
+    .subject-science { background-color: #74B3A1 !important; color: white !important; }
+    .subject-english { background-color: #E4C29B !important; color: #5B3E2E !important; }
+    .subject-civics { background-color: #B8A7C7 !important; color: white !important; }
+    
+    /* Smooth scroll for chat */
+    [data-testid="stChatMessageContainer"] {
+        scroll-behavior: smooth;
+    }
+    
+    /* Enhanced chat bubbles */
+    [data-testid="stChatMessage"] {
+        animation: fadeIn 0.4s ease-in-out;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.markdown(f"### 🌟 Welcome, {student_name}!")
     st.markdown("*Your Montessori Learning Companion - Ask questions, explore ideas, discover connections*")
     
@@ -764,8 +792,12 @@ def show_student_interface():
     )
     
     # Display chat history with avatars
+    # Try to use custom Montessori avatar if available, otherwise use emoji
+    import os
+    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🤖"
+    
     for message in st.session_state.student_messages:
-        avatar = "🤖" if message["role"] == "assistant" else "👤"
+        avatar = ai_avatar if message["role"] == "assistant" else "👤"
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
     
@@ -800,6 +832,7 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
         st.session_state.student_messages.append({"role": "user", "content": full_prompt})
         
         # Display user message (original prompt only) with avatar
+        import os
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         
@@ -853,7 +886,8 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
         selected_year_level = st.session_state.get('student_year_selector', 'Year 6')
         
         # Get AI response with enhanced features and curriculum alignment
-        with st.chat_message("assistant", avatar="🤖"):
+        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🤖"
+        with st.chat_message("assistant", avatar=ai_avatar):
             with st.spinner("Thinking..."):
                 response = call_openai_api(
                     st.session_state.student_messages,
