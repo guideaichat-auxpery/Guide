@@ -1,20 +1,113 @@
-Create a dedicated section in the educator dashboard for developing Montessori Great Story on a prompted theme or topic for educators to share and spark imagination and curiosity.
-Add a notes or planning page where teachers can copy and paste words, images, materials and type directly in. This should be saved to their account so that it is retrievable each time they log in. Each should have the basic functionality of a word doc or Google doc. including chapter/content organisation.
+next to the chat bar place a notice stating do not input your name, bithdate, or address, the address of your school or the personal information of real people into the chat bar:
+<!-- Montessori-Inspired Chat Container -->
+<div id="chatContainer" style="
+    max-width: 700px;
+    margin: 40px auto;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+">
 
-Student account needs work:
+  <!-- Privacy Banner -->
+  <div id="privacyNotice" style="
+      background-color: #FFF4E0;
+      color: #8A5D3B;
+      border: 1px solid #FFD59E;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  ">
+    ⚠️ Privacy Notice: Do NOT enter personal information (your name, birthdate, home or school address, or details of real people). Keep all inputs anonymous.
+  </div>
 
-AttributeError: st.session_state has no attribute "planning_messages". Did you forget to initialize it? More info: https://docs.streamlit.io/develop/concepts/architecture/session-state#initialization
-Traceback:
-File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 128, in exec_func_with_error_handling
-    result = func()
-             ^^^^^^
-File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 669, in code_to_exec
-    exec(code, module.__dict__)  # noqa: S102
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-File "/home/runner/workspace/app.py", line 143, in <module>
-    show_student_interface()
-File "/home/runner/workspace/interfaces.py", line 467, in show_student_interface
-    response = call_openai_api(st.session_state.planning_messages, max_tokens)
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/state/session_state_proxy.py", line 132, in __getattr__
-    raise AttributeError(_missing_attr_error_message(key))
+  <!-- Chat Output Area -->
+  <div id="chatOutput" style="
+      background-color: #FAF8F1;
+      border-radius: 10px;
+      padding: 14px;
+      min-height: 320px;
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #E5E0D4;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  "></div>
+
+  <!-- Chat Input with Tooltip -->
+  <div style="position: relative; display: flex; flex-direction: column; gap: 4px;">
+    <input id="userInput" type="text" placeholder="Type your question here..." style="
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 8px;
+        border: 1px solid #DDD1B0;
+        font-size: 1rem;
+        box-sizing: border-box;
+        outline: none;
+    "/>
+    <span style="
+        visibility: hidden;
+        width: 280px;
+        background-color: #FFF4E0;
+        color: #8A5D3B;
+        text-align: left;
+        border: 1px solid #FFD59E;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 10;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.85rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    ">
+      ⚠️ Privacy Notice: Do NOT enter personal info (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.
+    </span>
+  </div>
+
+  <!-- Send Button -->
+  <button id="sendBtn" style="
+      margin-top: 4px;
+      padding: 12px 24px;
+      background-color: #A7C796;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+  ">Send</button>
+
+</div>
+
+<script>
+const chatOutput = document.getElementById('chatOutput');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const tooltip = document.querySelector('span');
+
+userInput.addEventListener('mouseenter', () => tooltip.style.visibility = 'visible');
+userInput.addEventListener('mouseleave', () => tooltip.style.visibility = 'hidden');
+
+sendBtn.addEventListener('click', async () => {
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    // Display user message
+    chatOutput.innerHTML += `<div style="margin-bottom:10px;"><strong style="color:#6B4C3B;">You:</strong> ${message}</div>`;
+
+    userInput.value = "";
+    chatOutput.scrollTop = chatOutput.scrollHeight;
+
+    // Call your GuideChat API here and append the response
+    // Example placeholder:
+    const response = "GuideChat response would appear here.";
+    chatOutput.innerHTML += `<div style="margin-bottom:10px;"><strong style="color:#4F7A5D;">AI:</strong> ${response}</div>`;
+    chatOutput.scrollTop = chatOutput.scrollHeight;
+});
+</script>
