@@ -94,15 +94,15 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Student Curriculum Selector**: Optional subject/year level selector in student interface for curriculum-aligned learning support
 - **Montessori Integration**: All curriculum contexts include Montessori material connections and cosmic education links
 
-## October 7, 2025 - Provocational & Ethical Inquiry Framework
-- **Provocational Learning Design**: Completely redesigned educator system prompt to focus on ethical, dialectical, and morally complex inquiry experiences
-- **Australian Context Integration**: All responses begin with provocations, quotes, or scenarios grounded in Australian society and First Nations perspectives
-- **Grey Area Questions**: Big Questions designed to have no simple answers, inviting ethical reasoning, empathy, and debate on complex issues
-- **Education for Peace**: Aligns with Montessori's vision of education for social responsibility, human unity, and active citizenship
-- **Multi-Perspective Pathways**: Exploration avenues representing diverse viewpoints (social, environmental, economic, political, cultural)
-- **Structured Provocational Format**: Provocation/Quote (Australian Context) → Big Question → Challenge/Inquiry Task → Possible Pathways → Observation Prompts → Curriculum Connections
-- **Third-Plane Montessori Focus**: Designed for upper primary and adolescent students grappling with ambiguity, perspective, and moral responsibility
-- **Critical Capabilities Emphasis**: Direct integration of AC V9 General Capabilities (ethical understanding, intercultural understanding, civics, sustainability)
+## October 7, 2025 - Enhanced Provocational Framework with Mandatory AC V9 Rigor
+- **Mandatory Quality Gate System**: AI responses MUST self-assess against 9-point checklist before finalizing (authentic Australian provocation, ethical reasoning, Bloom's higher-order thinking, First Nations perspectives, specific AC V9 codes, General Capabilities mapping, Years 5-10 cognitive rigor, multiple perspectives, Montessori third-plane alignment)
+- **Hard AC V9 Requirements**: SPECIFIC descriptor codes mandatory (e.g., AC9S6H01, AC9E6LA03), named achievement standards, explicit General Capabilities mapping (Ethical Understanding, Critical & Creative Thinking, Intercultural Understanding), Cross-Curriculum Priorities integration
+- **Intellectual Rigor Standards (Years 5-10)**: Demands analysis of systems/patterns, synthesis across disciplines, evaluation of competing claims, creation of reasoned arguments, genuine moral dilemmas, justice/fairness/rights exploration, contemporary Australian issues, First Nations knowledge systems
+- **Uploaded Curriculum Integration**: Mandatory referencing of educator-uploaded documents with specific sections/pages quoted, content descriptors cited, seamless integration with provocational framework
+- **Enhanced Response Structure**: Provocation (authentic Australian context) → Big Question (no simple answer) → Inquiry Challenge (complex, sustained engagement) → Exploration Pathways (3-4 genuinely different perspectives) → Educator Observation Prompts → Curriculum Alignment (with mandatory specificity format)
+- **Higher Intellectual Standards**: Treats Years 5-10 students as serious thinkers capable of abstract reasoning, moral complexity, systems thinking, and wrestling with real-world ambiguity
+- **Third-Plane Developmental Focus**: Aligns with Montessori adolescent needs for social consciousness, moral independence, intellectual work, and community contribution
+- **Education for Peace Integration**: Centres human unity, active citizenship, multiple legitimate perspectives, and construction of understanding through inquiry
 
 ## October 6, 2025 - Conversation Persistence, Analytics & Export System
 - **Session-Based Conversation Persistence**: All chat conversations (companion and student) now persist in PostgreSQL database, maintaining history across page refreshes
