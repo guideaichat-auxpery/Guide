@@ -583,23 +583,59 @@ def show_student_interface():
     st.markdown(f"### 🌟 Welcome, {student_name}!")
     st.markdown("*Your Montessori Learning Companion - Ask questions, explore ideas, discover connections*")
     
-    # Optional: Curriculum context selector for students (collapsed by default)
+    # Enhanced learning context selector with age-appropriate subjects
+    from utils import map_age_to_year_levels
+    
     with st.expander("📚 Set Learning Context (Optional)", expanded=False):
-        col1, col2 = st.columns(2)
-        with col1:
-            subject = st.selectbox(
-                "Subject Area:",
-                ["", "Science", "Mathematics", "English"],
-                key="student_subject",
-                help="Select a subject to get curriculum-aligned guidance"
-            )
-        with col2:
-            year_level = st.selectbox(
-                "Year Level:",
-                ["", "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"],
-                key="student_year_level",
-                help="Select your year level for age-appropriate support"
-            )
+        # Age group selector
+        student_age_group = st.selectbox(
+            "Your Age Group:",
+            ["3-6", "6-9", "9-12", "12-15"],
+            index=3 if age_group == "12-15" else (2 if age_group == "9-12" else (1 if age_group == "6-9" else 0)),
+            key="student_age_selector",
+            format_func=lambda x: {
+                "3-6": "Early Years (3-6) → Foundation",
+                "6-9": "Lower Primary (6-9) → Years 1-3", 
+                "9-12": "Upper Primary (9-12) → Years 4-6",
+                "12-15": "Adolescent (12-15) → Years 7-9"
+            }[x]
+        )
+        
+        # Display year level mapping
+        year_levels = map_age_to_year_levels(student_age_group)
+        if year_levels:
+            year_levels_str = ", ".join(year_levels)
+            st.caption(f"🎯 Australian Curriculum Year Levels: **{year_levels_str}**")
+        
+        # Age-appropriate subject selector
+        if student_age_group in ["3-6", "6-9", "9-12"]:
+            # Foundation to Year 6: Use HASS
+            subject_options = ["English", "Mathematics", "Science", "HASS (Humanities and Social Sciences)", 
+                              "Design and Technologies", "Digital Technologies", "The Arts", 
+                              "Health and Physical Education", "Languages"]
+        else:  # 12-15 (Years 7-9)
+            # Years 7-9: Use separate humanities subjects
+            subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
+                              "Business and Economics", "Civics and Citizenship",
+                              "Design and Technologies", "Digital Technologies", "The Arts", 
+                              "Health and Physical Education", "Languages"]
+        
+        # Multi-subject selector
+        student_subjects = st.multiselect(
+            "Subject(s) you're learning about:",
+            subject_options,
+            key="student_subjects",
+            help="Select one or more subjects to get curriculum-aligned guidance"
+        )
+    
+    # File upload section for student work
+    st.markdown("#### 📄 Upload Your Work for Help (Optional)")
+    student_uploaded_files = st.file_uploader(
+        "Upload homework, notes, or questions you need help with",
+        accept_multiple_files=True,
+        type=['txt', 'pdf', 'docx', 'doc', 'jpg', 'jpeg', 'png'],
+        key="student_file_uploader"
+    )
     
     # Manage conversation history (keep last 10 exchanges)
     st.session_state.student_messages = manage_conversation_history(
@@ -613,10 +649,35 @@ def show_student_interface():
     
     # Chat input
     if prompt := st.chat_input("What would you like to learn about today?"):
-        # Add user message to chat history
-        st.session_state.student_messages.append({"role": "user", "content": prompt})
+        # Process uploaded files if any
+        document_context = ""
+        if student_uploaded_files:
+            st.info(f"📎 Reviewing {len(student_uploaded_files)} file(s) you uploaded...")
+            for file in student_uploaded_files:
+                file_content = extract_file_content(file)
+                if file_content:
+                    document_context += f"""
+
+📄 YOUR UPLOADED FILE: {file.name}
+═══════════════════════════════════════════════════════════════════
+{file_content}
+═══════════════════════════════════════════════════════════════════
+"""
         
-        # Display user message
+        # Build enhanced prompt with document context
+        full_prompt = prompt
+        if document_context:
+            full_prompt = f"""STUDENT QUESTION: {prompt}
+
+STUDENT'S UPLOADED WORK/DOCUMENTS:
+{document_context}
+
+HELP THE STUDENT understand their work using guided questions and scaffolded support."""
+        
+        # Add user message to chat history
+        st.session_state.student_messages.append({"role": "user", "content": full_prompt})
+        
+        # Display user message (original prompt only)
         with st.chat_message("user"):
             st.markdown(prompt)
         
@@ -643,19 +704,18 @@ def show_student_interface():
                 finally:
                     db.close()
         
-        # Get curriculum context if selected
-        selected_subject = st.session_state.get('student_subject', '')
-        selected_year = st.session_state.get('student_year_level', '')
+        # Get selected subjects and age group
+        selected_subjects = st.session_state.get('student_subjects', [])
+        selected_age_group = st.session_state.get('student_age_selector', age_group)
         
-        # Get AI response with enhanced features
+        # Get AI response with enhanced features and intelligent year level inference
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 response = call_openai_api(
                     st.session_state.student_messages,
                     is_student=True,
-                    age_group=age_group,
-                    subject=selected_subject if selected_subject else None,
-                    year_level=selected_year if selected_year else None,
+                    age_group=selected_age_group,
+                    subjects=selected_subjects if selected_subjects else None,
                     curriculum_type="Blended",
                     use_conversation_history=True
                 )

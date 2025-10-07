@@ -11,8 +11,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 # System Architecture
 
 ## Frontend
-- **Framework**: Streamlit (wide layout) with a chat interface, curriculum selector, file upload, and accessibility wizard.
-- **State Management**: Session-based for conversation history, curriculum selection, and uploaded content.
+- **Framework**: Streamlit (wide layout) with dual-mode interface (educator and student) featuring chat, curriculum selector, file upload, and accessibility wizard.
+- **State Management**: Session-based for conversation history, curriculum selection, and uploaded content with separate contexts for educators and students.
 - **Visualization**: Plotly for charts and timelines.
 
 ## Backend
@@ -30,7 +30,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Export Capabilities**: Lesson plan export to PDF and DOCX using Montessori-themed templates.
 
 ## Core Features
-- **Dual Interface**: Teacher and student modes.
+- **Dual Interface**: Teacher and student modes with parallel feature sets:
+  - **Educator Mode**: Full lesson planning, curriculum alignment review, observation dashboards, and advanced tools
+  - **Student Mode**: AI tutor with curriculum-aligned support, file upload for homework help, multi-subject selection, and intelligent year level inference
 - **Curriculum Integration**: Incorporates Australian Curriculum V9 and Montessori National Curriculum (2011), with AI responses rooted in Montessori's Cosmic Education.
 - **Age-to-Year-Level Mapping**: Automatic translation of age groups to AC year levels (6-9→Years 1-3, 9-12→Years 4-6, 12-15→Years 7-9) with visual display.
 - **Comprehensive Subject Coverage**: Age-appropriate multiselect subject selector - HASS (Humanities and Social Sciences) for Foundation-Year 6; separate History, Geography, Business and Economics, Civics and Citizenship for Years 7-9; plus English, Mathematics, Science, Design and Technologies, Digital Technologies, The Arts, Health and Physical Education, Languages for cross-curricular planning.
