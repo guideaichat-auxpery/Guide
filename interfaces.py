@@ -759,9 +759,10 @@ def show_student_interface():
         st.session_state.student_messages, max_history=20
     )
     
-    # Display chat history
+    # Display chat history with avatars
     for message in st.session_state.student_messages:
-        with st.chat_message(message["role"]):
+        avatar = "🤖" if message["role"] == "assistant" else "👤"
+        with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
     
     # Chat input
@@ -794,8 +795,8 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
         # Add user message to chat history
         st.session_state.student_messages.append({"role": "user", "content": full_prompt})
         
-        # Display user message (original prompt only)
-        with st.chat_message("user"):
+        # Display user message (original prompt only) with avatar
+        with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         
         # Extract curriculum keywords from student query
@@ -848,7 +849,7 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
         selected_year_level = st.session_state.get('student_year_selector', 'Year 6')
         
         # Get AI response with enhanced features and curriculum alignment
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("Thinking..."):
                 response = call_openai_api(
                     st.session_state.student_messages,
@@ -858,7 +859,23 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
                     curriculum_type="Blended",
                     use_conversation_history=True
                 )
-                st.markdown(response)
+                
+                # Highlight detected keywords in response
+                highlighted_response = response
+                if detected_keywords:
+                    for kw in detected_keywords:
+                        keyword = kw['keyword']
+                        # Use markdown bold to highlight keywords
+                        import re
+                        pattern = r'\b(' + re.escape(keyword) + r')\b'
+                        highlighted_response = re.sub(
+                            pattern, 
+                            r'**\1**', 
+                            highlighted_response, 
+                            flags=re.IGNORECASE
+                        )
+                
+                st.markdown(highlighted_response)
         
         # Add assistant response to chat history
         st.session_state.student_messages.append({"role": "assistant", "content": response})
