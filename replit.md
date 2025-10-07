@@ -20,7 +20,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **AI Integration**: OpenAI API client (GPT-4o-mini) with dynamic system prompts based on selected curriculum and role-based optimization.
 - **Conversation Management**: Intelligent 10-message rolling history and dynamic curriculum context injection.
 - **Token Optimization**: Enhanced token limits (3000 for educators, 800 for students).
-- **Curriculum Keyword Extraction**: Automatic detection of curriculum-relevant terms from user input with semantic grounding to AC V9 descriptors - scans messages for subject-specific keywords (e.g., "sustainability", "urbanization" for Geography) and injects them into AI context for enhanced alignment.
+- **Curriculum Keyword Extraction**: Sophisticated multi-word phrase detection system with year-specific topic mapping - recognizes official AC V9 topic names (e.g., "Geographies of Interconnections", "Making a Nation", "Biomes and Food Security") and automatically infers appropriate year levels (Year 7-9) from detected curriculum content. System prioritizes longest phrases first to prevent overlap, supports singular/plural variations, and injects detected keywords into AI context for enhanced alignment.
+- **Intelligent Year Level Inference**: Automatic year level detection based on curriculum topic keywords - when Year 9-specific topics like "Geographies of Interconnections" are mentioned, system overrides default Year 8 and selects Year 9, ensuring age-appropriate content delivery.
 - **File Processing**: Supports `.txt`, `.csv`, `.pdf`, `.docx`, images, audio, and presentation files for AI integration.
 
 ## Data Management
@@ -40,6 +41,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
     - **Planning Notes Workspace**: Word processor-style planning tool with organization, materials management, and image upload.
     - **Educator Observation Dashboard**: Student activity tracking with multi-educator access.
     - **Lesson Planning Assistant**: Creates specific activities and lessons, and analyzes existing ones.
+    - **Curriculum Alignment Review**: Intelligent document analysis tool that appears when files are uploaded and "Curriculum Alignment Review" planning type is selected - uses sophisticated keyword recognition to detect AC V9 topics, automatically infers year levels, and provides comprehensive alignment feedback against AC V9 and MNC with specific citations, detected keywords display, year-level appropriateness assessment, and actionable improvement recommendations.
     - **Big Picture Curriculum Mapping**: Maps knowledge connections for long-term planning.
     - **Student Work Analysis**: AI-powered multi-modal feedback using a blended curriculum approach.
 - **Assessment & Tracking**: Advanced rubric generator, holistic student progress tracking, CEC competency visualization (radar charts), asset-based assessment, and learner profile generation.

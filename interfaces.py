@@ -83,6 +83,31 @@ def show_lesson_planning_interface():
         type=['txt', 'pdf', 'docx', 'doc', 'jpg', 'jpeg', 'png']
     )
     
+    # Curriculum Alignment Review Button (appears when documents uploaded and planning type selected)
+    if uploaded_files and planning_type == "curriculum_alignment":
+        st.markdown("---")
+        st.markdown("### 🔍 AI-Powered Curriculum Alignment Review")
+        st.markdown("*Sophisticated AC V9 and Montessori National Curriculum alignment analysis with keyword recognition*")
+        
+        if st.button("🚀 Start Curriculum Alignment Review", type="primary", use_container_width=True):
+            # Process uploaded documents
+            with st.spinner("📚 Analyzing uploaded documents for curriculum alignment..."):
+                review_results = perform_curriculum_alignment_review(
+                    uploaded_files=uploaded_files,
+                    age_group=age_group,
+                    subjects=subjects
+                )
+                
+                # Display review results
+                if review_results:
+                    st.session_state.planning_messages.append({
+                        "role": "assistant",
+                        "content": review_results
+                    })
+                    st.rerun()
+        
+        st.markdown("---")
+    
     # Quick planning templates based on age group
     st.markdown(f"#### Quick {age_group} Planning Templates:")
     
@@ -235,6 +260,149 @@ YOU MUST cite specific content from these uploaded documents in your response, i
         
         # Add assistant response to chat history
         st.session_state.planning_messages.append({"role": "assistant", "content": response})
+
+def perform_curriculum_alignment_review(uploaded_files, age_group, subjects):
+    """
+    Perform sophisticated curriculum alignment review of uploaded documents
+    using AC V9 and MNC with intelligent keyword recognition and year level inference
+    """
+    from utils import extract_curriculum_keywords, get_primary_year_level, infer_year_level_from_keywords
+    from utils import fetch_curriculum_context, call_openai_api
+    
+    # Extract content from all uploaded files
+    document_content = ""
+    for file in uploaded_files:
+        file_content = extract_file_content(file)
+        if file_content:
+            document_content += f"""
+═══════════════════════════════════════════════════════════════════
+📄 DOCUMENT: {file.name}
+═══════════════════════════════════════════════════════════════════
+{file_content}
+
+═══════════════════════════════════════════════════════════════════
+"""
+    
+    if not document_content:
+        return "⚠️ Unable to extract content from uploaded documents. Please ensure files are readable."
+    
+    # Detect curriculum keywords from document content
+    all_keywords = []
+    subject_keywords_map = {}
+    
+    if subjects:
+        for subject in subjects:
+            found_keywords = extract_curriculum_keywords(subject, document_content)
+            if found_keywords:
+                all_keywords.extend(found_keywords)
+                subject_keywords_map[subject] = found_keywords
+    
+    # Infer year level from detected keywords
+    inferred_year_level = None
+    if all_keywords and age_group:
+        inferred_year_level = infer_year_level_from_keywords(all_keywords, age_group)
+    
+    # Get primary year level (with keyword inference)
+    target_year_level = get_primary_year_level(age_group, detected_keywords=all_keywords if all_keywords else None)
+    
+    # Build keyword context summary
+    keyword_summary = ""
+    if all_keywords:
+        unique_keywords = list(set(all_keywords))
+        keyword_summary = f"""
+🎯 **DETECTED CURRICULUM KEYWORDS**: {', '.join(unique_keywords[:15])}
+{'...' if len(unique_keywords) > 15 else ''}
+
+📚 **SUBJECT-SPECIFIC ALIGNMENT**:
+"""
+        for subject, keywords in subject_keywords_map.items():
+            keyword_summary += f"- **{subject}**: {', '.join(keywords[:5])}\n"
+    
+    # Add year level inference info
+    year_level_info = ""
+    if inferred_year_level:
+        year_level_info = f"\n🎓 **INFERRED YEAR LEVEL**: {target_year_level} (based on detected AC V9 curriculum topics)\n"
+    elif target_year_level:
+        year_level_info = f"\n🎓 **TARGET YEAR LEVEL**: {target_year_level} (from age group: {age_group})\n"
+    
+    # Fetch curriculum context for alignment
+    curriculum_contexts = []
+    if subjects and target_year_level:
+        for subject in subjects:
+            context = fetch_curriculum_context(subject, target_year_level, curriculum_type="Blended")
+            if context:
+                curriculum_contexts.append(f"--- {subject} ({target_year_level}) ---\n{context}")
+    
+    curriculum_reference = "\n\n".join(curriculum_contexts) if curriculum_contexts else ""
+    
+    # Build comprehensive review prompt
+    review_prompt = f"""You are an expert curriculum alignment reviewer specializing in Australian Curriculum V9 and Montessori National Curriculum.
+
+Conduct a COMPREHENSIVE CURRICULUM ALIGNMENT REVIEW of the uploaded document(s).
+
+{keyword_summary}
+{year_level_info}
+
+UPLOADED DOCUMENT(S):
+{document_content}
+
+RELEVANT CURRICULUM CONTEXT:
+{curriculum_reference}
+
+⚠️ CRITICAL REQUIREMENTS:
+1. **AC V9 VERSION ENFORCEMENT**: Use ONLY Australian Curriculum VERSION 9 codes (starting with "AC9", e.g., AC9HG9K03, AC9E7LA01)
+2. **KEYWORD-BASED ALIGNMENT**: Reference the detected curriculum keywords above and explain how the document aligns (or doesn't align) with each
+3. **YEAR LEVEL APPROPRIATENESS**: Assess whether content is pitched at the correct cognitive level for {target_year_level}
+4. **MONTESSORI INTEGRATION**: Evaluate how well the document integrates Montessori principles (prepared environment, cosmic education, student agency)
+5. **SPECIFIC CITATIONS**: Quote specific sections from the uploaded document to support your analysis
+
+PROVIDE A STRUCTURED REVIEW WITH:
+
+### 🎯 Curriculum Alignment Summary
+- Overall AC V9 alignment strength (Strong/Moderate/Weak)
+- Overall MNC alignment strength (Strong/Moderate/Weak)
+- Key strengths identified
+- Critical gaps or misalignments
+
+### 📊 Detailed AC V9 Analysis
+For each detected subject ({', '.join(subjects) if subjects else 'N/A'}):
+- Specific AC V9 content descriptors addressed (with codes)
+- Direct quotes from document showing alignment
+- Year level appropriateness for {target_year_level}
+- General Capabilities integration (Critical & Creative Thinking, Ethical Understanding, etc.)
+
+### 🌱 Montessori National Curriculum Analysis
+- Cosmic Education connections (if applicable)
+- Developmental plane alignment ({age_group} years)
+- Student agency and choice provisions
+- Prepared environment considerations
+- Practical life/grace and courtesy integration
+
+### 💡 Specific Recommendations for Improvement
+Provide 3-5 actionable suggestions with:
+- What to add/modify/remove
+- Specific AC V9 codes to incorporate
+- Montessori principles to strengthen
+- Example implementations
+
+### ⭐ Highlighted Strengths
+Quote 2-3 specific sections from the document that demonstrate excellent curriculum alignment
+
+Be thorough, specific, and reference actual content from the uploaded documents."""
+    
+    # Call OpenAI API with the review prompt
+    review_messages = [{"role": "user", "content": review_prompt}]
+    
+    review_response = call_openai_api(
+        messages=review_messages,
+        is_student=False,
+        age_group=age_group,
+        subjects=subjects,
+        curriculum_type="Blended",
+        use_conversation_history=False
+    )
+    
+    return review_response
 
 def extract_file_content(file):
     """Extract text content from uploaded files"""
