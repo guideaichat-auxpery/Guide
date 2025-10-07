@@ -120,7 +120,7 @@ WHAT I WON'T DO:
     return base_prompt + montessori_references
 
 def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=False, age_group=None, 
-                    subject=None, year_level=None, curriculum_type="Blended", use_conversation_history=True):
+                    subject=None, subjects=None, year_level=None, curriculum_type="Blended", use_conversation_history=True):
     """Enhanced OpenAI API call with conversation history and curriculum context
     
     Args:
@@ -151,15 +151,28 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         if use_conversation_history and len(messages) > 0:
             conversation_messages = get_conversation_context(messages, max_messages=10)
         
-        # Fetch curriculum context if subject and year level provided, OR if age group provided
+        # Fetch curriculum context for all selected subjects
         curriculum_context = ""
-        if subject and year_level:
-            curriculum_context = fetch_curriculum_context(subject, year_level, curriculum_type)
-        elif age_group and subject:
-            # Auto-map age group to year level for curriculum context
-            mapped_year_level = get_primary_year_level(age_group)
-            if mapped_year_level:
-                curriculum_context = fetch_curriculum_context(subject, mapped_year_level, curriculum_type)
+        
+        # Determine which subjects to process
+        subject_list = subjects if subjects else ([subject] if subject else [])
+        
+        if subject_list:
+            # Get year level (from parameter or auto-map from age)
+            target_year_level = year_level
+            if not target_year_level and age_group:
+                target_year_level = get_primary_year_level(age_group)
+            
+            # Fetch context for each subject and combine
+            if target_year_level:
+                contexts = []
+                for subj in subject_list:
+                    context = fetch_curriculum_context(subj, target_year_level, curriculum_type)
+                    if context:
+                        contexts.append(f"--- {subj} ---\n{context}")
+                
+                if contexts:
+                    curriculum_context = "\n\n".join(contexts)
         
         # Prepare API messages
         api_messages = [{"role": "system", "content": system_prompt}]

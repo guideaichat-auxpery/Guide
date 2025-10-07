@@ -218,7 +218,7 @@ YOU MUST cite specific content from these uploaded documents in your response, i
                     system_prompt=system_prompt,
                     is_student=False,
                     age_group=age_group,
-                    subject=subjects[0] if subjects else None  # Pass first subject for curriculum context
+                    subjects=subjects if subjects else None  # Pass all selected subjects
                 )
                 st.markdown(response)
         
