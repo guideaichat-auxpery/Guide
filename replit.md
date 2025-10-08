@@ -35,13 +35,17 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **feedbackSystem.js**: Emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation
   - **subjectCalibrator.js**: Dynamic weight adjustment system balancing Montessori philosophy (0.7), curriculum alignment (0.6), scaffolding (0.5), and complexity (0.6)
   - **analyticsRoute.js**: REST API with 10+ endpoints for dashboard, trends, student profiles, and system analytics
-  - **server.js**: Express server with auto database initialization
+  - **server.js**: Express server with auto database initialization and 72-hour auto-refresh cycle
 - **Database Tables**: 
   - `adaptive_interactions`: Query/response pairs with embeddings
-  - `adaptive_feedback`: Emoji feedback with sentiment weights
+  - `adaptive_feedback`: Emoji and rating-based feedback with sentiment weights
   - `adaptive_prompts`: Versioned prompt history per subject
   - `adaptive_weights`: Subject-specific calibration weights
+  - `system_config`: Configuration storage for auto-refresh timestamps
+- **Auto-Refresh System**: 72-hour cycle with hourly checks - dynamically discovers active subjects from database, updates prompts based on accumulated feedback patterns, tracks refresh timestamp in system_config table
 - **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, and weight management
+  - `/api/simple-feedback`: Simplified rating endpoint (1-5 scale) with subject/student association and validation
+  - `/api/message`: Message pipeline integration logging semantic vectors and returning adaptive prompts
 - **Self-Improvement**: System automatically updates prompts and adjusts weights based on student feedback patterns
 
 ## Data Management
