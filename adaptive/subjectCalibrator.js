@@ -1,6 +1,7 @@
 class SubjectCalibrator {
-  constructor(db) {
+  constructor(db, trendingKeywords = null) {
     this.db = db;
+    this.trendingKeywords = trendingKeywords;
     this.defaultWeights = {
       montessoriWeight: 0.7,
       curriculumWeight: 0.6,
@@ -9,7 +10,7 @@ class SubjectCalibrator {
     };
   }
 
-  async getSubjectWeights(subject) {
+  async getSubjectWeights(subject, useTrendingBoost = false) {
     const result = await this.db.query(`
       SELECT 
         montessori_weight,
@@ -29,12 +30,26 @@ class SubjectCalibrator {
     }
     
     const weights = result.rows[0];
-    return {
+    const baseWeights = {
       montessoriWeight: parseFloat(weights.montessori_weight),
       curriculumWeight: parseFloat(weights.curriculum_weight),
       scaffoldingWeight: parseFloat(weights.scaffolding_weight),
       complexityLevel: parseFloat(weights.complexity_level)
     };
+
+    if (useTrendingBoost && this.trendingKeywords) {
+      const trendingWeight = await this.trendingKeywords.getSubjectWeight(subject);
+      return {
+        ...baseWeights,
+        trendingBoost: trendingWeight,
+        effectiveCurriculumWeight: this.clamp(
+          baseWeights.curriculumWeight * trendingWeight,
+          0.3, 1.0
+        )
+      };
+    }
+    
+    return baseWeights;
   }
 
   async initializeWeights(subject) {

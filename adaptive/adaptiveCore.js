@@ -18,11 +18,11 @@ class AdaptiveCore {
       connectionString: process.env.DATABASE_URL
     });
     
+    this.trendingKeywords = new TrendingKeywords(this.db);
     this.promptManager = new PromptManager(this.db, this.openai);
     this.semanticLogger = new SemanticLogger(this.db, this.openai);
     this.feedbackSystem = new FeedbackSystem(this.db);
-    this.subjectCalibrator = new SubjectCalibrator(this.db);
-    this.trendingKeywords = new TrendingKeywords(this.db);
+    this.subjectCalibrator = new SubjectCalibrator(this.db, this.trendingKeywords);
   }
 
   async generateResponse(userQuery, context = {}) {
