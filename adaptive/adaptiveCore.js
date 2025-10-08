@@ -6,6 +6,7 @@ const PromptManager = require('./adaptivePromptManager');
 const SemanticLogger = require('./semanticLogger');
 const FeedbackSystem = require('./feedbackSystem');
 const SubjectCalibrator = require('./subjectCalibrator');
+const TrendingKeywords = require('./trendingKeywords');
 
 class AdaptiveCore {
   constructor() {
@@ -21,6 +22,7 @@ class AdaptiveCore {
     this.semanticLogger = new SemanticLogger(this.db, this.openai);
     this.feedbackSystem = new FeedbackSystem(this.db);
     this.subjectCalibrator = new SubjectCalibrator(this.db);
+    this.trendingKeywords = new TrendingKeywords(this.db);
   }
 
   async generateResponse(userQuery, context = {}) {
