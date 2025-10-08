@@ -32,7 +32,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **adaptiveCore.js**: Main orchestrator coordinating all adaptive subsystems
   - **adaptivePromptManager.js**: Self-updating AI prompts based on feedback patterns - dynamically evolves system prompts when 10+ feedback samples indicate need for adjustment
   - **semanticLogger.js**: OpenAI embeddings-based interaction logging with k-means clustering for topic discovery
-  - **feedbackSystem.js**: Emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation
+  - **feedbackSystem.js**: Hybrid KV + PostgreSQL feedback system - in-memory Map for fast writes, 30-second auto-sync to PostgreSQL for analytics; emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation; UUID-based collision-proof keys
   - **subjectCalibrator.js**: Dynamic weight adjustment system balancing Montessori philosophy (0.7), curriculum alignment (0.6), scaffolding (0.5), and complexity (0.6)
   - **analyticsRoute.js**: REST API with 10+ endpoints for dashboard, trends, student profiles, and system analytics
   - **server.js**: Express server with auto database initialization and 72-hour auto-refresh cycle
@@ -48,6 +48,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, and weight management
   - `/api/simple-feedback`: Simplified rating endpoint (1-5 scale) with subject/student association and validation
   - `/api/message`: Message pipeline integration logging semantic vectors and returning adaptive prompts
+  - `/api/kv-feedback`: Fast KV-based feedback recording with auto-sync to PostgreSQL
+  - `/api/kv-store`: View current in-memory KV store size and keys
+  - `/api/kv-sync`: Manual sync trigger for KV entries to PostgreSQL
 - **Self-Improvement**: System automatically updates prompts and adjusts weights based on student feedback patterns
 
 ## Data Management
