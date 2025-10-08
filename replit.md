@@ -43,6 +43,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - `adaptive_weights`: Subject-specific calibration weights
   - `system_config`: Configuration storage for auto-refresh timestamps
 - **Auto-Refresh System**: 72-hour cycle with hourly checks - dynamically discovers active subjects from database, updates prompts based on accumulated feedback patterns, tracks refresh timestamp in system_config table
+  - **Helpfulness-Based Refresh**: Calculates helpfulness ratios from feedback (weight ≥0.6 = helpful), generates Montessori GuideChat-style prompts with targeted improvement instructions for subjects below 50% helpful threshold
+  - **Dynamic Prompt Storage**: Stores generated prompts in system_config as `systemPrompt_dynamic` for persistent, evolving system guidance
 - **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, and weight management
   - `/api/simple-feedback`: Simplified rating endpoint (1-5 scale) with subject/student association and validation
   - `/api/message`: Message pipeline integration logging semantic vectors and returning adaptive prompts
