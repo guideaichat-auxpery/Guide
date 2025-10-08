@@ -426,11 +426,15 @@ def delete_student(db, student_id: int):
     """
     student = db.query(Student).filter(Student.id == student_id).first()
     if student:
-        # Delete educator-student access records
-        db.query(EducatorStudentAccess).filter(EducatorStudentAccess.student_id == student_id).delete()
+        # Delete educator-student access records for this specific student
+        db.query(EducatorStudentAccess).filter(
+            EducatorStudentAccess.student_id == student_id
+        ).delete(synchronize_session=False)
         
-        # Delete conversation messages
-        db.query(ConversationHistory).filter(ConversationHistory.student_id == student_id).delete()
+        # Delete conversation messages for this specific student
+        db.query(ConversationHistory).filter(
+            ConversationHistory.student_id == student_id
+        ).delete(synchronize_session=False)
         
         # Delete the student (activities will cascade delete automatically)
         db.delete(student)
