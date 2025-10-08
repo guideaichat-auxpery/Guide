@@ -18,7 +18,8 @@ class FeedbackSystem {
   }
 
   async recordFeedback(subject, rating) {
-    const key = `feedback_${Date.now()}`;
+    const crypto = require('crypto');
+    const key = `feedback_${crypto.randomUUID()}`;
     this.kvStore.set(key, { subject, rating, timestamp: new Date() });
     return key;
   }
