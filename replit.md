@@ -26,8 +26,26 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Anonymous Query Logging**: Privacy-focused student query tracking with UUID session IDs, detected keyword metadata, and anonymized data storage - enables analytics while protecting student privacy.
 - **File Processing**: Supports `.txt`, `.csv`, `.pdf`, `.docx`, images, audio, and presentation files for AI integration.
 
+## Adaptive Learning System (Node.js)
+- **Architecture**: Standalone Express.js server running on port 3000 alongside Streamlit (port 5000)
+- **Core Components**:
+  - **adaptiveCore.js**: Main orchestrator coordinating all adaptive subsystems
+  - **adaptivePromptManager.js**: Self-updating AI prompts based on feedback patterns - dynamically evolves system prompts when 10+ feedback samples indicate need for adjustment
+  - **semanticLogger.js**: OpenAI embeddings-based interaction logging with k-means clustering for topic discovery
+  - **feedbackSystem.js**: Emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation
+  - **subjectCalibrator.js**: Dynamic weight adjustment system balancing Montessori philosophy (0.7), curriculum alignment (0.6), scaffolding (0.5), and complexity (0.6)
+  - **analyticsRoute.js**: REST API with 10+ endpoints for dashboard, trends, student profiles, and system analytics
+  - **server.js**: Express server with auto database initialization
+- **Database Tables**: 
+  - `adaptive_interactions`: Query/response pairs with embeddings
+  - `adaptive_feedback`: Emoji feedback with sentiment weights
+  - `adaptive_prompts`: Versioned prompt history per subject
+  - `adaptive_weights`: Subject-specific calibration weights
+- **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, and weight management
+- **Self-Improvement**: System automatically updates prompts and adjusts weights based on student feedback patterns
+
 ## Data Management
-- **Persistence**: PostgreSQL for conversation history, educator analytics, student activities, great stories, planning notes, and curriculum contexts.
+- **Persistence**: PostgreSQL for conversation history, educator analytics, student activities, great stories, planning notes, curriculum contexts, and adaptive learning data.
 - **Session State**: In-memory storage for current session data.
 - **Export Capabilities**: Lesson plan export to PDF and DOCX using Montessori-themed templates.
 
