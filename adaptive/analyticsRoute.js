@@ -1,7 +1,7 @@
 const express = require('express');
-const router = express.Router();
 
 function createAnalyticsRouter(adaptiveCore) {
+  const router = express.Router();
   
   router.get('/analytics/overview', async (req, res) => {
     try {

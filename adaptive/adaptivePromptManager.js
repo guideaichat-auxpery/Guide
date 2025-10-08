@@ -94,13 +94,14 @@ Maintain Montessori philosophy while addressing the feedback.`
     const result = await this.db.query(`
       SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN emoji = '😕' THEN 1 ELSE 0 END) as confused,
-        SUM(CASE WHEN emoji = '🤩' THEN 1 ELSE 0 END) as loved,
-        SUM(CASE WHEN emoji = '📚' THEN 1 ELSE 0 END) as curriculum_focused,
-        SUM(CASE WHEN emoji = '🌍' THEN 1 ELSE 0 END) as montessori_focused
-      FROM adaptive_feedback
-      WHERE subject = $1 
-        AND created_at > NOW() - interval '24 hours'
+        SUM(CASE WHEN af.emoji = '😕' THEN 1 ELSE 0 END) as confused,
+        SUM(CASE WHEN af.emoji = '🤩' THEN 1 ELSE 0 END) as loved,
+        SUM(CASE WHEN af.emoji = '📚' THEN 1 ELSE 0 END) as curriculum_focused,
+        SUM(CASE WHEN af.emoji = '🌍' THEN 1 ELSE 0 END) as montessori_focused
+      FROM adaptive_feedback af
+      JOIN adaptive_interactions ai ON af.interaction_id = ai.id
+      WHERE ai.subject = $1 
+        AND af.created_at > NOW() - interval '24 hours'
     `, [subject]);
     
     const data = result.rows[0];
