@@ -1,6 +1,7 @@
 class FeedbackSystem {
   constructor(db) {
     this.db = db;
+    this.kvStore = new Map();
     this.emojiMeanings = {
       '🤩': { sentiment: 'excellent', weight: 1.0, category: 'engagement' },
       '💡': { sentiment: 'insightful', weight: 0.9, category: 'understanding' },
@@ -12,6 +13,85 @@ class FeedbackSystem {
       '😕': { sentiment: 'confused', weight: 0.2, category: 'difficulty' },
       '❌': { sentiment: 'not_helpful', weight: 0.1, category: 'negative' }
     };
+    
+    this.startAutoSync();
+  }
+
+  async recordFeedback(subject, rating) {
+    const key = `feedback_${Date.now()}`;
+    this.kvStore.set(key, { subject, rating, timestamp: new Date() });
+    return key;
+  }
+
+  async syncKVtoPostgreSQL() {
+    if (this.kvStore.size === 0) {
+      return { synced: 0 };
+    }
+
+    const entries = Array.from(this.kvStore.entries());
+    let syncedCount = 0;
+
+    for (const [key, data] of entries) {
+      try {
+        const result = await this.db.query(`
+          SELECT id FROM adaptive_interactions 
+          WHERE subject = $1 
+          ORDER BY created_at DESC 
+          LIMIT 1
+        `, [data.subject]);
+
+        if (result.rows[0]) {
+          const interactionId = result.rows[0].id;
+          const weight = typeof data.rating === 'number' ? data.rating / 5.0 : 
+                        data.rating === 'helpful' ? 0.8 : 0.2;
+          
+          await this.db.query(`
+            INSERT INTO adaptive_feedback (
+              interaction_id, emoji, sentiment, weight, category, created_at
+            ) VALUES ($1, $2, $3, $4, 'kv_synced', $5)
+          `, [
+            interactionId,
+            '⚡',
+            `kv_${data.rating}`,
+            weight,
+            data.timestamp
+          ]);
+
+          this.kvStore.delete(key);
+          syncedCount++;
+        }
+      } catch (error) {
+        console.error(`Sync error for ${key}:`, error.message);
+      }
+    }
+
+    return { synced: syncedCount, remaining: this.kvStore.size };
+  }
+
+  startAutoSync() {
+    setInterval(async () => {
+      const result = await this.syncKVtoPostgreSQL();
+      if (result.synced > 0) {
+        console.log(`🔄 Synced ${result.synced} KV entries to PostgreSQL`);
+      }
+    }, 30000);
+  }
+
+  getKVStore() {
+    return {
+      size: this.kvStore.size,
+      keys: Array.from(this.kvStore.keys()),
+      list: () => Array.from(this.kvStore.keys())
+    };
+  }
+
+  async get(key) {
+    return this.kvStore.get(key);
+  }
+
+  async set(key, value) {
+    this.kvStore.set(key, value);
+    return true;
   }
 
   async logFeedback(interactionId, emoji) {
