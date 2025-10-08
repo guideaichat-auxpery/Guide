@@ -108,46 +108,6 @@ def show_lesson_planning_interface():
         
         st.markdown("---")
     
-    # Quick planning templates based on age group
-    st.markdown(f"#### Quick {age_group} Planning Templates:")
-    
-    if age_group == "3-6":
-        templates = [
-            f"Create a practical life lesson for 3-6 year olds with AC V.9 alignment for {planning_type}",
-            f"Design a sensorial exploration activity with Montessori materials for {planning_type}",
-            f"Plan a grace and courtesy lesson with cultural connections for {planning_type}",
-            f"Develop a language enrichment activity for early literacy for {planning_type}"
-        ]
-    elif age_group == "6-9":
-        templates = [
-            f"Create a cosmic education lesson connecting math and science for {planning_type}",
-            f"Design a cultural studies project on Australian geography for {planning_type}",
-            f"Plan a collaborative research activity for 6-9 year olds for {planning_type}",
-            f"Develop mathematical concepts with concrete materials for {planning_type}"
-        ]
-    elif age_group == "9-12":
-        templates = [
-            f"Create a cosmic education Great Story extension for {planning_type}",
-            f"Design an independent research project on Australian history for {planning_type}",
-            f"Plan a mathematical exploration of real-world applications for {planning_type}",
-            f"Develop a scientific investigation with hypothesis testing for {planning_type}"
-        ]
-    else:  # 12-15
-        templates = [
-            f"Create an adolescent community project with real-world impact for {planning_type}",
-            f"Design a micro-economy activity for practical life skills for {planning_type}",
-            f"Plan a leadership and social justice exploration for {planning_type}",
-            f"Develop an interdisciplinary inquiry project for {planning_type}"
-        ]
-    
-    # Display templates as clickable buttons
-    cols = st.columns(2)
-    for idx, template in enumerate(templates):
-        with cols[idx % 2]:
-            if st.button(template, key=f"template_{idx}"):
-                st.session_state.planning_prompt = template
-                st.rerun()
-    
     # Chat input
     if prompt := st.chat_input("What would you like help planning today?"):
         # Add user message to chat history
@@ -565,13 +525,31 @@ def show_companion_interface():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    # Quick conversation starters
-    st.markdown("#### Quick Conversation Starters:")
+    # Quick conversation starters - Comprehensive Montessori Guide Topics
+    st.markdown("#### 📚 Montessori Quick Guides")
+    st.markdown("*Click any topic to explore authentic Montessori wisdom from Dr. Montessori's foundational texts*")
+    
     quick_prompts = [
-        "Explain the concept of cosmic education",
-        "How do I introduce a new material?",
-        "What is the prepared environment?",
-        "Help me understand the sensitive periods"
+        "🌌 What is cosmic education and how do I implement it?",
+        "🎯 Explain the sensitive periods in child development",
+        "🏛️ What is the prepared environment?",
+        "👁️ How do I observe children effectively?",
+        "🌱 What is the absorbent mind?",
+        "✋ How do I introduce a new material?",
+        "🔄 What are the three-period lessons?",
+        "🌍 How does Montessori connect to the universe story?",
+        "🧘 What is normalization in Montessori?",
+        "🎨 How do I set up practical life activities?",
+        "📐 What are sensorial materials and their purpose?",
+        "✍️ How does Montessori approach language development?",
+        "🔢 What is the Montessori math progression?",
+        "🌿 How do I teach cultural subjects in Montessori?",
+        "🤝 What is grace and courtesy in Montessori?",
+        "🧭 How do I guide without interfering?",
+        "🔬 What is cosmic task and human tendencies?",
+        "⏰ How do I respect the child's rhythm?",
+        "🎭 What is the role of imagination in Montessori?",
+        "📖 How do Great Stories spark cosmic education?"
     ]
     
     cols = st.columns(2)
@@ -580,6 +558,72 @@ def show_companion_interface():
             if st.button(quick_prompt, key=f"quick_{idx}"):
                 st.session_state.companion_prompt = quick_prompt
                 st.rerun()
+    
+    # Process quick prompt if one was selected
+    if 'companion_prompt' in st.session_state and st.session_state.companion_prompt:
+        prompt = st.session_state.companion_prompt
+        st.session_state.companion_prompt = None  # Clear after processing
+        
+        # Add user message to chat history
+        st.session_state.companion_messages.append({"role": "user", "content": prompt})
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Save user message to database
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    save_conversation_message(
+                        db, st.session_state.companion_session_id, 'companion',
+                        'user', prompt, user_id=user_id
+                    )
+                except Exception as e:
+                    print(f"Error saving conversation: {str(e)}")
+                finally:
+                    db.close()
+        
+        # Get AI response with specialized Montessori system prompt
+        with st.chat_message("assistant"):
+            with st.spinner("Consulting Montessori texts..."):
+                from utils import get_montessori_companion_system_prompt
+                montessori_system_prompt = get_montessori_companion_system_prompt()
+                
+                response = call_openai_api(
+                    st.session_state.companion_messages,
+                    system_prompt=montessori_system_prompt,
+                    is_student=False,
+                    use_conversation_history=True
+                )
+                st.markdown(response)
+        
+        # Add assistant response to chat history
+        st.session_state.companion_messages.append({"role": "assistant", "content": response})
+        
+        # Save assistant response and log analytics
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    # Save conversation
+                    save_conversation_message(
+                        db, st.session_state.companion_session_id, 'companion',
+                        'assistant', response, user_id=user_id
+                    )
+                    # Log analytics
+                    from utils import estimate_tokens
+                    tokens_est = estimate_tokens(prompt + response)
+                    from database import log_educator_prompt
+                    log_educator_prompt(
+                        db, user_id, 'companion', prompt, 
+                        tokens_used=tokens_est
+                    )
+                except Exception as e:
+                    print(f"Error saving conversation/analytics: {str(e)}")
+                finally:
+                    db.close()
     
     # Chat input
     if prompt := st.chat_input("Ask me about Montessori philosophy, cosmic education, or educational approaches..."):
@@ -604,11 +648,15 @@ def show_companion_interface():
                 finally:
                     db.close()
         
-        # Get AI response with enhanced features
+        # Get AI response with specialized Montessori system prompt
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+            with st.spinner("Consulting Montessori texts..."):
+                from utils import get_montessori_companion_system_prompt
+                montessori_system_prompt = get_montessori_companion_system_prompt()
+                
                 response = call_openai_api(
                     st.session_state.companion_messages,
+                    system_prompt=montessori_system_prompt,
                     is_student=False,
                     use_conversation_history=True
                 )

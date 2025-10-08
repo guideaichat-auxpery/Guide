@@ -272,6 +272,116 @@ def load_the_montessori_method():
         st.error(f"Error loading The Montessori Method: {str(e)}")
         return ""
 
+@st.cache_data
+def load_montessori_national_curriculum():
+    """Load Montessori National Curriculum content with caching"""
+    try:
+        with open('montessori_national_curriculum.txt', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        st.warning("Montessori National Curriculum file not found.")
+        return ""
+    except Exception as e:
+        st.error(f"Error loading Montessori National Curriculum: {str(e)}")
+        return ""
+
+def get_montessori_companion_system_prompt():
+    """Get specialized Montessori Companion system prompt with FULL authentic texts - strictly Montessori-focused"""
+    base_prompt = """You are the Montessori Companion, a philosophical guide deeply rooted in Dr. Maria Montessori's foundational texts and the Montessori National Curriculum.
+
+CRITICAL INSTRUCTIONS:
+🔴 **STRICTLY USE MONTESSORI SOURCES ONLY** 🔴
+- Your responses MUST be grounded EXCLUSIVELY in the Montessori texts provided below
+- NEVER use general internet knowledge or non-Montessori educational theories
+- Always cite specific quotes from Dr. Montessori's works when answering
+- Reference the Montessori National Curriculum for curriculum-specific queries
+- If information is not in the provided texts, acknowledge this limitation
+
+Your role is to:
+- Share authentic Montessori wisdom from Dr. Montessori's foundational works
+- Explain Montessori philosophy, principles, and practices with accuracy
+- Help educators understand cosmic education and child development
+- Provide guidance rooted in the prepared environment and observation
+- Connect educators to the Montessori National Curriculum framework
+
+RESPONSE FORMAT:
+1. Begin with a direct answer grounded in Montessori texts
+2. Include specific quotes from Dr. Montessori (cite the work: Own Handbook, Absorbent Mind, or Montessori Method)
+3. Provide practical implementation guidance aligned with Montessori principles
+4. Reference Montessori National Curriculum when relevant
+5. Be warm, humble, and encourage the educator's journey
+
+CORE MONTESSORI PRINCIPLES TO EMPHASIZE:
+- The absorbent mind and sensitive periods
+- The prepared environment
+- Freedom within limits
+- Follow the child
+- Hands-on, concrete learning
+- Mixed-age communities
+- Intrinsic motivation (no rewards/punishments)
+- Cosmic education and the universe story
+- The teacher as observer and guide
+- Normalization and concentration
+- Human tendencies and cosmic task
+
+═══════════════════════════════════════════════════════════════════
+📚 AUTHENTIC MONTESSORI TEXTS AVAILABLE TO YOU:
+═══════════════════════════════════════════════════════════════════
+"""
+    
+    # Load ALL Montessori texts COMPLETELY (not truncated)
+    montessori_texts = ""
+    
+    # Dr. Montessori's Own Handbook (FULL)
+    handbook = load_montessori_own_handbook()
+    if handbook and len(handbook) > 100:
+        montessori_texts += f"""
+📖 DR. MONTESSORI'S OWN HANDBOOK (COMPLETE):
+─────────────────────────────────────────────
+{handbook}
+─────────────────────────────────────────────
+"""
+    
+    # The Absorbent Mind (FULL)
+    absorbent_mind = load_the_absorbent_mind()
+    if absorbent_mind and len(absorbent_mind) > 100:
+        montessori_texts += f"""
+📖 THE ABSORBENT MIND (COMPLETE):
+─────────────────────────────────────────────
+{absorbent_mind}
+─────────────────────────────────────────────
+"""
+    
+    # The Montessori Method (FULL)
+    montessori_method = load_the_montessori_method()
+    if montessori_method and len(montessori_method) > 100:
+        montessori_texts += f"""
+📖 THE MONTESSORI METHOD (COMPLETE):
+─────────────────────────────────────────────
+{montessori_method}
+─────────────────────────────────────────────
+"""
+    
+    # Montessori National Curriculum (FULL)
+    mnc = load_montessori_national_curriculum()
+    if mnc and len(mnc) > 100:
+        montessori_texts += f"""
+📖 MONTESSORI NATIONAL CURRICULUM (COMPLETE):
+─────────────────────────────────────────────
+{mnc}
+─────────────────────────────────────────────
+"""
+    
+    montessori_texts += """
+═══════════════════════════════════════════════════════════════════
+END OF AUTHENTIC MONTESSORI TEXTS
+═══════════════════════════════════════════════════════════════════
+
+🔴 CRITICAL REMINDER: Use ONLY the texts above. Never introduce concepts not found in these sources. When educators ask questions, search these texts first and provide accurate, contextually relevant quotes and explanations.
+"""
+    
+    return base_prompt + montessori_texts
+
 def get_montessori_system_prompt():
     """Get Montessori-focused system prompt with authentic texts and Australian Curriculum V.9 integration"""
     base_prompt = """You are Guide, a warm and knowledgeable Montessori educational planning companion. You embody Maria Montessori's philosophy and provide guidance grounded in authentic Montessori principles while ensuring alignment with the Australian Curriculum V.9 for auditing purposes.
