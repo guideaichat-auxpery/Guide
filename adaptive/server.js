@@ -296,6 +296,144 @@ app.post('/api/message', async (req, res) => {
   }
 });
 
+app.post('/api/trending/record', async (req, res) => {
+  try {
+    const { subject, keyword, sessionId, studentId } = req.body;
+    
+    if (!subject || !keyword) {
+      return res.status(400).json({
+        success: false,
+        error: 'subject and keyword required'
+      });
+    }
+    
+    const key = await adaptiveCore.trendingKeywords.recordKeyword(subject, keyword, sessionId, studentId);
+    res.json({ 
+      success: true, 
+      key,
+      message: 'Keyword stored in KV, will sync to PostgreSQL automatically'
+    });
+  } catch (error) {
+    console.error('Trending keyword record error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/trending/kv-store', async (req, res) => {
+  try {
+    const store = adaptiveCore.trendingKeywords.getKVStore();
+    res.json({ 
+      success: true, 
+      ...store
+    });
+  } catch (error) {
+    console.error('Trending KV store error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/trending/kv-sync', async (req, res) => {
+  try {
+    const result = await adaptiveCore.trendingKeywords.syncKVtoPostgreSQL();
+    res.json({ 
+      success: true, 
+      ...result
+    });
+  } catch (error) {
+    console.error('Trending KV sync error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/trending/subject/:subject', async (req, res) => {
+  try {
+    const { subject } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    const trending = await adaptiveCore.trendingKeywords.getTrendingBySubject(subject, limit);
+    const weight = await adaptiveCore.trendingKeywords.getSubjectWeight(subject);
+    
+    res.json({ 
+      success: true, 
+      subject,
+      trending,
+      dynamicWeight: weight
+    });
+  } catch (error) {
+    console.error('Trending by subject error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/trending/all', async (req, res) => {
+  try {
+    const timeframe = req.query.timeframe || '7 days';
+    const limit = parseInt(req.query.limit) || 20;
+    
+    const trending = await adaptiveCore.trendingKeywords.getAllTrending(timeframe, limit);
+    res.json({ 
+      success: true, 
+      trending
+    });
+  } catch (error) {
+    console.error('All trending error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/trending/stats', async (req, res) => {
+  try {
+    const subject = req.query.subject || null;
+    const stats = await adaptiveCore.trendingKeywords.getTrendingStats(subject);
+    res.json({ 
+      success: true, 
+      stats
+    });
+  } catch (error) {
+    console.error('Trending stats error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/trending/keyword/:keyword', async (req, res) => {
+  try {
+    const { keyword } = req.params;
+    const subject = req.query.subject || null;
+    const days = parseInt(req.query.days) || 30;
+    
+    const history = await adaptiveCore.trendingKeywords.getKeywordHistory(keyword, subject, days);
+    res.json({ 
+      success: true, 
+      keyword,
+      history
+    });
+  } catch (error) {
+    console.error('Keyword history error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.use('/api', createAnalyticsRouter(adaptiveCore));
 
 app.use((err, req, res, next) => {
