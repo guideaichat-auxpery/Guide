@@ -448,14 +448,32 @@ app.get('/api/trending/keyword/:keyword', async (req, res) => {
   }
 });
 
-app.get('/api/weights/:subject?', async (req, res) => {
+app.get('/api/weights', async (req, res) => {
+  try {
+    const weights = await adaptiveCore.subjectCalibrator.getSubjectWeights();
+    
+    res.json({ 
+      success: true, 
+      subject: 'default',
+      weights
+    });
+  } catch (error) {
+    console.error('Weights error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/weights/:subject', async (req, res) => {
   try {
     const { subject } = req.params;
     const weights = await adaptiveCore.subjectCalibrator.getSubjectWeights(subject);
     
     res.json({ 
       success: true, 
-      subject: subject || 'default',
+      subject,
       weights
     });
   } catch (error) {
