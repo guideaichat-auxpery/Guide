@@ -4,6 +4,175 @@ from openai import OpenAI
 from datetime import datetime
 import json
 import re
+import trafilatura
+import requests
+from PIL import Image
+import io
+import base64
+
+# ---- URL PROCESSING UTILITIES ----
+def extract_urls_from_text(text):
+    """Extract all URLs from a text message"""
+    url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    urls = re.findall(url_pattern, text)
+    return urls
+
+def fetch_web_content(url):
+    """Fetch and extract main text content from a webpage using trafilatura"""
+    try:
+        downloaded = trafilatura.fetch_url(url)
+        if downloaded:
+            text = trafilatura.extract(downloaded)
+            if text:
+                return f"""
+═══════════════════════════════════════════════════════════════════
+🔗 WEB CONTENT FROM: {url}
+═══════════════════════════════════════════════════════════════════
+
+{text}
+
+═══════════════════════════════════════════════════════════════════
+END OF WEB CONTENT
+═══════════════════════════════════════════════════════════════════
+"""
+        return None
+    except Exception as e:
+        st.warning(f"Could not fetch content from {url}: {str(e)}")
+        return None
+
+def fetch_image_from_url(url):
+    """Fetch an image from URL and return PIL Image object"""
+    try:
+        response = requests.get(url, timeout=10, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        if response.status_code == 200:
+            image = Image.open(io.BytesIO(response.content))
+            return image
+        return None
+    except Exception as e:
+        st.warning(f"Could not fetch image from {url}: {str(e)}")
+        return None
+
+def is_image_url(url):
+    """Check if URL likely points to an image"""
+    image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']
+    return any(url.lower().endswith(ext) for ext in image_extensions)
+
+def is_document_url(url):
+    """Check if URL likely points to a document"""
+    doc_extensions = ['.pdf', '.doc', '.docx', '.txt']
+    return any(url.lower().endswith(ext) for ext in doc_extensions)
+
+def fetch_document_from_url(url):
+    """Fetch a document (PDF, DOCX, TXT) from URL and extract text content"""
+    try:
+        response = requests.get(url, timeout=30, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        if response.status_code == 200:
+            # Determine document type from URL
+            url_lower = url.lower()
+            
+            if url_lower.endswith('.pdf'):
+                # Extract PDF content
+                try:
+                    import PyPDF2
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(response.content))
+                    text = ""
+                    for page in pdf_reader.pages:
+                        text += page.extract_text() + "\n"
+                    if text.strip():
+                        return f"""
+═══════════════════════════════════════════════════════════════════
+📄 PDF DOCUMENT FROM: {url}
+═══════════════════════════════════════════════════════════════════
+
+{text}
+
+═══════════════════════════════════════════════════════════════════
+END OF PDF DOCUMENT
+═══════════════════════════════════════════════════════════════════
+"""
+                except Exception as e:
+                    st.warning(f"Could not extract PDF content: {str(e)}")
+                    return None
+                    
+            elif url_lower.endswith(('.docx', '.doc')):
+                # Extract Word document content
+                try:
+                    from docx import Document
+                    doc = Document(io.BytesIO(response.content))
+                    text = "\n".join([para.text for para in doc.paragraphs])
+                    if text.strip():
+                        return f"""
+═══════════════════════════════════════════════════════════════════
+📝 WORD DOCUMENT FROM: {url}
+═══════════════════════════════════════════════════════════════════
+
+{text}
+
+═══════════════════════════════════════════════════════════════════
+END OF WORD DOCUMENT
+═══════════════════════════════════════════════════════════════════
+"""
+                except Exception as e:
+                    st.warning(f"Could not extract Word document content: {str(e)}")
+                    return None
+                    
+            elif url_lower.endswith('.txt'):
+                # Plain text file
+                text = response.text
+                if text.strip():
+                    return f"""
+═══════════════════════════════════════════════════════════════════
+📋 TEXT FILE FROM: {url}
+═══════════════════════════════════════════════════════════════════
+
+{text}
+
+═══════════════════════════════════════════════════════════════════
+END OF TEXT FILE
+═══════════════════════════════════════════════════════════════════
+"""
+        return None
+    except Exception as e:
+        st.warning(f"Could not fetch document from {url}: {str(e)}")
+        return None
+
+def process_url_content(url):
+    """Process URL content - fetch web pages, images, or documents"""
+    if is_image_url(url):
+        # Try to fetch and OCR the image
+        image = fetch_image_from_url(url)
+        if image:
+            try:
+                import pytesseract
+                text = pytesseract.image_to_string(image)
+                if text.strip():
+                    return f"""
+═══════════════════════════════════════════════════════════════════
+🖼️ IMAGE CONTENT FROM: {url}
+Extracted text via OCR:
+═══════════════════════════════════════════════════════════════════
+
+{text}
+
+═══════════════════════════════════════════════════════════════════
+END OF IMAGE CONTENT
+═══════════════════════════════════════════════════════════════════
+"""
+                else:
+                    return f"📷 Image fetched from {url} (no text detected)"
+            except Exception as e:
+                return f"📷 Image fetched from {url} (OCR not available: {str(e)})"
+        return None
+    elif is_document_url(url):
+        # Try to fetch and parse document
+        return fetch_document_from_url(url)
+    else:
+        # Try to fetch as web page
+        return fetch_web_content(url)
 
 # ---- CURRICULUM KEYWORD MAPPING ----
 # Maps subjects to key curriculum terms from AC V9 descriptors

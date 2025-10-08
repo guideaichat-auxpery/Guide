@@ -110,12 +110,26 @@ def show_lesson_planning_interface():
     
     # Chat input
     if prompt := st.chat_input("What would you like help planning today?"):
+        # Detect and process URLs in the prompt
+        from utils import extract_urls_from_text, process_url_content
+        urls = extract_urls_from_text(prompt)
+        url_context = ""
+        
+        if urls:
+            st.info(f"🔗 Detected {len(urls)} link(s) - fetching content...")
+            for url in urls:
+                content = process_url_content(url)
+                if content:
+                    url_context += content + "\n\n"
+        
         # Add user message to chat history
         st.session_state.planning_messages.append({"role": "user", "content": prompt})
         
         # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
+            if url_context:
+                st.caption(f"✅ Successfully fetched content from {len(urls)} link(s)")
         
         # Process uploaded documents with enhanced structure
         document_context = ""
@@ -198,15 +212,21 @@ Response Structure (MANDATORY):
 
 Tone: Reflective, curious, facilitative. Always reference uploaded documents and Montessori literature.{montessori_refs}"""
         
-        # Prepare comprehensive prompt with document context
+        # Prepare comprehensive prompt with document and URL context
         full_prompt = prompt
+        additional_context = ""
+        
+        if url_context:
+            additional_context += f"\n\nWEB LINKS PROVIDED:\n{url_context}"
+        
         if document_context:
+            additional_context += f"\n\nUPLOADED CURRICULUM DOCUMENTS TO REFERENCE:\n{document_context}"
+        
+        if additional_context:
             full_prompt = f"""EDUCATOR REQUEST: {prompt}
+{additional_context}
 
-UPLOADED CURRICULUM DOCUMENTS TO REFERENCE:
-{document_context}
-
-YOU MUST cite specific content from these uploaded documents in your response, including AC V9 codes and descriptors."""
+YOU MUST cite and reference the provided content (from links and/or uploaded documents) in your response, including AC V9 codes and descriptors where relevant."""
         
         # Update the last message with enhanced context
         st.session_state.planning_messages[-1] = {"role": "user", "content": full_prompt}
@@ -627,12 +647,33 @@ def show_companion_interface():
     
     # Chat input
     if prompt := st.chat_input("Ask me about Montessori philosophy, cosmic education, or educational approaches..."):
-        # Add user message to chat history
-        st.session_state.companion_messages.append({"role": "user", "content": prompt})
+        # Detect and process URLs in the prompt
+        from utils import extract_urls_from_text, process_url_content
+        urls = extract_urls_from_text(prompt)
+        url_context = ""
+        
+        if urls:
+            st.info(f"🔗 Detected {len(urls)} link(s) - fetching content...")
+            for url in urls:
+                content = process_url_content(url)
+                if content:
+                    url_context += content + "\n\n"
+            
+            if url_context:
+                # Enhance prompt with URL content
+                enhanced_prompt = f"{prompt}\n\n{url_context}"
+                st.session_state.companion_messages.append({"role": "user", "content": enhanced_prompt})
+            else:
+                st.session_state.companion_messages.append({"role": "user", "content": prompt})
+        else:
+            # Add user message to chat history
+            st.session_state.companion_messages.append({"role": "user", "content": prompt})
         
         # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
+            if url_context:
+                st.caption(f"✅ Successfully fetched content from {len(urls)} link(s)")
         
         # Save user message to database
         if database_available and user_id:
@@ -851,6 +892,18 @@ def show_student_interface():
     
     # Chat input
     if prompt := st.chat_input("What would you like to learn about today?"):
+        # Detect and process URLs in the prompt
+        from utils import extract_urls_from_text, process_url_content
+        urls = extract_urls_from_text(prompt)
+        url_context = ""
+        
+        if urls:
+            st.info(f"🔗 Detected {len(urls)} link(s) - fetching content...")
+            for url in urls:
+                content = process_url_content(url)
+                if content:
+                    url_context += content + "\n\n"
+        
         # Process uploaded files if any
         document_context = ""
         if student_uploaded_files:
@@ -866,15 +919,21 @@ def show_student_interface():
 ═══════════════════════════════════════════════════════════════════
 """
         
-        # Build enhanced prompt with document context
+        # Build enhanced prompt with URL and document context
         full_prompt = prompt
+        additional_context = ""
+        
+        if url_context:
+            additional_context += f"\n\nWEB LINKS YOU SHARED:\n{url_context}"
+        
         if document_context:
+            additional_context += f"\n\nYOUR UPLOADED WORK/DOCUMENTS:\n{document_context}"
+        
+        if additional_context:
             full_prompt = f"""STUDENT QUESTION: {prompt}
+{additional_context}
 
-STUDENT'S UPLOADED WORK/DOCUMENTS:
-{document_context}
-
-HELP THE STUDENT understand their work using guided questions and scaffolded support."""
+HELP THE STUDENT understand the content using guided questions and scaffolded support."""
         
         # Add user message to chat history
         st.session_state.student_messages.append({"role": "user", "content": full_prompt})
@@ -883,6 +942,8 @@ HELP THE STUDENT understand their work using guided questions and scaffolded sup
         import os
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
+            if url_context:
+                st.caption(f"✅ Successfully fetched content from {len(urls)} link(s)")
         
         # Extract curriculum keywords from student query
         from utils import detect_trending_keywords, update_trending_keywords
