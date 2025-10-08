@@ -27,16 +27,16 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **File Processing**: Supports `.txt`, `.csv`, `.pdf`, `.docx`, images, audio, and presentation files for AI integration.
 
 ## Adaptive Learning System (Node.js)
-- **Architecture**: Standalone Express.js server running on port 3000 alongside Streamlit (port 5000)
+- **Architecture**: Standalone Express.js server running on port 3000 alongside Streamlit (port 5000) with centralized dependency injection pattern
 - **Core Components**:
-  - **adaptiveCore.js**: Main orchestrator coordinating all adaptive subsystems
+  - **adaptiveCore.js**: Main orchestrator coordinating all adaptive subsystems - accepts shared PostgreSQL Pool, OpenAI client, and Replit KV Database instances via constructor injection
   - **adaptivePromptManager.js**: Self-updating AI prompts based on feedback patterns - dynamically evolves system prompts when 10+ feedback samples indicate need for adjustment
   - **semanticLogger.js**: Hybrid Replit KV + PostgreSQL embeddings system - persistent Replit KV database (@replit/database) for fast writes with workflow survival, 30-second auto-sync to PostgreSQL for analytics; OpenAI embeddings-based interaction logging with k-means clustering for topic discovery; UUID-based collision-proof keys; race condition prevention with sync guard
   - **feedbackSystem.js**: Hybrid Replit KV + PostgreSQL feedback system - persistent Replit KV database for fast writes with workflow survival, 30-second auto-sync to PostgreSQL for analytics; emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation; UUID-based collision-proof keys; race condition prevention with sync guard
   - **trendingKeywords.js**: Hybrid Replit KV + PostgreSQL trending curriculum topics system - persistent Replit KV database for fast keyword recording with workflow survival, 30-second auto-sync with intelligent UPDATE-or-INSERT logic (increments count for existing keywords), dynamic weight calculation (1 + total/50, capped at 1.5) for curriculum alignment boost; UUID-based collision-proof keys; race condition prevention with sync guard; composite index on (subject, keyword) for efficient lookups at scale
   - **subjectCalibrator.js**: Dynamic weight adjustment system balancing Montessori philosophy (0.7), curriculum alignment (0.6), scaffolding (0.5), and complexity (0.6) with optional trending topics boost multiplier
   - **analyticsRoute.js**: REST API with 10+ endpoints for dashboard, trends, student profiles, and system analytics
-  - **server.js**: Express server with auto database initialization and 72-hour auto-refresh cycle
+  - **server.js**: Express server with centralized database instance management - instantiates single shared PostgreSQL Pool, OpenAI client, and Replit KV Database; injects these into AdaptiveCore constructor for consistent dependency flow across all subsystems; includes auto database initialization and 72-hour auto-refresh cycle
 - **Database Tables**: 
   - `adaptive_interactions`: Query/response pairs with embeddings
   - `adaptive_feedback`: Emoji and rating-based feedback with sentiment weights
