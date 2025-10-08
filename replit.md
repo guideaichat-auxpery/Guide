@@ -31,8 +31,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Core Components**:
   - **adaptiveCore.js**: Main orchestrator coordinating all adaptive subsystems
   - **adaptivePromptManager.js**: Self-updating AI prompts based on feedback patterns - dynamically evolves system prompts when 10+ feedback samples indicate need for adjustment
-  - **semanticLogger.js**: OpenAI embeddings-based interaction logging with k-means clustering for topic discovery
-  - **feedbackSystem.js**: Hybrid KV + PostgreSQL feedback system - in-memory Map for fast writes, 30-second auto-sync to PostgreSQL for analytics; emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation; UUID-based collision-proof keys
+  - **semanticLogger.js**: Hybrid KV + PostgreSQL embeddings system - in-memory Map for fast writes, 30-second auto-sync to PostgreSQL for analytics; OpenAI embeddings-based interaction logging with k-means clustering for topic discovery; UUID-based collision-proof keys; race condition prevention with sync guard
+  - **feedbackSystem.js**: Hybrid KV + PostgreSQL feedback system - in-memory Map for fast writes, 30-second auto-sync to PostgreSQL for analytics; emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation; UUID-based collision-proof keys; race condition prevention with sync guard
   - **subjectCalibrator.js**: Dynamic weight adjustment system balancing Montessori philosophy (0.7), curriculum alignment (0.6), scaffolding (0.5), and complexity (0.6)
   - **analyticsRoute.js**: REST API with 10+ endpoints for dashboard, trends, student profiles, and system analytics
   - **server.js**: Express server with auto database initialization and 72-hour auto-refresh cycle
@@ -51,6 +51,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - `/api/kv-feedback`: Fast KV-based feedback recording with auto-sync to PostgreSQL
   - `/api/kv-store`: View current in-memory KV store size and keys
   - `/api/kv-sync`: Manual sync trigger for KV entries to PostgreSQL
+  - `/api/kv-embeddings`: View embedding KV store size and keys
+  - `/api/kv-embeddings-sync`: Manual sync trigger for embedding entries to PostgreSQL
 - **Self-Improvement**: System automatically updates prompts and adjusts weights based on student feedback patterns
 
 ## Data Management
