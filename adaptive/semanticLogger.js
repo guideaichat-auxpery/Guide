@@ -1,8 +1,10 @@
+const Client = require('@replit/database');
+
 class SemanticLogger {
-  constructor(db, openai) {
+  constructor(db, openai, kvClient = null) {
     this.db = db;
     this.openai = openai;
-    this.kvStore = new Map();
+    this.kvStore = kvClient || new Client();
     this.isSyncing = false;
     this.startAutoSync();
   }
@@ -16,7 +18,7 @@ class SemanticLogger {
     const queryEmbedding = await this.generateEmbedding(query);
     const responseEmbedding = await this.generateEmbedding(response);
     
-    this.kvStore.set(key, {
+    await this.kvStore.set(key, {
       studentId,
       query,
       response,
@@ -24,7 +26,7 @@ class SemanticLogger {
       responseEmbedding,
       subject,
       yearLevel,
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
     });
     
     return key;
@@ -32,21 +34,28 @@ class SemanticLogger {
 
   async syncKVtoPostgreSQL() {
     if (this.isSyncing) {
-      return { synced: 0, remaining: this.kvStore.size, message: 'Sync already in progress' };
+      const { value: allKeys } = await this.kvStore.list();
+      const keys = allKeys.filter(k => k.startsWith("embedding_"));
+      return { synced: 0, remaining: keys.length, message: 'Sync already in progress' };
     }
 
-    if (this.kvStore.size === 0) {
+    const { value: allKeys } = await this.kvStore.list();
+    const keys = allKeys.filter(k => k.startsWith("embedding_"));
+    if (keys.length === 0) {
       return { synced: 0 };
     }
 
     this.isSyncing = true;
 
     try {
-      const entries = Array.from(this.kvStore.entries());
       let syncedCount = 0;
 
-      for (const [key, data] of entries) {
+      for (const key of keys) {
         try {
+          const kvResult = await this.kvStore.get(key);
+          if (!kvResult || !kvResult.value) continue;
+          const data = kvResult.value;
+
           await this.db.query(`
             INSERT INTO adaptive_interactions (
               student_id,
@@ -69,14 +78,16 @@ class SemanticLogger {
             data.timestamp
           ]);
 
-          this.kvStore.delete(key);
+          await this.kvStore.delete(key);
           syncedCount++;
         } catch (error) {
           console.error(`Embedding sync error for ${key}:`, error.message);
         }
       }
 
-      return { synced: syncedCount, remaining: this.kvStore.size };
+      const { value: allRemainingKeys } = await this.kvStore.list();
+      const remainingKeys = allRemainingKeys.filter(k => k.startsWith("embedding_"));
+      return { synced: syncedCount, remaining: remainingKeys.length };
     } finally {
       this.isSyncing = false;
     }
@@ -91,10 +102,12 @@ class SemanticLogger {
     }, 30000);
   }
 
-  getKVStore() {
+  async getKVStore() {
+    const { value: allKeys } = await this.kvStore.list();
+    const keys = allKeys.filter(k => k.startsWith("embedding_"));
     return {
-      size: this.kvStore.size,
-      keys: Array.from(this.kvStore.keys())
+      size: keys.length,
+      keys: keys
     };
   }
 

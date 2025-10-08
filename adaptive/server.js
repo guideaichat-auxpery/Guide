@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const Client = require('@replit/database');
 require('dotenv').config();
 
 const AdaptiveCore = require('./adaptiveCore');
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 const adaptiveCore = new AdaptiveCore();
+const kvDatabase = new Client();
 
 app.get('/health', (req, res) => {
   res.json({ 
@@ -199,7 +201,7 @@ app.post('/api/kv-feedback', async (req, res) => {
 
 app.get('/api/kv-store', async (req, res) => {
   try {
-    const store = adaptiveCore.feedbackSystem.getKVStore();
+    const store = await adaptiveCore.feedbackSystem.getKVStore();
     res.json({ 
       success: true, 
       ...store
@@ -231,7 +233,7 @@ app.post('/api/kv-sync', async (req, res) => {
 
 app.get('/api/kv-embeddings', async (req, res) => {
   try {
-    const store = adaptiveCore.semanticLogger.getKVStore();
+    const store = await adaptiveCore.semanticLogger.getKVStore();
     res.json({ 
       success: true, 
       ...store
@@ -324,7 +326,7 @@ app.post('/api/trending/record', async (req, res) => {
 
 app.get('/api/trending/kv-store', async (req, res) => {
   try {
-    const store = adaptiveCore.trendingKeywords.getKVStore();
+    const store = await adaptiveCore.trendingKeywords.getKVStore();
     res.json({ 
       success: true, 
       ...store
@@ -573,6 +575,34 @@ async function runAutoRefreshCycle() {
     console.error('❌ Auto-refresh cycle error:', error.message);
   }
 }
+
+app.get("/analytics", async (req, res) => {
+  try {
+    const { value: keys } = await kvDatabase.list();
+    const feedback = await Promise.all(
+      keys.filter(k => k.startsWith("feedback_")).map(k => kvDatabase.get(k))
+    );
+    const embeddings = await Promise.all(
+      keys.filter(k => k.startsWith("embedding_")).map(k => kvDatabase.get(k))
+    );
+    const trending = await Promise.all(
+      keys.filter(k => k.startsWith("trending_")).map(k => kvDatabase.get(k))
+    );
+    res.json({ 
+      success: true, 
+      feedback, 
+      embeddings,
+      trending,
+      totalKeys: keys.length
+    });
+  } catch (error) {
+    console.error('Analytics KV error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 app.listen(PORT, async () => {
   console.log(`\n🚀 Guide Adaptive Learning System running on port ${PORT}`);

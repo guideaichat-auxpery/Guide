@@ -1,7 +1,9 @@
+const Client = require('@replit/database');
+
 class FeedbackSystem {
-  constructor(db) {
+  constructor(db, kvClient = null) {
     this.db = db;
-    this.kvStore = new Map();
+    this.kvStore = kvClient || new Client();
     this.isSyncing = false;
     this.emojiMeanings = {
       '🤩': { sentiment: 'excellent', weight: 1.0, category: 'engagement' },
@@ -21,27 +23,34 @@ class FeedbackSystem {
   async recordFeedback(subject, rating) {
     const crypto = require('crypto');
     const key = `feedback_${crypto.randomUUID()}`;
-    this.kvStore.set(key, { subject, rating, timestamp: new Date() });
+    await this.kvStore.set(key, { subject, rating, timestamp: new Date().toISOString() });
     return key;
   }
 
   async syncKVtoPostgreSQL() {
     if (this.isSyncing) {
-      return { synced: 0, remaining: this.kvStore.size, message: 'Sync already in progress' };
+      const { value: allKeys } = await this.kvStore.list();
+      const keys = allKeys.filter(k => k.startsWith("feedback_"));
+      return { synced: 0, remaining: keys.length, message: 'Sync already in progress' };
     }
 
-    if (this.kvStore.size === 0) {
+    const { value: allKeys } = await this.kvStore.list();
+    const keys = allKeys.filter(k => k.startsWith("feedback_"));
+    if (keys.length === 0) {
       return { synced: 0 };
     }
 
     this.isSyncing = true;
 
     try {
-      const entries = Array.from(this.kvStore.entries());
       let syncedCount = 0;
 
-      for (const [key, data] of entries) {
+      for (const key of keys) {
         try {
+          const kvResult = await this.kvStore.get(key);
+          if (!kvResult || !kvResult.value) continue;
+          const data = kvResult.value;
+
           const result = await this.db.query(`
             SELECT id FROM adaptive_interactions 
             WHERE subject = $1 
@@ -66,7 +75,7 @@ class FeedbackSystem {
               data.timestamp
             ]);
 
-            this.kvStore.delete(key);
+            await this.kvStore.delete(key);
             syncedCount++;
           }
         } catch (error) {
@@ -74,7 +83,9 @@ class FeedbackSystem {
         }
       }
 
-      return { synced: syncedCount, remaining: this.kvStore.size };
+      const { value: allRemainingKeys } = await this.kvStore.list();
+      const remainingKeys = allRemainingKeys.filter(k => k.startsWith("feedback_"));
+      return { synced: syncedCount, remaining: remainingKeys.length };
     } finally {
       this.isSyncing = false;
     }
@@ -89,20 +100,22 @@ class FeedbackSystem {
     }, 30000);
   }
 
-  getKVStore() {
+  async getKVStore() {
+    const { value: allKeys } = await this.kvStore.list();
+    const keys = allKeys.filter(k => k.startsWith("feedback_"));
     return {
-      size: this.kvStore.size,
-      keys: Array.from(this.kvStore.keys()),
-      list: () => Array.from(this.kvStore.keys())
+      size: keys.length,
+      keys: keys,
+      list: () => keys
     };
   }
 
   async get(key) {
-    return this.kvStore.get(key);
+    return await this.kvStore.get(key);
   }
 
   async set(key, value) {
-    this.kvStore.set(key, value);
+    await this.kvStore.set(key, value);
     return true;
   }
 
