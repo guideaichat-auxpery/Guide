@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const Client = require('@replit/database');
+const OpenAI = require('openai');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const AdaptiveCore = require('./adaptiveCore');
@@ -12,8 +14,13 @@ const PORT = process.env.ADAPTIVE_PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const adaptiveCore = new AdaptiveCore();
+// Centralized database and service instances
 const kvDatabase = new Client();
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const db = new Pool({ connectionString: process.env.DATABASE_URL });
+
+// Initialize adaptive core with shared instances
+const adaptiveCore = new AdaptiveCore(db, openai, kvDatabase);
 
 app.get('/health', (req, res) => {
   res.json({ 
@@ -101,7 +108,6 @@ app.post('/api/simple-feedback', async (req, res) => {
       5: '🌟'
     };
     
-    const { db } = adaptiveCore;
     const result = await db.query(`
       SELECT id FROM adaptive_interactions 
       WHERE subject = $1 
@@ -123,15 +129,22 @@ app.post('/api/simple-feedback', async (req, res) => {
     await db.query(`
       INSERT INTO adaptive_feedback (
         interaction_id, emoji, sentiment, weight, category, created_at
-      ) VALUES ($1, $2, $3, $4, 'rating', NOW())
+      ) VALUES ($1, $2, $3, $4, $5, NOW())
     `, [
       interactionId,
       emoji,
       `rating_${rating}`,
-      rating / 5.0
+      rating / 5.0,
+      'simplified_rating'
     ]);
     
-    res.json({ success: true, rating });
+    res.json({
+      success: true,
+      message: 'Simplified feedback recorded',
+      interactionId,
+      rating,
+      emoji
+    });
   } catch (error) {
     console.error('Simple feedback error:', error);
     res.status(500).json({
@@ -141,31 +154,46 @@ app.post('/api/simple-feedback', async (req, res) => {
   }
 });
 
-app.get('/api/dynamic-prompt', async (req, res) => {
+app.post('/api/message', async (req, res) => {
   try {
-    const prompt = await adaptiveCore.promptManager.getDynamicSystemPrompt();
-    res.json({ 
-      success: true, 
-      prompt 
+    const { query, subject, yearLevel, studentId } = req.body;
+    
+    if (!query || !subject) {
+      return res.status(400).json({
+        success: false,
+        error: 'query and subject required'
+      });
+    }
+    
+    const systemPrompt = await adaptiveCore.promptManager.getAdaptivePrompt(subject, yearLevel);
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: query }
+      ],
+      temperature: 0.7,
+      max_tokens: 800
+    });
+    
+    const answer = response.choices[0].message.content;
+    
+    await adaptiveCore.semanticLogger.logInteraction({
+      query,
+      response: answer,
+      subject,
+      yearLevel,
+      studentId
+    });
+    
+    res.json({
+      success: true,
+      answer,
+      systemPrompt: systemPrompt.substring(0, 100) + '...'
     });
   } catch (error) {
-    console.error('Dynamic prompt error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-app.post('/api/refresh-prompt', async (req, res) => {
-  try {
-    const result = await adaptiveCore.promptManager.refreshSystemPromptWithHelpfulness();
-    res.json({ 
-      success: true, 
-      ...result
-    });
-  } catch (error) {
-    console.error('Refresh prompt error:', error);
+    console.error('Message error:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -263,41 +291,6 @@ app.post('/api/kv-embeddings-sync', async (req, res) => {
   }
 });
 
-app.post('/api/message', async (req, res) => {
-  try {
-    const { input, subject, studentId } = req.body;
-    
-    if (!input || !subject) {
-      return res.status(400).json({
-        success: false,
-        error: 'input and subject required'
-      });
-    }
-    
-    await adaptiveCore.semanticLogger.logInteraction({
-      query: input,
-      response: '',
-      subject,
-      yearLevel: 'Year 7',
-      studentId: studentId || 'anonymous'
-    });
-    
-    const weight = await adaptiveCore.subjectCalibrator.getSubjectWeights(subject);
-    const dynamicPrompt = await adaptiveCore.promptManager.getAdaptivePrompt(subject);
-    
-    res.json({ 
-      systemPrompt: dynamicPrompt, 
-      weight 
-    });
-  } catch (error) {
-    console.error('Message pipeline error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
 app.post('/api/trending/record', async (req, res) => {
   try {
     const { subject, keyword, sessionId, studentId } = req.body;
@@ -368,10 +361,11 @@ app.get('/api/trending/subject/:subject', async (req, res) => {
       success: true, 
       subject,
       trending,
-      dynamicWeight: weight
+      weight,
+      count: trending.length
     });
   } catch (error) {
-    console.error('Trending by subject error:', error);
+    console.error('Trending subject error:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -381,13 +375,19 @@ app.get('/api/trending/subject/:subject', async (req, res) => {
 
 app.get('/api/trending/all', async (req, res) => {
   try {
-    const timeframe = req.query.timeframe || '7 days';
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 50;
     
-    const trending = await adaptiveCore.trendingKeywords.getAllTrending(timeframe, limit);
+    const result = await db.query(`
+      SELECT subject, keyword, count, last_detected 
+      FROM trending_keywords 
+      ORDER BY count DESC, last_detected DESC 
+      LIMIT $1
+    `, [limit]);
+    
     res.json({ 
       success: true, 
-      trending
+      trending: result.rows,
+      count: result.rows.length
     });
   } catch (error) {
     console.error('All trending error:', error);
@@ -400,11 +400,20 @@ app.get('/api/trending/all', async (req, res) => {
 
 app.get('/api/trending/stats', async (req, res) => {
   try {
-    const subject = req.query.subject || null;
-    const stats = await adaptiveCore.trendingKeywords.getTrendingStats(subject);
+    const result = await db.query(`
+      SELECT 
+        subject,
+        COUNT(DISTINCT keyword) as unique_keywords,
+        SUM(count) as total_detections,
+        MAX(last_detected) as most_recent
+      FROM trending_keywords
+      GROUP BY subject
+      ORDER BY total_detections DESC
+    `);
+    
     res.json({ 
       success: true, 
-      stats
+      stats: result.rows
     });
   } catch (error) {
     console.error('Trending stats error:', error);
@@ -418,14 +427,17 @@ app.get('/api/trending/stats', async (req, res) => {
 app.get('/api/trending/keyword/:keyword', async (req, res) => {
   try {
     const { keyword } = req.params;
-    const subject = req.query.subject || null;
-    const days = parseInt(req.query.days) || 30;
     
-    const history = await adaptiveCore.trendingKeywords.getKeywordHistory(keyword, subject, days);
+    const result = await db.query(`
+      SELECT * FROM trending_keywords 
+      WHERE keyword = $1 
+      ORDER BY last_detected DESC
+    `, [keyword]);
+    
     res.json({ 
       success: true, 
       keyword,
-      history
+      history: result.rows
     });
   } catch (error) {
     console.error('Keyword history error:', error);
@@ -436,34 +448,67 @@ app.get('/api/trending/keyword/:keyword', async (req, res) => {
   }
 });
 
-app.use('/api', createAnalyticsRouter(adaptiveCore));
-
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error',
-    message: err.message
-  });
+app.get('/api/weights/:subject?', async (req, res) => {
+  try {
+    const { subject } = req.params;
+    const weights = await adaptiveCore.subjectCalibrator.getSubjectWeights(subject);
+    
+    res.json({ 
+      success: true, 
+      subject: subject || 'default',
+      weights
+    });
+  } catch (error) {
+    console.error('Weights error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
+app.post('/api/weights/:subject', async (req, res) => {
+  try {
+    const { subject } = req.params;
+    const { weights } = req.body;
+    
+    await adaptiveCore.subjectCalibrator.updateWeights(subject, weights);
+    
+    res.json({ 
+      success: true, 
+      message: 'Weights updated successfully',
+      subject,
+      weights
+    });
+  } catch (error) {
+    console.error('Update weights error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+const analyticsRouter = createAnalyticsRouter(db);
+app.use('/api/analytics', analyticsRouter);
+
 async function initializeDatabase() {
-  const { db } = adaptiveCore;
-  
   try {
     await db.query(`
       CREATE TABLE IF NOT EXISTS adaptive_interactions (
         id SERIAL PRIMARY KEY,
         student_id VARCHAR(255),
         query_text TEXT NOT NULL,
-        response_text TEXT NOT NULL,
-        query_embedding JSONB,
-        response_embedding JSONB,
+        response_text TEXT,
+        query_embedding TEXT,
+        response_embedding TEXT,
         subject VARCHAR(100),
-        year_level VARCHAR(20),
+        year_level VARCHAR(50),
         created_at TIMESTAMP DEFAULT NOW()
-      );
+      )
+    `);
 
+    await db.query(`
       CREATE TABLE IF NOT EXISTS adaptive_feedback (
         id SERIAL PRIMARY KEY,
         interaction_id INTEGER REFERENCES adaptive_interactions(id),
@@ -472,55 +517,78 @@ async function initializeDatabase() {
         weight DECIMAL(3,2),
         category VARCHAR(50),
         created_at TIMESTAMP DEFAULT NOW()
-      );
+      )
+    `);
 
+    await db.query(`
       CREATE TABLE IF NOT EXISTS adaptive_prompts (
         id SERIAL PRIMARY KEY,
         subject VARCHAR(100),
         prompt_text TEXT NOT NULL,
         version INTEGER DEFAULT 1,
+        feedback_summary TEXT,
         created_at TIMESTAMP DEFAULT NOW()
-      );
+      )
+    `);
 
+    await db.query(`
       CREATE TABLE IF NOT EXISTS adaptive_weights (
         id SERIAL PRIMARY KEY,
-        subject VARCHAR(100),
-        montessori_weight DECIMAL(3,2),
-        curriculum_weight DECIMAL(3,2),
-        scaffolding_weight DECIMAL(3,2),
-        complexity_level DECIMAL(3,2),
-        created_at TIMESTAMP DEFAULT NOW(),
+        subject VARCHAR(100) UNIQUE,
+        montessori_weight DECIMAL(3,2) DEFAULT 0.7,
+        curriculum_weight DECIMAL(3,2) DEFAULT 0.6,
+        scaffolding_weight DECIMAL(3,2) DEFAULT 0.5,
+        complexity_weight DECIMAL(3,2) DEFAULT 0.6,
         updated_at TIMESTAMP DEFAULT NOW()
-      );
+      )
+    `);
 
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS trending_keywords (
+        id SERIAL PRIMARY KEY,
+        subject VARCHAR(100) NOT NULL,
+        keyword VARCHAR(255) NOT NULL,
+        count INTEGER DEFAULT 1,
+        session_id VARCHAR(255),
+        student_id VARCHAR(255),
+        last_detected TIMESTAMP DEFAULT NOW(),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_trending_subject_keyword 
+      ON trending_keywords(subject, keyword)
+    `);
+
+    await db.query(`
       CREATE TABLE IF NOT EXISTS system_config (
         id SERIAL PRIMARY KEY,
         config_key VARCHAR(100) UNIQUE NOT NULL,
         config_value TEXT,
         updated_at TIMESTAMP DEFAULT NOW()
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_interactions_subject ON adaptive_interactions(subject);
-      CREATE INDEX IF NOT EXISTS idx_interactions_student ON adaptive_interactions(student_id);
-      CREATE INDEX IF NOT EXISTS idx_feedback_interaction ON adaptive_feedback(interaction_id);
-      CREATE INDEX IF NOT EXISTS idx_prompts_subject ON adaptive_prompts(subject);
-      CREATE INDEX IF NOT EXISTS idx_weights_subject ON adaptive_weights(subject);
+      )
     `);
-    
+
+    await db.query(`
+      INSERT INTO system_config (config_key, config_value, updated_at)
+      VALUES ('last_refresh', NOW()::text, NOW())
+      ON CONFLICT (config_key) DO NOTHING
+    `);
+
     console.log('✅ Database tables initialized successfully');
   } catch (error) {
-    console.error('❌ Database initialization error:', error.message);
+    console.error('❌ Database initialization error:', error);
+    throw error;
   }
 }
 
 async function runAutoRefreshCycle() {
-  const { db } = adaptiveCore;
-  
   try {
     const result = await db.query(`
-      SELECT config_value, updated_at 
+      SELECT config_value as updated_at 
       FROM system_config 
-      WHERE config_key = 'lastPromptRefresh'
+      WHERE config_key = 'last_refresh'
     `);
     
     const now = Date.now();

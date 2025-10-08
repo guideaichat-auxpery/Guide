@@ -1,7 +1,3 @@
-const OpenAI = require('openai');
-const { Pool } = require('pg');
-require('dotenv').config();
-
 const PromptManager = require('./adaptivePromptManager');
 const SemanticLogger = require('./semanticLogger');
 const FeedbackSystem = require('./feedbackSystem');
@@ -9,19 +5,14 @@ const SubjectCalibrator = require('./subjectCalibrator');
 const TrendingKeywords = require('./trendingKeywords');
 
 class AdaptiveCore {
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+  constructor(db, openai, kvClient) {
+    this.db = db;
+    this.openai = openai;
     
-    this.db = new Pool({
-      connectionString: process.env.DATABASE_URL
-    });
-    
-    this.trendingKeywords = new TrendingKeywords(this.db);
+    this.trendingKeywords = new TrendingKeywords(this.db, kvClient);
     this.promptManager = new PromptManager(this.db, this.openai);
-    this.semanticLogger = new SemanticLogger(this.db, this.openai);
-    this.feedbackSystem = new FeedbackSystem(this.db);
+    this.semanticLogger = new SemanticLogger(this.db, this.openai, kvClient);
+    this.feedbackSystem = new FeedbackSystem(this.db, kvClient);
     this.subjectCalibrator = new SubjectCalibrator(this.db, this.trendingKeywords);
   }
 

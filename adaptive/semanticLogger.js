@@ -1,10 +1,8 @@
-const Client = require('@replit/database');
-
 class SemanticLogger {
-  constructor(db, openai, kvClient = null) {
+  constructor(db, openai, kvClient) {
     this.db = db;
     this.openai = openai;
-    this.kvStore = kvClient || new Client();
+    this.kvStore = kvClient;
     this.isSyncing = false;
     this.startAutoSync();
   }

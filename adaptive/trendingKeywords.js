@@ -1,9 +1,7 @@
-const Client = require('@replit/database');
-
 class TrendingKeywords {
-  constructor(db, kvClient = null) {
+  constructor(db, kvClient) {
     this.db = db;
-    this.kvStore = kvClient || new Client();
+    this.kvStore = kvClient;
     this.isSyncing = false;
     this.startAutoSync();
   }

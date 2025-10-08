@@ -1,9 +1,7 @@
-const Client = require('@replit/database');
-
 class FeedbackSystem {
-  constructor(db, kvClient = null) {
+  constructor(db, kvClient) {
     this.db = db;
-    this.kvStore = kvClient || new Client();
+    this.kvStore = kvClient;
     this.isSyncing = false;
     this.emojiMeanings = {
       '🤩': { sentiment: 'excellent', weight: 1.0, category: 'engagement' },
