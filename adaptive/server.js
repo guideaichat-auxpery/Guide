@@ -229,6 +229,38 @@ app.post('/api/kv-sync', async (req, res) => {
   }
 });
 
+app.get('/api/kv-embeddings', async (req, res) => {
+  try {
+    const store = adaptiveCore.semanticLogger.getKVStore();
+    res.json({ 
+      success: true, 
+      ...store
+    });
+  } catch (error) {
+    console.error('KV embeddings error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/kv-embeddings-sync', async (req, res) => {
+  try {
+    const result = await adaptiveCore.semanticLogger.syncKVtoPostgreSQL();
+    res.json({ 
+      success: true, 
+      ...result
+    });
+  } catch (error) {
+    console.error('KV embeddings sync error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.post('/api/message', async (req, res) => {
   try {
     const { input, subject, studentId } = req.body;
