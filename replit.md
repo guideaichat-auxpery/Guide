@@ -33,7 +33,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **adaptivePromptManager.js**: Self-updating AI prompts based on feedback patterns - dynamically evolves system prompts when 10+ feedback samples indicate need for adjustment
   - **semanticLogger.js**: Hybrid KV + PostgreSQL embeddings system - in-memory Map for fast writes, 30-second auto-sync to PostgreSQL for analytics; OpenAI embeddings-based interaction logging with k-means clustering for topic discovery; UUID-based collision-proof keys; race condition prevention with sync guard
   - **feedbackSystem.js**: Hybrid KV + PostgreSQL feedback system - in-memory Map for fast writes, 30-second auto-sync to PostgreSQL for analytics; emoji-based sentiment tracking (🤩=excellent, 😕=confused, 📚=curriculum-aligned, 🌍=Montessori-cosmic) with weight calculation; UUID-based collision-proof keys; race condition prevention with sync guard
-  - **subjectCalibrator.js**: Dynamic weight adjustment system balancing Montessori philosophy (0.7), curriculum alignment (0.6), scaffolding (0.5), and complexity (0.6)
+  - **trendingKeywords.js**: Hybrid KV + PostgreSQL trending curriculum topics system - in-memory Map for fast keyword recording, 30-second auto-sync with intelligent UPDATE-or-INSERT logic (increments count for existing keywords), dynamic weight calculation (1 + total/50, capped at 1.5) for curriculum alignment boost; UUID-based collision-proof keys; race condition prevention with sync guard; composite index on (subject, keyword) for efficient lookups at scale
+  - **subjectCalibrator.js**: Dynamic weight adjustment system balancing Montessori philosophy (0.7), curriculum alignment (0.6), scaffolding (0.5), and complexity (0.6) with optional trending topics boost multiplier
   - **analyticsRoute.js**: REST API with 10+ endpoints for dashboard, trends, student profiles, and system analytics
   - **server.js**: Express server with auto database initialization and 72-hour auto-refresh cycle
 - **Database Tables**: 
@@ -41,11 +42,12 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - `adaptive_feedback`: Emoji and rating-based feedback with sentiment weights
   - `adaptive_prompts`: Versioned prompt history per subject
   - `adaptive_weights`: Subject-specific calibration weights
+  - `trending_keywords`: Curriculum keyword tracking with count aggregation and dynamic weights (composite index on subject+keyword)
   - `system_config`: Configuration storage for auto-refresh timestamps
 - **Auto-Refresh System**: 72-hour cycle with hourly checks - dynamically discovers active subjects from database, updates prompts based on accumulated feedback patterns, tracks refresh timestamp in system_config table
   - **Helpfulness-Based Refresh**: Calculates helpfulness ratios from feedback (weight ≥0.6 = helpful), generates Montessori GuideChat-style prompts with targeted improvement instructions for subjects below 50% helpful threshold
   - **Dynamic Prompt Storage**: Stores generated prompts in system_config as `systemPrompt_dynamic` for persistent, evolving system guidance
-- **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, and weight management
+- **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, weight management, and trending topics
   - `/api/simple-feedback`: Simplified rating endpoint (1-5 scale) with subject/student association and validation
   - `/api/message`: Message pipeline integration logging semantic vectors and returning adaptive prompts
   - `/api/kv-feedback`: Fast KV-based feedback recording with auto-sync to PostgreSQL
@@ -53,6 +55,13 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - `/api/kv-sync`: Manual sync trigger for KV entries to PostgreSQL
   - `/api/kv-embeddings`: View embedding KV store size and keys
   - `/api/kv-embeddings-sync`: Manual sync trigger for embedding entries to PostgreSQL
+  - `/api/trending/record`: Fast curriculum keyword recording to KV store
+  - `/api/trending/kv-store`: Monitor trending keywords KV store
+  - `/api/trending/kv-sync`: Manual sync trigger for trending keywords to PostgreSQL
+  - `/api/trending/subject/:subject`: Get trending keywords and dynamic weight for subject
+  - `/api/trending/all`: Get all trending keywords across subjects
+  - `/api/trending/stats`: Aggregated statistics for trending keywords
+  - `/api/trending/keyword/:keyword`: Historical data for specific keyword
 - **Self-Improvement**: System automatically updates prompts and adjusts weights based on student feedback patterns
 
 ## Data Management
