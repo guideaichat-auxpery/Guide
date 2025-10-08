@@ -139,6 +139,22 @@ app.post('/api/simple-feedback', async (req, res) => {
   }
 });
 
+app.get('/api/dynamic-prompt', async (req, res) => {
+  try {
+    const prompt = await adaptiveCore.promptManager.getDynamicSystemPrompt();
+    res.json({ 
+      success: true, 
+      prompt 
+    });
+  } catch (error) {
+    console.error('Dynamic prompt error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.post('/api/message', async (req, res) => {
   try {
     const { input, subject, studentId } = req.body;
@@ -268,6 +284,16 @@ async function runAutoRefreshCycle() {
     if (!lastRun || now - new Date(lastRun).getTime() > REFRESH_INTERVAL) {
       console.log('🔄 Running 72-hour auto-refresh cycle...');
       
+      const { prompt, stats } = await adaptiveCore.promptManager.refreshSystemPromptWithHelpfulness();
+      
+      console.log('   📊 Helpfulness stats:');
+      for (const [subject, data] of Object.entries(stats)) {
+        const percentage = (data.ratio * 100).toFixed(1);
+        console.log(`      ${subject}: ${percentage}% helpful (${data.helpful}/${data.total})`);
+      }
+      
+      console.log('   ✨ Dynamic prompt updated');
+      
       const subjectsResult = await db.query(`
         SELECT DISTINCT subject 
         FROM adaptive_interactions 
@@ -293,13 +319,6 @@ async function runAutoRefreshCycle() {
           await adaptiveCore.promptManager.updatePromptFromFeedback(subject, feedback);
         }
       }
-      
-      await db.query(`
-        INSERT INTO system_config (config_key, config_value, updated_at)
-        VALUES ('lastPromptRefresh', $1, NOW())
-        ON CONFLICT (config_key) 
-        DO UPDATE SET config_value = $1, updated_at = NOW()
-      `, [new Date().toISOString()]);
       
       console.log('✅ Auto-refresh cycle completed');
     } else {

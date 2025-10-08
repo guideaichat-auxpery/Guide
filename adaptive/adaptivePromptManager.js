@@ -159,6 +159,68 @@ Maintain Montessori philosophy while addressing the feedback.`
     const currentPrompt = await this.getSavedPrompt(subject) || this.basePrompts[subject];
     return await this.generateUpdatedPrompt(currentPrompt, subject, feedbackPattern);
   }
+
+  async refreshSystemPromptWithHelpfulness() {
+    const result = await this.db.query(`
+      SELECT 
+        ai.subject,
+        COUNT(*) as total,
+        SUM(CASE WHEN af.weight >= 0.6 THEN 1 ELSE 0 END) as helpful_count
+      FROM adaptive_feedback af
+      JOIN adaptive_interactions ai ON af.interaction_id = ai.id
+      WHERE ai.subject IS NOT NULL 
+        AND af.created_at > NOW() - interval '7 days'
+      GROUP BY ai.subject
+      HAVING COUNT(*) >= 5
+    `);
+
+    const stats = {};
+    for (const row of result.rows) {
+      const helpfulRatio = parseFloat(row.helpful_count) / parseFloat(row.total);
+      stats[row.subject] = {
+        helpful: parseFloat(row.helpful_count),
+        total: parseFloat(row.total),
+        ratio: helpfulRatio
+      };
+    }
+
+    let focus = "";
+    for (const [subject, { ratio }] of Object.entries(stats)) {
+      if (ratio < 0.5) {
+        focus += `Refine ${subject} to offer more ethical ambiguity and abstract challenges.\n`;
+      }
+    }
+
+    const prompt = `You are Montessori GuideChat. You begin provocations with a quote or visual idea, followed by an open ethical or societal challenge.
+Improvement focus:
+${focus || "Maintain current sophistication."}`.trim();
+
+    await this.db.query(`
+      INSERT INTO system_config (config_key, config_value, updated_at)
+      VALUES ('systemPrompt_dynamic', $1, NOW())
+      ON CONFLICT (config_key) 
+      DO UPDATE SET config_value = $1, updated_at = NOW()
+    `, [prompt]);
+
+    await this.db.query(`
+      INSERT INTO system_config (config_key, config_value, updated_at)
+      VALUES ('lastPromptRefresh', $1, NOW())
+      ON CONFLICT (config_key) 
+      DO UPDATE SET config_value = $1, updated_at = NOW()
+    `, [new Date().toISOString()]);
+
+    return { prompt, stats };
+  }
+
+  async getDynamicSystemPrompt() {
+    const result = await this.db.query(`
+      SELECT config_value 
+      FROM system_config 
+      WHERE config_key = 'systemPrompt_dynamic'
+    `);
+    
+    return result.rows[0]?.config_value || this.basePrompts.default;
+  }
 }
 
 module.exports = AdaptivePromptManager;
