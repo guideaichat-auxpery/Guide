@@ -171,6 +171,64 @@ app.post('/api/refresh-prompt', async (req, res) => {
   }
 });
 
+app.post('/api/kv-feedback', async (req, res) => {
+  try {
+    const { subject, rating } = req.body;
+    
+    if (!subject || !rating) {
+      return res.status(400).json({
+        success: false,
+        error: 'subject and rating required'
+      });
+    }
+    
+    const key = await adaptiveCore.feedbackSystem.recordFeedback(subject, rating);
+    res.json({ 
+      success: true, 
+      key,
+      message: 'Feedback stored in KV, will sync to PostgreSQL automatically'
+    });
+  } catch (error) {
+    console.error('KV feedback error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/kv-store', async (req, res) => {
+  try {
+    const store = adaptiveCore.feedbackSystem.getKVStore();
+    res.json({ 
+      success: true, 
+      ...store
+    });
+  } catch (error) {
+    console.error('KV store error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/kv-sync', async (req, res) => {
+  try {
+    const result = await adaptiveCore.feedbackSystem.syncKVtoPostgreSQL();
+    res.json({ 
+      success: true, 
+      ...result
+    });
+  } catch (error) {
+    console.error('KV sync error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.post('/api/message', async (req, res) => {
   try {
     const { input, subject, studentId } = req.body;
