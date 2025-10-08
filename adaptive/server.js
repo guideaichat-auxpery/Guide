@@ -155,6 +155,22 @@ app.get('/api/dynamic-prompt', async (req, res) => {
   }
 });
 
+app.post('/api/refresh-prompt', async (req, res) => {
+  try {
+    const result = await adaptiveCore.promptManager.refreshSystemPromptWithHelpfulness();
+    res.json({ 
+      success: true, 
+      ...result
+    });
+  } catch (error) {
+    console.error('Refresh prompt error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.post('/api/message', async (req, res) => {
   try {
     const { input, subject, studentId } = req.body;
