@@ -2,6 +2,7 @@ class FeedbackSystem {
   constructor(db) {
     this.db = db;
     this.kvStore = new Map();
+    this.isSyncing = false;
     this.emojiMeanings = {
       '🤩': { sentiment: 'excellent', weight: 1.0, category: 'engagement' },
       '💡': { sentiment: 'insightful', weight: 0.9, category: 'understanding' },
@@ -25,48 +26,58 @@ class FeedbackSystem {
   }
 
   async syncKVtoPostgreSQL() {
+    if (this.isSyncing) {
+      return { synced: 0, remaining: this.kvStore.size, message: 'Sync already in progress' };
+    }
+
     if (this.kvStore.size === 0) {
       return { synced: 0 };
     }
 
-    const entries = Array.from(this.kvStore.entries());
-    let syncedCount = 0;
+    this.isSyncing = true;
 
-    for (const [key, data] of entries) {
-      try {
-        const result = await this.db.query(`
-          SELECT id FROM adaptive_interactions 
-          WHERE subject = $1 
-          ORDER BY created_at DESC 
-          LIMIT 1
-        `, [data.subject]);
+    try {
+      const entries = Array.from(this.kvStore.entries());
+      let syncedCount = 0;
 
-        if (result.rows[0]) {
-          const interactionId = result.rows[0].id;
-          const weight = typeof data.rating === 'number' ? data.rating / 5.0 : 
-                        data.rating === 'helpful' ? 0.8 : 0.2;
-          
-          await this.db.query(`
-            INSERT INTO adaptive_feedback (
-              interaction_id, emoji, sentiment, weight, category, created_at
-            ) VALUES ($1, $2, $3, $4, 'kv_synced', $5)
-          `, [
-            interactionId,
-            '⚡',
-            `kv_${data.rating}`,
-            weight,
-            data.timestamp
-          ]);
+      for (const [key, data] of entries) {
+        try {
+          const result = await this.db.query(`
+            SELECT id FROM adaptive_interactions 
+            WHERE subject = $1 
+            ORDER BY created_at DESC 
+            LIMIT 1
+          `, [data.subject]);
 
-          this.kvStore.delete(key);
-          syncedCount++;
+          if (result.rows[0]) {
+            const interactionId = result.rows[0].id;
+            const weight = typeof data.rating === 'number' ? data.rating / 5.0 : 
+                          data.rating === 'helpful' ? 0.8 : 0.2;
+            
+            await this.db.query(`
+              INSERT INTO adaptive_feedback (
+                interaction_id, emoji, sentiment, weight, category, created_at
+              ) VALUES ($1, $2, $3, $4, 'kv_synced', $5)
+            `, [
+              interactionId,
+              '⚡',
+              `kv_${data.rating}`,
+              weight,
+              data.timestamp
+            ]);
+
+            this.kvStore.delete(key);
+            syncedCount++;
+          }
+        } catch (error) {
+          console.error(`Sync error for ${key}:`, error.message);
         }
-      } catch (error) {
-        console.error(`Sync error for ${key}:`, error.message);
       }
-    }
 
-    return { synced: syncedCount, remaining: this.kvStore.size };
+      return { synced: syncedCount, remaining: this.kvStore.size };
+    } finally {
+      this.isSyncing = false;
+    }
   }
 
   startAutoSync() {

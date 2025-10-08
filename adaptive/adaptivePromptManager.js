@@ -123,10 +123,10 @@ Maintain Montessori philosophy while addressing the feedback.`
   async savePrompt(subject, prompt) {
     await this.db.query(`
       INSERT INTO adaptive_prompts (subject, prompt_text, version, created_at)
-      VALUES ($1, $2, (
+      VALUES ($1::varchar, $2::text, (
         SELECT COALESCE(MAX(version), 0) + 1 
         FROM adaptive_prompts 
-        WHERE subject = $1
+        WHERE subject = $1::varchar
       ), NOW())
     `, [subject, prompt]);
   }

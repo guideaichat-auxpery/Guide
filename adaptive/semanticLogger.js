@@ -3,6 +3,7 @@ class SemanticLogger {
     this.db = db;
     this.openai = openai;
     this.kvStore = new Map();
+    this.isSyncing = false;
     this.startAutoSync();
   }
 
@@ -30,45 +31,55 @@ class SemanticLogger {
   }
 
   async syncKVtoPostgreSQL() {
+    if (this.isSyncing) {
+      return { synced: 0, remaining: this.kvStore.size, message: 'Sync already in progress' };
+    }
+
     if (this.kvStore.size === 0) {
       return { synced: 0 };
     }
 
-    const entries = Array.from(this.kvStore.entries());
-    let syncedCount = 0;
+    this.isSyncing = true;
 
-    for (const [key, data] of entries) {
-      try {
-        await this.db.query(`
-          INSERT INTO adaptive_interactions (
-            student_id,
-            query_text,
-            response_text,
-            query_embedding,
-            response_embedding,
-            subject,
-            year_level,
-            created_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `, [
-          data.studentId,
-          data.query,
-          data.response,
-          JSON.stringify(data.queryEmbedding),
-          JSON.stringify(data.responseEmbedding),
-          data.subject,
-          data.yearLevel,
-          data.timestamp
-        ]);
+    try {
+      const entries = Array.from(this.kvStore.entries());
+      let syncedCount = 0;
 
-        this.kvStore.delete(key);
-        syncedCount++;
-      } catch (error) {
-        console.error(`Embedding sync error for ${key}:`, error.message);
+      for (const [key, data] of entries) {
+        try {
+          await this.db.query(`
+            INSERT INTO adaptive_interactions (
+              student_id,
+              query_text,
+              response_text,
+              query_embedding,
+              response_embedding,
+              subject,
+              year_level,
+              created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [
+            data.studentId,
+            data.query,
+            data.response,
+            JSON.stringify(data.queryEmbedding),
+            JSON.stringify(data.responseEmbedding),
+            data.subject,
+            data.yearLevel,
+            data.timestamp
+          ]);
+
+          this.kvStore.delete(key);
+          syncedCount++;
+        } catch (error) {
+          console.error(`Embedding sync error for ${key}:`, error.message);
+        }
       }
-    }
 
-    return { synced: syncedCount, remaining: this.kvStore.size };
+      return { synced: syncedCount, remaining: this.kvStore.size };
+    } finally {
+      this.isSyncing = false;
+    }
   }
 
   startAutoSync() {
