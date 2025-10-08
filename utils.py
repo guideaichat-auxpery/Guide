@@ -474,7 +474,7 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
 def get_max_tokens_for_user_type(user_type):
     """Get appropriate token limit based on user type"""
     if user_type in ["educator"]:
-        return 3000  # Enhanced for ChatGPT-level detail (approximately 10,000 words)
+        return 6000  # Enhanced for comprehensive responses and detailed planning
     elif user_type == "student":
         return 800   # Approximately 2,500 words with scaffolding
     else:

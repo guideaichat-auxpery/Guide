@@ -1348,7 +1348,17 @@ def show_planning_notes_interface():
         with col1:
             if existing_notes:
                 note_options = ["-- Create New Note --"] + [f"{note.title}" for note in existing_notes]
-                selected_note_name = st.selectbox("Select Note:", note_options)
+                
+                # Determine default index based on active_note_id
+                default_index = 0
+                active_note_id = st.session_state.get('active_note_id')
+                if active_note_id:
+                    for idx, note in enumerate(existing_notes):
+                        if note.id == active_note_id:
+                            default_index = idx + 1  # +1 because "Create New Note" is at index 0
+                            break
+                
+                selected_note_name = st.selectbox("Select Note:", note_options, index=default_index)
                 
                 if selected_note_name != "-- Create New Note --":
                     # Load selected note
