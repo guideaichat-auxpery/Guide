@@ -2,34 +2,89 @@ class SemanticLogger {
   constructor(db, openai) {
     this.db = db;
     this.openai = openai;
+    this.kvStore = new Map();
+    this.startAutoSync();
   }
 
   async logInteraction(data) {
     const { query, response, subject, yearLevel, studentId } = data;
     
+    const crypto = require('crypto');
+    const key = `embedding_${crypto.randomUUID()}`;
+    
     const queryEmbedding = await this.generateEmbedding(query);
     const responseEmbedding = await this.generateEmbedding(response);
     
-    await this.db.query(`
-      INSERT INTO adaptive_interactions (
-        student_id,
-        query_text,
-        response_text,
-        query_embedding,
-        response_embedding,
-        subject,
-        year_level,
-        created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-    `, [
+    this.kvStore.set(key, {
       studentId,
       query,
       response,
-      JSON.stringify(queryEmbedding),
-      JSON.stringify(responseEmbedding),
+      queryEmbedding,
+      responseEmbedding,
       subject,
-      yearLevel
-    ]);
+      yearLevel,
+      timestamp: new Date()
+    });
+    
+    return key;
+  }
+
+  async syncKVtoPostgreSQL() {
+    if (this.kvStore.size === 0) {
+      return { synced: 0 };
+    }
+
+    const entries = Array.from(this.kvStore.entries());
+    let syncedCount = 0;
+
+    for (const [key, data] of entries) {
+      try {
+        await this.db.query(`
+          INSERT INTO adaptive_interactions (
+            student_id,
+            query_text,
+            response_text,
+            query_embedding,
+            response_embedding,
+            subject,
+            year_level,
+            created_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+          data.studentId,
+          data.query,
+          data.response,
+          JSON.stringify(data.queryEmbedding),
+          JSON.stringify(data.responseEmbedding),
+          data.subject,
+          data.yearLevel,
+          data.timestamp
+        ]);
+
+        this.kvStore.delete(key);
+        syncedCount++;
+      } catch (error) {
+        console.error(`Embedding sync error for ${key}:`, error.message);
+      }
+    }
+
+    return { synced: syncedCount, remaining: this.kvStore.size };
+  }
+
+  startAutoSync() {
+    setInterval(async () => {
+      const result = await this.syncKVtoPostgreSQL();
+      if (result.synced > 0) {
+        console.log(`🔄 Synced ${result.synced} embedding entries to PostgreSQL`);
+      }
+    }, 30000);
+  }
+
+  getKVStore() {
+    return {
+      size: this.kvStore.size,
+      keys: Array.from(this.kvStore.keys())
+    };
   }
 
   async generateEmbedding(text) {
