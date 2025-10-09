@@ -235,9 +235,9 @@ st.markdown("---")
 st.markdown(
     """
     <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
+        <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
         Guide - Your Montessori Companion | Powered by OpenAI GPT-4o Mini<br>
         Grounded in authentic Montessori principles and foundational texts<br>
-        <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br>
         Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Teaching</em>
     </div>
     """,
