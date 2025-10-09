@@ -181,6 +181,7 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                 
                 response = call_openai_api(
                     st.session_state.planning_messages,
+                    system_prompt=system_context,
                     age_group=age_group,
                     subject=subjects[0] if subjects else None,
                     subjects=subjects,
@@ -972,7 +973,7 @@ def show_student_dashboard_interface():
                     
                     # Grant access to other educators
                     st.markdown("#### Share Access")
-                    from database import get_all_educators, grant_student_access, get_student_access_list
+                    from database import get_all_educators, grant_educator_access, get_student_access_educators
                     
                     all_educators = get_all_educators(db)
                     other_educators = [e for e in all_educators if e.id != educator_id]
@@ -985,18 +986,18 @@ def show_student_dashboard_interface():
                         )
                         
                         if st.button("Grant Access"):
-                            if grant_student_access(db, educator_id, selected_student.id, selected_educator.id):
+                            if grant_educator_access(db, selected_educator.id, selected_student.id, educator_id):
                                 st.success(f"✅ Access granted to {selected_educator.full_name}")
                                 st.rerun()
                             else:
                                 st.error("Failed to grant access")
                     
                     # Show current access list
-                    access_list = get_student_access_list(db, selected_student.id)
+                    access_list = get_student_access_educators(db, selected_student.id)
                     if access_list:
                         st.markdown("#### Current Access")
-                        for access in access_list:
-                            st.markdown(f"- {access.educator.full_name} (granted {access.granted_at.strftime('%Y-%m-%d')})")
+                        for educator in access_list:
+                            st.markdown(f"- {educator.full_name} ({educator.email})")
                     
                     # Danger zone - remove student
                     st.markdown("---")
@@ -1313,7 +1314,7 @@ def show_planning_notes_interface():
                             st.session_state.note_chapters = []
                         
                         # Optionally display images
-                        if selected_note.image_data:
+                        if hasattr(selected_note, 'image_data') and selected_note.image_data:
                             try:
                                 image = Image.open(io.BytesIO(selected_note.image_data))
                                 st.image(image, caption="Attached Image", use_column_width=True)
