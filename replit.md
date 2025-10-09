@@ -35,6 +35,11 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 ## Backend
 - **Core Logic**: Single-file Python application (`app.py`) with modular functions.
 - **AI Integration**: OpenAI API client (GPT-4o-mini) with dynamic system prompts based on selected curriculum and role-based optimization.
+- **Age-Appropriate Lesson Planning**: Intelligent lesson planning assistant with developmental stage-specific prompts:
+  - Ages 3-6: Foundational skills, Montessori materials, step-by-step educator guidance
+  - Ages 6-9: Literacy/numeracy building, hands-on activities, collaborative learning
+  - Ages 9-12: Deeper comprehension, research skills, independent thinking
+  - Ages 12-15: Complex ideas, inquiry-based learning, ethical dilemmas, systems thinking
 - **Conversation Management**: Intelligent 10-message rolling history and dynamic curriculum context injection.
 - **Token Optimization**: Enhanced token limits (6000 for educators, 800 for students).
 - **Curriculum Keyword Extraction**: Multi-word phrase detection system with year-specific topic mapping, prioritizing longest phrases and supporting singular/plural variations. Automatically infers year levels and injects detected keywords into AI context.

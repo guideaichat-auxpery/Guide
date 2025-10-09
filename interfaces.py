@@ -164,9 +164,12 @@ Please provide:
                 
                 response = call_openai_api(
                     st.session_state.planning_messages,
+                    age_group=age_group,
                     subject=subjects[0] if subjects else None,
+                    subjects=subjects,
                     year_level=year_levels[0] if year_levels else None,
-                    curriculum_type="AC_V9"
+                    curriculum_type="AC_V9",
+                    interface_type="lesson_planning"
                 )
                 
                 st.markdown(response)
