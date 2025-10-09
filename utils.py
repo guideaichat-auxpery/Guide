@@ -1771,7 +1771,9 @@ def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_pla
             text = line.replace('##', '').strip()
             story.append(Paragraph(text, heading_style))
         elif line.startswith('**') and line.endswith('**'):
-            text = line.replace('**', '<b>').replace('**', '</b>')
+            # Remove ** from both ends and wrap in <b> tags
+            text = line[2:-2]  # Strip ** from start and end
+            text = f'<b>{text}</b>'
             story.append(Paragraph(text, styles['Normal']))
         else:
             # Regular paragraph

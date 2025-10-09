@@ -8,6 +8,7 @@ import io
 import uuid
 import json
 import os
+from datetime import datetime
 from database import get_db, log_student_activity, database_available
 
 def show_lesson_planning_interface():
@@ -203,13 +204,21 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
         
         with col1:
             if st.button("📄 Export as PDF", use_container_width=True):
-                from utils import export_lesson_plan_pdf
-                pdf_data, filename = export_lesson_plan_pdf(
-                    st.session_state.planning_messages,
-                    age_group,
-                    subjects,
-                    planning_type
-                )
+                from utils import export_lesson_plan_to_pdf
+                # Format conversation into content string
+                content = ""
+                for msg in st.session_state.planning_messages:
+                    if msg['role'] == 'user':
+                        content += f"**Educator Question:**\n{msg['content']}\n\n"
+                    else:
+                        content += f"{msg['content']}\n\n"
+                
+                # Create title from context
+                subject_str = ", ".join(subjects) if subjects else "General"
+                title = f"{planning_type} - {subject_str} ({age_group})"
+                filename = f"lesson_plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+                
+                pdf_data, filename = export_lesson_plan_to_pdf(content, title, filename)
                 st.download_button(
                     label="Download PDF",
                     data=pdf_data,
@@ -219,13 +228,21 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
         
         with col2:
             if st.button("📝 Export as DOCX", use_container_width=True):
-                from utils import export_lesson_plan_docx
-                docx_data, filename = export_lesson_plan_docx(
-                    st.session_state.planning_messages,
-                    age_group,
-                    subjects,
-                    planning_type
-                )
+                from utils import export_lesson_plan_to_docx
+                # Format conversation into content string
+                content = ""
+                for msg in st.session_state.planning_messages:
+                    if msg['role'] == 'user':
+                        content += f"**Educator Question:**\n{msg['content']}\n\n"
+                    else:
+                        content += f"{msg['content']}\n\n"
+                
+                # Create title from context
+                subject_str = ", ".join(subjects) if subjects else "General"
+                title = f"{planning_type} - {subject_str} ({age_group})"
+                filename = f"lesson_plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+                
+                docx_data, filename = export_lesson_plan_to_docx(content, title, filename)
                 st.download_button(
                     label="Download DOCX",
                     data=docx_data,
