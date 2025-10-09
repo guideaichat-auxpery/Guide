@@ -71,7 +71,17 @@ st.markdown("""
     text-align: center;
     font-family: var(--font-serif);
     color: var(--color-ink);
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem;
+    font-size: 4rem;
+    font-weight: 500;
+}
+.main-byline {
+    text-align: center;
+    color: var(--color-ink);
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
 }
 .subtitle {
     text-align: center;
@@ -99,8 +109,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main Header
-st.markdown('<h1 class="main-header">🌟 Guide - Your Montessori Companion</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">From lesson planning to philosophy, get clear guidance that supports your teaching</p>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">🌟 Guide</h1>', unsafe_allow_html=True)
+st.markdown('<p class="main-byline">Your Montessori Companion</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">From lesson planning to philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
 
 # Authentication and main application logic
 if not st.session_state.authenticated:
