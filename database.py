@@ -800,3 +800,224 @@ def get_top_keywords_by_subject(db, subject: str, limit: int = 5):
     except Exception as e:
         print(f"Error getting top keywords: {str(e)}")
         return []
+
+# ---- DATA RETENTION POLICY FUNCTIONS (APP 11.2) ----
+
+def cleanup_old_data(db, retention_days_conversations=730, retention_days_analytics=730, retention_days_inactive_accounts=1095):
+    """
+    Clean up old data according to retention policy:
+    - Conversation history: 2 years (730 days)
+    - Analytics: 2 years (730 days)  
+    - Inactive accounts: 3 years (1095 days)
+    """
+    from datetime import datetime, timedelta
+    
+    try:
+        # Calculate cutoff dates
+        conversation_cutoff = datetime.utcnow() - timedelta(days=retention_days_conversations)
+        analytics_cutoff = datetime.utcnow() - timedelta(days=retention_days_analytics)
+        inactive_account_cutoff = datetime.utcnow() - timedelta(days=retention_days_inactive_accounts)
+        
+        deleted_counts = {
+            "conversations": 0,
+            "student_activities": 0,
+            "educator_analytics": 0,
+            "inactive_students": 0,
+            "inactive_educators": 0
+        }
+        
+        # Delete old conversation history
+        old_conversations = db.query(ConversationHistory).filter(
+            ConversationHistory.created_at < conversation_cutoff
+        ).delete(synchronize_session=False)
+        deleted_counts["conversations"] = old_conversations
+        
+        # Delete old student activities
+        old_activities = db.query(StudentActivity).filter(
+            StudentActivity.created_at < analytics_cutoff
+        ).delete(synchronize_session=False)
+        deleted_counts["student_activities"] = old_activities
+        
+        # Delete old educator analytics
+        old_analytics = db.query(EducatorAnalytics).filter(
+            EducatorAnalytics.created_at < analytics_cutoff
+        ).delete(synchronize_session=False)
+        deleted_counts["educator_analytics"] = old_analytics
+        
+        # Find and delete inactive student accounts (no activity in 3 years)
+        inactive_students = db.query(Student).filter(
+            Student.created_at < inactive_account_cutoff,
+            ~Student.activities.any(StudentActivity.created_at >= inactive_account_cutoff)
+        ).all()
+        
+        for student in inactive_students:
+            db.delete(student)
+            deleted_counts["inactive_students"] += 1
+        
+        # Find and delete inactive educator accounts (no activity in 3 years)
+        inactive_educators = db.query(User).filter(
+            User.created_at < inactive_account_cutoff,
+            User.user_type == "educator"
+        ).all()
+        
+        # Check if educator has recent activity
+        for educator in inactive_educators:
+            recent_analytics = db.query(EducatorAnalytics).filter(
+                EducatorAnalytics.user_id == educator.id,
+                EducatorAnalytics.created_at >= inactive_account_cutoff
+            ).first()
+            
+            if not recent_analytics:
+                db.delete(educator)
+                deleted_counts["inactive_educators"] += 1
+        
+        db.commit()
+        return deleted_counts
+        
+    except Exception as e:
+        print(f"Error during data cleanup: {str(e)}")
+        db.rollback()
+        return None
+
+
+def get_data_retention_status(db):
+    """Get statistics about data retention and what could be cleaned up"""
+    from datetime import datetime, timedelta
+    
+    try:
+        conversation_cutoff = datetime.utcnow() - timedelta(days=730)
+        analytics_cutoff = datetime.utcnow() - timedelta(days=730)
+        inactive_account_cutoff = datetime.utcnow() - timedelta(days=1095)
+        
+        status = {
+            "old_conversations": db.query(ConversationHistory).filter(
+                ConversationHistory.created_at < conversation_cutoff
+            ).count(),
+            "old_student_activities": db.query(StudentActivity).filter(
+                StudentActivity.created_at < analytics_cutoff
+            ).count(),
+            "old_educator_analytics": db.query(EducatorAnalytics).filter(
+                EducatorAnalytics.created_at < analytics_cutoff
+            ).count(),
+            "total_conversations": db.query(ConversationHistory).count(),
+            "total_activities": db.query(StudentActivity).count(),
+            "total_analytics": db.query(EducatorAnalytics).count(),
+            "total_students": db.query(Student).count(),
+            "total_educators": db.query(User).filter(User.user_type == "educator").count()
+        }
+        
+        return status
+    except Exception as e:
+        print(f"Error getting retention status: {str(e)}")
+        return None
+
+
+# ---- CONSENT TRACKING MODELS (APP 5/8 AUDITING) ----
+
+class ConsentRecord(Base):
+    __tablename__ = "consent_records"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # For educators
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # For students
+    consent_type = Column(String, nullable=False)  # 'data_collection', 'overseas_transfer', 'privacy_policy', 'parental_consent'
+    granted = Column(Boolean, default=True)
+    granted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    granted_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Educator who granted for student
+    policy_version = Column(String, default="1.0")  # Track policy version
+    ip_address = Column(String, nullable=True)  # Optional IP for audit trail
+    user_agent = Column(String, nullable=True)  # Optional browser info
+    
+class ParentalConsentRecord(Base):
+    __tablename__ = "parental_consent_records"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
+    educator_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Who created the record
+    parent_guardian_name = Column(String, nullable=True)  # Optional parent name
+    parent_guardian_email = Column(String, nullable=True)  # Optional parent email
+    consent_obtained = Column(Boolean, default=True)
+    consent_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    consent_method = Column(String, nullable=True)  # 'written', 'email', 'verbal', etc.
+    expires_at = Column(DateTime, nullable=True)  # Optional expiry
+    withdrawn_at = Column(DateTime, nullable=True)  # If consent withdrawn
+    notes = Column(Text, nullable=True)
+
+# ---- CONSENT TRACKING FUNCTIONS ----
+
+def record_consent(db, user_id=None, student_id=None, consent_type='privacy_policy', granted_by_id=None, policy_version="1.0"):
+    """Record user consent for auditing purposes"""
+    try:
+        consent = ConsentRecord(
+            user_id=user_id,
+            student_id=student_id,
+            consent_type=consent_type,
+            granted=True,
+            granted_at=datetime.utcnow(),
+            granted_by_id=granted_by_id,
+            policy_version=policy_version
+        )
+        db.add(consent)
+        db.commit()
+        return consent
+    except Exception as e:
+        print(f"Error recording consent: {str(e)}")
+        db.rollback()
+        return None
+
+def record_parental_consent(db, student_id, educator_id, parent_name=None, parent_email=None, consent_method=None):
+    """Record parental consent for student account"""
+    try:
+        consent = ParentalConsentRecord(
+            student_id=student_id,
+            educator_id=educator_id,
+            parent_guardian_name=parent_name,
+            parent_guardian_email=parent_email,
+            consent_obtained=True,
+            consent_date=datetime.utcnow(),
+            consent_method=consent_method
+        )
+        db.add(consent)
+        db.commit()
+        return consent
+    except Exception as e:
+        print(f"Error recording parental consent: {str(e)}")
+        db.rollback()
+        return None
+
+def get_user_consents(db, user_id=None, student_id=None):
+    """Get all consent records for a user"""
+    try:
+        if user_id:
+            return db.query(ConsentRecord).filter(ConsentRecord.user_id == user_id).all()
+        elif student_id:
+            return db.query(ConsentRecord).filter(ConsentRecord.student_id == student_id).all()
+        return []
+    except Exception as e:
+        print(f"Error getting consents: {str(e)}")
+        return []
+
+def get_parental_consent(db, student_id):
+    """Get parental consent record for a student"""
+    try:
+        return db.query(ParentalConsentRecord).filter(
+            ParentalConsentRecord.student_id == student_id,
+            ParentalConsentRecord.withdrawn_at.is_(None)
+        ).first()
+    except Exception as e:
+        print(f"Error getting parental consent: {str(e)}")
+        return None
+
+def withdraw_parental_consent(db, student_id):
+    """Mark parental consent as withdrawn"""
+    try:
+        consent = get_parental_consent(db, student_id)
+        if consent:
+            consent.withdrawn_at = datetime.utcnow()
+            db.commit()
+            return True
+        return False
+    except Exception as e:
+        print(f"Error withdrawing consent: {str(e)}")
+        db.rollback()
+        return False

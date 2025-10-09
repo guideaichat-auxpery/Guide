@@ -93,6 +93,14 @@ def signup_page():
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">📝 Create Your Educator Account</h2>', unsafe_allow_html=True)
     st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
     
+    # Privacy notice before signup
+    st.info("📋 **Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Privacy Policy for details on how we handle your information.")
+    
+    # Link to privacy policy
+    if st.button("🔒 View Privacy Policy", key="signup_privacy_link"):
+        st.session_state.auth_mode = "privacy_policy"
+        st.rerun()
+    
     with st.form("educator_signup"):
         st.markdown("### Create New Account")
         full_name = st.text_input("Full Name", placeholder="Your full name")
@@ -101,6 +109,25 @@ def signup_page():
         user_type = "educator"  # Normalize to single type
         password = st.text_input("Password", type="password", help="Minimum 6 characters")
         confirm_password = st.text_input("Confirm Password", type="password")
+        
+        # Consent checkboxes
+        st.markdown("---")
+        st.markdown("### Privacy & Consent")
+        
+        consent_data_collection = st.checkbox(
+            "I understand that Guide collects and stores my personal information (name, email, usage data) to provide educational services.",
+            value=False
+        )
+        
+        consent_overseas_transfer = st.checkbox(
+            "I consent to my data being sent to OpenAI (United States) for AI processing. I understand Australian privacy laws may not apply to this overseas data transfer.",
+            value=False
+        )
+        
+        consent_privacy_policy = st.checkbox(
+            "I have read and agree to the Privacy Policy.",
+            value=False
+        )
         
         submit = st.form_submit_button("Create Account", use_container_width=True)
         
@@ -112,6 +139,12 @@ def signup_page():
                 st.error("Please enter a valid email address")
             elif password != confirm_password:
                 st.error("Passwords do not match")
+            elif not consent_data_collection:
+                st.error("Please acknowledge our data collection practices to continue")
+            elif not consent_overseas_transfer:
+                st.error("Please consent to overseas data transfer (required for AI functionality)")
+            elif not consent_privacy_policy:
+                st.error("Please read and agree to the Privacy Policy")
             else:
                 valid_password, password_message = validate_password(password)
                 if not valid_password:
@@ -129,6 +162,13 @@ def signup_page():
                         else:
                             # Create new user
                             user = create_user(db, email, password, full_name, user_type)
+                            
+                            # Record consent for auditing (APP 5/8 compliance)
+                            from database import record_consent
+                            record_consent(db, user_id=user.id, consent_type='data_collection', policy_version="1.0")
+                            record_consent(db, user_id=user.id, consent_type='overseas_transfer', policy_version="1.0")
+                            record_consent(db, user_id=user.id, consent_type='privacy_policy', policy_version="1.0")
+                            
                             st.success(f"Account created successfully! Welcome, {full_name}!")
                             st.session_state.user_id = user.id
                             st.session_state.user_type = user.user_type
@@ -149,6 +189,16 @@ def create_student_page():
     
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">👨‍🎓 Create Student Account</h2>', unsafe_allow_html=True)
     
+    # Privacy and consent notice
+    st.warning("⚠️ **Student Privacy & Parental Consent Required**")
+    st.info("""
+    **Important Privacy Information:**
+    - Student data (name, activities, conversations) will be stored and processed
+    - Student queries are sent to OpenAI (US) for AI responses
+    - Students are instructed NOT to enter personal information in conversations
+    - **Parental/guardian consent is required for students under 18**
+    """)
+    
     with st.form("create_student"):
         st.markdown("### Add New Student")
         full_name = st.text_input("Student's Full Name", placeholder="Student's full name")
@@ -163,6 +213,21 @@ def create_student_page():
         password = st.text_input("Password", type="password", help="Minimum 6 characters")
         confirm_password = st.text_input("Confirm Password", type="password")
         
+        # Parental consent
+        st.markdown("---")
+        st.markdown("### Parental Consent & Privacy")
+        
+        parental_consent = st.checkbox(
+            "I confirm that I have obtained parental/guardian consent to create this student account and process their data.",
+            value=False,
+            help="Required for all students under 18 years of age"
+        )
+        
+        privacy_notice_acknowledged = st.checkbox(
+            "I acknowledge that student data will be sent to OpenAI (US) for AI processing and that students will be instructed to keep all inputs anonymous.",
+            value=False
+        )
+        
         submit = st.form_submit_button("Create Student Account", use_container_width=True)
         
         if submit:
@@ -170,6 +235,10 @@ def create_student_page():
                 st.error("Please fill in all fields")
             elif password != confirm_password:
                 st.error("Passwords do not match")
+            elif not parental_consent:
+                st.error("Parental consent is required to create a student account")
+            elif not privacy_notice_acknowledged:
+                st.error("Please acknowledge the privacy notice regarding overseas data transfer")
             else:
                 valid_password, password_message = validate_password(password)
                 if not valid_password:
@@ -194,6 +263,22 @@ def create_student_page():
                                 st.session_state.user_id, 
                                 age_group
                             )
+                            
+                            # Record parental consent for auditing (APP 3/5 compliance)
+                            from database import record_parental_consent, record_consent
+                            record_parental_consent(
+                                db, 
+                                student_id=student.id,
+                                educator_id=st.session_state.user_id,
+                                consent_method='educator_confirmed'
+                            )
+                            
+                            # Record privacy consents for student
+                            record_consent(db, student_id=student.id, consent_type='data_collection', 
+                                         granted_by_id=st.session_state.user_id, policy_version="1.0")
+                            record_consent(db, student_id=student.id, consent_type='overseas_transfer',
+                                         granted_by_id=st.session_state.user_id, policy_version="1.0")
+                            
                             st.success(f"Student account created successfully for {full_name}!")
                             st.info(f"Username: {username}")
                             st.info("The student can now log in using their username and password.")

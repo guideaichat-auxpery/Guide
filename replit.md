@@ -8,6 +8,22 @@ Preferred communication style: Simple, everyday language.
 Philosophy: Montessori Cosmic Education and systems thinking approach - emphasizing interconnections, big ideas, patterns, and the child's place in the universe story.
 Tone: Warm, humble, practical, avoiding jargon while honoring developmental stages and student agency.
 
+# Privacy & Compliance
+
+**Australian Privacy Act 1988 Compliance:**
+- Comprehensive privacy policy addressing all 13 Australian Privacy Principles (APPs)
+- Consent tracking: All user consents are recorded with timestamps and policy versions for auditing
+- Parental consent mechanism for students under 18 with auditable records
+- Overseas disclosure notices: Users explicitly consent to OpenAI (US) data transfer (APP 8)
+- Data retention policy: 2 years for conversations/analytics, 3 years for inactive accounts (APP 11.2)
+- Automated data cleanup runs daily to enforce retention periods
+- User rights implementation: Data access (export), correction, and deletion features (APP 12/13)
+- Privacy notices displayed at signup for educators and student creation
+
+**Database Tables for Compliance:**
+- `consent_records`: Tracks all user consents (data collection, overseas transfer, privacy policy)
+- `parental_consent_records`: Tracks parental consent for student accounts with educator ID, timestamp, and consent method
+
 # System Architecture
 
 ## Frontend

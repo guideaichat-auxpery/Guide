@@ -1,7 +1,7 @@
 import streamlit as st
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
-from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface
+from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface
 
 # Configure page
 st.set_page_config(
@@ -18,6 +18,36 @@ if not database_available:
 elif not create_tables():
     st.warning("Database initialization failed - some features may not work properly.")
     st.info("You can still explore the companion features while we resolve this.")
+else:
+    # Run data retention cleanup periodically (APP 11.2 compliance)
+    from database import get_db, cleanup_old_data, get_data_retention_status
+    from datetime import datetime, timedelta
+    
+    # Check if we should run cleanup (once per day)
+    if 'last_cleanup_check' not in st.session_state:
+        st.session_state.last_cleanup_check = datetime.now() - timedelta(days=2)  # Force first check
+    
+    time_since_last_check = datetime.now() - st.session_state.last_cleanup_check
+    
+    # Run cleanup if it's been more than 24 hours
+    if time_since_last_check > timedelta(hours=24):
+        db = get_db()
+        if db:
+            try:
+                # Get status before cleanup (for logging)
+                status = get_data_retention_status(db)
+                if status and (status['old_conversations'] > 0 or status['old_student_activities'] > 0):
+                    # Run cleanup
+                    deleted = cleanup_old_data(db)
+                    if deleted:
+                        print(f"Data retention cleanup: {deleted}")  # Log for admin
+                
+                # Update last check time
+                st.session_state.last_cleanup_check = datetime.now()
+            except Exception as e:
+                print(f"Error during data retention cleanup: {str(e)}")
+            finally:
+                db.close()
 
 # Initialize session state
 if 'messages' not in st.session_state:
@@ -97,13 +127,17 @@ if not st.session_state.authenticated:
             st.rerun()
     
     with col3:
-        st.write("")  # Empty space for layout
+        if st.button("🔒 Privacy Policy", use_container_width=True):
+            st.session_state.auth_mode = "privacy_policy"
+            st.rerun()
     
     # Display appropriate authentication form
     if st.session_state.auth_mode == "login":
         login_page()
     elif st.session_state.auth_mode == "signup":
         signup_page()
+    elif st.session_state.auth_mode == "privacy_policy":
+        show_privacy_policy()
     
 
 else:
@@ -142,8 +176,24 @@ else:
                 st.session_state.auth_mode = "student_dashboard"
                 st.rerun()
         
+        # Privacy & Settings row
+        st.markdown("---")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("🔒 Privacy Policy", use_container_width=True):
+                st.session_state.auth_mode = "privacy_policy"
+                st.rerun()
+        with col2:
+            if st.button("📥 My Data", use_container_width=True):
+                st.session_state.auth_mode = "data_access"
+                st.rerun()
+        with col3:
+            if st.button("⚙️ Account", use_container_width=True):
+                st.session_state.auth_mode = "account_deletion"
+                st.rerun()
+        
         # Default to lesson planning for educators
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes']:
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion']:
             st.session_state.auth_mode = 'lesson_planning'
     else:
         # Student interface
@@ -164,6 +214,12 @@ else:
         show_planning_notes_interface()
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
+    elif st.session_state.auth_mode == "privacy_policy":
+        show_privacy_policy()
+    elif st.session_state.auth_mode == "data_access":
+        show_data_access_interface()
+    elif st.session_state.auth_mode == "account_deletion":
+        show_account_deletion_interface()
     
 # Main app logic continues here
 
