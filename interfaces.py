@@ -26,7 +26,7 @@ def show_lesson_planning_interface():
     
     age_group = st.selectbox(
         "Select Age Group:",
-        ["3-6", "6-9", "9-12", "12-15"],
+        ["12-15", "9-12", "6-9", "3-6"],
         format_func=lambda x: {
             "3-6": "Early Years (3-6) → Foundation",
             "6-9": "Lower Primary (6-9) → Years 1-3", 
@@ -275,10 +275,10 @@ def show_companion_interface():
     
     companion_age_options = {
         "All Ages (3-18)": "all",
-        "Ages 3-6 (Early Years)": "3-6",
-        "Ages 6-9 (Lower Primary)": "6-9", 
+        "Ages 12-15 (Adolescent)": "12-15",
         "Ages 9-12 (Upper Primary)": "9-12",
-        "Ages 12-15 (Adolescent)": "12-15"
+        "Ages 6-9 (Lower Primary)": "6-9",
+        "Ages 3-6 (Early Years)": "3-6"
     }
     
     selected_age_display = st.selectbox(
@@ -1051,7 +1051,7 @@ def show_great_story_interface():
         # Age group selector
         age_group = st.selectbox(
             "Target Age Group:",
-            ["3-6", "6-9", "9-12", "12-15", "All Ages"],
+            ["All Ages", "12-15", "9-12", "6-9", "3-6"],
             format_func=lambda x: {
                 "3-6": "Early Years (3-6)",
                 "6-9": "Lower Primary (6-9)", 
