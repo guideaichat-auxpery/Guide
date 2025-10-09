@@ -189,16 +189,12 @@ else:
         
         # Privacy & Settings row
         st.markdown("---")
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
-            if st.button("🔒 Privacy Policy", use_container_width=True):
-                st.session_state.auth_mode = "privacy_policy"
-                st.rerun()
-        with col2:
             if st.button("📥 My Data", use_container_width=True):
                 st.session_state.auth_mode = "data_access"
                 st.rerun()
-        with col3:
+        with col2:
             if st.button("⚙️ Account", use_container_width=True):
                 st.session_state.auth_mode = "account_deletion"
                 st.rerun()
