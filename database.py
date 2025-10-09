@@ -442,6 +442,79 @@ def delete_student(db, student_id: int):
         return True
     return False
 
+def delete_educator(db, educator_id: int):
+    """
+    Permanently delete an educator account and all associated data.
+    Returns: (success: bool, error_message: str or None)
+    """
+    educator = db.query(User).filter(User.id == educator_id).first()
+    if not educator:
+        return (False, "Educator not found")
+    
+    # Safety check: prevent deletion if educator has active students
+    active_students = db.query(Student).filter(
+        Student.educator_id == educator_id,
+        Student.is_active == True
+    ).count()
+    
+    if active_students > 0:
+        return (False, f"Cannot delete account: You have {active_students} active student(s). Please delete or transfer your students first.")
+    
+    try:
+        # Delete educator-student access records
+        db.query(EducatorStudentAccess).filter(
+            EducatorStudentAccess.educator_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete lesson plans
+        db.query(LessonPlan).filter(
+            LessonPlan.creator_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete great stories
+        db.query(GreatStory).filter(
+            GreatStory.educator_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete planning notes
+        db.query(PlanningNote).filter(
+            PlanningNote.educator_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete conversation history
+        db.query(ConversationHistory).filter(
+            ConversationHistory.user_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete educator analytics
+        db.query(EducatorAnalytics).filter(
+            EducatorAnalytics.user_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete consent records where educator is the user
+        db.query(ConsentRecord).filter(
+            ConsentRecord.user_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete consent records granted by this educator (for students)
+        db.query(ConsentRecord).filter(
+            ConsentRecord.granted_by_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Delete parental consent records created by this educator
+        db.query(ParentalConsentRecord).filter(
+            ParentalConsentRecord.educator_id == educator_id
+        ).delete(synchronize_session=False)
+        
+        # Finally delete the educator user record
+        db.delete(educator)
+        db.commit()
+        return (True, None)
+        
+    except Exception as e:
+        db.rollback()
+        return (False, f"Error during deletion: {str(e)}")
+
 # Great Story functions
 def create_great_story(db, educator_id: int, title: str, theme: str, content: str, age_group: str = None, keywords: str = None):
     """Create a new Great Story"""

@@ -1729,13 +1729,11 @@ def show_account_deletion_interface():
                         else:
                             st.error("Failed to delete account. Please contact support.")
                     else:
-                        from database import User, delete_user_account
-                        # Custom deletion for educators (if function exists)
-                        user = db.query(User).filter(User.id == user_id).first()
-                        if user:
-                            db.delete(user)
-                            db.commit()
-                            
+                        from database import delete_educator
+                        # Comprehensive deletion for educators with all related data
+                        success, error_msg = delete_educator(db, user_id)
+                        
+                        if success:
                             st.success("✅ Your account has been permanently deleted.")
                             st.info("You will be logged out in 3 seconds...")
                             
@@ -1744,6 +1742,10 @@ def show_account_deletion_interface():
                             for key in list(st.session_state.keys()):
                                 del st.session_state[key]
                             st.rerun()
+                        else:
+                            st.error(f"❌ {error_msg}")
+                            if "active student" in error_msg.lower():
+                                st.info("💡 **Tip:** Go to 'Create Student Account' to view and delete your students first.")
                 
                 except Exception as e:
                     st.error(f"Error deleting account: {str(e)}")
