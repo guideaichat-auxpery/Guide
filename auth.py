@@ -189,16 +189,6 @@ def create_student_page():
     
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">👨‍🎓 Create Student Account</h2>', unsafe_allow_html=True)
     
-    # Privacy and consent notice
-    st.warning("⚠️ **Student Privacy & Parental Consent Required**")
-    st.info("""
-    **Important Privacy Information:**
-    - Student data (name, activities, conversations) will be stored and processed
-    - Student queries are sent to OpenAI (US) for AI responses
-    - Students are instructed NOT to enter personal information in conversations
-    - **Parental/guardian consent is required for students under 18**
-    """)
-    
     with st.form("create_student"):
         st.markdown("### Add New Student")
         full_name = st.text_input("Student's Full Name", placeholder="Student's full name")
@@ -211,21 +201,6 @@ def create_student_page():
         password = st.text_input("Password", type="password", help="Minimum 6 characters")
         confirm_password = st.text_input("Confirm Password", type="password")
         
-        # Parental consent
-        st.markdown("---")
-        st.markdown("### Parental Consent & Privacy")
-        
-        parental_consent = st.checkbox(
-            "I confirm that I have obtained parental/guardian consent to create this student account and process their data.",
-            value=False,
-            help="Required for all students under 18 years of age"
-        )
-        
-        privacy_notice_acknowledged = st.checkbox(
-            "I acknowledge that student data will be sent to OpenAI (US) for AI processing and that students will be instructed to keep all inputs anonymous.",
-            value=False
-        )
-        
         submit = st.form_submit_button("Create Student Account", use_container_width=True)
         
         if submit:
@@ -233,10 +208,6 @@ def create_student_page():
                 st.error("Please fill in all fields")
             elif password != confirm_password:
                 st.error("Passwords do not match")
-            elif not parental_consent:
-                st.error("Parental consent is required to create a student account")
-            elif not privacy_notice_acknowledged:
-                st.error("Please acknowledge the privacy notice regarding overseas data transfer")
             else:
                 valid_password, password_message = validate_password(password)
                 if not valid_password:
