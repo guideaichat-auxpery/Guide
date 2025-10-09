@@ -1,0 +1,275 @@
+/* Montessori Design System for Streamlit */
+
+:root {
+  /* Montessori Color Palette */
+  --color-sand: #f5f1e6;
+  --color-clay: #d9c2a3;
+  --color-sky: #cce3de;
+  --color-leaf: #9bbf9b;
+  --color-ink: #2f3e46;
+  --color-soft-rose: #f0dada;
+  --color-paper: #fffdf8;
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+
+  /* Spacing & Layout */
+  --text-base: 16px;
+  --radius-large: 20px;
+  --radius-medium: 12px;
+  --radius-small: 8px;
+  --shadow-soft: 0 6px 18px rgba(20, 20, 20, 0.06);
+  --transition-smooth: all 0.28s ease-in-out;
+
+  /* Accessibility */
+  --focus-ring: 3px solid rgba(155, 191, 155, 0.28);
+  --max-width: 1080px;
+}
+
+/* Global Streamlit Overrides */
+.stApp {
+  background-color: var(--color-paper) !important;
+  font-family: var(--font-sans) !important;
+  color: var(--color-ink) !important;
+}
+
+/* Main content area */
+.main .block-container {
+  max-width: var(--max-width) !important;
+  padding: 2rem 1rem !important;
+}
+
+/* Headers */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif) !important;
+  color: var(--color-ink) !important;
+}
+
+/* Cards and containers */
+.element-container {
+  transition: var(--transition-smooth);
+}
+
+/* Streamlit expanders */
+.streamlit-expanderHeader {
+  background-color: var(--color-sand) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 0.75rem 1rem !important;
+  font-weight: 500 !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.streamlit-expanderHeader:hover {
+  background-color: var(--color-clay) !important;
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+  gap: 8px;
+  background-color: transparent !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+  background-color: var(--color-sand) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 0.5rem 1rem !important;
+  transition: var(--transition-smooth) !important;
+  border: none !important;
+}
+
+.stTabs [aria-selected="true"] {
+  background: linear-gradient(135deg, var(--color-sky), var(--color-leaf)) !important;
+  color: white !important;
+}
+
+/* Buttons */
+.stButton > button {
+  background: linear-gradient(135deg, var(--color-leaf), var(--color-sky)) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 0.5rem 1.5rem !important;
+  font-weight: 500 !important;
+  box-shadow: var(--shadow-soft) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.stButton > button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(20, 20, 20, 0.12) !important;
+}
+
+.stButton > button:active {
+  transform: translateY(0) !important;
+}
+
+/* Text inputs */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea {
+  background-color: white !important;
+  border: 1px solid var(--color-clay) !important;
+  border-radius: var(--radius-small) !important;
+  padding: 0.75rem !important;
+  transition: var(--transition-smooth) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+  border-color: var(--color-leaf) !important;
+  box-shadow: 0 0 0 var(--focus-ring) !important;
+}
+
+/* Select boxes and multiselect */
+.stSelectbox > div > div,
+.stMultiSelect > div > div {
+  background-color: white !important;
+  border: 1px solid var(--color-clay) !important;
+  border-radius: var(--radius-small) !important;
+}
+
+/* Chat messages styling */
+.stChatMessage {
+  background-color: var(--color-sand) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+  margin-bottom: 0.75rem !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+/* Success/Info/Warning/Error boxes */
+.stSuccess {
+  background-color: var(--color-leaf) !important;
+  color: white !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+}
+
+.stInfo {
+  background-color: var(--color-sky) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+}
+
+.stWarning {
+  background-color: var(--color-clay) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+}
+
+.stError {
+  background-color: var(--color-soft-rose) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+}
+
+/* Sidebar */
+.css-1d391kg, [data-testid="stSidebar"] {
+  background: linear-gradient(180deg, var(--color-sand), var(--color-paper)) !important;
+}
+
+/* File uploader */
+.stFileUploader {
+  background-color: var(--color-sand) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+  border: 2px dashed var(--color-clay) !important;
+}
+
+/* Dataframes and tables */
+.stDataFrame {
+  border-radius: var(--radius-medium) !important;
+  overflow: hidden !important;
+}
+
+/* Plotly charts */
+.js-plotly-plot {
+  border-radius: var(--radius-medium) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+/* Markdown content */
+.stMarkdown {
+  font-family: var(--font-sans) !important;
+}
+
+/* Links */
+a {
+  color: var(--color-leaf) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+a:hover {
+  color: var(--color-ink) !important;
+}
+
+/* Metrics */
+.stMetric {
+  background-color: var(--color-sand) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+/* Progress bars */
+.stProgress > div > div > div {
+  background-color: var(--color-leaf) !important;
+  border-radius: var(--radius-small) !important;
+}
+
+/* Checkbox and radio */
+.stCheckbox, .stRadio {
+  transition: var(--transition-smooth) !important;
+}
+
+/* Download button */
+.stDownloadButton > button {
+  background-color: var(--color-clay) !important;
+  color: var(--color-ink) !important;
+  border: none !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 0.5rem 1.5rem !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.stDownloadButton > button:hover {
+  background-color: var(--color-leaf) !important;
+  color: white !important;
+}
+
+/* Spinner */
+.stSpinner > div {
+  border-top-color: var(--color-leaf) !important;
+}
+
+/* Columns spacing */
+.row-widget.stHorizontal {
+  gap: 1rem !important;
+}
+
+/* Fade in animation for new elements */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.element-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Footer styling */
+footer {
+  background-color: transparent !important;
+  color: var(--color-ink) !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');

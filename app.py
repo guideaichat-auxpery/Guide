@@ -27,33 +27,43 @@ if 'authenticated' not in st.session_state:
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
 
-# Custom CSS for Montessori aesthetics
+# Load Montessori Design System
+def load_css(file_path):
+    with open(file_path) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+load_css('static/css/montessori-theme.css')
+
+# Additional custom CSS for specific components
 st.markdown("""
 <style>
 .main-header {
     text-align: center;
-    color: #2E8B57;
+    font-family: var(--font-serif);
+    color: var(--color-ink);
     margin-bottom: 2rem;
 }
 .subtitle {
     text-align: center;
-    color: #666;
+    color: var(--color-ink);
     font-style: italic;
     margin-bottom: 2rem;
+    opacity: 0.8;
 }
 .welcome-box {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, var(--color-sand), var(--color-sky));
     padding: 2rem;
-    border-radius: 10px;
+    border-radius: var(--radius-large);
     margin: 2rem 0;
-    border-left: 5px solid #2E8B57;
+    border-left: 5px solid var(--color-leaf);
+    box-shadow: var(--shadow-soft);
 }
 .user-type {
-    background: #f8f9fa;
+    background: var(--color-sand);
     padding: 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-medium);
     margin: 1rem 0;
-    border-left: 3px solid #2E8B57;
+    border-left: 3px solid var(--color-leaf);
 }
 </style>
 """, unsafe_allow_html=True)
