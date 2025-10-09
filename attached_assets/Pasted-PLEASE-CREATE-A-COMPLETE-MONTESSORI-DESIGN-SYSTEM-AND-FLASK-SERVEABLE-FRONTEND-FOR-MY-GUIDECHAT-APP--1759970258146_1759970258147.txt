@@ -1,0 +1,325 @@
+PLEASE CREATE A COMPLETE MONTESSORI DESIGN SYSTEM AND FLASK SERVEABLE FRONTEND FOR MY GUIDECHAT APP
+
+Goal:
+Create an app-wide design system (soft, Montessori-inspired, consistent) and wire it into a Python Flask app that serves the UI and an API endpoint `/api/chat`. Make it drop-in ready for my existing GuideChat logic (OpenAI integration will be present in app.py as shown). Use the file structure below and create all files with the content provided.
+
+File structure to create (root of project):
+
+/static/
+  /css/
+    guidechat-theme.css
+    guidechat.css
+  /js/
+    typing.js
+  /assets/
+    maria-montessori-avatar.png   (create a tasteful placeholder if a real avatar isn't provided)
+ /templates/
+    index.html
+app.py
+README_CREATE.txt  (brief notes)
+
+--- FILE: /static/css/guidechat-theme.css ---
+:root {
+  /* Montessori palette & tokens */
+  --color-sand: #f5f1e6;
+  --color-clay: #d9c2a3;
+  --color-sky: #cce3de;
+  --color-leaf: #9bbf9b;
+  --color-ink: #2f3e46;
+  --color-soft-rose: #f0dada;
+  --color-paper: #fffdf8;
+
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --font-serif: "Cormorant Garamond", serif;
+
+  --text-base: 16px;
+  --radius-large: 20px;
+  --radius-medium: 12px;
+  --radius-small: 8px;
+  --shadow-soft: 0 6px 18px rgba(20,20,20,0.06);
+  --transition-smooth: all 0.28s ease-in-out;
+}
+
+/* Accessibility helpers */
+:root {
+  --focus-ring: 3px solid rgba(155,191,155,0.28);
+  --max-width: 1080px;
+}
+
+--- END FILE ---
+
+--- FILE: /static/css/guidechat.css ---
+/* Base layout */
+* { box-sizing: border-box; }
+html,body { height:100%; margin:0; font-family:var(--font-sans); background:var(--color-paper); color:var(--color-ink); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+.container { max-width: var(--max-width); margin:28px auto; padding:0 16px; }
+
+/* Shell */
+.app-shell { display:flex; flex-direction:column; gap:16px; }
+.header {
+  display:flex; align-items:center; gap:12px;
+  background: linear-gradient(135deg, var(--color-sky), var(--color-leaf));
+  padding:14px 18px; border-radius:14px; box-shadow:var(--shadow-soft);
+}
+.header .brand { font-size:1.15rem; font-weight:600; }
+.header .tag { font-size:0.92rem; color: rgba(0,0,0,0.55); }
+
+/* Body */
+.main-panel { display:flex; gap:18px; margin-top:8px; align-items:flex-start; }
+.left-column { flex:1; display:flex; flex-direction:column; gap:12px; }
+.right-column { width:320px; min-width:260px; }
+
+/* Chat window */
+.chat-card {
+  background:var(--color-sand); border-radius:14px; padding:12px; box-shadow:var(--shadow-soft); display:flex; flex-direction:column; height:70vh; overflow:hidden;
+}
+.chat-history { flex:1; overflow:auto; padding:12px; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth; }
+.chat-input-bar { border-top:1px solid rgba(0,0,0,0.06); padding:12px; display:flex; flex-direction:column; gap:8px; background:linear-gradient(180deg, rgba(255,255,255,0.6), transparent); }
+
+/* Bubbles */
+.chat-bubble { max-width:78%; padding:12px 14px; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.04); animation:fadeIn 0.22s ease; position:relative; word-break:break-word; }
+.ai { align-self:flex-start; background:var(--color-sky); color: #08392f; padding-left:56px; }
+.user { align-self:flex-end; background:var(--color-leaf); color:white; padding-right:44px; }
+
+/* Avatar markers inside bubbles */
+.ai::before { content:''; position:absolute; left:12px; top:12px; width:36px; height:36px; border-radius:50%; background-size:cover; background-position:center; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
+.user::before { content:''; position:absolute; right:12px; top:12px; width:28px; height:28px; border-radius:50%; background-image:url('https://img.icons8.com/ios-filled/50/6B4C3B/user-male-circle.png'); background-size:cover; }
+
+/* Typing indicator & subtle motion */
+.typing { display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.08); width:fit-content; }
+.typing .dot { width:7px; height:7px; background:#fff; border-radius:50%; opacity:0.7; animation:typing 1s infinite; }
+.typing .dot:nth-child(2){ animation-delay:0.15s } .typing .dot:nth-child(3){ animation-delay:0.3s }
+@keyframes typing { 0%,80%,100%{ transform:scale(0.7); opacity:0.6 } 40%{ transform:scale(1); opacity:1 } }
+
+/* Input area */
+.input-row { display:flex; gap:8px; align-items:center; }
+.input-row input { flex:1; padding:12px 14px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); background:white; outline:none; font-size:var(--text-base); }
+.input-row button { background:var(--color-leaf); color:white; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; box-shadow:var(--shadow-soft); transition:var(--transition-smooth); }
+.input-row button:active { transform:translateY(1px) }
+.input-row button:focus, .input-row input:focus { outline:var(--focus-ring) }
+
+/* Sidebar / cards */
+.card { background:var(--color-paper); border-radius:12px; padding:12px; box-shadow:var(--shadow-soft); margin-bottom:12px; }
+
+/* small screens */
+@media (max-width:860px) {
+  .main-panel { flex-direction:column; }
+  .right-column { width:100%; min-width: auto; }
+  .chat-card { height:60vh; }
+}
+
+/* fade */
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+--- END FILE ---
+
+--- FILE: /static/js/typing.js ---
+export function createTypingElement() {
+  const el = document.createElement('div');
+  el.className = 'typing';
+  el.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  return el;
+}
+--- END FILE ---
+
+--- FILE: /templates/index.html ---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Auxpery — GuideChat</title>
+  <link rel="stylesheet" href="/static/css/guidechat-theme.css" />
+  <link rel="stylesheet" href="/static/css/guidechat.css" />
+</head>
+<body>
+  <div class="container app-shell" role="application" aria-label="GuideChat">
+    <header class="header">
+      <img src="/static/assets/maria-montessori-avatar.png" alt="Guide avatar" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.35)" />
+      <div>
+        <div class="brand">Auxpery — GuideChat</div>
+        <div class="tag">Because Teaching Is an Art Form</div>
+      </div>
+    </header>
+
+    <div class="main-panel">
+      <div class="left-column">
+        <section class="chat-card" aria-live="polite">
+          <div class="chat-history" id="chatHistory"></div>
+
+          <div class="chat-input-bar">
+            <p class="disclaimer">⚠️ Do NOT enter personal information (name, birthdate, home/school address, or details of real people). Keep inputs anonymous.</p>
+            <div class="input-row">
+              <input id="userInput" placeholder="Ask, wonder, explore..." aria-label="Chat input" />
+              <button id="sendBtn" aria-label="Send message">Send</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="right-column">
+        <div class="card">
+          <strong>Quick Actions</strong>
+          <ul>
+            <li>Create new prompt</li>
+            <li>Open templates</li>
+            <li>View trending topics</li>
+          </ul>
+        </div>
+        <div class="card">
+          <strong>Curriculum alignment</strong>
+          <p style="margin:8px 0 0 0">Auto-detected topics will be shown with each response.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createTypingElement } from '/static/js/typing.js';
+
+    const sendBtn = document.getElementById('sendBtn');
+    const userInput = document.getElementById('userInput');
+    const chatHistory = document.getElementById('chatHistory');
+
+    function appendBubble(text, cls='ai') {
+      const b = document.createElement('div');
+      b.className = 'chat-bubble ' + (cls === 'ai' ? 'ai' : 'user');
+      b.innerHTML = text;
+      // set avatar background for ai bubble if available
+      if (cls === 'ai') {
+        b.style.setProperty('--ai-avatar-url', "url('/static/assets/maria-montessori-avatar.png')");
+        b.style.background = ''; // leave to CSS classes
+        // set pseudo-element background via inline style for compatibility
+        b.querySelectorAll('::before'); // noop to keep linter happy
+        b.style.setProperty('background-image', '');
+      }
+      chatHistory.appendChild(b);
+      chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+      return b;
+    }
+
+    async function callChatAPI(message, role='educator') {
+      try {
+        const res = await fetch('/api/chat', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ message, role })
+        });
+        return res.ok ? res.json() : { error: 'Network error' };
+      } catch (err) {
+        return { error: err.message || String(err) };
+      }
+    }
+
+    sendBtn.addEventListener('click', async () => {
+      const text = userInput.value.trim();
+      if (!text) return;
+      appendBubble(text, 'user');
+      userInput.value = '';
+      const typingEl = createTypingElement();
+      const typingWrap = document.createElement('div');
+      typingWrap.className = 'chat-bubble ai';
+      typingWrap.appendChild(typingEl);
+      chatHistory.appendChild(typingWrap);
+      chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+
+      // call server API
+      const result = await callChatAPI(text, 'student'); // default to 'student' for inquiry style
+
+      // remove typing
+      typingWrap.remove();
+
+      if (result?.error) {
+        appendBubble(`<strong>Error:</strong> ${result.error}`, 'ai');
+      } else {
+        // highlight simple curriculum keywords if present (server ideally returns structured data)
+        let aiHtml = result.response ? result.response.replace(/\n/g, '<br>') : 'No response.';
+        appendBubble(aiHtml, 'ai');
+      }
+    });
+
+    // keyboard enter to send
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
+--- END FILE ---
+
+--- FILE: app.py ---
+# Minimal Flask server to serve this front-end and proxy to OpenAI
+from flask import Flask, render_template, request, jsonify
+import os, openai
+from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+app = Flask(__name__, static_folder='static', template_folder='templates')
+
+def inject_curriculum_context(user_input):
+    montessori_context = (
+        "Dr Maria Montessori emphasized education for peace, moral independence, "
+        "and purposeful activity. Adolescents should grapple with ethical and social complexity."
+    )
+    australian_context = (
+        "Australian Curriculum v9: emphasise inquiry, intercultural understanding, ethical reasoning."
+    )
+    return f"Context:\\n{montessori_context}\\n{australian_context}\\n\\nUser Input:\\n{user_input}"
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    try:
+        data = request.get_json()
+        user_input = data.get("message","")
+        role = data.get("role","student")
+        enriched = inject_curriculum_context(user_input)
+        style = ("You are a Montessori-aligned guide for adolescents. Offer open-ended provocations, "
+                 "ethical questions, and multiple pathways rather than step-by-step solutions.") if role == "student" else (
+                 "You are an educator support assistant. Provide scaffolding, rubric links and assessment ideas.")
+        # Call OpenAI ChatCompletion (use whichever SDK call your environment expects)
+        resp = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role":"system","content":"You are GuideChat, a Montessori-aligned assistant."},
+                {"role":"user","content": enriched + "\\n\\n" + style}
+            ],
+            max_tokens=3000,
+            temperature=0.8
+        )
+        out = resp.choices[0].message['content'].strip()
+        # return structured if you wish to highlight curriculum later
+        return jsonify({"response": out, "timestamp": datetime.utcnow().isoformat()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+if __name__ == "__main__":
+    # Replit likes port 8080; adjust if your environment demands another
+    app.run(host="0.0.0.0", port=8080, debug=True)
+--- END FILE ---
+
+--- FILE: README_CREATE.txt ---
+Place the maria-montessori-avatar.png into /static/assets/ (agent can create a tasteful placeholder if none). 
+Set OPENAI_API_KEY in Replit secrets. 
+Run the project; the Flask server will serve the UI at /. 
+If you already have chat logic, adapt /api/chat to call your existing functions instead of the inline OpenAI call.
+--- END FILE ---
+
+END INSTRUCTION.
+
+Notes for the Agent:
+- If `maria-montessori-avatar.png` is missing, create a tasteful 256x256 circular placeholder image using soft palette that matches the theme (or copy an included placeholder).
+- Ensure static assets are readable and served by Flask. Add any necessary MIME settings.
+- Keep file permissions normal.
+- If a `requirements.txt` or package support is needed, add dependencies: flask, python-dotenv, openai.
+- Do NOT store any personal data in logs; add the privacy disclaimer in the UI as included.
+
+Please create these files now exactly as above.
