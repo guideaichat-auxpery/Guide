@@ -1,3 +1,6 @@
+/* Google Fonts Import - Must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
 /* Montessori Design System for Streamlit */
 
 :root {
@@ -24,7 +27,25 @@
 
   /* Accessibility */
   --focus-ring: 3px solid rgba(155, 191, 155, 0.28);
+  --focus-shadow: rgba(155, 191, 155, 0.5) 0px 0px 0px 0.2rem;
   --max-width: 1080px;
+}
+
+/* Global focus state override - Montessori leaf color instead of Streamlit red */
+/* High specificity to override Streamlit emotion classes */
+:is(*):focus-visible,
+:is(button):focus-visible,
+:is(input):focus-visible,
+:is(textarea):focus-visible,
+:is(select):focus-visible,
+:is([role="button"]):focus-visible,
+:is([role="tab"]):focus-visible,
+:is([data-testid]):focus-visible,
+[class*="st-emotion-cache"]:focus-visible,
+[class*="st-"]:focus-visible {
+  box-shadow: var(--focus-shadow) !important;
+  outline: none !important;
+  border-color: var(--color-leaf) !important;
 }
 
 /* Global Streamlit Overrides */
@@ -104,6 +125,12 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(0) !important;
 }
 
+.stButton > button:focus,
+.stButton > button:focus-visible {
+  box-shadow: rgba(155, 191, 155, 0.5) 0px 0px 0px 0.2rem !important;
+  outline: none !important;
+}
+
 /* Text inputs */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea {
@@ -116,9 +143,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stTextInput > div > div > input:focus,
-.stTextArea > div > div > textarea:focus {
+.stTextInput > div > div > input:focus-visible,
+.stTextArea > div > div > textarea:focus,
+.stTextArea > div > div > textarea:focus-visible,
+input[type="text"]:focus-visible,
+input[type="email"]:focus-visible,
+input[type="password"]:focus-visible {
   border-color: var(--color-leaf) !important;
-  box-shadow: 0 0 0 var(--focus-ring) !important;
+  box-shadow: var(--focus-shadow) !important;
+  outline: none !important;
 }
 
 /* Select boxes and multiselect */
@@ -141,7 +174,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Success/Info/Warning/Error boxes */
 .stSuccess {
   background-color: var(--color-leaf) !important;
-  color: white !important;
+  color: var(--color-ink) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
 }
@@ -270,6 +303,3 @@ footer {
   color: var(--color-ink) !important;
   font-family: var(--font-sans) !important;
 }
-
-/* Google Fonts Import */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
