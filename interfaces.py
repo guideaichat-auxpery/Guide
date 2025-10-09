@@ -1258,7 +1258,7 @@ def show_great_story_interface():
     educator_id = st.session_state.get('user_id')
     
     # Tabs for creating new stories and viewing saved stories
-    tab1, tab2 = st.tabs(["✨ Create New Story", "📚 My Saved Stories"])
+    tab1, tab2, tab3 = st.tabs(["✨ Create New Story", "📚 My Saved Stories", "🌟 Interactive Story Experience"])
     
     with tab1:
         st.markdown("#### Theme or Topic")
@@ -1423,6 +1423,247 @@ def show_great_story_interface():
                 db.close()
         else:
             st.info("Database connection required to view saved stories.")
+    
+    with tab3:
+        st.markdown("#### 🌟 Interactive Montessori Great Story")
+        st.markdown("*Experience a fully-narrated story with choices that shape your journey through cosmic education*")
+        
+        # Initialize session state for interactive story
+        if 'interactive_story_active' not in st.session_state:
+            st.session_state.interactive_story_active = False
+        if 'interactive_story_content' not in st.session_state:
+            st.session_state.interactive_story_content = []
+        if 'interactive_story_choices' not in st.session_state:
+            st.session_state.interactive_story_choices = []
+        if 'interactive_story_history' not in st.session_state:
+            st.session_state.interactive_story_history = []
+        
+        # Story setup section
+        if not st.session_state.interactive_story_active:
+            st.markdown("##### Begin Your Story Journey")
+            
+            story_theme_interactive = st.text_input(
+                "What story theme inspires you?",
+                placeholder="e.g., The Journey of a River, How Fire Came to Earth, The First Seeds"
+            )
+            
+            age_group_interactive = st.selectbox(
+                "Age Group:",
+                ["3-6", "6-9", "9-12", "12-15"],
+                format_func=lambda x: {
+                    "3-6": "Early Years (3-6)",
+                    "6-9": "Lower Primary (6-9)", 
+                    "9-12": "Upper Primary (9-12)",
+                    "12-15": "Adolescent (12-15)"
+                }[x],
+                key="interactive_age_group"
+            )
+            
+            if st.button("✨ Begin Interactive Story", type="primary", use_container_width=True):
+                if story_theme_interactive:
+                    system_prompt = f"""You are a masterful Montessori Great Story narrator with a warm, humble Australian voice rooted in peace education principles.
+
+Your task: Create the BEGINNING of an engaging, interactive Montessori Great Story about "{story_theme_interactive}" for {age_group_interactive} year olds.
+
+CRITICAL REQUIREMENTS:
+
+1. **Authentic Montessori Great Story Style:**
+   - Begin with cosmic wonder and capture imagination
+   - Connect to the child's place in the universe
+   - Use vivid sensory details and imagery
+   - Inspire reflection and curiosity naturally (no explicit questions)
+   - Follow Montessori cosmic education principles
+
+2. **Australian Voice & Peace Education:**
+   - Use warm, distinctly Australian tone and vernacular (e.g., "out in the bush", "under the southern stars")
+   - Incorporate peace education themes: interconnection, respect, harmony with nature
+   - Humble, inviting narrative voice
+   - Contemporary Australian English (not outdated slang)
+
+3. **Interactive Branching Structure:**
+   - Write a complete opening narrative (150-200 words)
+   - End at a natural story decision point
+   - Provide EXACTLY 3 choices for what happens next
+   - Format choices as: "CHOICE 1:", "CHOICE 2:", "CHOICE 3:"
+   - Each choice should be brief (one sentence) and lead to different story directions
+   - Choices should reflect curiosity, exploration, or cosmic connection
+
+4. **Narrative Quality:**
+   - Beginning, middle building toward choice
+   - Emotional depth and coherence
+   - Age-appropriate language and concepts
+   - Maintain wonder throughout
+
+Remember: This is the ONLY place in the app for fully-written narrative text. Make it magical."""
+
+                    with st.spinner("🌟 Crafting your story beginning..."):
+                        response = call_openai_api(
+                            [{"role": "user", "content": f"Create an interactive Great Story beginning for: {story_theme_interactive}"}],
+                            system_prompt=system_prompt,
+                            is_student=False
+                        )
+                        
+                        # Parse response to extract story and choices
+                        parts = response.split("CHOICE 1:")
+                        story_text = parts[0].strip()
+                        
+                        choices = []
+                        if len(parts) > 1:
+                            choice_text = "CHOICE 1:" + parts[1]
+                            for i in range(1, 4):
+                                if f"CHOICE {i}:" in choice_text:
+                                    start = choice_text.find(f"CHOICE {i}:")
+                                    if i < 3:
+                                        end = choice_text.find(f"CHOICE {i+1}:")
+                                        choice = choice_text[start:end].replace(f"CHOICE {i}:", "").strip()
+                                    else:
+                                        choice = choice_text[start:].replace(f"CHOICE {i}:", "").strip()
+                                    choices.append(choice)
+                        
+                        st.session_state.interactive_story_content.append(story_text)
+                        st.session_state.interactive_story_choices = choices
+                        st.session_state.interactive_story_active = True
+                        st.session_state.interactive_story_theme = story_theme_interactive
+                        st.session_state.interactive_story_age = age_group_interactive
+                        st.rerun()
+                else:
+                    st.warning("Please enter a story theme to begin.")
+        
+        else:
+            # Display ongoing story
+            st.markdown("---")
+            
+            # Show all story content so far
+            for content in st.session_state.interactive_story_content:
+                st.markdown(content)
+                st.markdown("")
+            
+            # Show current choices if available
+            if st.session_state.interactive_story_choices:
+                st.markdown("##### 🌿 What happens next?")
+                
+                for idx, choice in enumerate(st.session_state.interactive_story_choices):
+                    if st.button(f"**{chr(65+idx)}.** {choice}", key=f"choice_{len(st.session_state.interactive_story_content)}_{idx}", use_container_width=True):
+                        # User made a choice - continue the story
+                        st.session_state.interactive_story_history.append(choice)
+                        
+                        # Determine if this should be a continuation or ending
+                        is_final = len(st.session_state.interactive_story_content) >= 3
+                        
+                        if is_final:
+                            # Generate conclusion
+                            system_prompt = f"""You are a masterful Montessori Great Story narrator with a warm Australian voice.
+
+Continue and CONCLUDE the story based on this choice: "{choice}"
+
+Story so far:
+{"".join(st.session_state.interactive_story_content)}
+
+Previous choices made: {", ".join(st.session_state.interactive_story_history)}
+
+Create a CONCLUDING narrative (150-200 words) that:
+- Builds naturally from the choice
+- Brings the story to a satisfying, wonder-filled conclusion
+- Connects back to cosmic themes and the child's place in the universe
+- Leaves the reader with inspiration and reflection
+- Maintains Australian tone and peace education themes
+- NO MORE CHOICES - this is the ending
+
+Do not include "CHOICE" markers. Write only the concluding narrative."""
+                        else:
+                            # Generate continuation with new choices
+                            system_prompt = f"""You are a masterful Montessori Great Story narrator with a warm Australian voice.
+
+Continue the story based on this choice: "{choice}"
+
+Story so far:
+{"".join(st.session_state.interactive_story_content)}
+
+Previous choices made: {", ".join(st.session_state.interactive_story_history)}
+
+Create the NEXT PART of the story (150-200 words) that:
+- Builds naturally from the choice
+- Deepens the cosmic connections and wonder
+- Maintains Australian tone and peace education themes
+- Ends at a new decision point
+- Provides EXACTLY 3 new choices formatted as "CHOICE 1:", "CHOICE 2:", "CHOICE 3:"
+
+Remember: Authentic Montessori style, emotional depth, age-appropriate for {st.session_state.interactive_story_age}."""
+                        
+                        with st.spinner("🌟 The story continues..."):
+                            response = call_openai_api(
+                                [{"role": "user", "content": f"Continue the story with choice: {choice}"}],
+                                system_prompt=system_prompt,
+                                is_student=False
+                            )
+                            
+                            # Parse response
+                            if "CHOICE 1:" in response:
+                                parts = response.split("CHOICE 1:")
+                                story_text = parts[0].strip()
+                                
+                                choices = []
+                                choice_text = "CHOICE 1:" + parts[1]
+                                for i in range(1, 4):
+                                    if f"CHOICE {i}:" in choice_text:
+                                        start = choice_text.find(f"CHOICE {i}:")
+                                        if i < 3:
+                                            end = choice_text.find(f"CHOICE {i+1}:")
+                                            choice = choice_text[start:end].replace(f"CHOICE {i}:", "").strip()
+                                        else:
+                                            choice = choice_text[start:].replace(f"CHOICE {i}:", "").strip()
+                                        choices.append(choice)
+                                
+                                st.session_state.interactive_story_content.append(story_text)
+                                st.session_state.interactive_story_choices = choices
+                            else:
+                                # This is the ending
+                                st.session_state.interactive_story_content.append(response.strip())
+                                st.session_state.interactive_story_choices = []
+                            
+                            st.rerun()
+            
+            else:
+                # Story has concluded
+                st.markdown("---")
+                st.success("✨ **The End** ✨")
+                st.markdown("*Your journey through this Great Story is complete.*")
+                
+                # Option to save the complete story
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("💾 Save Complete Story", type="primary", use_container_width=True):
+                        complete_story = "\n\n".join(st.session_state.interactive_story_content)
+                        db = get_db()
+                        if db and educator_id:
+                            try:
+                                from database import create_great_story
+                                story = create_great_story(
+                                    db,
+                                    educator_id=educator_id,
+                                    title=st.session_state.interactive_story_theme,
+                                    theme=st.session_state.interactive_story_theme,
+                                    content=complete_story,
+                                    age_group=st.session_state.interactive_story_age,
+                                    keywords="interactive, branching narrative"
+                                )
+                                st.success(f"✅ Interactive story saved to 'My Saved Stories'!")
+                                # Force page refresh to update "My Saved Stories" tab
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error saving story: {str(e)}")
+                            finally:
+                                db.close()
+                        else:
+                            st.warning("Database connection required to save.")
+                
+                with col2:
+                    if st.button("🔄 Start New Story", use_container_width=True):
+                        st.session_state.interactive_story_active = False
+                        st.session_state.interactive_story_content = []
+                        st.session_state.interactive_story_choices = []
+                        st.session_state.interactive_story_history = []
+                        st.rerun()
 
 def show_planning_notes_interface():
     """Notes and planning workspace for educators"""
