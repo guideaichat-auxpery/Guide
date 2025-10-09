@@ -376,7 +376,6 @@ def show_companion_interface():
                 response = call_openai_api(
                     st.session_state.companion_messages,
                     age_group=companion_age_group if companion_age_group != "all" else None,
-                    curriculum_type="Montessori",
                     interface_type="companion"
                 )
                 st.markdown(response)
