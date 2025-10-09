@@ -80,7 +80,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **V9 Enforcement**: Explicit Australian Curriculum VERSION 9 enforcement - all codes must start with "AC9" (e.g., AC9S6H01), never V8.4 codes.
 - **Age-Appropriate Outputs**: Mandatory cognitive development matching - Foundation-Year 3 (concrete, simple), Years 4-6 (transitional, guided), Years 7-9 (abstract, independent).
 - **AI-Powered Tools**:
-    - **Great Story Creator**: AI-assisted Montessori Great Story development with persistent storage.
+    - **Great Story Creator**: AI-assisted Montessori Great Story development with persistent storage and Interactive Story Experience - a unique branching narrative feature generating fully-written stories with user choices that shape the journey (beginning, middle, end), authentic Montessori style, warm Australian tone with peace education themes, and 3-segment progression with clickable choice points (the ONLY place in the app for complete narrative text generation).
     - **Planning Notes Workspace**: Word processor-style planning tool with organization, materials management, and image upload.
     - **Educator Observation Dashboard**: Student activity tracking with multi-educator access.
     - **Lesson Planning Assistant**: Creates specific activities and lessons, and analyzes existing ones.
