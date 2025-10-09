@@ -68,6 +68,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Comprehensive Subject Coverage**: Age-appropriate multiselect subject selector for various subjects across different year levels.
 - **V9 Enforcement**: Explicit Australian Curriculum VERSION 9 enforcement (all codes must start with "AC9").
 - **Age-Appropriate Outputs**: Mandatory cognitive development matching for Foundation-Year 3, Years 4-6, and Years 7-9.
+- **Age-Adaptive Companion**: Montessori Companion interface with age-specific guidance (3-6, 6-9, 9-12, 12-15) or comprehensive all-ages support, matching developmental planes with appropriate materials, tone, and pedagogical approach.
 - **AI-Powered Tools**: Includes Great Story Creator (branching narratives), Planning Notes Workspace, Educator Observation Dashboard, Lesson Planning Assistant, Curriculum Alignment Review (document analysis with keyword recognition), Big Picture Curriculum Mapping, and Student Work Analysis.
 - **Assessment & Tracking**: Advanced rubric generator, holistic student progress tracking, CEC competency visualization, asset-based assessment, and learner profile generation.
 - **Portfolio System**: Creation and management of student portfolios.

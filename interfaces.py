@@ -249,6 +249,27 @@ def show_companion_interface():
     st.markdown("### 🗨️ Montessori Companion")
     st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
     
+    # Age group selector for companion (optional - defaults to all ages)
+    st.markdown("#### 🌱 Select Age Group (Optional)")
+    st.markdown("*Choose a specific age range for targeted guidance, or select 'All Ages' for comprehensive support*")
+    
+    companion_age_options = {
+        "All Ages (3-18)": "all",
+        "Ages 3-6 (Early Years)": "3-6",
+        "Ages 6-9 (Lower Primary)": "6-9", 
+        "Ages 9-12 (Upper Primary)": "9-12",
+        "Ages 12-15 (Adolescent)": "12-15"
+    }
+    
+    selected_age_display = st.selectbox(
+        "Age Focus",
+        options=list(companion_age_options.keys()),
+        key="companion_age_selector",
+        label_visibility="collapsed"
+    )
+    
+    companion_age_group = companion_age_options[selected_age_display]
+    
     # Manage conversation history (keep last 10 exchanges)
     st.session_state.companion_messages = manage_conversation_history(
         st.session_state.companion_messages, max_history=20
@@ -297,8 +318,13 @@ def show_companion_interface():
                     if db:
                         try:
                             save_conversation_message(
-                                db, user_id, None, st.session_state.companion_session_id,
-                                'companion', 'user', prompt_text
+                                db,
+                                session_id=st.session_state.companion_session_id,
+                                interface_type='companion',
+                                role='user',
+                                content=prompt_text,
+                                user_id=user_id,
+                                student_id=None
                             )
                         except Exception as e:
                             print(f"Error saving conversation: {str(e)}")
@@ -322,8 +348,13 @@ def show_companion_interface():
             if db:
                 try:
                     save_conversation_message(
-                        db, user_id, None, st.session_state.companion_session_id,
-                        'companion', 'user', prompt
+                        db,
+                        session_id=st.session_state.companion_session_id,
+                        interface_type='companion',
+                        role='user',
+                        content=prompt,
+                        user_id=user_id,
+                        student_id=None
                     )
                     
                     # Log for analytics
@@ -344,7 +375,9 @@ def show_companion_interface():
             with st.spinner("Consulting Montessori wisdom..."):
                 response = call_openai_api(
                     st.session_state.companion_messages,
-                    curriculum_type="Montessori"
+                    age_group=companion_age_group if companion_age_group != "all" else None,
+                    curriculum_type="Montessori",
+                    interface_type="companion"
                 )
                 st.markdown(response)
                 st.session_state.companion_messages.append({
@@ -358,8 +391,13 @@ def show_companion_interface():
                     if db:
                         try:
                             save_conversation_message(
-                                db, user_id, None, st.session_state.companion_session_id,
-                                'companion', 'assistant', response
+                                db,
+                                session_id=st.session_state.companion_session_id,
+                                interface_type='companion',
+                                role='assistant',
+                                content=response,
+                                user_id=user_id,
+                                student_id=None
                             )
                         except Exception as e:
                             print(f"Error saving conversation: {str(e)}")
@@ -559,8 +597,13 @@ def show_student_interface():
                 try:
                     # Save user message
                     save_conversation_message(
-                        db, None, student_id, st.session_state.student_session_id,
-                        'student', 'user', prompt
+                        db,
+                        session_id=st.session_state.student_session_id,
+                        interface_type='student',
+                        role='user',
+                        content=prompt,
+                        user_id=None,
+                        student_id=student_id
                     )
                     
                     # Detect and track curriculum keywords
@@ -641,8 +684,13 @@ def show_student_interface():
                     if db:
                         try:
                             save_conversation_message(
-                                db, None, student_id, st.session_state.student_session_id,
-                                'student', 'assistant', response
+                                db,
+                                session_id=st.session_state.student_session_id,
+                                interface_type='student',
+                                role='assistant',
+                                content=response,
+                                user_id=None,
+                                student_id=student_id
                             )
                             
                             # Log response activity
