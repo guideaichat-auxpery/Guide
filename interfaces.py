@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import call_openai_api, get_max_tokens_for_user_type
+from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top
 import PyPDF2
 from docx import Document
 from PIL import Image
@@ -12,6 +12,8 @@ from database import get_db, log_student_activity, database_available
 
 def show_lesson_planning_interface():
     """Educational planning interface for educators with Australian Curriculum alignment"""
+    scroll_to_top()
+    
     # Ensure planning messages are initialized separately
     if 'planning_messages' not in st.session_state:
         st.session_state.planning_messages = []
@@ -72,8 +74,10 @@ def show_lesson_planning_interface():
     )
     
     # Display chat history
+    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
     for message in st.session_state.planning_messages:
-        with st.chat_message(message["role"]):
+        avatar = ai_avatar if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
     
     # File uploader for curriculum alignment review
@@ -150,7 +154,8 @@ Please provide:
             st.markdown(prompt)
         
         # Get AI response
-        with st.chat_message("assistant"):
+        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
+        with st.chat_message("assistant", avatar=ai_avatar):
             with st.spinner("Planning your lesson..."):
                 # Construct system prompt based on planning type
                 if planning_type == "lesson_plan":
@@ -160,7 +165,19 @@ Please provide:
                 elif planning_type == "curriculum_alignment":
                     system_context = "You are analyzing curriculum alignment with Australian Curriculum V9 standards and Montessori principles."
                 else:  # assessment_rubric
-                    system_context = "You are creating an assessment rubric that balances Montessori observational assessment with Australian Curriculum V9 achievement standards."
+                    system_context = """You are creating an assessment rubric that balances Montessori observational assessment with Australian Curriculum V9 achievement standards.
+
+IMPORTANT RUBRIC FORMAT REQUIREMENTS:
+- Do NOT use letter grades (A, B, C, D) or numerical scores
+- Use ONLY these four performance levels as column headers (left to right):
+  1. Sophisticated
+  2. High Expectation Met
+  3. Expectation Met
+  4. Developing
+- For each criterion, describe what each performance level looks like
+- Focus on descriptive, asset-based language that honors the child's development
+- Align descriptions with AC V9 achievement standards where appropriate
+- Include Montessori observational assessment approaches"""
                 
                 response = call_openai_api(
                     st.session_state.planning_messages,
@@ -218,6 +235,8 @@ Please provide:
 
 def show_companion_interface():
     """Enhanced Montessori companion interface with conversation history management and persistence"""
+    scroll_to_top()
+    
     from utils import manage_conversation_history, estimate_tokens
     from database import save_conversation_message, log_educator_prompt, load_conversation_to_session
     
@@ -275,10 +294,55 @@ def show_companion_interface():
         st.session_state.companion_messages, max_history=20
     )
     
+    # Check if last message needs a response (from Quick Guide click)
+    need_response = (
+        len(st.session_state.companion_messages) > 0 and 
+        st.session_state.companion_messages[-1]["role"] == "user" and
+        (len(st.session_state.companion_messages) == 1 or 
+         st.session_state.companion_messages[-2]["role"] == "assistant")
+    )
+    
     # Display chat history
+    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
     for message in st.session_state.companion_messages:
-        with st.chat_message(message["role"]):
+        avatar = ai_avatar if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
+    
+    # If last message was from user (Quick Guide), generate response
+    if need_response:
+        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
+        with st.chat_message("assistant", avatar=ai_avatar):
+            with st.spinner("Consulting Montessori wisdom..."):
+                response = call_openai_api(
+                    st.session_state.companion_messages,
+                    age_group=companion_age_group if companion_age_group != "all" else None,
+                    interface_type="companion"
+                )
+                st.markdown(response)
+                st.session_state.companion_messages.append({
+                    "role": "assistant",
+                    "content": response
+                })
+                
+                # Save assistant response to database
+                if database_available and user_id:
+                    db = get_db()
+                    if db:
+                        try:
+                            save_conversation_message(
+                                db,
+                                session_id=st.session_state.companion_session_id,
+                                interface_type='companion',
+                                role='assistant',
+                                content=response,
+                                user_id=user_id,
+                                student_id=None
+                            )
+                        except Exception as e:
+                            print(f"Error saving conversation: {str(e)}")
+                        finally:
+                            db.close()
     
     # Quick conversation starters - Comprehensive Montessori Guide Topics
     st.markdown("#### 📚 Montessori Quick Guides")
@@ -371,7 +435,8 @@ def show_companion_interface():
             st.markdown(prompt)
         
         # Get AI response
-        with st.chat_message("assistant"):
+        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
+        with st.chat_message("assistant", avatar=ai_avatar):
             with st.spinner("Consulting Montessori wisdom..."):
                 response = call_openai_api(
                     st.session_state.companion_messages,
@@ -406,6 +471,8 @@ def show_companion_interface():
 
 def show_student_interface():
     """Enhanced student learning interface with curriculum context, conversation history, and persistence"""
+    scroll_to_top()
+    
     from utils import manage_conversation_history
     from database import save_conversation_message, load_conversation_to_session
     
@@ -522,42 +589,140 @@ def show_student_interface():
     )
     
     # Display chat history
+    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
     for message in st.session_state.student_messages:
-        with st.chat_message(message["role"]):
+        avatar = ai_avatar if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
-    
-    # Learning starter suggestions
-    st.markdown("#### 💡 Need inspiration? Try these:")
-    learning_starters = [
-        "🌍 How do volcanoes form?",
-        "🔢 Explain fractions in a simple way",
-        "📚 What makes a good story?",
-        "🌌 Tell me about the solar system",
-        "🎨 How do artists use colors?",
-        "🔬 What is photosynthesis?"
-    ]
-    
-    cols = st.columns(3)
-    for idx, starter in enumerate(learning_starters):
-        with cols[idx % 3]:
-            if st.button(starter, key=f"starter_{idx}", use_container_width=True):
-                st.session_state.student_messages.append({
-                    "role": "user",
-                    "content": starter
-                })
-                st.rerun()
     
     st.markdown("---")
     
-    # File upload for students
+    # File upload for students with rubric support
     st.markdown("#### 📁 Upload your work for feedback (optional)")
-    uploaded_file = st.file_uploader(
-        "Share your writing, drawing, or project",
-        type=['txt', 'pdf', 'jpg', 'png', 'docx'],
-        help="Upload your work and ask questions about it"
-    )
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        uploaded_work = st.file_uploader(
+            "Share your writing, drawing, or project",
+            type=['txt', 'pdf', 'jpg', 'png', 'docx'],
+            help="Upload your work for feedback",
+            key="work_upload"
+        )
+    
+    with col2:
+        uploaded_rubric = st.file_uploader(
+            "Upload assessment rubric (optional)",
+            type=['txt', 'pdf', 'docx'],
+            help="Upload a rubric to guide the feedback",
+            key="rubric_upload"
+        )
+    
+    # Feedback button when work is uploaded
+    if uploaded_work:
+        if st.button("🌟 How about some feedback?", use_container_width=True, type="primary"):
+            # Process work file
+            work_content = ""
+            with st.spinner("Reading your work..."):
+                if uploaded_work.type == "application/pdf":
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_work.read()))
+                    work_content = "\n".join([page.extract_text() for page in pdf_reader.pages])
+                elif uploaded_work.type in ["image/jpeg", "image/png"]:
+                    try:
+                        image = Image.open(uploaded_work)
+                        work_content = f"[Student uploaded an image: {uploaded_work.name}]"
+                    except:
+                        work_content = "[Image could not be processed]"
+                elif uploaded_work.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    doc = Document(io.BytesIO(uploaded_work.read()))
+                    work_content = "\n".join([para.text for para in doc.paragraphs])
+                else:
+                    work_content = uploaded_work.read().decode("utf-8")
+            
+            # Process rubric file if uploaded
+            rubric_content = ""
+            if uploaded_rubric:
+                with st.spinner("Reading rubric..."):
+                    if uploaded_rubric.type == "application/pdf":
+                        pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_rubric.read()))
+                        rubric_content = "\n".join([page.extract_text() for page in pdf_reader.pages])
+                    elif uploaded_rubric.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                        doc = Document(io.BytesIO(uploaded_rubric.read()))
+                        rubric_content = "\n".join([para.text for para in doc.paragraphs])
+                    else:
+                        rubric_content = uploaded_rubric.read().decode("utf-8")
+            
+            # Build comprehensive feedback prompt
+            feedback_prompt = f"""Please provide detailed, constructive feedback on the following student work.
+
+STUDENT WORK:
+{work_content[:2000]}
+
+"""
+            if rubric_content:
+                feedback_prompt += f"""ASSESSMENT RUBRIC:
+{rubric_content[:1500]}
+
+Please assess the work against the rubric criteria, providing specific feedback for each criterion.
+"""
+            
+            feedback_prompt += f"""
+FEEDBACK REQUIREMENTS:
+1. Assess the work based on the rubric (if provided) and learning standards
+2. Provide specific, actionable suggestions for improvement
+3. Highlight strengths and areas of growth
+4. Connect feedback to broader learning and real-world applications (Montessori approach)
+5. Use encouraging, asset-based language that honors student development
+6. Reference Australian Curriculum V9 standards for Year {st.session_state.get('student_year_selector', '6')}
+7. Suggest next steps to deepen understanding
+
+Keep feedback age-appropriate for {age_group} year olds."""
+
+            # Add to conversation
+            st.session_state.student_messages.append({
+                "role": "user",
+                "content": f"Please review my work: {uploaded_work.name}"
+            })
+            
+            # Get AI feedback
+            ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🤖"
+            with st.chat_message("assistant", avatar=ai_avatar):
+                with st.spinner("Analyzing your work..."):
+                    response = call_openai_api(
+                        st.session_state.student_messages + [{"role": "system", "content": feedback_prompt}],
+                        is_student=True,
+                        year_level=st.session_state.get('student_year_selector', 'Year 6'),
+                        subjects=selected_subjects if selected_subjects else None,
+                        curriculum_type="Blended"
+                    )
+                    st.markdown(response)
+                    st.session_state.student_messages.append({
+                        "role": "assistant",
+                        "content": response
+                    })
+                    
+                    # Save to database
+                    if database_available and student_id:
+                        db = get_db()
+                        if db:
+                            try:
+                                save_conversation_message(
+                                    db,
+                                    session_id=st.session_state.student_session_id,
+                                    interface_type='student',
+                                    role='assistant',
+                                    content=response,
+                                    user_id=None,
+                                    student_id=student_id
+                                )
+                            except Exception as e:
+                                print(f"Error saving feedback: {str(e)}")
+                            finally:
+                                db.close()
+    
+    st.markdown("---")
     
     # Chat input
+    uploaded_file = uploaded_work  # Keep backward compatibility
     if prompt := st.chat_input("Ask me anything about your learning..."):
         st.session_state.student_messages.append({
             "role": "user",
@@ -709,6 +874,8 @@ def show_student_interface():
 
 def show_student_dashboard_interface():
     """Student observation dashboard for educators"""
+    scroll_to_top()
+    
     st.markdown("### 📊 Student Dashboard")
     st.markdown("*View student learning activities, engagement patterns, and manage access*")
     
@@ -860,6 +1027,8 @@ def show_student_dashboard_interface():
 
 def show_great_story_interface():
     """Montessori Great Story creator interface for educators"""
+    scroll_to_top()
+    
     st.markdown("### 📖 Montessori Great Story Creator")
     st.markdown("*Develop inspiring cosmic education stories that spark imagination and curiosity*")
     
@@ -1085,6 +1254,8 @@ def show_great_story_interface():
 
 def show_planning_notes_interface():
     """Notes and planning workspace for educators"""
+    scroll_to_top()
+    
     st.markdown("### 📝 Planning Notes & Workspace")
     st.markdown("*Your personal workspace for planning, notes, resources, and materials organization*")
     
@@ -1219,7 +1390,7 @@ def show_planning_notes_interface():
                 db = get_db()
                 if db and educator_id:
                     try:
-                        from database import save_planning_note, update_planning_note
+                        from database import create_planning_note, update_planning_note
                         
                         # Process image if uploaded
                         image_data = None
@@ -1233,23 +1404,23 @@ def show_planning_notes_interface():
                             update_planning_note(
                                 db, 
                                 st.session_state.active_note_id,
-                                title, 
-                                content,
-                                materials,
-                                chapters_json,
-                                image_data
+                                title=title, 
+                                content=content,
+                                chapters=chapters_json,
+                                images=image_data,
+                                materials=materials
                             )
                             st.success("✅ Note updated successfully!")
                         else:
                             # Save new note
-                            note = save_planning_note(
+                            note = create_planning_note(
                                 db, 
                                 educator_id, 
                                 title, 
                                 content,
-                                materials,
-                                chapters_json,
-                                image_data
+                                chapters=chapters_json,
+                                images=image_data,
+                                materials=materials
                             )
                             st.session_state.active_note_id = note.id
                             st.success("✅ Note saved successfully!")

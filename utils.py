@@ -10,6 +10,18 @@ from PIL import Image
 import io
 import base64
 
+# ---- SCROLL TO TOP UTILITY ----
+def scroll_to_top():
+    """Scroll page to top when interface loads"""
+    st.markdown(
+        """
+        <script>
+            window.parent.document.querySelector('section.main').scrollTo(0, 0);
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+
 # ---- URL PROCESSING UTILITIES ----
 def extract_urls_from_text(text):
     """Extract all URLs from a text message"""

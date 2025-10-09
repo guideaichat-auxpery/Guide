@@ -301,6 +301,10 @@ def get_user_by_email(db, email: str) -> Optional[User]:
     """Get user by email"""
     return db.query(User).filter(User.email == email).first()
 
+def get_all_educators(db):
+    """Get all educators"""
+    return db.query(User).filter(User.user_type == 'educator').all()
+
 def get_student_by_username(db, username: str) -> Optional[Student]:
     """Get student by username"""
     return db.query(Student).filter(Student.username == username).first()

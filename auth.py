@@ -203,11 +203,9 @@ def create_student_page():
         st.markdown("### Add New Student")
         full_name = st.text_input("Student's Full Name", placeholder="Student's full name")
         username = st.text_input("Username", placeholder="student_username", help="This will be used for student login")
-        age_group = st.selectbox("Age Group", ["3-6", "6-9", "9-12", "12-15"], 
+        age_group = st.selectbox("Age Group", ["9-12", "12-15"], 
                                  format_func=lambda x: {
-                                     "3-6": "Early Years (3-6)",
-                                     "6-9": "Lower Primary (6-9)", 
-                                     "9-12": "Upper Primary (9-12)",
+                                     "9-12": "Upper Primary (9-12) → Year 6 minimum",
                                      "12-15": "Adolescent (12-15)"
                                  }[x])
         password = st.text_input("Password", type="password", help="Minimum 6 characters")
