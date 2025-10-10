@@ -77,8 +77,8 @@ localPort = 44671
 externalPort = 5000
 
 [[ports]]
-localPort = 46367
-externalPort = 5173
+localPort = 44765
+externalPort = 6000
 
 [agent]
 integrations = ["web_scraper==1.0.0", "python_openai==1.0.0==1.0.0", "python_openai==1.0.0"]
