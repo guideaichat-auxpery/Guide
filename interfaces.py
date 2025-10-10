@@ -1992,3 +1992,112 @@ def show_account_deletion_interface():
                     db.close()
         else:
             st.error(f"Confirmation text does not match. Please type exactly: {user_name}")
+
+
+def show_pd_expert_interface():
+    """Professional Development Expert Mode - Restricted to authorized educators"""
+    scroll_to_top()
+    
+    user_email = st.session_state.get('user_email', '')
+    
+    # Access control - restrict to authorized email
+    if user_email != "guideaichat@gmail.com":
+        st.error("🔒 Access Denied")
+        st.info("This Professional Development Expert Mode is restricted to authorized accounts only.")
+        return
+    
+    # Header with special badge
+    st.markdown("### 🧭 Professional Development Expert Mode")
+    st.markdown("*Evidence-based PD coaching with self-learning memory and Montessori expertise*")
+    
+    st.markdown("---")
+    
+    # Info box
+    with st.expander("ℹ️ About PD Expert Mode", expanded=False):
+        st.markdown("""
+        **This specialized mode provides:**
+        
+        - 📚 **Evidence-based guidance** from frameworks like Harvard Instructional Moves, Edutopia, and adult learning theory
+        - 🧠 **Self-learning memory** that adapts to your professional development focus areas
+        - 🎯 **Montessori-aligned** coaching with deep understanding of Prepared Adult principles
+        - 🔄 **Contextual responses** based on keywords like "adult learning", "instructional coaching", "workshop design"
+        
+        **Structured responses include:**
+        1️⃣ Summary of your question  
+        2️⃣ Evidence-based insight or framework  
+        3️⃣ Suggested approach or structure  
+        4️⃣ Montessori connection  
+        5️⃣ Next steps or reflective prompt
+        """)
+    
+    # Initialize PD messages in session state
+    if 'pd_messages' not in st.session_state:
+        st.session_state.pd_messages = []
+    
+    # Display conversation history with avatar
+    for msg in st.session_state.pd_messages:
+        if msg['role'] == 'user':
+            with st.chat_message("user"):
+                st.markdown(msg['content'])
+        else:
+            with st.chat_message("assistant", avatar="assets/montessori-avatar.png"):
+                st.markdown(f"**🧭 PD Expert**")
+                st.markdown(msg['content'])
+    
+    # Chat input
+    if user_prompt := st.chat_input("Ask your professional development question...", key="pd_expert_input"):
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(user_prompt)
+        
+        st.session_state.pd_messages.append({
+            "role": "user",
+            "content": user_prompt
+        })
+        
+        # Call PD Expert API
+        with st.chat_message("assistant", avatar="assets/montessori-avatar.png"):
+            st.markdown("**🧭 PD Expert**")
+            
+            with st.spinner("Consulting expertise and memory..."):
+                import requests
+                
+                try:
+                    response = requests.post(
+                        "http://localhost:3000/api/pd-expert",
+                        json={
+                            "userEmail": user_email,
+                            "prompt": user_prompt
+                        },
+                        timeout=60
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        expert_response = data.get('output', '')
+                        st.markdown(expert_response)
+                        
+                        st.session_state.pd_messages.append({
+                            "role": "assistant",
+                            "content": expert_response
+                        })
+                    elif response.status_code == 403:
+                        st.error("🔒 Access denied. This feature is restricted.")
+                    else:
+                        st.error(f"Error: {response.status_code}")
+                        error_data = response.json()
+                        st.error(error_data.get('error', 'Unknown error'))
+                        
+                except requests.exceptions.Timeout:
+                    st.error("⏱️ Request timed out. Please try again.")
+                except requests.exceptions.ConnectionError:
+                    st.error("🔌 Unable to connect to PD Expert service. Please ensure the Adaptive Learning Server is running.")
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+    
+    # Clear conversation button
+    if st.session_state.pd_messages:
+        st.markdown("---")
+        if st.button("🗑️ Clear Conversation", use_container_width=True):
+            st.session_state.pd_messages = []
+            st.rerun()

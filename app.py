@@ -1,7 +1,7 @@
 import streamlit as st
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
-from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface
+from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface
 
 # Configure page
 st.set_page_config(
@@ -187,6 +187,13 @@ else:
                 st.session_state.auth_mode = "student_dashboard"
                 st.rerun()
         
+        # PD Expert Mode (restricted access)
+        if st.session_state.get('user_email') == "guideaichat@gmail.com":
+            st.markdown("---")
+            if st.button("🧭 PD Expert Mode", use_container_width=True, type="primary"):
+                st.session_state.auth_mode = "pd_expert"
+                st.rerun()
+        
         # Privacy & Settings row
         st.markdown("---")
         col1, col2 = st.columns(2)
@@ -200,7 +207,7 @@ else:
                 st.rerun()
         
         # Default to lesson planning for educators
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion']:
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
             st.session_state.auth_mode = 'lesson_planning'
     else:
         # Student interface
@@ -219,6 +226,8 @@ else:
         show_great_story_interface()
     elif st.session_state.auth_mode == "planning_notes":
         show_planning_notes_interface()
+    elif st.session_state.auth_mode == "pd_expert":
+        show_pd_expert_interface()
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
     elif st.session_state.auth_mode == "privacy_policy":
