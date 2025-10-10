@@ -845,7 +845,7 @@ REQUIRED STRUCTURE (Use all sections with extensive detail):
         },
       ],
       temperature: 0.7,
-      max_tokens: 8000, // Maximum comprehensive detail for professional development coaching
+      max_tokens: 6000, // Reduced for better performance
     });
     
     // 90 second timeout for OpenAI API
