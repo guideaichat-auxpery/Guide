@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button
+from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response
 import PyPDF2
 from docx import Document
 from PIL import Image
@@ -196,6 +196,9 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                     "role": "assistant",
                     "content": response
                 })
+                
+                # Scroll to beginning of new response
+                scroll_to_latest_response()
     
     # Export options
     if st.session_state.planning_messages:
@@ -346,6 +349,9 @@ def show_companion_interface():
                     "content": response
                 })
                 
+                # Scroll to beginning of new response
+                scroll_to_latest_response()
+                
                 # Save assistant response to database
                 if database_available and user_id:
                     db = get_db()
@@ -469,6 +475,9 @@ def show_companion_interface():
                     "role": "assistant",
                     "content": response
                 })
+                
+                # Scroll to beginning of new response
+                scroll_to_latest_response()
                 
                 # Save assistant response to database
                 if database_available and user_id:
@@ -865,6 +874,9 @@ Keep feedback age-appropriate for {age_group} year olds."""
                     "role": "assistant",
                     "content": response
                 })
+                
+                # Scroll to beginning of new response
+                scroll_to_latest_response()
                 
                 # Save assistant response
                 if database_available and student_id:
@@ -2093,6 +2105,9 @@ def show_pd_expert_interface():
                             "role": "assistant",
                             "content": expert_response
                         })
+                        
+                        # Scroll to beginning of new response
+                        scroll_to_latest_response()
                     elif response.status_code == 403:
                         st.error("🔒 Access denied. This feature is restricted.")
                     else:

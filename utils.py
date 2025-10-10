@@ -78,6 +78,30 @@ def scroll_to_element(element_id):
         unsafe_allow_html=True
     )
 
+def add_response_anchor():
+    """Add an invisible anchor at the start of a response for scrolling"""
+    import time
+    anchor_id = f"response_{int(time.time() * 1000)}"
+    st.markdown(f'<div id="{anchor_id}" style="height: 0; margin: 0; padding: 0;"></div>', unsafe_allow_html=True)
+    return anchor_id
+
+def scroll_to_latest_response():
+    """Scroll to show the beginning of the latest AI response"""
+    st.markdown(
+        """
+        <script>
+            setTimeout(function() {
+                var chatMessages = window.parent.document.querySelectorAll('[data-testid="stChatMessage"]');
+                if (chatMessages.length > 0) {
+                    var lastMessage = chatMessages[chatMessages.length - 1];
+                    lastMessage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 200);
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+
 # ---- URL PROCESSING UTILITIES ----
 def extract_urls_from_text(text):
     """Extract all URLs from a text message"""
