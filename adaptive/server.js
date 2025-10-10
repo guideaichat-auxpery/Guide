@@ -837,7 +837,7 @@ REQUIRED STRUCTURE (Use all sections with extensive detail):
         },
       ],
       temperature: 0.7,
-      max_tokens: 4000, // Extended for comprehensive, detailed responses
+      max_tokens: 8000, // Maximum comprehensive detail for professional development coaching
     });
 
     const output = response.choices[0].message.content;
