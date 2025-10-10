@@ -1,0 +1,134 @@
+// --- Professional Development Expert Mode (Restricted Access) ---
+// Drop this into your Replit Agent server or route handler (e.g., server.js or agent.js)
+// Requires: OpenAI SDK + optional Replit KV database
+
+import { kv } from "@replit/kv"; // Optional: comment out if not using KV
+import OpenAI from "openai";
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// === ROUTE ===
+app.post("/pd-expert", async (req, res) => {
+  const { userEmail, prompt } = req.body;
+
+  // Restrict to one specific email
+  if (userEmail !== "guideaichat@gmail.com") {
+    return res.status(403).json({
+      error: "Access denied. This function is restricted to the authorized account.",
+    });
+  }
+
+  // --- Optional UI label trigger ---
+  // Your front-end can use this endpoint or response flag to show the special label
+  const uiLabel = "🧭 PD Mode";
+
+  // --- Self-learning memory logic ---
+  // Retrieve and summarize recent chat history for this user
+  let previousPrompts = [];
+  try {
+    const allKeys = await kv.list({ prefix: "pdprompts:" });
+    for await (const key of allKeys) {
+      const record = await kv.get(key.key);
+      if (record?.userEmail === userEmail) previousPrompts.push(record.prompt);
+    }
+  } catch (err) {
+    console.warn("KV retrieval skipped or failed:", err);
+  }
+
+  // Keep memory manageable
+  if (previousPrompts.length > 15) previousPrompts = previousPrompts.slice(-15);
+
+  // Summarize user’s prior focus to inform the agent’s adaptation
+  let memorySummary = "";
+  if (previousPrompts.length > 0) {
+    const summaryResponse = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are summarizing key learning patterns and developmental focus areas from previous professional development prompts. Be concise and thematic.",
+        },
+        {
+          role: "user",
+          content: previousPrompts.join("\n\n"),
+        },
+      ],
+      temperature: 0.3,
+    });
+    memorySummary = summaryResponse.choices[0].message.content;
+  }
+
+  // Store current prompt for continued self-learning
+  await kv.set(`pdprompts:${Date.now()}`, { userEmail, prompt });
+
+  // --- Contextual keyword analysis ---
+  const keywordContexts = {
+    "adult learning": "Integrate andragogy principles—autonomy, experience-based learning, relevance, reflection.",
+    "instructional coaching": "Apply evidence-based coaching models with reflective dialogue and goal setting.",
+    "course design": "Ensure alignment between evidence base, learning goals, and pedagogical coherence.",
+    "Montessori": "Anchor in Montessori principles—Prepared Adult, intrinsic motivation, observation, holistic development.",
+    "workshop": "Emphasize experiential, interactive learning that honors participants’ prior experience.",
+    "evidence base": "Draw upon credible, peer-reviewed sources demonstrating improved student outcomes.",
+  };
+
+  let matchedContexts = Object.entries(keywordContexts)
+    .filter(([key]) => prompt.toLowerCase().includes(key))
+    .map(([_, context]) => context)
+    .join(" ");
+
+  if (!matchedContexts) {
+    matchedContexts =
+      "Default to evidence-based, adult-learning-oriented, Montessori-consistent professional development guidance.";
+  }
+
+  // --- System prompt for PD Expert role ---
+  const systemPrompt = `
+You are a Professional Development Expert with 25–50 years of experience as an instructional coach, PD trainer, and facilitator.
+You specialize in Montessori education and adult learning.
+
+Your role:
+- Provide evidence-based, experience-grounded professional development advice.
+- Model coherence between learning goals, pedagogy, and content.
+- Reference reputable frameworks such as:
+  • Harvard’s Instructional Moves (https://instructionalmoves.gse.harvard.edu/professional-development-facilitation-guide)
+  • Edutopia’s PD facilitation strategies
+  • Adult learning theory (Knowles, Kolb)
+  • Global Partnership for Education on teacher training improvement.
+- Encourage reflective and self-directed learning among educators.
+- Maintain a Montessori-informed tone—calm, curious, observant, and empowering.
+- Use Australian educational context and terminology when relevant.
+
+Use the following structure where suitable:
+1️⃣ Summary of what is being asked
+2️⃣ Evidence-based insight or framework
+3️⃣ Suggested approach or structure
+4️⃣ Montessori connection
+5️⃣ Next steps or reflective prompt
+`;
+
+  // --- Generate final expert response ---
+  const response = await openai.chat.completions.create({
+    model: "gpt-5", // use gpt-5 or your app's model setting
+    messages: [
+      { role: "system", content: systemPrompt },
+      {
+        role: "assistant",
+        content: `Prior user focus summary (memory): ${memorySummary || "No prior history yet."}`,
+      },
+      {
+        role: "user",
+        content: `Prompt: ${prompt}\nContext cues: ${matchedContexts}`,
+      },
+    ],
+    temperature: 0.7,
+  });
+
+  const output = response.choices[0].message.content;
+
+  // --- Send final response ---
+  res.json({
+    role: "PD Expert",
+    label: uiLabel,
+    output,
+  });
+});

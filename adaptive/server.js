@@ -662,6 +662,143 @@ async function runAutoRefreshCycle() {
   }
 }
 
+// === PROFESSIONAL DEVELOPMENT EXPERT MODE ===
+app.post("/api/pd-expert", async (req, res) => {
+  try {
+    const { userEmail, prompt } = req.body;
+
+    // Restrict to authorized email only
+    if (userEmail !== "guideaichat@gmail.com") {
+      return res.status(403).json({
+        success: false,
+        error: "Access denied. This function is restricted to the authorized account.",
+      });
+    }
+
+    const uiLabel = "🧭 PD Mode";
+
+    // Self-learning memory logic - retrieve recent prompts
+    let previousPrompts = [];
+    try {
+      const { value: allKeys } = await kvDatabase.list();
+      const pdKeys = allKeys.filter(k => k.startsWith("pdprompts:"));
+      
+      for (const key of pdKeys) {
+        const record = await kvDatabase.get(key);
+        if (record?.userEmail === userEmail) {
+          previousPrompts.push(record.prompt);
+        }
+      }
+    } catch (err) {
+      console.warn("KV retrieval for PD prompts:", err);
+    }
+
+    // Keep memory manageable (last 15 prompts)
+    if (previousPrompts.length > 15) {
+      previousPrompts = previousPrompts.slice(-15);
+    }
+
+    // Summarize user's prior focus
+    let memorySummary = "";
+    if (previousPrompts.length > 0) {
+      const summaryResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are summarizing key learning patterns and developmental focus areas from previous professional development prompts. Be concise and thematic.",
+          },
+          {
+            role: "user",
+            content: previousPrompts.join("\n\n"),
+          },
+        ],
+        temperature: 0.3,
+      });
+      memorySummary = summaryResponse.choices[0].message.content;
+    }
+
+    // Store current prompt for continued self-learning
+    await kvDatabase.set(`pdprompts:${Date.now()}`, { userEmail, prompt });
+
+    // Contextual keyword analysis
+    const keywordContexts = {
+      "adult learning": "Integrate andragogy principles—autonomy, experience-based learning, relevance, reflection.",
+      "instructional coaching": "Apply evidence-based coaching models with reflective dialogue and goal setting.",
+      "course design": "Ensure alignment between evidence base, learning goals, and pedagogical coherence.",
+      "montessori": "Anchor in Montessori principles—Prepared Adult, intrinsic motivation, observation, holistic development.",
+      "workshop": "Emphasize experiential, interactive learning that honors participants' prior experience.",
+      "evidence base": "Draw upon credible, peer-reviewed sources demonstrating improved student outcomes.",
+    };
+
+    let matchedContexts = Object.entries(keywordContexts)
+      .filter(([key]) => prompt.toLowerCase().includes(key))
+      .map(([_, context]) => context)
+      .join(" ");
+
+    if (!matchedContexts) {
+      matchedContexts = "Default to evidence-based, adult-learning-oriented, Montessori-consistent professional development guidance.";
+    }
+
+    // System prompt for PD Expert role
+    const systemPrompt = `
+You are a Professional Development Expert with 25–50 years of experience as an instructional coach, PD trainer, and facilitator.
+You specialize in Montessori education and adult learning.
+
+Your role:
+- Provide evidence-based, experience-grounded professional development advice.
+- Model coherence between learning goals, pedagogy, and content.
+- Reference reputable frameworks such as:
+  • Harvard's Instructional Moves (https://instructionalmoves.gse.harvard.edu/professional-development-facilitation-guide)
+  • Edutopia's PD facilitation strategies
+  • Adult learning theory (Knowles, Kolb)
+  • Global Partnership for Education on teacher training improvement.
+- Encourage reflective and self-directed learning among educators.
+- Maintain a Montessori-informed tone—calm, curious, observant, and empowering.
+- Use Australian educational context and terminology when relevant.
+
+Use the following structure where suitable:
+1️⃣ Summary of what is being asked
+2️⃣ Evidence-based insight or framework
+3️⃣ Suggested approach or structure
+4️⃣ Montessori connection
+5️⃣ Next steps or reflective prompt
+`;
+
+    // Generate expert response
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "assistant",
+          content: `Prior user focus summary (memory): ${memorySummary || "No prior history yet."}`,
+        },
+        {
+          role: "user",
+          content: `Prompt: ${prompt}\nContext cues: ${matchedContexts}`,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    const output = response.choices[0].message.content;
+
+    res.json({
+      success: true,
+      role: "PD Expert",
+      label: uiLabel,
+      output,
+    });
+  } catch (error) {
+    console.error('PD Expert error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.get("/analytics", async (req, res) => {
   try {
     const { value: keys } = await kvDatabase.list();
