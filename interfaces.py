@@ -2083,7 +2083,7 @@ def show_pd_expert_interface():
         with st.chat_message("assistant", avatar="assets/montessori-avatar.png"):
             st.markdown("**🧭 PD Expert**")
             
-            with st.spinner("Consulting expertise and memory..."):
+            with st.spinner("Consulting expertise and memory... (this may take 30-60 seconds for comprehensive responses)"):
                 import requests
                 
                 try:
@@ -2093,7 +2093,7 @@ def show_pd_expert_interface():
                             "userEmail": user_email,
                             "prompt": user_prompt
                         },
-                        timeout=60
+                        timeout=120  # Increased for comprehensive 8000-token responses
                     )
                     
                     if response.status_code == 200:
