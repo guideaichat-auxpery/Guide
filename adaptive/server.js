@@ -665,15 +665,20 @@ async function runAutoRefreshCycle() {
 // === PROFESSIONAL DEVELOPMENT EXPERT MODE ===
 app.post("/api/pd-expert", async (req, res) => {
   try {
+    console.log('🧭 PD Expert request received:', { userEmail: req.body.userEmail, promptLength: req.body.prompt?.length });
+    
     const { userEmail, prompt } = req.body;
 
     // Restrict to authorized email only
     if (userEmail !== "guideaichat@gmail.com") {
+      console.log('❌ Access denied for:', userEmail);
       return res.status(403).json({
         success: false,
         error: "Access denied. This function is restricted to the authorized account.",
       });
     }
+    
+    console.log('✅ Access granted, processing request...');
 
     const uiLabel = "🧭 PD Mode";
 
@@ -823,7 +828,10 @@ REQUIRED STRUCTURE (Use all sections with extensive detail):
 `;
 
     // Generate expert response with extended token limit for comprehensive detail
-    const response = await openai.chat.completions.create({
+    console.log('🤖 Calling OpenAI API with max_tokens: 8000...');
+    
+    // Add timeout wrapper
+    const apiCallPromise = openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
@@ -839,8 +847,17 @@ REQUIRED STRUCTURE (Use all sections with extensive detail):
       temperature: 0.7,
       max_tokens: 8000, // Maximum comprehensive detail for professional development coaching
     });
+    
+    // 90 second timeout for OpenAI API
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('OpenAI API timeout after 90 seconds')), 90000)
+    );
+    
+    const response = await Promise.race([apiCallPromise, timeoutPromise]);
 
+    console.log('✅ OpenAI API response received');
     const output = response.choices[0].message.content;
+    console.log(`📝 Response length: ${output.length} characters`);
 
     res.json({
       success: true,
