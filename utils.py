@@ -10,13 +10,69 @@ from PIL import Image
 import io
 import base64
 
-# ---- SCROLL TO TOP UTILITY ----
+# ---- SCROLL UTILITIES ----
 def scroll_to_top():
     """Scroll page to top when interface loads"""
     st.markdown(
         """
         <script>
-            window.parent.document.querySelector('section.main').scrollTo(0, 0);
+            window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'instant'});
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+
+def add_scroll_to_top_button():
+    """Add a floating scroll-to-top button at the bottom of the page"""
+    st.markdown(
+        """
+        <style>
+        .scroll-to-top-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+            background: linear-gradient(135deg, #8B7355, #A67B5B);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .scroll-to-top-btn:hover {
+            background: linear-gradient(135deg, #A67B5B, #B8956A);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        .scroll-to-top-btn:active {
+            transform: translateY(-1px);
+        }
+        </style>
+        <button class="scroll-to-top-btn" onclick="window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'smooth'});" title="Scroll to top">
+            ↑
+        </button>
+        """,
+        unsafe_allow_html=True
+    )
+
+def scroll_to_element(element_id):
+    """Scroll to a specific element by ID"""
+    st.markdown(
+        f"""
+        <script>
+            setTimeout(function() {{
+                var element = window.parent.document.getElementById('{element_id}');
+                if (element) {{
+                    element.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+                }}
+            }}, 100);
         </script>
         """,
         unsafe_allow_html=True
