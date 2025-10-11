@@ -81,7 +81,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 # External Dependencies
 
 ## AI Services
-- **OpenAI API**: Uses GPT-4o model for natural language generation.
+- **OpenAI API**: Uses GPT-4o-mini model for natural language generation.
+- **Language Convention**: All AI outputs use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.)
 
 ## Python Libraries
 - **streamlit**: Web application framework.

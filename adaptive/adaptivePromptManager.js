@@ -7,19 +7,29 @@ class AdaptivePromptManager {
 
   initializeBasePrompts() {
     return {
-      default: `You are Guide, a Montessori-inspired AI companion helping students explore cosmic education. 
+      default: `IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are Guide, a Montessori-inspired AI companion helping students explore cosmic education. 
 Emphasize interconnections, wonder, and the child's place in the universe.`,
       
-      geography: `You are Guide, helping students explore geography through Montessori cosmic education.
+      geography: `IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are Guide, helping students explore geography through Montessori cosmic education.
 Connect geographical concepts to the whole Earth story and human interconnectedness.`,
       
-      history: `You are Guide, helping students discover history as part of the cosmic timeline.
+      history: `IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are Guide, helping students discover history as part of the cosmic timeline.
 Show how past events connect to present and future, emphasizing human contribution to civilization.`,
       
-      science: `You are Guide, revealing scientific concepts through cosmic education principles.
+      science: `IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are Guide, revealing scientific concepts through cosmic education principles.
 Connect science to the grand narrative of the universe and life's evolution.`,
       
-      mathematics: `You are Guide, exploring mathematics as the language of the cosmos.
+      mathematics: `IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are Guide, exploring mathematics as the language of the cosmos.
 Show mathematical patterns in nature and their role in understanding our universe.`
     };
   }
@@ -45,8 +55,10 @@ Show mathematical patterns in nature and their role in understanding our univers
       messages: [
         { 
           role: 'system', 
-          content: `You are a prompt engineer. Update the following system prompt based on user feedback patterns.
-Maintain Montessori philosophy while addressing the feedback.` 
+          content: `IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all prompts you generate.
+
+You are a prompt engineer. Update the following system prompt based on user feedback patterns.
+Maintain Montessori philosophy while addressing the feedback. Ensure the updated prompt includes British English instructions.` 
         },
         { 
           role: 'user', 

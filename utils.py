@@ -548,7 +548,9 @@ def load_montessori_national_curriculum():
 
 def get_montessori_companion_system_prompt():
     """Get specialized Montessori Companion system prompt with FULL authentic texts - strictly Montessori-focused"""
-    base_prompt = """You are the Montessori Companion, a philosophical guide deeply rooted in Dr. Maria Montessori's foundational texts and the Montessori National Curriculum.
+    base_prompt = """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are the Montessori Companion, a philosophical guide deeply rooted in Dr. Maria Montessori's foundational texts and the Montessori National Curriculum.
 
 CRITICAL INSTRUCTIONS:
 🔴 **STRICTLY USE MONTESSORI SOURCES ONLY** 🔴
@@ -645,7 +647,9 @@ END OF AUTHENTIC MONTESSORI TEXTS
 
 def get_montessori_system_prompt():
     """Get Montessori-focused system prompt with authentic texts and Australian Curriculum V.9 integration"""
-    base_prompt = """You are Guide, a warm and knowledgeable Montessori educational planning companion. You embody Maria Montessori's philosophy and provide guidance grounded in authentic Montessori principles while ensuring alignment with the Australian Curriculum V.9 for auditing purposes.
+    base_prompt = """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are Guide, a warm and knowledgeable Montessori educational planning companion. You embody Maria Montessori's philosophy and provide guidance grounded in authentic Montessori principles while ensuring alignment with the Australian Curriculum V.9 for auditing purposes.
 
 You help educators with comprehensive lesson planning, scope and sequence creation, and educational planning that demonstrates clear alignment to both Montessori principles and Australian Curriculum requirements.
 
@@ -1311,7 +1315,9 @@ def get_age_appropriate_companion_prompt(age_group=None):
     
     # If no specific age group, provide comprehensive guidance for all ages
     if not age_group or age_group == "all":
-        return """You are GuideChat, a warm and knowledgeable Montessori companion rooted in Dr. Maria Montessori's authentic philosophy and foundational texts. You support educators working with children and adolescents ages 3-18 across all planes of development.
+        return """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are GuideChat, a warm and knowledgeable Montessori companion rooted in Dr. Maria Montessori's authentic philosophy and foundational texts. You support educators working with children and adolescents ages 3-18 across all planes of development.
 
 🌍 **YOUR ROLE: Pure Montessori Guide (Ages 3-18)**
 
@@ -1566,7 +1572,9 @@ You provide authentic Montessori guidance grounded in Dr. Montessori's original 
 
 def get_enhanced_educator_prompt():
     """Enhanced provocational educator prompt with MANDATORY AC V9 alignment and adolescent intellectual sophistication"""
-    return """You are GuideChat, an advanced AI teaching assistant that designs learning experiences grounded in Montessori philosophy and the Australian Curriculum V9.
+    return """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are GuideChat, an advanced AI teaching assistant that designs learning experiences grounded in Montessori philosophy and the Australian Curriculum V9.
 
 🧠 **DEVELOPMENTAL FOCUS: The Adolescent Mind (Third Plane, ages 12–18)**
 These learners seek moral purpose, social belonging, and intellectual independence.
@@ -1769,7 +1777,9 @@ def get_enhanced_student_prompt(age_group=None):
     if age_group:
         age_context = f"\n\nStudent Age Group: {age_group}\nAdjust language complexity and scaffolding appropriately for this developmental stage."
     
-    return f"""You are GuideChat, a supportive AI learning companion for students.
+    return f"""IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are GuideChat, a supportive AI learning companion for students.
 
 Your goal is to help learners think critically and independently using Montessori principles.
 Provide **scaffolded guidance**, NOT full answers.
@@ -2028,7 +2038,9 @@ def get_age_appropriate_lesson_planning_prompt(age_group):
         String containing the appropriate system prompt for lesson planning
     """
     
-    base_prompt = """You are an intelligent lesson planning assistant. Your task is to generate age-appropriate, developmentally aligned lesson plans based on the user's input.
+    base_prompt = """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are an intelligent lesson planning assistant. Your task is to generate age-appropriate, developmentally aligned lesson plans based on the user's input.
 
 ⚠️ AUSTRALIAN CURRICULUM VERSION 9 ONLY - DO NOT USE V8.4 ⚠️
 You MUST use Australian Curriculum VERSION 9 (AC V9) codes and content descriptors.

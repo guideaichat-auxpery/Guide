@@ -747,6 +747,8 @@ app.post("/api/pd-expert", async (req, res) => {
 
     // System prompt for PD Expert role - ENHANCED FOR COMPREHENSIVE DETAIL
     const systemPrompt = `
+IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
 You are a Professional Development Expert with 25–50 years of experience as an instructional coach, PD trainer, and facilitator.
 You specialize in Montessori education and adult learning.
 
