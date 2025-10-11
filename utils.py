@@ -2236,3 +2236,218 @@ NEVER reference V8.4 codes (AC codes without "9" like ACS6H01, ACE5LA03).
 """
     
     return base_prompt + age_content + closing_prompt
+
+
+def call_pd_expert(user_email: str, prompt: str, openai_client) -> dict:
+    """
+    Professional Development Expert Mode - Python implementation for production deployment.
+    Provides comprehensive PD coaching with self-learning memory and contextual analysis.
+    
+    Args:
+        user_email: Email of the user (must be guideaichat@gmail.com)
+        prompt: The PD question from the user
+        openai_client: Initialized OpenAI client
+        
+    Returns:
+        dict: {"success": bool, "output": str, "error": str (optional)}
+    """
+    import psycopg2
+    import os
+    from datetime import datetime, timedelta
+    
+    try:
+        # Access restriction
+        if user_email != "guideaichat@gmail.com":
+            return {
+                "success": False,
+                "error": "Access denied. This function is restricted to the authorized account."
+            }
+        
+        # Connect to database for memory retrieval
+        db_url = os.environ.get('DATABASE_URL')
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Self-learning memory - retrieve recent PD prompts (last 15)
+        cursor.execute("""
+            SELECT prompt, created_at 
+            FROM pd_expert_memory 
+            WHERE user_email = %s 
+            ORDER BY created_at DESC 
+            LIMIT 15
+        """, (user_email,))
+        
+        previous_prompts = [row[0] for row in cursor.fetchall()]
+        previous_prompts.reverse()  # Oldest to newest
+        
+        # Summarize user's prior focus if there's history
+        memory_summary = ""
+        if previous_prompts:
+            summary_response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are summarising key learning patterns and developmental focus areas from previous professional development prompts. Be concise and thematic."
+                    },
+                    {
+                        "role": "user",
+                        "content": "\n\n".join(previous_prompts)
+                    }
+                ],
+                temperature=0.3,
+                max_tokens=500
+            )
+            memory_summary = summary_response.choices[0].message.content
+        
+        # Store current prompt for continued self-learning
+        cursor.execute("""
+            INSERT INTO pd_expert_memory (user_email, prompt, created_at)
+            VALUES (%s, %s, %s)
+        """, (user_email, prompt, datetime.now()))
+        conn.commit()
+        
+        # Clean up old memory (keep last 30 days only)
+        cursor.execute("""
+            DELETE FROM pd_expert_memory 
+            WHERE user_email = %s AND created_at < %s
+        """, (user_email, datetime.now() - timedelta(days=30)))
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        # Contextual keyword analysis
+        keyword_contexts = {
+            "adult learning": "Integrate andragogy principles—autonomy, experience-based learning, relevance, reflection.",
+            "instructional coaching": "Apply evidence-based coaching models with reflective dialogue and goal setting.",
+            "course design": "Ensure alignment between evidence base, learning goals, and pedagogical coherence.",
+            "montessori": "Anchor in Montessori principles—Prepared Adult, intrinsic motivation, observation, holistic development.",
+            "workshop": "Emphasise experiential, interactive learning that honours participants' prior experience.",
+            "evidence base": "Draw upon credible, peer-reviewed sources demonstrating improved student outcomes."
+        }
+        
+        matched_contexts = []
+        for keyword, context in keyword_contexts.items():
+            if keyword in prompt.lower():
+                matched_contexts.append(context)
+        
+        context_guidance = " ".join(matched_contexts) if matched_contexts else \
+            "Default to evidence-based, adult-learning-oriented, Montessori-consistent professional development guidance."
+        
+        # Comprehensive system prompt
+        system_prompt = """
+IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are a Professional Development Expert with 25–50 years of experience as an instructional coach, PD trainer, and facilitator.
+You specialise in Montessori education and adult learning.
+
+CRITICAL: Provide COMPREHENSIVE, DETAILED, IN-DEPTH responses. This is professional development coaching - depth and thoroughness are essential.
+
+Your role:
+- Provide evidence-based, experience-grounded professional development advice with extensive detail
+- Model coherence between learning goals, pedagogy, and content with specific examples
+- Reference reputable frameworks with detailed explanations:
+  • Harvard's Instructional Moves (https://instructionalmoves.gse.harvard.edu/professional-development-facilitation-guide)
+  • Edutopia's PD facilitation strategies
+  • Adult learning theory (Knowles' andragogy, Kolb's experiential learning cycle)
+  • Wenger's Communities of Practice
+  • Schön's Reflective Practice
+  • Joyce & Showers' Coaching Models
+  • Global Partnership for Education on teacher training improvement
+- Encourage reflective and self-directed learning among educators with specific prompts
+- Maintain a Montessori-informed tone—calm, curious, observant, and empowering
+- Use Australian educational context and terminology when relevant
+- Provide multiple practical examples for each concept
+- Include specific activities, timelines, and implementation steps
+- Address potential challenges and how to overcome them
+- Offer variations for different contexts (school size, experience levels, etc.)
+
+REQUIRED STRUCTURE (Use all sections with extensive detail):
+
+1️⃣ **COMPREHENSIVE SUMMARY** (2-3 paragraphs)
+   - Reframe the question to show deep understanding
+   - Identify underlying needs and goals
+   - Connect to broader PD principles
+
+2️⃣ **EVIDENCE-BASED INSIGHTS & FRAMEWORKS** (3-5 paragraphs)
+   - Cite specific research and frameworks with explanations
+   - Provide context from adult learning theory
+   - Include relevant statistics or findings where applicable
+   - Explain WHY these frameworks matter for this specific situation
+   - Draw connections between multiple frameworks
+
+3️⃣ **DETAILED APPROACH & STRUCTURE** (4-6 paragraphs with bullet points)
+   - Step-by-step implementation guide
+   - Specific activities with timing (e.g., "15-minute paired reflection")
+   - Materials needed and preparation required
+   - Sample scripts or facilitation language
+   - Multiple variations for different contexts
+   - Anticipated challenges and solutions
+   - Assessment and feedback mechanisms
+
+4️⃣ **MONTESSORI CONNECTIONS** (2-3 paragraphs)
+   - Deep dive into Montessori philosophy relevance
+   - Specific quotes from Montessori texts where applicable
+   - How Prepared Adult principles apply
+   - Connection to cosmic education or other Montessori concepts
+   - Practical ways to honour Montessori values in this PD context
+
+5️⃣ **IMPLEMENTATION TIMELINE & NEXT STEPS** (detailed action plan)
+   - Immediate next steps (today/this week)
+   - Short-term actions (1-4 weeks)
+   - Medium-term development (1-3 months)
+   - Long-term sustainability strategies
+   - Specific reflective prompts for ongoing learning
+   - Resources for continued exploration (books, articles, websites)
+   - Metrics for measuring success
+
+6️⃣ **PRACTICAL EXAMPLES & SCENARIOS** (2-3 detailed examples)
+   - Real-world applications
+   - Sample dialogue or facilitator moves
+   - What it looks like in practice
+   - Variations for different settings
+
+**TONE & STYLE:**
+- Write as a wise, experienced mentor sharing hard-won insights
+- Balance theoretical grounding with practical, actionable advice
+- Use storytelling and concrete examples liberally
+- Acknowledge complexity while providing clarity
+- Encourage experimentation and reflection
+- Be warm, supportive, and empowering
+
+**LENGTH EXPECTATION:** Aim for 800-1500 words minimum. Comprehensive detail is valued over brevity.
+"""
+        
+        # Generate expert response with extended token limit
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "assistant",
+                    "content": f"Prior user focus summary (memory): {memory_summary or 'No prior history yet.'}"
+                },
+                {
+                    "role": "user",
+                    "content": f"Prompt: {prompt}\nContext cues: {context_guidance}"
+                }
+            ],
+            temperature=0.7,
+            max_tokens=6000,
+            timeout=120  # 2 minute timeout
+        )
+        
+        output = response.choices[0].message.content
+        
+        return {
+            "success": True,
+            "output": output,
+            "length": len(output)
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
