@@ -76,7 +76,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Accessibility**: Universal Design for Learning interface.
 - **Mathematics Hub**: Dedicated tools for cosmic math connections.
 - **Provocational Framework**: Design emphasizing adolescent sophistication, focusing on real Australian provocations, mature philosophical tone, and adherence to a 10-point checklist.
-- **Professional Development Expert Mode**: Restricted-access advanced PD coaching system for authorized educators with 25-50 years of simulated experience. Features self-learning memory (Replit KV storage), contextual keyword analysis, and comprehensive 6-section responses (Summary, Evidence-Based Insights, Detailed Approach, Montessori Connections, Implementation Timeline, Practical Examples). Includes Harvard Instructional Moves, Edutopia strategies, adult learning theory (Knowles, Kolb, Schön, Wenger), and Montessori-aligned coaching. 8000 token limit for 2000-3000+ word in-depth guidance. Access restricted to guideaichat@gmail.com.
+- **Professional Development Expert Mode**: Restricted-access advanced PD coaching system for authorized educators with 25-50 years of simulated experience. Features self-learning memory (Replit KV storage), contextual keyword analysis, and comprehensive 6-section responses (Summary, Evidence-Based Insights, Detailed Approach, Montessori Connections, Implementation Timeline, Practical Examples). Includes Harvard Instructional Moves, Edutopia strategies, adult learning theory (Knowles, Kolb, Schön, Wenger), and Montessori-aligned coaching. 6000 token limit for 800-1500+ word in-depth guidance with 120-second timeout for comprehensive responses. Access restricted to guideaichat@gmail.com.
 
 # External Dependencies
 

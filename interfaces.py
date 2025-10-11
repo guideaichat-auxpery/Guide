@@ -2087,20 +2087,14 @@ def show_pd_expert_interface():
                 import requests
                 
                 try:
-                    import traceback
-                    st.write("DEBUG: Sending request to PD Expert API...")  # Debug log
-                    st.write(f"DEBUG: Email: {user_email}, Prompt length: {len(user_prompt)}")  # Debug log
-                    
                     response = requests.post(
                         "http://localhost:3000/api/pd-expert",
                         json={
                             "userEmail": user_email,
                             "prompt": user_prompt
                         },
-                        timeout=120  # Increased for comprehensive 6000-token responses
+                        timeout=120  # Increased for comprehensive responses
                     )
-                    
-                    st.write(f"DEBUG: Response status code: {response.status_code}")  # Debug log
                     
                     if response.status_code == 200:
                         data = response.json()
@@ -2123,15 +2117,10 @@ def show_pd_expert_interface():
                         
                 except requests.exceptions.Timeout:
                     st.error("⏱️ Request timed out. Please try again.")
-                    st.write(f"DEBUG: Timeout after 120 seconds")
-                except requests.exceptions.ConnectionError as e:
+                except requests.exceptions.ConnectionError:
                     st.error("🔌 Unable to connect to PD Expert service. Please ensure the Adaptive Learning Server is running.")
-                    st.write(f"DEBUG: Connection error details: {str(e)}")
-                    st.write(f"DEBUG: Full traceback: {traceback.format_exc()}")
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-                    st.write(f"DEBUG: Exception type: {type(e).__name__}")
-                    st.write(f"DEBUG: Full traceback: {traceback.format_exc()}")
     
     # Clear conversation button
     if st.session_state.pd_messages:

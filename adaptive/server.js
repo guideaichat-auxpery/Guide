@@ -828,7 +828,7 @@ REQUIRED STRUCTURE (Use all sections with extensive detail):
 `;
 
     // Generate expert response with extended token limit for comprehensive detail
-    console.log('🤖 Calling OpenAI API with max_tokens: 8000...');
+    console.log('🤖 Calling OpenAI API with max_tokens: 6000...');
     
     // Add timeout wrapper
     const apiCallPromise = openai.chat.completions.create({
