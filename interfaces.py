@@ -2079,26 +2079,24 @@ def show_pd_expert_interface():
             "content": user_prompt
         })
         
-        # Call PD Expert API
+        # Call PD Expert API (Python implementation)
         with st.chat_message("assistant", avatar="assets/montessori-avatar.png"):
             st.markdown("**🧭 PD Expert**")
             
             with st.spinner("Consulting expertise and memory... (this may take 30-60 seconds for comprehensive responses)"):
-                import requests
+                from utils import call_pd_expert
+                from openai import OpenAI
+                import os
                 
                 try:
-                    response = requests.post(
-                        "http://localhost:3000/api/pd-expert",
-                        json={
-                            "userEmail": user_email,
-                            "prompt": user_prompt
-                        },
-                        timeout=120  # Increased for comprehensive responses
-                    )
+                    # Initialize OpenAI client
+                    openai_client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
                     
-                    if response.status_code == 200:
-                        data = response.json()
-                        expert_response = data.get('output', '')
+                    # Call PD Expert function
+                    result = call_pd_expert(user_email, user_prompt, openai_client)
+                    
+                    if result.get('success'):
+                        expert_response = result.get('output', '')
                         st.markdown(expert_response)
                         
                         st.session_state.pd_messages.append({
@@ -2108,17 +2106,13 @@ def show_pd_expert_interface():
                         
                         # Scroll to beginning of new response
                         scroll_to_latest_response()
-                    elif response.status_code == 403:
-                        st.error("🔒 Access denied. This feature is restricted.")
                     else:
-                        st.error(f"Error: {response.status_code}")
-                        error_data = response.json()
-                        st.error(error_data.get('error', 'Unknown error'))
+                        error_msg = result.get('error', 'Unknown error')
+                        if 'Access denied' in error_msg:
+                            st.error("🔒 Access denied. This feature is restricted.")
+                        else:
+                            st.error(f"Error: {error_msg}")
                         
-                except requests.exceptions.Timeout:
-                    st.error("⏱️ Request timed out. Please try again.")
-                except requests.exceptions.ConnectionError:
-                    st.error("🔌 Unable to connect to PD Expert service. Please ensure the Adaptive Learning Server is running.")
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
     
