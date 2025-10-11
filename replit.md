@@ -57,13 +57,23 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Core Components**: Manages self-updating AI prompts, semantic logging (Replit KV + PostgreSQL with OpenAI embeddings), feedback (Replit KV + PostgreSQL with emoji-based sentiment), trending keywords (Replit KV + PostgreSQL), and subject calibration.
 - **Database Tables**: `adaptive_interactions`, `adaptive_feedback`, `adaptive_prompts`, `adaptive_weights`, `trending_keywords`, `system_config`.
 - **Auto-Refresh System**: 72-hour cycle with hourly checks to dynamically update prompts based on feedback patterns, storing generated prompts in `system_config`.
-- **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, weight management, and trending topics.
+- **REST API**: Available at `http://localhost:3000/api` with endpoints for generation, feedback, analytics, weight management, and trending topics. **Note**: Development-only service for adaptive prompts; not required for production deployment.
 - **Self-Improvement**: System automatically updates prompts and adjusts weights based on student feedback patterns.
 
+## Professional Development Expert (Python)
+- **Architecture**: Python-based implementation integrated directly into Streamlit app (`utils.py`) for production compatibility.
+- **Implementation**: `call_pd_expert()` function eliminates inter-service dependencies by calling OpenAI API directly.
+- **Memory System**: PostgreSQL `pd_expert_memory` table stores conversation history with 30-day retention and automatic cleanup.
+- **Features**: Self-learning memory (summarizes prior focus), contextual keyword analysis, comprehensive 6-section responses (800-1500 words).
+- **Access Control**: Restricted to `guideaichat@gmail.com` only.
+- **Performance**: 6000 max_tokens, 120-second timeout, British English conventions.
+- **Production Ready**: No localhost dependencies, works in both development and published deployments.
+
 ## Data Management
-- **Persistence**: PostgreSQL for conversation history, educator analytics, student activities, great stories, planning notes, curriculum contexts, and adaptive learning data.
+- **Persistence**: PostgreSQL for conversation history, educator analytics, student activities, great stories, planning notes, curriculum contexts, adaptive learning data, and PD Expert memory.
 - **Session State**: In-memory storage for current session data.
 - **Export Capabilities**: Lesson plan export to PDF and DOCX using Montessori-themed templates.
+- **PD Expert Memory Table**: `pd_expert_memory` stores professional development prompts for self-learning memory system (user_email, prompt, created_at with 30-day retention).
 
 ## Core Features
 - **Dual Interface**: Teacher and student modes with features like lesson planning, curriculum alignment review, observation dashboards (educator), and AI tutor with file upload and anonymous tracking (student).
@@ -80,7 +90,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Accessibility**: Universal Design for Learning interface.
 - **Mathematics Hub**: Dedicated tools for cosmic math connections.
 - **Provocational Framework**: Design emphasizing adolescent sophistication, focusing on real Australian provocations, mature philosophical tone, and adherence to a 10-point checklist.
-- **Professional Development Expert Mode**: Restricted-access advanced PD coaching system for authorized educators with 25-50 years of simulated experience. Features self-learning memory (Replit KV storage), contextual keyword analysis, and comprehensive 6-section responses (Summary, Evidence-Based Insights, Detailed Approach, Montessori Connections, Implementation Timeline, Practical Examples). Includes Harvard Instructional Moves, Edutopia strategies, adult learning theory (Knowles, Kolb, Schön, Wenger), and Montessori-aligned coaching. 6000 token limit for 800-1500+ word in-depth guidance with 120-second timeout for comprehensive responses. **Access:** guideaichat@gmail.com (password: pdexpert123)
+- **Professional Development Expert Mode**: Restricted-access advanced PD coaching system for authorized educators with 25-50 years of simulated experience. **Production-ready Python implementation** with self-learning memory (PostgreSQL `pd_expert_memory` table), contextual keyword analysis, and comprehensive 6-section responses (Summary, Evidence-Based Insights, Detailed Approach, Montessori Connections, Implementation Timeline, Practical Examples). Includes Harvard Instructional Moves, Edutopia strategies, adult learning theory (Knowles, Kolb, Schön, Wenger), and Montessori-aligned coaching. 6000 token limit for 800-1500+ word in-depth guidance with 120-second timeout for comprehensive responses. Direct OpenAI API integration eliminates inter-service dependencies for reliable deployment. **Access:** guideaichat@gmail.com (password: pdexpert123)
 
 # External Dependencies
 
