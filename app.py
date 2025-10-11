@@ -156,7 +156,7 @@ else:
     show_user_info()
     
     # Navigation menu for authenticated users
-    if not st.session_state.get('is_student'):
+    if st.session_state.get('is_student') == False:
         # Educator interface
         col1, col2, col3 = st.columns(3)
         
