@@ -46,6 +46,9 @@ def login_page():
                             st.session_state.user_email = user.email
                             st.session_state.authenticated = True
                             st.session_state.is_student = False
+                            # Clear any existing auth_mode to ensure clean state
+                            if 'auth_mode' in st.session_state:
+                                del st.session_state['auth_mode']
                             st.success(f"Welcome back, {user.full_name}!")
                             st.rerun()
                         else:
@@ -80,6 +83,9 @@ def login_page():
                             st.session_state.age_group = student.age_group
                             st.session_state.authenticated = True
                             st.session_state.is_student = True
+                            # Clear any existing auth_mode to prevent educator features from showing
+                            if 'auth_mode' in st.session_state:
+                                del st.session_state['auth_mode']
                             st.success(f"Welcome back, {student.full_name}!")
                             st.rerun()
                         else:

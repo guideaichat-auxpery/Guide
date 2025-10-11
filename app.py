@@ -156,7 +156,10 @@ else:
     show_user_info()
     
     # Navigation menu for authenticated users
-    if st.session_state.get('is_student') == False:
+    # Explicitly check user type to ensure proper role-based UI
+    is_student = st.session_state.get('is_student', None)
+    
+    if is_student is False:
         # Educator interface
         col1, col2, col3 = st.columns(3)
         
@@ -209,8 +212,11 @@ else:
         # Default to lesson planning for educators
         if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
             st.session_state.auth_mode = 'lesson_planning'
+    elif is_student is True:
+        # Student interface - explicitly for students only
+        st.session_state.auth_mode = 'student_companion'
     else:
-        # Student interface
+        # Fallback for undefined state - treat as student for safety
         st.session_state.auth_mode = 'student_companion'
     
     # Display appropriate interface based on mode
