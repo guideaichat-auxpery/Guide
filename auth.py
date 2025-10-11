@@ -32,6 +32,9 @@ def login_page():
         with col2:
             if st.button("📧 Use Email/Password Instead", use_container_width=True):
                 st.session_state.skip_replit_auth = True
+                # Clear the logout flag so user can login normally
+                if 'explicitly_logged_out' in st.session_state:
+                    del st.session_state.explicitly_logged_out
                 st.rerun()
         
         if not st.session_state.get('skip_replit_auth'):
@@ -67,6 +70,9 @@ def login_page():
                             st.session_state.user_email = user.email
                             st.session_state.authenticated = True
                             st.session_state.is_student = False
+                            # Clear logout flag since user is now authenticated
+                            if 'explicitly_logged_out' in st.session_state:
+                                del st.session_state.explicitly_logged_out
                             st.success(f"Welcome back, {user.full_name}!")
                             st.rerun()
                         else:
@@ -101,6 +107,9 @@ def login_page():
                             st.session_state.age_group = student.age_group
                             st.session_state.authenticated = True
                             st.session_state.is_student = True
+                            # Clear logout flag since user is now authenticated
+                            if 'explicitly_logged_out' in st.session_state:
+                                del st.session_state.explicitly_logged_out
                             st.success(f"Welcome back, {student.full_name}!")
                             st.rerun()
                         else:
@@ -197,6 +206,9 @@ def signup_page():
                             st.session_state.user_email = user.email
                             st.session_state.authenticated = True
                             st.session_state.is_student = False
+                            # Clear logout flag since user is now authenticated
+                            if 'explicitly_logged_out' in st.session_state:
+                                del st.session_state.explicitly_logged_out
                             st.rerun()
                     finally:
                         if db:
@@ -280,12 +292,19 @@ def create_student_page():
 
 def logout():
     """Log out current user"""
+    # Check if logging out from Replit Auth - need to prevent auto re-login
+    was_replit_auth = st.session_state.get('replit_auth', False)
+    
     # Clear all authentication-related session state
     for key in ['user_id', 'user_type', 'user_name', 'user_email', 'username', 
                 'educator_id', 'age_group', 'authenticated', 'is_student',
-                'replit_auth', 'replit_username', 'replit_auth_checked', 'skip_replit_auth']:
+                'replit_auth', 'replit_username', 'replit_auth_checked']:
         if key in st.session_state:
             del st.session_state[key]
+    
+    # If logging out from Replit Auth, set flag to prevent auto re-login
+    if was_replit_auth:
+        st.session_state.explicitly_logged_out = True
     
     # Clear messages as well
     if 'messages' in st.session_state:

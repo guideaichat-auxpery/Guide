@@ -59,11 +59,14 @@ if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
 
 # Auto-authenticate with Replit Auth if available and not already authenticated
+# BUT only if user hasn't explicitly chosen to skip it or logged out
 if not st.session_state.authenticated and not st.session_state.get('replit_auth_checked'):
-    is_replit_auth, replit_info = check_replit_auth()
-    if is_replit_auth and replit_info and database_available:
-        # Attempt auto-authentication
-        authenticate_with_replit()
+    # Don't auto-login if user has explicitly skipped or logged out from Replit Auth
+    if not st.session_state.get('skip_replit_auth') and not st.session_state.get('explicitly_logged_out'):
+        is_replit_auth, replit_info = check_replit_auth()
+        if is_replit_auth and replit_info and database_available:
+            # Attempt auto-authentication
+            authenticate_with_replit()
     st.session_state.replit_auth_checked = True
 
 # Load Montessori Design System
