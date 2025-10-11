@@ -2,7 +2,6 @@ import streamlit as st
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface
-from replit_auth import check_replit_auth, authenticate_with_replit, show_replit_auth_status
 
 # Configure page
 st.set_page_config(
@@ -57,17 +56,6 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
-
-# Auto-authenticate with Replit Auth if available and not already authenticated
-# BUT only if user hasn't explicitly chosen to skip it or logged out
-if not st.session_state.authenticated and not st.session_state.get('replit_auth_checked'):
-    # Don't auto-login if user has explicitly skipped or logged out from Replit Auth
-    if not st.session_state.get('skip_replit_auth') and not st.session_state.get('explicitly_logged_out'):
-        is_replit_auth, replit_info = check_replit_auth()
-        if is_replit_auth and replit_info and database_available:
-            # Attempt auto-authentication
-            authenticate_with_replit()
-    st.session_state.replit_auth_checked = True
 
 # Load Montessori Design System
 def load_css(file_path):

@@ -27,9 +27,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 # System Architecture
 
 ## Authentication
-- **Replit Auth Integration**: Automatic authentication using Replit environment variables (REPLIT_USER, REPL_OWNER_ID). Auto-creates educator accounts for Replit users with format `{username}@replit.user`. Shows dedicated UI when running in Replit environment with seamless login experience.
-- **Traditional Auth**: Email/password authentication for educators and username/password for students with bcrypt hashing and session management.
-- **Privacy Compliant**: All authentication methods record user consent for data collection, overseas transfer, and privacy policy agreement.
+- Email/password authentication for educators and username/password for students with bcrypt hashing and session management.
+- Privacy compliant with consent tracking for data collection, overseas transfer, and privacy policy agreement.
 
 ## Frontend
 - **Framework**: Streamlit (wide layout) with dual-mode interface (educator and student) featuring chat, curriculum selector, file upload, and accessibility wizard.
