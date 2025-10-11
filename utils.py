@@ -2268,6 +2268,25 @@ def call_pd_expert(user_email: str, prompt: str, openai_client) -> dict:
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
+        # Create table if it doesn't exist (for both dev and production)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pd_expert_memory (
+                id SERIAL PRIMARY KEY,
+                user_email VARCHAR(255) NOT NULL,
+                prompt TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create indices if they don't exist
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_pd_memory_user_email ON pd_expert_memory(user_email)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_pd_memory_created_at ON pd_expert_memory(created_at)
+        """)
+        conn.commit()
+        
         # Self-learning memory - retrieve recent PD prompts (last 15)
         cursor.execute("""
             SELECT prompt, created_at 
