@@ -332,11 +332,16 @@ def get_student_activities(db, student_id: int, limit: int = 100):
     ).order_by(StudentActivity.created_at.desc()).limit(limit).all()
 
 def grant_educator_access(db, educator_id: int, student_id: int, granted_by: int):
-    """Grant an educator access to view a student's activities"""
+    """
+    Grant an educator access to view a student's activities.
+    Returns: (success: bool, error_message: str or None)
+    
+    Enforces institution-based sharing when enforcement is enabled.
+    """
     # Verify that granted_by is the primary educator of the student
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student or student.educator_id != granted_by:
-        return False
+        return (False, "You are not the primary educator of this student")
     
     # Check if educator exists and is active
     educator = db.query(User).filter(
@@ -345,7 +350,13 @@ def grant_educator_access(db, educator_id: int, student_id: int, granted_by: int
         User.is_active == True
     ).first()
     if not educator:
-        return False
+        return (False, "Educator not found or inactive")
+    
+    # Check institution enforcement
+    if is_institution_enforcement_on(db):
+        same_institution, institution_name = check_same_institution(db, granted_by, educator_id)
+        if not same_institution:
+            return (False, "You can only share students with educators from your institution")
     
     # Check if access already exists
     existing_access = db.query(EducatorStudentAccess).filter(
@@ -354,7 +365,7 @@ def grant_educator_access(db, educator_id: int, student_id: int, granted_by: int
     ).first()
     
     if existing_access:
-        return True  # Already granted
+        return (True, None)  # Already granted
     
     # Create new access record
     access = EducatorStudentAccess(
@@ -364,7 +375,7 @@ def grant_educator_access(db, educator_id: int, student_id: int, granted_by: int
     )
     db.add(access)
     db.commit()
-    return True
+    return (True, None)
 
 def revoke_educator_access(db, educator_id: int, student_id: int, revoked_by: int = None):
     """Revoke an educator's access to view a student's activities"""
@@ -1101,3 +1112,110 @@ def withdraw_parental_consent(db, student_id):
         print(f"Error withdrawing consent: {str(e)}")
         db.rollback()
         return False
+
+# === INSTITUTION-BASED SHARING WITH GRACE PERIOD ===
+
+def is_institution_enforcement_on(db):
+    """Check if institution enforcement is currently active"""
+    try:
+        from models import SystemConfig
+        config = db.query(SystemConfig).filter(
+            SystemConfig.config_key == 'enforce_institution'
+        ).first()
+        return config and config.config_value == 'true'
+    except Exception as e:
+        print(f"Error checking enforcement: {str(e)}")
+        return False
+
+def maybe_auto_enable_enforcement(db):
+    """
+    Automatically enable institution enforcement when ALL educators have set their institution.
+    This implements the grace period auto-switch feature.
+    """
+    try:
+        from models import SystemConfig
+        
+        # Count educators without institution
+        educators_without_institution = db.query(User).filter(
+            User.user_type == 'educator',
+            User.is_active == True,
+            db.or_(
+                User.institution_name.is_(None),
+                User.institution_name == ''
+            )
+        ).count()
+        
+        # If all educators have institution, auto-enable enforcement
+        if educators_without_institution == 0:
+            config = db.query(SystemConfig).filter(
+                SystemConfig.config_key == 'enforce_institution'
+            ).first()
+            
+            if config and config.config_value != 'true':
+                config.config_value = 'true'
+                config.updated_at = datetime.utcnow()
+                db.commit()
+                print("🚀 All educators have set their institution. Enforcement automatically enabled!")
+                return True
+        
+        return False
+    except Exception as e:
+        print(f"Error in auto-enable enforcement: {str(e)}")
+        db.rollback()
+        return False
+
+def update_educator_institution(db, educator_id: int, institution_name: str):
+    """
+    Update an educator's institution name and check for auto-enable enforcement.
+    Returns: (success: bool, auto_enabled: bool)
+    """
+    try:
+        educator = db.query(User).filter(
+            User.id == educator_id,
+            User.user_type == 'educator'
+        ).first()
+        
+        if not educator:
+            return (False, False)
+        
+        # Update institution name
+        educator.institution_name = institution_name.strip() if institution_name else None
+        db.commit()
+        
+        # Check if this triggers auto-enable
+        auto_enabled = maybe_auto_enable_enforcement(db)
+        
+        return (True, auto_enabled)
+    except Exception as e:
+        print(f"Error updating institution: {str(e)}")
+        db.rollback()
+        return (False, False)
+
+def check_same_institution(db, educator_id_1: int, educator_id_2: int):
+    """
+    Check if two educators are from the same institution.
+    Returns: (same_institution: bool, institution_name: str or None)
+    """
+    try:
+        educators = db.query(User).filter(
+            User.id.in_([educator_id_1, educator_id_2]),
+            User.user_type == 'educator'
+        ).all()
+        
+        if len(educators) != 2:
+            return (False, None)
+        
+        inst1 = educators[0].institution_name
+        inst2 = educators[1].institution_name
+        
+        # Both must have institution set
+        if not inst1 or not inst2:
+            return (False, None)
+        
+        # Compare case-insensitive
+        same = inst1.strip().lower() == inst2.strip().lower()
+        
+        return (same, inst1 if same else None)
+    except Exception as e:
+        print(f"Error checking institution: {str(e)}")
+        return (False, None)

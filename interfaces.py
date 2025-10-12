@@ -1024,11 +1024,12 @@ def show_student_dashboard_interface():
                         )
                         
                         if st.button("Grant Access"):
-                            if grant_educator_access(db, selected_educator.id, selected_student.id, educator_id):
+                            success, error_msg = grant_educator_access(db, selected_educator.id, selected_student.id, educator_id)
+                            if success:
                                 st.success(f"✅ Access granted to {selected_educator.full_name}")
                                 st.rerun()
                             else:
-                                st.error("Failed to grant access")
+                                st.error(f"❌ {error_msg or 'Failed to grant access'}")
                     
                     # Show current access list
                     access_list = get_student_access_educators(db, selected_student.id)
