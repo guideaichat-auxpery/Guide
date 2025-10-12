@@ -1178,24 +1178,31 @@ def update_educator_institution(db, educator_id: int, institution_name: str):
     Returns: (success: bool, auto_enabled: bool)
     """
     try:
+        print(f"DEBUG: Updating institution for educator_id={educator_id}, institution={institution_name}")
         educator = db.query(User).filter(
             User.id == educator_id,
             User.user_type == 'educator'
         ).first()
         
         if not educator:
+            print(f"ERROR: Educator not found with id={educator_id}")
             return (False, False)
         
         # Update institution name
         educator.institution_name = institution_name.strip() if institution_name else None
+        print(f"DEBUG: Set institution_name to {educator.institution_name}")
         db.commit()
+        print(f"DEBUG: Committed successfully")
         
         # Check if this triggers auto-enable
         auto_enabled = maybe_auto_enable_enforcement(db)
+        print(f"DEBUG: Auto-enabled={auto_enabled}")
         
         return (True, auto_enabled)
     except Exception as e:
-        print(f"Error updating institution: {str(e)}")
+        print(f"ERROR updating institution: {str(e)}")
+        import traceback
+        traceback.print_exc()
         db.rollback()
         return (False, False)
 
