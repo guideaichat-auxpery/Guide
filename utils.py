@@ -24,49 +24,41 @@ def scroll_to_top():
 
 def add_scroll_to_top_button():
     """Add a floating scroll-to-top button at the bottom of the page"""
-    import streamlit.components.v1 as components
+    # Simple approach: Use st.button with custom styling and st.rerun() to scroll to top
+    # Create unique key for this button instance
+    import time
+    button_key = f"scroll_top_{int(time.time() * 1000)}"
     
-    components.html(
+    # Position the button using columns (right-aligned)
+    col1, col2 = st.columns([0.9, 0.1])
+    with col2:
+        if st.button("⬆️ Top", key=button_key, help="Scroll to top", use_container_width=True):
+            # Trigger rerun which scrolls to top naturally
+            st.rerun()
+    
+    # Add CSS styling for this button
+    st.markdown(
         """
         <style>
-        .scroll-to-top-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 999;
-            background: linear-gradient(135deg, #8B7355, #A67B5B);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 56px;
-            height: 56px;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Style for scroll to top button */
+        div[data-testid="column"]:last-child button {
+            background: linear-gradient(135deg, #8B7355, #A67B5B) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+            transition: all 0.3s ease !important;
         }
-        .scroll-to-top-btn:hover {
-            background: linear-gradient(135deg, #A67B5B, #B8956A);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-        }
-        .scroll-to-top-btn:active {
-            transform: translateY(-1px);
+        div[data-testid="column"]:last-child button:hover {
+            background: linear-gradient(135deg, #A67B5B, #B8956A) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
         }
         </style>
-        <button class="scroll-to-top-btn" onclick="scrollToTop()" title="Scroll to top">
-            ↑
-        </button>
-        <script>
-        function scrollToTop() {
-            window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'smooth'});
-        }
-        </script>
         """,
-        height=0
+        unsafe_allow_html=True
     )
 
 def scroll_to_element(element_id):
