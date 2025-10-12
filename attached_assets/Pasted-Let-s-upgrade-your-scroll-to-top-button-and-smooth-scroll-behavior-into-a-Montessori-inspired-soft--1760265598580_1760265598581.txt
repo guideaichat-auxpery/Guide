@@ -1,0 +1,84 @@
+Let’s upgrade your scroll-to-top button and smooth scroll behavior into a Montessori-inspired, soft, subtle, and responsive version that looks elegant on both desktop and mobile.
+
+HTML (minimal, clean)
+<!-- Scroll to Top Button -->
+<button id="scrollTopBtn" aria-label="Scroll to top"></button>
+
+CSS (soft Montessori-inspired style, floating subtly)
+#scrollTopBtn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #f6e7d7, #dbe8e0); /* gentle sand to soft teal */
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #4b4b4b;
+    z-index: 999;
+}
+
+#scrollTopBtn.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#scrollTopBtn:hover {
+    background: linear-gradient(135deg, #eae0d1, #c7dbd6);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+JavaScript (enhanced smooth behavior, gentle animations)
+const scrollBtn = document.getElementById('scrollTopBtn');
+
+// Show/hide button smoothly
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 150) {
+        scrollBtn.classList.add('show');
+    } else {
+        scrollBtn.classList.remove('show');
+    }
+});
+
+// Scroll to top gently
+scrollBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Ensure page loads at top (login or refresh)
+window.addEventListener('load', () => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+});
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+});
+
+✅ Features of this version:
+
+Gentle, Montessori-inspired design: muted gradient, soft rounded shape, subtle shadows.
+
+Animated appearance: fades in and moves up gently when scrolling down.
+
+Responsive: button is small and unobtrusive on mobile screens.
+
+Smooth UX: scrolls gently to top or anchors without sudden jumps.
+
+Accessibility: has aria-label for screen readers.

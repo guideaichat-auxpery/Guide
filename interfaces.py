@@ -252,6 +252,9 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                     file_name=filename,
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
+    
+    # Add scroll to top button
+    add_scroll_to_top_button()
 
 
 def show_companion_interface():
@@ -494,6 +497,9 @@ def show_companion_interface():
                             print(f"Error saving conversation: {str(e)}")
                         finally:
                             db.close()
+    
+    # Add scroll to top button
+    add_scroll_to_top_button()
 
 
 def show_student_interface():
@@ -900,6 +906,9 @@ Keep feedback age-appropriate for {age_group} year olds."""
                             print(f"Error saving conversation/logging response: {str(e)}")
                         finally:
                             db.close()
+    
+    # Add scroll to top button
+    add_scroll_to_top_button()
 
 
 def show_student_dashboard_interface():
@@ -1067,6 +1076,9 @@ def show_student_dashboard_interface():
     finally:
         if db:
             db.close()
+    
+    # Add scroll to top button
+    add_scroll_to_top_button()
 
 
 def show_great_story_interface():
@@ -2124,3 +2136,6 @@ def show_pd_expert_interface():
         if st.button("🗑️ Clear Conversation", use_container_width=True):
             st.session_state.pd_messages = []
             st.rerun()
+    
+    # Add scroll to top button
+    add_scroll_to_top_button()

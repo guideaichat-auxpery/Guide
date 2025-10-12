@@ -23,54 +23,85 @@ def scroll_to_top():
     )
 
 def add_scroll_to_top_button():
-    """Add a floating scroll-to-top button at the bottom of the page"""
+    """Add a floating scroll-to-top button at the bottom of the page - Montessori-inspired design"""
     import streamlit.components.v1 as components
     
-    # Check if we should scroll to top on this render
-    if 'scroll_to_top_flag' in st.session_state and st.session_state.scroll_to_top_flag:
-        # Inject JavaScript to scroll to top using components.html
-        components.html(
-            """
-            <script>
-                window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'smooth'});
-            </script>
-            """,
-            height=0
-        )
-        # Clear the flag
-        st.session_state.scroll_to_top_flag = False
-    
-    # Position the button using columns (right-aligned)
-    col1, col2 = st.columns([0.9, 0.1])
-    with col2:
-        if st.button("⬆️ Top", key="scroll_to_top_btn", help="Scroll to top", use_container_width=True):
-            # Set flag and trigger rerun
-            st.session_state.scroll_to_top_flag = True
-            st.rerun()
-    
-    # Add CSS styling for this button
-    st.markdown(
+    components.html(
         """
+        <!-- Scroll to Top Button -->
+        <button id="scrollTopBtn" aria-label="Scroll to top"></button>
+        
         <style>
-        /* Style for scroll to top button */
-        div[data-testid="column"]:last-child button {
-            background: linear-gradient(135deg, #8B7355, #A67B5B) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 8px !important;
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-            transition: all 0.3s ease !important;
+        #scrollTopBtn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8B7355, #A67B5B);
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            z-index: 999;
         }
-        div[data-testid="column"]:last-child button:hover {
-            background: linear-gradient(135deg, #A67B5B, #B8956A) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        
+        #scrollTopBtn.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        #scrollTopBtn:hover {
+            background: linear-gradient(135deg, #A67B5B, #B8956A);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+        
+        #scrollTopBtn::before {
+            content: '⬆️';
         }
         </style>
+        
+        <script>
+        const scrollBtn = document.getElementById('scrollTopBtn');
+        const mainSection = window.parent.document.querySelector('section.stMain');
+        
+        // Show/hide button smoothly based on scroll position
+        if (mainSection) {
+            mainSection.addEventListener('scroll', () => {
+                if (mainSection.scrollTop > 150) {
+                    scrollBtn.classList.add('show');
+                } else {
+                    scrollBtn.classList.remove('show');
+                }
+            });
+        }
+        
+        // Scroll to top gently when clicked
+        scrollBtn.addEventListener('click', () => {
+            if (mainSection) {
+                mainSection.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        
+        // Ensure page loads at top
+        window.addEventListener('load', () => {
+            if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+            if (mainSection) {
+                mainSection.scrollTo({ top: 0, behavior: 'instant' });
+            }
+        });
+        </script>
         """,
-        unsafe_allow_html=True
+        height=0
     )
 
 def scroll_to_element(element_id):
