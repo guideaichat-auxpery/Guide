@@ -158,12 +158,11 @@ else:
     # Institution setting for educators (grace period auto-switch feature)
     is_student = st.session_state.get('is_student', None)
     if is_student is False:
-        from database import get_db, update_educator_institution, is_institution_enforcement_on
+        from database import get_db, update_educator_institution, is_institution_enforcement_on, User
         db = get_db()
         if db:
             try:
                 educator_id = st.session_state.get('user_id')
-                from models import User
                 educator = db.query(User).filter(User.id == educator_id).first()
                 
                 # Check if institution needs to be set

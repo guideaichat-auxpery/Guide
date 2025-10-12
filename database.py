@@ -65,6 +65,7 @@ class User(Base):
     user_type = Column(String, nullable=False)  # 'educator'
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
+    institution_name = Column(Text, nullable=True)  # For institution-based sharing
     
     # Relationship to students they manage (primary educator)
     students = relationship("Student", back_populates="educator")
@@ -195,6 +196,14 @@ class TrendingKeyword(Base):
     student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # Optional student tracking
     last_detected = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    config_key = Column(String, unique=True, nullable=False, index=True)
+    config_value = Column(Text, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def create_tables():
     """Create all database tables with error handling"""
@@ -1118,7 +1127,6 @@ def withdraw_parental_consent(db, student_id):
 def is_institution_enforcement_on(db):
     """Check if institution enforcement is currently active"""
     try:
-        from models import SystemConfig
         config = db.query(SystemConfig).filter(
             SystemConfig.config_key == 'enforce_institution'
         ).first()
@@ -1133,13 +1141,13 @@ def maybe_auto_enable_enforcement(db):
     This implements the grace period auto-switch feature.
     """
     try:
-        from models import SystemConfig
+        from sqlalchemy import or_
         
         # Count educators without institution
         educators_without_institution = db.query(User).filter(
             User.user_type == 'educator',
             User.is_active == True,
-            db.or_(
+            or_(
                 User.institution_name.is_(None),
                 User.institution_name == ''
             )
