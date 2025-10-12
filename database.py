@@ -1143,9 +1143,9 @@ def maybe_auto_enable_enforcement(db):
     try:
         from sqlalchemy import or_
         
-        # Count educators without institution
+        # Count educators/teachers without institution (both user types are educators)
         educators_without_institution = db.query(User).filter(
-            User.user_type == 'educator',
+            or_(User.user_type == 'educator', User.user_type == 'teacher'),
             User.is_active == True,
             or_(
                 User.institution_name.is_(None),
@@ -1180,8 +1180,7 @@ def update_educator_institution(db, educator_id: int, institution_name: str):
     try:
         print(f"DEBUG: Updating institution for educator_id={educator_id}, institution={institution_name}")
         educator = db.query(User).filter(
-            User.id == educator_id,
-            User.user_type == 'educator'
+            User.id == educator_id
         ).first()
         
         if not educator:
