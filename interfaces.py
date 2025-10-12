@@ -1011,10 +1011,23 @@ def show_student_dashboard_interface():
                     
                     # Grant access to other educators
                     st.markdown("#### Share Access")
-                    from database import get_all_educators, grant_educator_access, get_student_access_educators
+                    from database import get_all_educators, grant_educator_access, get_student_access_educators, is_institution_enforcement_on, User
                     
                     all_educators = get_all_educators(db)
-                    other_educators = [e for e in all_educators if e.id != educator_id]
+                    
+                    # Filter educators by institution if enforcement is ON
+                    enforcement_on = is_institution_enforcement_on(db)
+                    if enforcement_on:
+                        current_educator = db.query(User).filter(User.id == educator_id).first()
+                        if current_educator and current_educator.institution_name:
+                            # Only show educators from same institution
+                            other_educators = [e for e in all_educators 
+                                             if e.id != educator_id 
+                                             and e.institution_name == current_educator.institution_name]
+                        else:
+                            other_educators = [e for e in all_educators if e.id != educator_id]
+                    else:
+                        other_educators = [e for e in all_educators if e.id != educator_id]
                     
                     if other_educators:
                         selected_educator = st.selectbox(
