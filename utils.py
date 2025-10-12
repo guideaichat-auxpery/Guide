@@ -24,7 +24,9 @@ def scroll_to_top():
 
 def add_scroll_to_top_button():
     """Add a floating scroll-to-top button at the bottom of the page"""
-    st.markdown(
+    import streamlit.components.v1 as components
+    
+    components.html(
         """
         <style>
         .scroll-to-top-btn {
@@ -55,11 +57,16 @@ def add_scroll_to_top_button():
             transform: translateY(-1px);
         }
         </style>
-        <button class="scroll-to-top-btn" onclick="window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'smooth'});" title="Scroll to top">
+        <button class="scroll-to-top-btn" onclick="scrollToTop()" title="Scroll to top">
             ↑
         </button>
+        <script>
+        function scrollToTop() {
+            window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'smooth'});
+        }
+        </script>
         """,
-        unsafe_allow_html=True
+        height=0
     )
 
 def scroll_to_element(element_id):
