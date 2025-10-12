@@ -203,6 +203,11 @@ else:
     
     if is_student is False:
         # Educator interface
+        
+        # Default to lesson planning for educators (set this FIRST before checking current mode)
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
+            st.session_state.auth_mode = 'lesson_planning'
+        
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -252,10 +257,6 @@ else:
                 if st.button("⚙️ Account", use_container_width=True):
                     st.session_state.auth_mode = "account_deletion"
                     st.rerun()
-        
-        # Default to lesson planning for educators
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
-            st.session_state.auth_mode = 'lesson_planning'
     elif is_student is True:
         # Student interface - explicitly for students only
         st.session_state.auth_mode = 'student_companion'
