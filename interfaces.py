@@ -65,11 +65,10 @@ def show_lesson_planning_interface():
     # Planning type selector
     planning_type = st.selectbox(
         "Planning Type:",
-        ["lesson_plan", "scope_sequence", "curriculum_alignment", "assessment_rubric"],
+        ["lesson_plan", "scope_sequence", "assessment_rubric"],
         format_func=lambda x: {
-            "lesson_plan": "Individual Lesson Plan",
+            "lesson_plan": "Lesson Planning",
             "scope_sequence": "Scope & Sequence Creation",
-            "curriculum_alignment": "Curriculum Alignment Review",
             "assessment_rubric": "Assessment Rubric"
         }[x]
     )
@@ -80,69 +79,6 @@ def show_lesson_planning_interface():
         avatar = ai_avatar if message["role"] == "assistant" else None
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
-    
-    # File uploader for curriculum alignment review
-    if planning_type == "curriculum_alignment":
-        st.markdown("#### 📄 Upload Documents for Curriculum Alignment Review")
-        uploaded_files = st.file_uploader(
-            "Upload your lesson plans, unit plans, or teaching documents for curriculum alignment analysis",
-            type=['txt', 'pdf', 'docx'],
-            accept_multiple_files=True,
-            help="Upload documents and Guide will analyze them against the Australian Curriculum V9"
-        )
-        
-        if uploaded_files and st.button("Analyze Documents for Curriculum Alignment", use_container_width=True):
-            with st.spinner("Analyzing documents for Australian Curriculum V9 alignment..."):
-                # Process uploaded documents
-                all_content = []
-                for uploaded_file in uploaded_files:
-                    content = ""
-                    if uploaded_file.type == "application/pdf":
-                        pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_file.read()))
-                        for page in pdf_reader.pages:
-                            content += page.extract_text()
-                    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                        doc = Document(io.BytesIO(uploaded_file.read()))
-                        content = "\n".join([para.text for para in doc.paragraphs])
-                    else:  # txt
-                        content = uploaded_file.read().decode("utf-8")
-                    
-                    all_content.append(f"--- Content from {uploaded_file.name} ---\n{content}\n")
-                
-                combined_content = "\n\n".join(all_content)
-                
-                # Create alignment review prompt
-                review_prompt = f"""Please analyze the following teaching documents for alignment with the Australian Curriculum V9.
-
-Selected Subjects: {', '.join(subjects) if subjects else 'Not specified'}
-Age Group: {age_group}
-
-Document Content:
-{combined_content[:15000]}  # Limit content to avoid token limits
-
-Please provide:
-1. Identified Australian Curriculum V9 content descriptors (with AC9 codes)
-2. Alignment strengths
-3. Gaps or areas for improvement
-4. Montessori connection opportunities
-5. Recommendations for enhancing curriculum alignment"""
-
-                # Get AI response for alignment review
-                review_results = call_openai_api(
-                    [{"role": "user", "content": review_prompt}],
-                    subject=subjects[0] if subjects else None,
-                    year_level=year_levels[0] if year_levels else None,
-                    curriculum_type="AC_V9"
-                )
-                
-                if review_results:
-                    st.session_state.planning_messages.append({
-                        "role": "assistant",
-                        "content": review_results
-                    })
-                    st.rerun()
-        
-        st.markdown("---")
     
     # Chat input for planning questions
     if prompt := st.chat_input("Ask your planning question..."):
@@ -160,11 +96,9 @@ Please provide:
             with st.spinner("Planning your lesson..."):
                 # Construct system prompt based on planning type
                 if planning_type == "lesson_plan":
-                    system_context = "You are creating an individual lesson plan with Montessori principles and Australian Curriculum V9 alignment."
+                    system_context = "You are creating a lesson plan with Montessori principles and Australian Curriculum V9 alignment."
                 elif planning_type == "scope_sequence":
                     system_context = "You are developing a scope and sequence document that maps learning across time, integrating Montessori principles with Australian Curriculum V9."
-                elif planning_type == "curriculum_alignment":
-                    system_context = "You are analyzing curriculum alignment with Australian Curriculum V9 standards and Montessori principles."
                 else:  # assessment_rubric
                     system_context = """You are creating an assessment rubric that balances Montessori observational assessment with Australian Curriculum V9 achievement standards.
 
