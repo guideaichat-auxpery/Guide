@@ -155,9 +155,52 @@ else:
     # Authenticated user interface
     show_user_info()
     
+    # Institution setting for educators (grace period auto-switch feature)
+    is_student = st.session_state.get('is_student', None)
+    if is_student is False:
+        from database import get_db, update_educator_institution, is_institution_enforcement_on
+        db = get_db()
+        if db:
+            try:
+                educator_id = st.session_state.get('user_id')
+                from models import User
+                educator = db.query(User).filter(User.id == educator_id).first()
+                
+                # Check if institution needs to be set
+                if not educator.institution_name or educator.institution_name.strip() == '':
+                    st.warning("⚠️ **Action Required:** Please set your institution name to enable student sharing.")
+                    
+                    with st.form("institution_form"):
+                        institution_name = st.text_input(
+                            "Institution Name:",
+                            placeholder="e.g., Melbourne Montessori School",
+                            help="This enables secure student sharing with educators from your institution"
+                        )
+                        submitted = st.form_submit_button("Set Institution")
+                        
+                        if submitted and institution_name:
+                            success, auto_enabled = update_educator_institution(db, educator_id, institution_name)
+                            if success:
+                                if auto_enabled:
+                                    st.success("✅ Institution set! 🚀 All educators now have institutions - enforcement automatically enabled!")
+                                else:
+                                    st.success(f"✅ Institution set to: {institution_name}")
+                                st.rerun()
+                            else:
+                                st.error("Failed to update institution")
+                else:
+                    # Show enforcement status and institution
+                    enforcement_on = is_institution_enforcement_on(db)
+                    status_icon = "🔒" if enforcement_on else "⏳"
+                    status_text = "Active" if enforcement_on else "Grace Period"
+                    st.info(f"{status_icon} **Institution:** {educator.institution_name} | **Sharing Enforcement:** {status_text}")
+            except Exception as e:
+                print(f"Institution check error: {str(e)}")
+            finally:
+                db.close()
+    
     # Navigation menu for authenticated users
     # Explicitly check user type to ensure proper role-based UI
-    is_student = st.session_state.get('is_student', None)
     
     if is_student is False:
         # Educator interface
