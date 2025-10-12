@@ -1,0 +1,119 @@
+// --- GRACE PERIOD AUTO SWITCH ---
+
+import express from "express";
+import bodyParser from "body-parser";
+import pkg from "pg";
+const { Pool } = pkg;
+
+const app = express();
+app.use(bodyParser.json());
+
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+// --- 1. Setup DB columns and config table ---
+(async () => {
+  await db.query(`
+    ALTER TABLE educators ADD COLUMN IF NOT EXISTS institution_name TEXT;
+    CREATE TABLE IF NOT EXISTS system_config (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+  `);
+  // ensure flag exists
+  const res = await db.query(
+    `SELECT * FROM system_config WHERE key='enforce_institution'`
+  );
+  if (res.rows.length === 0) {
+    await db.query(
+      `INSERT INTO system_config (key, value) VALUES ('enforce_institution','false')`
+    );
+    console.log("✅ Grace period started (enforce_institution = false)");
+  }
+})();
+
+// --- Helper: get config flag ---
+async function isEnforcementOn() {
+  const { rows } = await db.query(
+    `SELECT value FROM system_config WHERE key='enforce_institution'`
+  );
+  return rows[0]?.value === "true";
+}
+
+// --- Helper: auto flip flag if all have institution ---
+async function maybeFlipSwitch() {
+  const { rows } = await db.query(
+    `SELECT COUNT(*) FROM educators WHERE institution_name IS NULL OR TRIM(institution_name)=''`
+  );
+  if (parseInt(rows[0].count) === 0) {
+    await db.query(
+      `UPDATE system_config SET value='true' WHERE key='enforce_institution'`
+    );
+    console.log("🚀 All educators set. Enforcement turned ON automatically.");
+  }
+}
+
+// --- Update institution route (users fill at next login) ---
+app.post("/update-institution", async (req, res) => {
+  const { educatorId, institution_name } = req.body;
+  try {
+    await db.query(
+      `UPDATE educators SET institution_name=$1 WHERE id=$2`,
+      [institution_name?.trim() || null, educatorId]
+    );
+    await maybeFlipSwitch();
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Update failed" });
+  }
+});
+
+// --- Share student route ---
+app.post("/share-student", async (req, res) => {
+  const { fromEducatorId, toEducatorId, studentId } = req.body;
+  try {
+    const enforcement = await isEnforcementOn();
+
+    const { rows: educators } = await db.query(
+      `SELECT id, institution_name FROM educators WHERE id = ANY($1::int[])`,
+      [[fromEducatorId, toEducatorId]]
+    );
+    if (educators.length !== 2)
+      return res.status(400).json({ error: "Educator(s) not found" });
+
+    const [from, to] = educators;
+
+    // Skip enforcement if grace period
+    if (enforcement) {
+      const sameInstitution =
+        from.institution_name &&
+        to.institution_name &&
+        from.institution_name.trim().toLowerCase() ===
+          to.institution_name.trim().toLowerCase();
+
+      if (!sameInstitution) {
+        return res.status(403).json({
+          error:
+            "You can only share students with educators from your institution.",
+        });
+      }
+    }
+
+    // Continue with your existing share logic
+    await db.query(
+      `INSERT INTO student_shares (student_id, from_educator_id, to_educator_id)
+       VALUES ($1,$2,$3)`,
+      [studentId, fromEducatorId, toEducatorId]
+    );
+
+    res.json({ success: true, message: "Student shared successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Share failed" });
+  }
+});
+
+app.listen(3000, () => console.log("✅ Server with auto-switch grace mode"));
