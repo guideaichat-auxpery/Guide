@@ -1297,10 +1297,6 @@ def show_planning_notes_interface():
                         st.session_state.note_title = selected_note.title
                         st.session_state.note_content = selected_note.content
                         st.session_state.note_materials = selected_note.materials or ""
-                        try:
-                            st.session_state.note_chapters = json.loads(selected_note.chapters) if selected_note.chapters else []
-                        except:
-                            st.session_state.note_chapters = []
                         
                         # Optionally display images
                         if hasattr(selected_note, 'image_data') and selected_note.image_data:
@@ -1315,7 +1311,6 @@ def show_planning_notes_interface():
                     st.session_state.note_title = ""
                     st.session_state.note_content = ""
                     st.session_state.note_materials = ""
-                    st.session_state.note_chapters = []
             else:
                 st.info("No existing notes. Create your first note below!")
         
@@ -1325,34 +1320,12 @@ def show_planning_notes_interface():
                 st.session_state.note_title = ""
                 st.session_state.note_content = ""
                 st.session_state.note_materials = ""
-                st.session_state.note_chapters = []
                 st.rerun()
         
         st.markdown("---")
         
         # Note editor
         title = st.text_input("Note Title:", value=st.session_state.get('note_title', ''), placeholder="Enter note title...")
-        
-        # Chapter organization
-        st.markdown("#### 📑 Organize by Chapters")
-        chapters = st.session_state.get('note_chapters', [])
-        
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            new_chapter = st.text_input("Add Chapter:", placeholder="e.g., Week 1, Introduction, Materials List")
-        with col2:
-            if st.button("➕ Add", use_container_width=True):
-                if new_chapter:
-                    chapters.append(new_chapter)
-                    st.session_state.note_chapters = chapters
-                    st.rerun()
-        
-        if chapters:
-            selected_chapter = st.selectbox("Current Chapter:", chapters)
-            if st.button("🗑️ Remove Chapter"):
-                chapters.remove(selected_chapter)
-                st.session_state.note_chapters = chapters
-                st.rerun()
         
         # Note content
         content = st.text_area(
@@ -1387,8 +1360,6 @@ def show_planning_notes_interface():
                         if uploaded_image:
                             image_data = uploaded_image.read()
                         
-                        chapters_json = json.dumps(chapters) if chapters else None
-                        
                         if st.session_state.get('active_note_id'):
                             # Update existing note
                             update_planning_note(
@@ -1396,7 +1367,6 @@ def show_planning_notes_interface():
                                 st.session_state.active_note_id,
                                 title=title, 
                                 content=content,
-                                chapters=chapters_json,
                                 images=image_data,
                                 materials=materials
                             )
@@ -1408,7 +1378,6 @@ def show_planning_notes_interface():
                                 educator_id, 
                                 title, 
                                 content,
-                                chapters=chapters_json,
                                 images=image_data,
                                 materials=materials
                             )
@@ -1442,15 +1411,6 @@ def show_planning_notes_interface():
                                 if note.materials:
                                     st.markdown("**Materials:**")
                                     st.markdown(note.materials)
-                                
-                                if note.chapters:
-                                    try:
-                                        chapters_list = json.loads(note.chapters)
-                                        st.markdown("**Chapters:**")
-                                        for ch in chapters_list:
-                                            st.markdown(f"- {ch}")
-                                    except:
-                                        pass
                                 
                                 col1, col2 = st.columns(2)
                                 with col1:

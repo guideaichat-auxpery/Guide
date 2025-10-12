@@ -76,14 +76,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **PD Expert Memory Table**: `pd_expert_memory` stores professional development prompts for self-learning memory system (user_email, prompt, created_at with 30-day retention).
 
 ## Core Features
-- **Dual Interface**: Teacher and student modes with features like lesson planning, curriculum alignment review, observation dashboards (educator), and AI tutor with file upload and anonymous tracking (student).
+- **Dual Interface**: Teacher and student modes with features like lesson planning, observation dashboards (educator), and AI tutor with file upload and anonymous tracking (student).
 - **Curriculum Integration**: Incorporates Australian Curriculum V9 and Montessori National Curriculum (2011), with AI responses rooted in Montessori's Cosmic Education.
 - **Age-to-Year-Level Mapping**: Automatic translation of age groups to AC year levels with visual display.
 - **Comprehensive Subject Coverage**: Age-appropriate multiselect subject selector for various subjects across different year levels.
 - **V9 Enforcement**: Explicit Australian Curriculum VERSION 9 enforcement (all codes must start with "AC9").
 - **Age-Appropriate Outputs**: Mandatory cognitive development matching for Foundation-Year 3, Years 4-6, and Years 7-9.
 - **Pure Montessori Companion**: Authentic Montessori philosophical companion with age-specific guidance (3-6, 6-9, 9-12, 12-15) or comprehensive all-ages support. Rooted in Dr. Montessori's foundational texts, providing teacher training, philosophical guidance, and practical implementation across all developmental planes WITHOUT curriculum alignment or government standards.
-- **AI-Powered Tools**: Includes Great Story Creator (branching narratives), Planning Notes Workspace, Educator Observation Dashboard, Lesson Planning Assistant, Curriculum Alignment Review (document analysis with keyword recognition), Big Picture Curriculum Mapping, and Student Work Analysis.
+- **AI-Powered Tools**: Includes Great Story Creator (branching narratives), Planning Notes Workspace (with materials list and image attachments), Educator Observation Dashboard, Lesson Planning Assistant (with three modes: Lesson Planning, Scope & Sequence Creation, and Assessment Rubric), Big Picture Curriculum Mapping, and Student Work Analysis.
 - **Assessment & Tracking**: Advanced rubric generator, holistic student progress tracking, CEC competency visualization, asset-based assessment, and learner profile generation.
 - **Portfolio System**: Creation and management of student portfolios.
 - **Collaboration**: Team Collaboration Hub for shared resources.
