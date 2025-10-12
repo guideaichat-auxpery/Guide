@@ -172,7 +172,7 @@ else:
                     with st.form("institution_form"):
                         institution_name = st.text_input(
                             "Institution Name:",
-                            placeholder="e.g., Melbourne Montessori School",
+                            placeholder="for example Montessori School",
                             help="This enables secure student sharing with educators from your institution"
                         )
                         submitted = st.form_submit_button("Set Institution")
