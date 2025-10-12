@@ -24,16 +24,28 @@ def scroll_to_top():
 
 def add_scroll_to_top_button():
     """Add a floating scroll-to-top button at the bottom of the page"""
-    # Simple approach: Use st.button with custom styling and st.rerun() to scroll to top
-    # Create unique key for this button instance
-    import time
-    button_key = f"scroll_top_{int(time.time() * 1000)}"
+    import streamlit.components.v1 as components
+    
+    # Check if we should scroll to top on this render
+    if 'scroll_to_top_flag' in st.session_state and st.session_state.scroll_to_top_flag:
+        # Inject JavaScript to scroll to top using components.html
+        components.html(
+            """
+            <script>
+                window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'smooth'});
+            </script>
+            """,
+            height=0
+        )
+        # Clear the flag
+        st.session_state.scroll_to_top_flag = False
     
     # Position the button using columns (right-aligned)
     col1, col2 = st.columns([0.9, 0.1])
     with col2:
-        if st.button("⬆️ Top", key=button_key, help="Scroll to top", use_container_width=True):
-            # Trigger rerun which scrolls to top naturally
+        if st.button("⬆️ Top", key="scroll_to_top_btn", help="Scroll to top", use_container_width=True):
+            # Set flag and trigger rerun
+            st.session_state.scroll_to_top_flag = True
             st.rerun()
     
     # Add CSS styling for this button
