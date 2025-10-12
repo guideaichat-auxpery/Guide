@@ -388,8 +388,10 @@ def revoke_educator_access(db, educator_id: int, student_id: int, revoked_by: in
 
 def get_educator_accessible_students(db, educator_id: int):
     """Get all students that an educator has access to view"""
-    # Get students where educator is primary educator
-    owned_students = db.query(Student).filter(Student.educator_id == educator_id).all()
+    from sqlalchemy.orm import joinedload
+    
+    # Get students where educator is primary educator (eagerly load educator relationship)
+    owned_students = db.query(Student).options(joinedload(Student.educator)).filter(Student.educator_id == educator_id).all()
     
     # Get students where educator has granted access
     accessible_student_ids = db.query(EducatorStudentAccess.student_id).filter(
@@ -399,7 +401,8 @@ def get_educator_accessible_students(db, educator_id: int):
     accessible_students = []
     if accessible_student_ids:
         student_ids = [row[0] for row in accessible_student_ids]
-        accessible_students = db.query(Student).filter(Student.id.in_(student_ids)).all()
+        # Eagerly load educator relationship for shared students
+        accessible_students = db.query(Student).options(joinedload(Student.educator)).filter(Student.id.in_(student_ids)).all()
     
     # Combine and deduplicate
     all_students = list(owned_students)
