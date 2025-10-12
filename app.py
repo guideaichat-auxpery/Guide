@@ -155,6 +155,13 @@ else:
     # Authenticated user interface
     show_user_info()
     
+    # Auto-scroll to main content on login
+    st.markdown("""
+        <script>
+            window.scrollTo({top: 200, behavior: 'smooth'});
+        </script>
+    """, unsafe_allow_html=True)
+    
     # Institution setting for educators (grace period auto-switch feature)
     is_student = st.session_state.get('is_student', None)
     if is_student is False:
