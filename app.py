@@ -239,17 +239,19 @@ else:
                 st.session_state.auth_mode = "pd_expert"
                 st.rerun()
         
-        # Privacy & Settings row
-        st.markdown("---")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📥 My Data", use_container_width=True):
-                st.session_state.auth_mode = "data_access"
-                st.rerun()
-        with col2:
-            if st.button("⚙️ Account", use_container_width=True):
-                st.session_state.auth_mode = "account_deletion"
-                st.rerun()
+        # Privacy & Settings row (only show on home/lesson planning page)
+        current_mode = st.session_state.get('auth_mode', 'lesson_planning')
+        if current_mode == 'lesson_planning':
+            st.markdown("---")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📥 My Data", use_container_width=True):
+                    st.session_state.auth_mode = "data_access"
+                    st.rerun()
+            with col2:
+                if st.button("⚙️ Account", use_container_width=True):
+                    st.session_state.auth_mode = "account_deletion"
+                    st.rerun()
         
         # Default to lesson planning for educators
         if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
