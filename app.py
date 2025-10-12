@@ -156,11 +156,14 @@ else:
     show_user_info()
     
     # Auto-scroll to main content on login
-    st.markdown("""
+    import streamlit.components.v1 as components
+    components.html("""
         <script>
-            window.scrollTo({top: 200, behavior: 'smooth'});
+            setTimeout(function() {
+                window.parent.scrollTo({top: 200, behavior: 'smooth'});
+            }, 100);
         </script>
-    """, unsafe_allow_html=True)
+    """, height=0)
     
     # Institution setting for educators (grace period auto-switch feature)
     is_student = st.session_state.get('is_student', None)
