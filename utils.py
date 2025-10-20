@@ -535,6 +535,72 @@ def get_openai_client():
 
 client = get_openai_client()
 
+# ---- OPENAI API RETRY LOGIC WITH EXPONENTIAL BACKOFF ----
+import time
+from functools import wraps
+
+def retry_with_exponential_backoff(
+    max_retries=5,
+    initial_delay=1.0,
+    exponential_base=2.0,
+    max_delay=32.0
+):
+    """
+    Decorator for OpenAI API calls with exponential backoff retry logic.
+    
+    Handles:
+    - Rate limit errors (429)
+    - Timeout errors
+    - API errors (500, 502, 503)
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        initial_delay: Initial delay in seconds (default: 1s)
+        exponential_base: Base for exponential backoff (default: 2x)
+        max_delay: Maximum delay between retries (default: 32s)
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            retries = 0
+            delay = initial_delay
+            
+            while retries <= max_retries:
+                try:
+                    return func(*args, **kwargs)
+                
+                except Exception as e:
+                    error_str = str(e).lower()
+                    
+                    # Check if error is retryable
+                    is_rate_limit = 'rate_limit' in error_str or '429' in error_str
+                    is_timeout = 'timeout' in error_str or 'timed out' in error_str
+                    is_server_error = any(code in error_str for code in ['500', '502', '503', 'internal server'])
+                    
+                    if retries >= max_retries or not (is_rate_limit or is_timeout or is_server_error):
+                        # Non-retryable error or max retries reached
+                        print(f"OpenAI API error (non-retryable or max retries): {e}")
+                        raise
+                    
+                    # Calculate backoff delay
+                    wait_time = min(delay, max_delay)
+                    
+                    # Log retry attempt
+                    print(f"⚠️ OpenAI API error (attempt {retries + 1}/{max_retries}): {type(e).__name__}")
+                    print(f"   Retrying in {wait_time:.1f}s...")
+                    
+                    time.sleep(wait_time)
+                    
+                    # Exponential backoff
+                    delay *= exponential_base
+                    retries += 1
+            
+            # Should never reach here, but just in case
+            raise Exception(f"Max retries ({max_retries}) exceeded")
+        
+        return wrapper
+    return decorator
+
 # Load Montessori texts
 @st.cache_data
 def load_montessori_own_handbook():
@@ -942,15 +1008,19 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         elif is_student:
             temperature = 0.6  # Balanced - Engaging but accurate for student learning
         
-        # Make API call with enhanced parameters
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=api_messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            presence_penalty=0.3,  # Encourage diverse responses
-            frequency_penalty=0.2  # Reduce repetition
-        )
+        # Make API call with retry logic and enhanced parameters
+        @retry_with_exponential_backoff(max_retries=3, initial_delay=1.0)
+        def make_api_call():
+            return client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=api_messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                presence_penalty=0.3,  # Encourage diverse responses
+                frequency_penalty=0.2  # Reduce repetition
+            )
+        
+        response = make_api_call()
         return response.choices[0].message.content
     except Exception as e:
         st.error(f"Error calling OpenAI API: {str(e)}")
