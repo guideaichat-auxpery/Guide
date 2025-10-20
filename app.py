@@ -111,14 +111,14 @@ st.markdown("""
 # Main Header
 st.markdown('<h1 class="main-header">🌟 Guide</h1>', unsafe_allow_html=True)
 st.markdown('<p class="main-byline">Your Montessori Companion</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">From lesson planning to philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
 
 # Authentication and main application logic
 if not st.session_state.authenticated:
     # Welcome section
     st.markdown("""
     <div class="welcome-box">
-        <h3>✨ Welcome to Guide - Your Montessori Educational Planning Tool</h3>
+        <h3>✨ Welcome to Guide - Your Montessori Cosmic Education Planning Tool</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
     </div>
