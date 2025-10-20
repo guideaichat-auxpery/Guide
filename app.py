@@ -5,7 +5,7 @@ from interfaces import show_lesson_planning_interface, show_companion_interface,
 
 # Configure page
 st.set_page_config(
-    page_title="Guide - Your Montessori Companion",
+    page_title="Adaptis - Your Montessori Companion",
     page_icon="🌟",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -109,7 +109,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main Header
-st.markdown('<h1 class="main-header">🌟 Guide</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">🌟 Adaptis</h1>', unsafe_allow_html=True)
 st.markdown('<p class="main-byline">Your Montessori Companion</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
 
@@ -118,7 +118,7 @@ if not st.session_state.authenticated:
     # Welcome section
     st.markdown("""
     <div class="welcome-box">
-        <h3>✨ Welcome to Guide - Your Montessori Cosmic Education Planning Tool</h3>
+        <h3>✨ Welcome to Adaptis - Your Montessori Cosmic Education Planning Tool</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
     </div>
@@ -296,7 +296,7 @@ st.markdown(
     """
     <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
         <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
-        Guide - Your Montessori Companion | Powered by OpenAI GPT-4o Mini<br>
+        Adaptis - Your Montessori Companion | Powered by OpenAI GPT-4o Mini<br>
         Grounded in authentic Montessori principles and foundational texts<br>
         Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
     </div>
