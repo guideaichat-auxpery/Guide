@@ -1842,12 +1842,13 @@ Help them develop independence, critical thinking, and a love of learning."""
 
 # ---- LESSON PLAN EXPORT FUNCTIONS ----
 def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_plan.pdf"):
-    """Export lesson plan content to PDF using reportlab"""
+    """Export lesson plan content to PDF using reportlab with table support"""
     from reportlab.lib.pagesizes import letter, A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
     from reportlab.lib.enums import TA_LEFT, TA_CENTER
+    from reportlab.lib import colors
     import io
     
     # Create a BytesIO buffer
@@ -1889,10 +1890,54 @@ def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_pla
     
     # Process content - convert markdown-like formatting to PDF
     lines = content.split('\n')
-    for line in lines:
-        line = line.strip()
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        
         if not line:
             story.append(Spacer(1, 12))
+            i += 1
+            continue
+        
+        # Check if this is the start of a markdown table
+        if '|' in line and line.count('|') >= 2:
+            # Collect table rows
+            table_data = []
+            while i < len(lines) and '|' in lines[i]:
+                row_line = lines[i].strip()
+                # Skip separator rows (|---|---|)
+                if not row_line.replace('|', '').replace('-', '').replace(' ', '').replace(':', ''):
+                    i += 1
+                    continue
+                # Parse table row
+                cells = [cell.strip() for cell in row_line.split('|')]
+                # Remove empty first/last cells (from leading/trailing |)
+                cells = [cell for cell in cells if cell]
+                if cells:
+                    table_data.append(cells)
+                i += 1
+            
+            # Create PDF table
+            if table_data:
+                # Create table with proper formatting
+                pdf_table = Table(table_data)
+                pdf_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E8B57')),  # Header background
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),  # Header text color
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 12),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                ]))
+                story.append(pdf_table)
+                story.append(Spacer(1, 12))
             continue
             
         # Handle headings
@@ -1910,6 +1955,8 @@ def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_pla
         else:
             # Regular paragraph
             story.append(Paragraph(line, styles['Normal']))
+        
+        i += 1
     
     # Build PDF
     doc.build(story)
@@ -1921,10 +1968,12 @@ def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_pla
     return pdf_data, filename
 
 def export_lesson_plan_to_docx(content, title="Lesson Plan", filename="lesson_plan.docx"):
-    """Export lesson plan content to DOCX using python-docx"""
+    """Export lesson plan content to DOCX using python-docx with table support"""
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
     import io
     
     # Create document
@@ -1944,13 +1993,57 @@ def export_lesson_plan_to_docx(content, title="Lesson Plan", filename="lesson_pl
     # Process content - convert markdown-like formatting to DOCX
     lines = content.split('\n')
     current_paragraph = None
+    i = 0
     
-    for line in lines:
-        line_stripped = line.strip()
+    while i < len(lines):
+        line_stripped = lines[i].strip()
         
         if not line_stripped:
             current_paragraph = None
             doc.add_paragraph()
+            i += 1
+            continue
+        
+        # Check if this is the start of a markdown table
+        if '|' in line_stripped and line_stripped.count('|') >= 2:
+            # Collect table rows
+            table_data = []
+            while i < len(lines) and '|' in lines[i]:
+                row_line = lines[i].strip()
+                # Skip separator rows (|---|---|)
+                if not row_line.replace('|', '').replace('-', '').replace(' ', '').replace(':', ''):
+                    i += 1
+                    continue
+                # Parse table row
+                cells = [cell.strip() for cell in row_line.split('|')]
+                # Remove empty first/last cells (from leading/trailing |)
+                cells = [cell for cell in cells if cell]
+                if cells:
+                    table_data.append(cells)
+                i += 1
+            
+            # Create DOCX table
+            if table_data:
+                num_cols = len(table_data[0])
+                docx_table = doc.add_table(rows=len(table_data), cols=num_cols)
+                docx_table.style = 'Light Grid Accent 1'
+                
+                # Fill table data
+                for row_idx, row_data in enumerate(table_data):
+                    for col_idx, cell_data in enumerate(row_data):
+                        cell = docx_table.rows[row_idx].cells[col_idx]
+                        cell.text = cell_data
+                        
+                        # Format header row
+                        if row_idx == 0:
+                            cell.paragraphs[0].runs[0].font.bold = True
+                            cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(46, 139, 87)
+                            # Add shading to header
+                            shading_elm = OxmlElement('w:shd')
+                            shading_elm.set(qn('w:fill'), 'E8F5E9')
+                            cell._element.get_or_add_tcPr().append(shading_elm)
+                
+                doc.add_paragraph()  # Add spacing after table
             continue
         
         # Handle headings
@@ -1977,6 +2070,8 @@ def export_lesson_plan_to_docx(content, title="Lesson Plan", filename="lesson_pl
         else:
             # Regular paragraph
             doc.add_paragraph(line_stripped)
+        
+        i += 1
     
     # Save to BytesIO buffer
     buffer = io.BytesIO()
