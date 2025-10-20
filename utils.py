@@ -755,7 +755,7 @@ WHAT I WON'T DO:
 
 def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=False, age_group=None, 
                     subject=None, subjects=None, year_level=None, curriculum_type="Blended", use_conversation_history=True,
-                    interface_type=None):
+                    interface_type=None, planning_type=None):
     """Enhanced OpenAI API call with conversation history and curriculum context
     
     Args:
@@ -769,6 +769,7 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         curriculum_type: Type of curriculum ("AC_V9", "Montessori", "Blended")
         use_conversation_history: Whether to manage conversation history (default True)
         interface_type: Type of interface (e.g., "lesson_planning" for age-appropriate prompts)
+        planning_type: Type of planning (e.g., "Lesson Planning", "Assessment Rubric")
     """
     try:
         # Determine max_tokens if not specified
@@ -882,12 +883,30 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         # Add conversation messages
         api_messages.extend(conversation_messages)
         
+        # Determine temperature based on interface type and planning type
+        # Tiered system: High (0.7) for creativity, Medium (0.5) for balanced, Low (0.3) for precision
+        temperature = 0.6  # Default balanced
+        
+        if interface_type == "great_stories":
+            temperature = 0.7  # High - Cosmic narratives need imaginative storytelling
+        elif interface_type == "companion":
+            temperature = 0.7  # High - Warm, exploratory philosophical guidance
+        elif interface_type == "pd_expert":
+            temperature = 0.7  # High - Creative professional development coaching
+        elif interface_type == "lesson_planning":
+            if planning_type == "Assessment Rubric":
+                temperature = 0.3  # Low - Precise curriculum codes and consistent descriptions
+            else:  # "Lesson Planning" or other
+                temperature = 0.5  # Medium - Creative pedagogy with accurate curriculum
+        elif is_student:
+            temperature = 0.6  # Balanced - Engaging but accurate for student learning
+        
         # Make API call with enhanced parameters
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=api_messages,
             max_tokens=max_tokens,
-            temperature=0.75,  # Balanced creativity as per JavaScript implementation
+            temperature=temperature,
             presence_penalty=0.3,  # Encourage diverse responses
             frequency_penalty=0.2  # Reduce repetition
         )
