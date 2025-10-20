@@ -286,7 +286,7 @@ def retrieve_relevant_chunks(
 
 def format_retrieved_context(chunks: List[Dict]) -> str:
     """
-    Format retrieved chunks into a context string for the AI
+    Format retrieved chunks into a context string for the AI with inline citation instructions
     
     Args:
         chunks: List of retrieved chunk dictionaries
@@ -298,16 +298,27 @@ def format_retrieved_context(chunks: List[Dict]) -> str:
         return ""
     
     context = "📚 RELEVANT CURRICULUM & MONTESSORI REFERENCES:\n\n"
+    context += "**IMPORTANT: Use inline citations when referencing these sources.**\n"
+    context += "Format: 'According to [Source Name]...' or 'As outlined in [1]...'\n\n"
     
+    citation_list = []
     for idx, chunk in enumerate(chunks, 1):
         source = chunk['metadata'].get('source', chunk['source'])
         framework = chunk['metadata'].get('framework', 'Unknown')
         
-        context += f"[{idx}] Source: {source} ({framework})\n"
+        # Clean up source name for better readability
+        source_display = source.replace('.txt', '').replace('_', ' ').title()
+        
+        context += f"[{idx}] **{source_display}** ({framework})\n"
         context += f"{chunk['text']}\n"
-        context += f"(Relevance: {chunk['similarity']:.2%})\n\n"
+        context += f"(Similarity: {chunk['similarity']:.1%})\n\n"
+        
+        citation_list.append(f"[{idx}] {source_display}")
     
-    context += "Please reference these sources when providing guidance and ensure alignment with the referenced curriculum standards.\n\n"
+    context += "─" * 70 + "\n"
+    context += "**CITATION REQUIREMENT**: When using information from these sources, cite them inline.\n"
+    context += f"Available citations: {', '.join(citation_list)}\n"
+    context += "Example: 'The Absorbent Mind [1] describes how children...'\n\n"
     
     return context
 
