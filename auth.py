@@ -121,7 +121,7 @@ def signup_page():
         st.markdown("### Privacy & Consent")
         
         consent_data_collection = st.checkbox(
-            "I understand that Adaptis collects and stores my personal information (name, email, usage data) to provide educational services.",
+            "I understand that Guide collects and stores my personal information (name, email, usage data) to provide educational services.",
             value=False
         )
         

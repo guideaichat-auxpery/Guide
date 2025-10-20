@@ -1392,9 +1392,9 @@ def show_privacy_policy():
     
     ## Introduction
     
-    Welcome to **Adaptis - Your Montessori Companion** ("Adaptis," "we," "us," or "our"). This Privacy Policy explains how we collect, use, store, and protect your personal information in accordance with the **Australian Privacy Act 1988** and the **Australian Privacy Principles (APPs)**.
+    Welcome to **Guide - Your Montessori Companion** ("Guide," "we," "us," or "our"). This Privacy Policy explains how we collect, use, store, and protect your personal information in accordance with the **Australian Privacy Act 1988** and the **Australian Privacy Principles (APPs)**.
     
-    Adaptis is provided by **Auxpery** and is designed to support educators and students in Montessori and Australian Curriculum-aligned educational settings.
+    Guide is provided by **Auxpery** and is designed to support educators and students in Montessori and Australian Curriculum-aligned educational settings.
     
     ---
     
@@ -1477,7 +1477,7 @@ def show_privacy_policy():
     - OpenAI may use data to improve their AI models (subject to their terms)
     
     **Your options:**
-    - By using Adaptis, you consent to this overseas data transfer
+    - By using Guide, you consent to this overseas data transfer
     - You can choose not to submit sensitive information
     - Contact us if you have concerns about overseas disclosure
     
@@ -1556,15 +1556,15 @@ def show_privacy_policy():
     - We provide privacy notices to students warning against sharing personal information
     
     ### School Responsibilities:
-    - Schools using Adaptis must ensure they have appropriate consent mechanisms
+    - Schools using Guide must ensure they have appropriate consent mechanisms
     - Schools remain data controllers for student information
-    - Adaptis acts as a data processor on behalf of schools
+    - Guide acts as a data processor on behalf of schools
     
     ---
     
     ## 8. Cookies and Tracking
     
-    Adaptis uses:
+    Guide uses:
     - **Session cookies**: For authentication and session management (essential)
     - **Streamlit cookies**: For application functionality (essential)
     - We do NOT use advertising or third-party tracking cookies
@@ -1609,7 +1609,7 @@ def show_privacy_policy():
     
     ## 11. Data Protection Agreement
     
-    For schools and organizations using Adaptis:
+    For schools and organizations using Guide:
     - We can provide a Data Processing Agreement (DPA) upon request
     - DPA outlines our responsibilities as a data processor
     - Contact privacy@auxpery.com for DPA template
