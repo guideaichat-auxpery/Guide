@@ -9,6 +9,10 @@ import requests
 from PIL import Image
 import io
 import base64
+import logging
+
+# Create logger for utils module (logging configured in app.py)
+logger = logging.getLogger(__name__)
 
 # ---- SCROLL UTILITIES ----
 def scroll_to_top():
@@ -579,15 +583,15 @@ def retry_with_exponential_backoff(
                     
                     if retries >= max_retries or not (is_rate_limit or is_timeout or is_server_error):
                         # Non-retryable error or max retries reached
-                        print(f"OpenAI API error (non-retryable or max retries): {e}")
+                        logger.error(f"OpenAI API error (non-retryable or max retries): {type(e).__name__} - {str(e)}")
                         raise
                     
                     # Calculate backoff delay
                     wait_time = min(delay, max_delay)
                     
                     # Log retry attempt
-                    print(f"⚠️ OpenAI API error (attempt {retries + 1}/{max_retries}): {type(e).__name__}")
-                    print(f"   Retrying in {wait_time:.1f}s...")
+                    logger.warning(f"OpenAI API error (attempt {retries + 1}/{max_retries}): {type(e).__name__}")
+                    logger.info(f"Retrying in {wait_time:.1f}s...")
                     
                     time.sleep(wait_time)
                     

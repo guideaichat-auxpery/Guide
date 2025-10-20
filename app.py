@@ -1,7 +1,22 @@
 import streamlit as st
+import logging
+import sys
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface
+
+# ---- STRUCTURED LOGGING CONFIGURATION ----
+# Centralized logging setup for the entire application
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# Create logger for app module
+logger = logging.getLogger(__name__)
 
 # Configure page
 st.set_page_config(
@@ -40,12 +55,12 @@ else:
                     # Run cleanup
                     deleted = cleanup_old_data(db)
                     if deleted:
-                        print(f"Data retention cleanup: {deleted}")  # Log for admin
+                        logger.info(f"Data retention cleanup: {deleted}")
                 
                 # Update last check time
                 st.session_state.last_cleanup_check = datetime.now()
             except Exception as e:
-                print(f"Error during data retention cleanup: {str(e)}")
+                logger.error(f"Error during data retention cleanup: {str(e)}")
             finally:
                 db.close()
 

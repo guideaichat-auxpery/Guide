@@ -11,6 +11,10 @@ from openai import OpenAI
 import psycopg2
 from psycopg2.extras import Json
 import numpy as np
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
@@ -103,29 +107,67 @@ def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[st
     return chunks
 
 
-@lru_cache(maxsize=200)
-def generate_embedding(text: str) -> tuple:
+def generate_embedding_with_retry(text: str) -> Optional[List[float]]:
     """
-    Generate embedding for text using OpenAI text-embedding-3-small with LRU caching
+    Generate embedding for text using OpenAI text-embedding-3-small with retry logic
     
-    Caches up to 200 embeddings to speed up repeated queries (60%+ cache hits expected).
+    Handles rate limits, timeouts, and server errors with exponential backoff.
     
     Args:
         text: Text to embed
     
     Returns:
-        1536-dimensional embedding vector as tuple (for caching compatibility)
+        1536-dimensional embedding vector or None on error
     """
-    try:
-        response = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=text
-        )
-        # Return as tuple for lru_cache compatibility (lists aren't hashable)
-        return tuple(response.data[0].embedding)
-    except Exception as e:
-        print(f"Error generating embedding: {e}")
+    import time
+    max_retries = 3
+    initial_delay = 1.0
+    
+    for retry in range(max_retries + 1):
+        try:
+            response = client.embeddings.create(
+                model="text-embedding-3-small",
+                input=text
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            error_str = str(e).lower()
+            is_retryable = (
+                'rate_limit' in error_str or '429' in error_str or
+                'timeout' in error_str or 'timed out' in error_str or
+                any(code in error_str for code in ['500', '502', '503'])
+            )
+            
+            if retry >= max_retries or not is_retryable:
+                logger.error(f"Error generating embedding: {type(e).__name__} - {str(e)}")
+                return None
+            
+            wait_time = initial_delay * (2 ** retry)
+            logger.warning(f"Embedding API error (attempt {retry + 1}/{max_retries}): {type(e).__name__}")
+            logger.info(f"Retrying in {wait_time:.1f}s...")
+            time.sleep(wait_time)
+    
+    return None
+
+@lru_cache(maxsize=100)
+def generate_embedding(text: str) -> Optional[tuple]:
+    """
+    Generate embedding for text with process-wide caching (100 entries)
+    
+    This is used for document ingestion where embeddings are shared across all users.
+    For per-session query embeddings, use generate_embedding_with_session_cache().
+    
+    Args:
+        text: Text to embed
+    
+    Returns:
+        1536-dimensional embedding vector as tuple (for caching compatibility) or None
+    """
+    embedding = generate_embedding_with_retry(text)
+    if embedding is None:
         return None
+    # Return as tuple for lru_cache compatibility (lists aren't hashable)
+    return tuple(embedding)
 
 
 def ingest_documents(db_session) -> Dict[str, int]:
@@ -145,24 +187,24 @@ def ingest_documents(db_session) -> Dict[str, int]:
         filepath = filename
         
         if not os.path.exists(filepath):
-            print(f"Warning: {filepath} not found, skipping...")
+            logger.warning(f"File not found: {filepath}, skipping...")
             results[filename] = 0
             continue
         
-        print(f"Processing {filename}...")
+        logger.info(f"Processing document: {filename}")
         
         # Read file
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
         except Exception as e:
-            print(f"Error reading {filename}: {e}")
+            logger.error(f"Error reading {filename}: {type(e).__name__} - {str(e)}")
             results[filename] = 0
             continue
         
         # Chunk the content
         chunks = chunk_text(content, chunk_size=1000, overlap=200)
-        print(f"  Created {len(chunks)} chunks")
+        logger.info(f"Created {len(chunks)} chunks from {filename}")
         
         # Process each chunk
         chunk_count = 0
@@ -171,7 +213,7 @@ def ingest_documents(db_session) -> Dict[str, int]:
             embedding = generate_embedding(chunk)
             
             if embedding is None:
-                print(f"  Skipping chunk {idx} due to embedding error")
+                logger.warning(f"Skipping chunk {idx} from {filename} due to embedding error")
                 continue
             
             # Store in database
@@ -197,12 +239,12 @@ def ingest_documents(db_session) -> Dict[str, int]:
                 finally:
                     cursor.close()
             except Exception as e:
-                print(f"  Error storing chunk {idx}: {e}")
+                logger.error(f"Error storing chunk {idx} from {filename}: {type(e).__name__} - {str(e)}")
                 continue
         
         db_session.commit()
         results[filename] = chunk_count
-        print(f"  ✓ Stored {chunk_count} chunks from {filename}")
+        logger.info(f"✓ Stored {chunk_count} chunks from {filename}")
     
     return results
 
@@ -285,7 +327,7 @@ def retrieve_relevant_chunks(
             cursor.close()
     
     except Exception as e:
-        print(f"Error retrieving chunks: {e}")
+        logger.error(f"Error retrieving chunks: {type(e).__name__} - {str(e)}")
         return []
 
 
@@ -333,7 +375,7 @@ def clear_document_chunks(db_session):
     from sqlalchemy import text
     db_session.execute(text("DELETE FROM document_chunks"))
     db_session.commit()
-    print("✓ Cleared all document chunks")
+    logger.info("✓ Cleared all document chunks")
 
 
 if __name__ == "__main__":
@@ -341,11 +383,11 @@ if __name__ == "__main__":
     import os
     from database import get_db
     
-    print("=== Guide RAG System - Document Ingestion ===\n")
+    logger.info("=== Guide RAG System - Document Ingestion ===\n")
     
     db = get_db()
     if not db:
-        print("❌ Could not connect to database")
+        logger.error("❌ Could not connect to database")
         exit(1)
     
     # Clear existing chunks (optional - comment out to keep existing)
@@ -354,19 +396,19 @@ if __name__ == "__main__":
     # Ingest documents
     results = ingest_documents(db)
     
-    print("\n=== Ingestion Summary ===")
+    logger.info("\n=== Ingestion Summary ===")
     total_chunks = sum(results.values())
-    print(f"Total chunks created: {total_chunks}")
+    logger.info(f"Total chunks created: {total_chunks}")
     for file, count in results.items():
-        print(f"  {file}: {count} chunks")
+        logger.info(f"  {file}: {count} chunks")
     
     # Test retrieval
-    print("\n=== Testing Retrieval ===")
+    logger.info("\n=== Testing Retrieval ===")
     test_query = "What is the Absorbent Mind in Montessori education?"
     chunks = retrieve_relevant_chunks(db, test_query, top_k=2)
     
-    print(f"Query: {test_query}")
-    print(f"Retrieved {len(chunks)} chunks:\n")
-    print(format_retrieved_context(chunks))
+    logger.info(f"Query: {test_query}")
+    logger.info(f"Retrieved {len(chunks)} chunks:\n")
+    logger.info(format_retrieved_context(chunks))
     
     db.close()
