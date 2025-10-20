@@ -69,6 +69,18 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Performance**: 6000 max_tokens, 120-second timeout, British English conventions.
 - **Production Ready**: No localhost dependencies, works in both development and published deployments.
 
+## RAG System (Retrieval-Augmented Generation)
+- **Architecture**: Semantic document retrieval system using PostgreSQL pgvector extension and OpenAI embeddings.
+- **Implementation**: `rag_system.py` for ingestion and retrieval, integrated into `call_openai_api()` in `utils.py`.
+- **Database Table**: `document_chunks` stores 196 embedded chunks from 7 source files (Australian Curriculum V9, General Capabilities, Cross-Curriculum Priorities, Montessori National Curriculum, Montessori's Own Handbook, The Absorbent Mind, The Montessori Method).
+- **Embedding Model**: OpenAI text-embedding-3-small (1536 dimensions) with pgvector HNSW index for fast cosine similarity search.
+- **Retrieval**: Top-3 most relevant chunks retrieved based on user queries (76% similarity for Montessori queries, 66% for AC V9 queries in tests).
+- **Framework-Aware Filtering**: Supports AC_V9-only, Montessori-only, or Blended retrieval modes based on curriculum_type parameter.
+- **Context Injection**: Retrieved chunks automatically formatted and injected as system messages before AI response generation.
+- **Error Handling**: Silent failures (returns empty context) to preserve user experience; errors logged for debugging.
+- **Chunking**: ~800 tokens per chunk with 100-token overlap for context preservation.
+- **Production Status**: Core functionality operational with identified improvements (caching, configurable parameters, enhanced error handling) documented for future optimization.
+
 ## Data Management
 - **Persistence**: PostgreSQL for conversation history, educator analytics, student activities, great stories, planning notes, curriculum contexts, adaptive learning data, and PD Expert memory.
 - **Session State**: In-memory storage for current session data.

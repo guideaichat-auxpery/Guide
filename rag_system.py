@@ -180,15 +180,17 @@ def ingest_documents(db_session) -> Dict[str, int]:
                 connection = db_session.connection().connection
                 cursor = connection.cursor()
                 
-                cursor.execute(
-                    """
-                    INSERT INTO document_chunks (source_file, chunk_text, chunk_index, embedding, metadata)
-                    VALUES (%s, %s, %s, %s::vector, %s::jsonb)
-                    """,
-                    (filename, chunk, idx, embedding_str, metadata_str)
-                )
-                
-                chunk_count += 1
+                try:
+                    cursor.execute(
+                        """
+                        INSERT INTO document_chunks (source_file, chunk_text, chunk_index, embedding, metadata)
+                        VALUES (%s, %s, %s, %s::vector, %s::jsonb)
+                        """,
+                        (filename, chunk, idx, embedding_str, metadata_str)
+                    )
+                    chunk_count += 1
+                finally:
+                    cursor.close()
             except Exception as e:
                 print(f"  Error storing chunk {idx}: {e}")
                 continue
@@ -234,45 +236,48 @@ def retrieve_relevant_chunks(
         connection = db_session.connection().connection
         cursor = connection.cursor()
         
-        # Build SQL query with optional framework filter
-        if framework_filter:
-            sql_query = """
-                SELECT 
-                    chunk_text,
-                    source_file,
-                    metadata,
-                    1 - (embedding <=> %s::vector) as similarity
-                FROM document_chunks
-                WHERE metadata->>'framework' = %s
-                ORDER BY embedding <=> %s::vector
-                LIMIT %s
-            """
-            cursor.execute(sql_query, (embedding_str, framework_filter, embedding_str, top_k))
-        else:
-            sql_query = """
-                SELECT 
-                    chunk_text,
-                    source_file,
-                    metadata,
-                    1 - (embedding <=> %s::vector) as similarity
-                FROM document_chunks
-                ORDER BY embedding <=> %s::vector
-                LIMIT %s
-            """
-            cursor.execute(sql_query, (embedding_str, embedding_str, top_k))
-        
-        rows = cursor.fetchall()
-        
-        chunks = []
-        for row in rows:
-            chunks.append({
-                "text": row[0],
-                "source": row[1],
-                "metadata": row[2],
-                "similarity": row[3]
-            })
-        
-        return chunks
+        try:
+            # Build SQL query with optional framework filter
+            if framework_filter:
+                sql_query = """
+                    SELECT 
+                        chunk_text,
+                        source_file,
+                        metadata,
+                        1 - (embedding <=> %s::vector) as similarity
+                    FROM document_chunks
+                    WHERE metadata->>'framework' = %s
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT %s
+                """
+                cursor.execute(sql_query, (embedding_str, framework_filter, embedding_str, top_k))
+            else:
+                sql_query = """
+                    SELECT 
+                        chunk_text,
+                        source_file,
+                        metadata,
+                        1 - (embedding <=> %s::vector) as similarity
+                    FROM document_chunks
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT %s
+                """
+                cursor.execute(sql_query, (embedding_str, embedding_str, top_k))
+            
+            rows = cursor.fetchall()
+            
+            chunks = []
+            for row in rows:
+                chunks.append({
+                    "text": row[0],
+                    "source": row[1],
+                    "metadata": row[2],
+                    "similarity": row[3]
+                })
+            
+            return chunks
+        finally:
+            cursor.close()
     
     except Exception as e:
         print(f"Error retrieving chunks: {e}")
