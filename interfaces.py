@@ -151,7 +151,8 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                     age_group=age_group,
                     year_level=year_levels[0] if year_levels else None,
                     curriculum_type="AC_V9",
-                    interface_type="lesson_planning"
+                    interface_type="lesson_planning",
+                    planning_type=planning_type
                 )
                 
                 st.markdown(response)
@@ -1102,7 +1103,8 @@ def show_great_story_interface():
                     with st.spinner("Creating story outline..."):
                         outline = call_openai_api(
                             [{"role": "user", "content": system_prompt}],
-                            curriculum_type="Montessori"
+                            curriculum_type="Montessori",
+                            interface_type="great_stories"
                         )
                         st.session_state.story_outline = outline
                         st.markdown(outline)
@@ -1135,7 +1137,8 @@ def show_great_story_interface():
                         story = call_openai_api(
                             [{"role": "user", "content": system_prompt}],
                             curriculum_type="Montessori",
-                            max_tokens=3000
+                            max_tokens=3000,
+                            interface_type="great_stories"
                         )
                         st.session_state.generated_story = story
                         st.markdown("### 📖 Your Great Story")
