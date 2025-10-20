@@ -42,33 +42,12 @@ def show_lesson_planning_interface():
         year_levels_str = ", ".join(year_levels)
         st.caption(f"🎯 Australian Curriculum Year Levels: **{year_levels_str}**")
     
-    # Subject multiselect for curriculum alignment (age-appropriate)
-    # HASS for Foundation-Year 6, separate subjects for Years 7-9
-    if age_group in ["3-6", "6-9", "9-12"]:
-        # Foundation to Year 6: Use HASS
-        subject_options = ["English", "Mathematics", "Science", "HASS (Humanities and Social Sciences)", 
-                          "Design and Technologies", "Digital Technologies", "The Arts", 
-                          "Health and Physical Education", "Languages"]
-    else:  # 12-15 (Years 7-9)
-        # Years 7-9: Use separate humanities subjects
-        subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
-                          "Business and Economics", "Civics and Citizenship",
-                          "Design and Technologies", "Digital Technologies", "The Arts", 
-                          "Health and Physical Education", "Languages"]
-    
-    subjects = st.multiselect(
-        "Subject Area(s) for AC V9 alignment:",
-        subject_options,
-        help="Select one or more subjects to get specific Australian Curriculum V9 content descriptors"
-    )
-    
     # Planning type selector
     planning_type = st.selectbox(
         "Planning Type:",
-        ["lesson_plan", "scope_sequence", "assessment_rubric"],
+        ["lesson_plan", "assessment_rubric"],
         format_func=lambda x: {
             "lesson_plan": "Lesson Planning",
-            "scope_sequence": "Scope & Sequence Creation",
             "assessment_rubric": "Assessment Rubric"
         }[x]
     )
@@ -81,7 +60,7 @@ def show_lesson_planning_interface():
             st.markdown(message["content"])
     
     # Chat input for planning questions
-    if prompt := st.chat_input("Ask your planning question..."):
+    if prompt := st.chat_input("Tell me your year level/age, topic, time, and instructions"):
         st.session_state.planning_messages.append({
             "role": "user",
             "content": prompt
