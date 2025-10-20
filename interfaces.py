@@ -73,11 +73,63 @@ def show_lesson_planning_interface():
         ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
         with st.chat_message("assistant", avatar=ai_avatar):
             with st.spinner("Planning your lesson..."):
-                # Construct system prompt based on planning type
+                # Construct system prompt based on planning type and age group
                 if planning_type == "lesson_plan":
-                    system_context = "You are creating a lesson plan with Montessori principles and Australian Curriculum V9 alignment."
-                elif planning_type == "scope_sequence":
-                    system_context = "You are developing a scope and sequence document that maps learning across time, integrating Montessori principles with Australian Curriculum V9."
+                    # Age-specific Montessori system context
+                    montessori_context = {
+                        "3-6": """You are creating a lesson plan for the First Plane of Development (ages 3-6) following Montessori curriculum, pedagogy, and philosophy.
+
+KEY MONTESSORI PRINCIPLES FOR AGES 3-6:
+- Absorbent Mind: Children effortlessly absorb knowledge from their environment
+- Sensitive Periods: Focus on order, language, movement, refinement of senses, and small objects
+- Prepared Environment: Carefully organized materials that invite independence
+- Practical Life exercises: Care of self, care of environment, grace and courtesy, control of movement
+- Sensorial Materials: Pink Tower, Brown Stairs, Red Rods, Colour Tablets, Sound Cylinders, etc.
+- Language Development: Sandpaper Letters, Movable Alphabet, Metal Insets
+- Mathematics Foundation: Number Rods, Sandpaper Numbers, Spindle Boxes, Golden Beads
+- Self-directed activity and freedom within limits
+- Hands-on concrete materials before abstract concepts""",
+                        
+                        "6-9": """You are creating a lesson plan for the Second Plane of Development (ages 6-9) following Montessori curriculum, pedagogy, and philosophy.
+
+KEY MONTESSORI PRINCIPLES FOR AGES 6-9:
+- Reasoning Mind: Children develop abstract thinking and imagination
+- Cosmic Education: Understanding the interconnectedness of all things and the child's role in the universe
+- Great Stories: The Five Great Lessons as foundation for integrated learning
+- Social Development: Group work, collaboration, peer learning
+- Moral Development: Sense of justice, fairness, and societal rules
+- Follow the Child: Child-led exploration within a structured framework
+- Passage to Abstraction: From concrete materials to abstract reasoning
+- Key Lessons: Story of the Universe, Coming of Life, Story of Humans, Story of Language, Story of Numbers
+- Research and exploration become central to learning""",
+                        
+                        "9-12": """You are creating a lesson plan for the Second Plane of Development (ages 9-12) following Montessori curriculum, pedagogy, and philosophy.
+
+KEY MONTESSORI PRINCIPLES FOR AGES 9-12:
+- Intellectual Independence: Deep research, critical thinking, and academic specialisation
+- Cosmic Education Deepens: Understanding systems, interdependence, and contribution to society
+- Hero Worship: Study of great contributors to civilisation
+- Justice and Morality: Advanced ethical reasoning and social responsibility
+- Cultural Subjects Integration: History, geography, biology, and physics interconnected
+- Going Out: Extended field work and community engagement
+- Follow the Child's Interests: Student agency in research topics and projects
+- Timeline Work: Great lessons extended into detailed timeline exploration
+- Entrepreneurial Spirit: Micro-economy, business ventures, real-world problem solving""",
+                        
+                        "12-15": """You are creating a lesson plan for the Third Plane of Development (ages 12-15) following Montessori curriculum, pedagogy, and philosophy.
+
+KEY MONTESSORI PRINCIPLES FOR AGES 12-15:
+- Erdkinder (Children of the Earth): Learning through land-based work and community contribution
+- Social Development: Peer relationships, identity formation, place in society
+- Valorisation: Development of self-worth through meaningful work
+- Real-World Application: Economics, agriculture, hospitality, entrepreneurship
+- Intellectual Engagement: Academic excellence through authentic purpose
+- Physical Activity: Outdoor work, farming, construction projects
+- Community Living: Shared responsibility, democratic governance
+- Emotional Development: Understanding self, managing emotions, building resilience
+- Passage to Independence: Preparation for adult life and societal contribution"""
+                    }
+                    system_context = montessori_context.get(age_group, "You are creating a lesson plan with Montessori principles and Australian Curriculum V9 alignment.")
                 else:  # assessment_rubric
                     system_context = """You are creating an assessment rubric that balances Montessori observational assessment with Australian Curriculum V9 achievement standards.
 
@@ -97,8 +149,6 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                     st.session_state.planning_messages,
                     system_prompt=system_context,
                     age_group=age_group,
-                    subject=subjects[0] if subjects else None,
-                    subjects=subjects,
                     year_level=year_levels[0] if year_levels else None,
                     curriculum_type="AC_V9",
                     interface_type="lesson_planning"
@@ -130,8 +180,7 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                         content += f"{msg['content']}\n\n"
                 
                 # Create title from context
-                subject_str = ", ".join(subjects) if subjects else "General"
-                title = f"{planning_type} - {subject_str} ({age_group})"
+                title = f"{planning_type} - {age_group}"
                 filename = f"lesson_plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
                 
                 pdf_data, filename = export_lesson_plan_to_pdf(content, title, filename)
@@ -154,8 +203,7 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                         content += f"{msg['content']}\n\n"
                 
                 # Create title from context
-                subject_str = ", ".join(subjects) if subjects else "General"
-                title = f"{planning_type} - {subject_str} ({age_group})"
+                title = f"{planning_type} - {age_group}"
                 filename = f"lesson_plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
                 
                 docx_data, filename = export_lesson_plan_to_docx(content, title, filename)
