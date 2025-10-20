@@ -818,6 +818,40 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
                     unique_keywords = list(set(all_keywords))
                     keyword_context = f"🎯 Curriculum Keywords Detected: {', '.join(unique_keywords)}\nFocus on these curriculum-aligned concepts in your response.\n\n"
         
+        # RAG: Retrieve relevant chunks from ingested documents
+        rag_context = ""
+        if last_user_message and len(last_user_message) > 10:
+            try:
+                from database import get_db
+                from rag_system import retrieve_relevant_chunks, format_retrieved_context
+                
+                db = get_db()
+                if db:
+                    try:
+                        # Determine framework filter based on curriculum type
+                        framework_filter = None
+                        if curriculum_type == "AC_V9":
+                            framework_filter = "AC_V9"
+                        elif curriculum_type == "Montessori":
+                            framework_filter = "Montessori"
+                        # "Blended" retrieves from both frameworks (no filter)
+                        
+                        # Retrieve top 3 relevant chunks
+                        chunks = retrieve_relevant_chunks(
+                            db_session=db,
+                            query=last_user_message,
+                            top_k=3,
+                            framework_filter=framework_filter
+                        )
+                        
+                        if chunks:
+                            rag_context = format_retrieved_context(chunks)
+                    finally:
+                        db.close()
+            except Exception as e:
+                # Silently fail RAG retrieval - don't interrupt user experience
+                print(f"RAG retrieval error: {e}")
+        
         # Fetch curriculum context for all selected subjects
         curriculum_context = ""
         
@@ -878,6 +912,13 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
             api_messages.append({
                 "role": "system", 
                 "content": f"Curriculum Context:\n{curriculum_context}"
+            })
+        
+        # Add RAG retrieved context if available
+        if rag_context:
+            api_messages.append({
+                "role": "system",
+                "content": rag_context
             })
         
         # Add conversation messages
