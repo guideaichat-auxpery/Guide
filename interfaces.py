@@ -1362,7 +1362,11 @@ def show_planning_notes_interface():
                                 col1, col2 = st.columns(2)
                                 with col1:
                                     if st.button(f"✏️ Edit", key=f"edit_{note.id}"):
+                                        # Load note data into session state for editing
                                         st.session_state.active_note_id = note.id
+                                        st.session_state.note_title = note.title
+                                        st.session_state.note_content = note.content
+                                        st.session_state.note_materials = note.materials or ""
                                         st.session_state.auth_mode = "planning_notes"
                                         st.rerun()
                                 with col2:
