@@ -1628,7 +1628,7 @@ def show_privacy_policy():
     
     *This Privacy Policy is designed to be transparent, accessible, and compliant with Australian Privacy Act 1988. We are committed to protecting your privacy and handling your data responsibly.*
     
-    **© 2025 Auxpery - Gentle Technology for Thoughtful Teaching**
+    **© 2025 Auxpery - Gentle Technology for Thoughtful Education**
     """)
     
     # Add quick actions

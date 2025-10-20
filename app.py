@@ -298,7 +298,7 @@ st.markdown(
         <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
         Guide - Your Montessori Companion | Powered by OpenAI GPT-4o Mini<br>
         Grounded in authentic Montessori principles and foundational texts<br>
-        Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Teaching</em>
+        Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
     </div>
     """,
     unsafe_allow_html=True
