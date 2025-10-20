@@ -1055,7 +1055,7 @@ def show_great_story_interface():
     educator_id = st.session_state.get('user_id')
     
     # Tabs for creating new stories and viewing saved stories
-    tab1, tab2, tab3 = st.tabs(["✨ Create New Story", "📚 My Saved Stories", "🌟 Interactive Story Experience"])
+    tab1, tab2 = st.tabs(["✨ Create New Story", "📚 My Saved Stories"])
     
     with tab1:
         st.markdown("#### Theme or Topic")
@@ -1187,86 +1187,6 @@ def show_great_story_interface():
                     db.close()
         else:
             st.info("Database connection required to view saved stories.")
-    
-    with tab3:
-        st.markdown("### 🌟 Interactive Story Experience")
-        st.markdown("*Create a branching, choose-your-own-adventure style story*")
-        
-        # Initialize branching story state
-        if 'branching_story' not in st.session_state:
-            st.session_state.branching_story = {
-                'segments': [],
-                'current_segment': 0,
-                'choices_made': []
-            }
-        
-        # Story setup
-        if not st.session_state.branching_story['segments']:
-            st.markdown("#### Start Your Interactive Story")
-            story_theme = st.text_input("Story Theme:", placeholder="e.g., Journey to the Ancient Forest")
-            story_age = st.selectbox("Age Group:", ["6-9", "9-12", "12-15"])
-            
-            if st.button("Begin Story", use_container_width=True):
-                if story_theme:
-                    # Generate first segment
-                    prompt = f"""Create the opening segment of an interactive Montessori Great Story on the theme: "{story_theme}"
-                    Age group: {story_age}
-                    
-                    Requirements:
-                    - Write 150-200 words of engaging narrative
-                    - End with a decision point
-                    - Provide exactly 2 choices for the reader
-                    - Each choice should be 1 sentence
-                    - Connect to cosmic education principles
-                    
-                    Format your response as:
-                    NARRATIVE: [story text]
-                    CHOICE_A: [first choice]
-                    CHOICE_B: [second choice]"""
-                    
-                    with st.spinner("Creating story opening..."):
-                        response = call_openai_api(
-                            [{"role": "user", "content": prompt}],
-                            curriculum_type="Montessori"
-                        )
-                        
-                        # Parse response
-                        if "NARRATIVE:" in response and "CHOICE_A:" in response:
-                            st.session_state.branching_story['segments'].append(response)
-                            st.rerun()
-        else:
-            # Display current story segment
-            current = st.session_state.branching_story['current_segment']
-            segments = st.session_state.branching_story['segments']
-            
-            if current < len(segments):
-                segment_text = segments[current]
-                
-                # Parse and display narrative
-                if "NARRATIVE:" in segment_text:
-                    narrative = segment_text.split("CHOICE_A:")[0].replace("NARRATIVE:", "").strip()
-                    st.markdown(f"### 📖 Story Continues...")
-                    st.markdown(narrative)
-                    
-                    # Parse and display choices
-                    if "CHOICE_A:" in segment_text and "CHOICE_B:" in segment_text:
-                        choice_a = segment_text.split("CHOICE_A:")[1].split("CHOICE_B:")[0].strip()
-                        choice_b = segment_text.split("CHOICE_B:")[1].strip()
-                        
-                        st.markdown("#### What happens next?")
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            if st.button(f"🔵 {choice_a}", use_container_width=True):
-                                st.session_state.branching_story['choices_made'].append('A')
-                                # Generate next segment based on choice A
-                                # ... continuation logic
-                        
-                        with col2:
-                            if st.button(f"🟢 {choice_b}", use_container_width=True):
-                                st.session_state.branching_story['choices_made'].append('B')
-                                # Generate next segment based on choice B
-                                # ... continuation logic
 
 
 def show_planning_notes_interface():
