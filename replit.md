@@ -39,6 +39,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 ## Backend
 - **Core Logic**: Single-file Python application (`app.py`) with modular functions.
 - **AI Integration**: OpenAI API client (GPT-4o-mini) with dynamic system prompts based on selected curriculum and role-based optimization.
+- **Student Brainstorming Agent**: AI tutor for students generates SHORT, suggestion-based outputs only (keywords, guiding questions, starter sentences, topic ideas, project titles). Explicitly avoids full paragraphs, essays, or complete answers. Designed to spark creativity and exploration while maintaining concise, idea-focused responses (1-2 sentences max per suggestion).
 - **Age-Appropriate Lesson Planning**: Intelligent lesson planning assistant with developmental stage-specific prompts:
   - Ages 3-6: Foundational skills, Montessori materials, step-by-step educator guidance
   - Ages 6-9: Literacy/numeracy building, hands-on activities, collaborative learning
