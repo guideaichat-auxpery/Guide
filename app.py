@@ -133,7 +133,7 @@ if not st.session_state.authenticated:
     # Welcome section
     st.markdown("""
     <div class="welcome-box">
-        <h3>✨ Welcome to Guide - Your Montessori Cosmic Education Planning Tool</h3>
+        <h3>✨ Welcome to Guide - Your prepared digital environment</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
     </div>
