@@ -1591,7 +1591,7 @@ def show_privacy_policy():
     ## 10. Complaints and Contact (APP 1)
     
     ### Privacy Officer Contact:
-    **Email:** privacy@auxpery.com  
+    **Email:** privacy@auxpery.com.au  
     **Response Time:** Within 30 days
     
     ### How to Make a Complaint:
@@ -1615,7 +1615,7 @@ def show_privacy_policy():
     For schools and organizations using Guide:
     - We can provide a Data Processing Agreement (DPA) upon request
     - DPA outlines our responsibilities as a data processor
-    - Contact privacy@auxpery.com for DPA template
+    - Contact privacy@auxpery.com.au for DPA template
     
     ---
     
@@ -1623,7 +1623,7 @@ def show_privacy_policy():
     
     If you have questions about this Privacy Policy or how we handle your data:
     
-    📧 **Email:** privacy@auxpery.com  
+    📧 **Email:** privacy@auxpery.com.au  
     🌐 **Website:** [Contact form available in app]  
     📞 **Support:** Available to registered users
     
