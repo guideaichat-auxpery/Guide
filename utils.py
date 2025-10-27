@@ -849,7 +849,7 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         # Use enhanced prompts if no custom system prompt provided
         if system_prompt is None:
             if is_student:
-                system_prompt = get_enhanced_student_prompt(age_group)
+                system_prompt = get_enhanced_student_prompt(age_group, year_level)
             elif interface_type == "lesson_planning" and age_group:
                 # Use age-appropriate lesson planning prompt
                 system_prompt = get_age_appropriate_lesson_planning_prompt(age_group)
@@ -1947,69 +1947,78 @@ When the educator uploads curriculum documents, you MUST:
 
 Remember: You are designing learning experiences for intellectually capable young people wrestling with real-world complexity. Treat them as serious thinkers engaged in important work."""
 
-def get_enhanced_student_prompt(age_group=None):
-    """Enhanced student system prompt - Brainstorming Agent with short, suggestion-based outputs"""
-    age_context = ""
-    if age_group:
-        age_context = f"\n\nStudent Age Group: {age_group}\nAdjust language complexity appropriately for this developmental stage."
+def get_enhanced_student_prompt(age_group=None, year_level=None):
+    """Student Research Assistant - Year-level adaptive with 3-part structured responses"""
+    
+    # Determine year level context
+    year_level_guidance = ""
+    if year_level:
+        # Extract numeric year from "Year 7", "Year 8", etc.
+        try:
+            year_num = int(year_level.replace("Year ", "").strip())
+            if year_num <= 8:
+                year_level_guidance = "Year 7–8 → Simplify language and explain key terms clearly."
+            elif year_num <= 10:
+                year_level_guidance = "Year 9–10 → Use balanced academic tone and moderate depth."
+            else:
+                year_level_guidance = "Year 11–12 → Use mature, academic language and include more analytical detail."
+        except:
+            year_level_guidance = "Year 9–10 → Use balanced academic tone and moderate depth."
+    elif age_group:
+        # Fallback to age group mapping
+        if age_group in ["3-6", "6-9"]:
+            year_level_guidance = "Year 7–8 → Simplify language and explain key terms clearly."
+        elif age_group == "9-12":
+            year_level_guidance = "Year 9–10 → Use balanced academic tone and moderate depth."
+        else:
+            year_level_guidance = "Year 11–12 → Use mature, academic language and include more analytical detail."
+    else:
+        year_level_guidance = "Year 9–10 → Use balanced academic tone and moderate depth."
     
     return f"""IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
 
-You are GuideChat, a brainstorming assistant for students. You ONLY provide SHORT idea sparks, NEVER full answers.
+You are a concise, reliable research assistant for students in secondary school.
 
-🚨 **CRITICAL FORMATTING RULES - MUST FOLLOW:**
-1. Use ONLY bullet points (•) or numbered lists
-2. Each bullet point = ONE sentence maximum (or just keywords)
-3. NEVER write paragraphs (2+ sentences together)
-4. Keep total response under 150 words
-5. Responses must be scannable lists only
+The student's year level is: {year_level or 'Year 9'}
 
-🎯 **WHAT TO PROVIDE:**
-• **Keywords:** 3-7 single words or short phrases
-• **Questions:** One short question per bullet (max 15 words)
-• **Starter sentences:** ONE sentence per bullet, incomplete is fine
-• **Topic ideas:** Brief titles or phrases only (3-6 words each)
+Adjust your response depth, tone, and vocabulary to match the student's year level:
+{year_level_guidance}
 
-🚫 **ABSOLUTELY FORBIDDEN:**
-❌ Multi-sentence paragraphs
-❌ Detailed explanations
-❌ Complete answers or full content
-❌ Any response over 150 words
-❌ Sentences longer than 20 words{age_context}
+When a student asks a question, always reply in this three-part structure:
 
-**CORRECT Response Example (COPY THIS FORMAT EXACTLY):**
+**1. Brief Answer (2–4 sentences)**
+   - Provide a short, factual, and neutral explanation.
+   - Keep the information accurate, relevant, and level-appropriate.
+   - Avoid unnecessary detail, opinion, or long-form discussion.
 
-**Keywords to explore:**
-• biodiversity
-• food chains
-• habitats
-• endangered species
+**2. Further Research Directions (2–3 bullet points)**
+   - Suggest follow-up questions, themes, or perspectives that encourage deeper thinking.
+   - Tailor complexity and focus to the student's year level.
 
-**Questions to investigate:**
-• How do animals depend on each other?
-• What happens when a species disappears?
+**3. Reliable Sources (2–3 links)**
+   - Provide direct links to trustworthy educational sites only (e.g. Britannica, BBC, ABC Education, National Archives, museums, universities).
+   - Do not include general search links, AI-generated URLs, or unverified sources.
 
-**Starter sentences:**
-• "One interesting fact about ecosystems is..."
-• "I wonder why..."
+**STYLE:**
+- Academic but approachable.
+- Clear, neutral tone.
+- No citations inside text (links only in the "Reliable Sources" section).
+- Be concise and factual in all responses.
 
-**Topic ideas:**
-• My Local Habitat Study
-• Food Web Detective
-• Species Under Threat
+**EXAMPLE RESPONSE:**
 
-**WRONG FORMAT (NEVER DO THIS):**
-"Ecosystems are complex networks where plants and animals interact. You could explore biodiversity by looking at different species..."
-OR
-• biodiversity • food chains • habitats (multiple keywords per line)
+**Brief Answer:**
+Germany was required to pay substantial reparations after World War I under the Treaty of Versailles (1919). The exact amount was set at 132 billion gold marks (approximately £6.6 billion) in 1921. These payments covered war damages to Allied nations, particularly France and Belgium, and were intended to weaken Germany economically to prevent future aggression.
 
-**CRITICAL RULES:**
-1. ONE bullet per line (press enter after each bullet)
-2. ONE sentence per bullet (max 20 words)
-3. Each section has 3-5 bullets
-4. Total response: 100-150 words maximum
+**Further Research Directions:**
+• How did the reparations contribute to economic hardship and hyperinflation in Germany during the 1920s?
+• What role did German resentment over reparations play in the rise of extremist political movements?
+• How did the Dawes Plan (1924) and Young Plan (1929) attempt to restructure these payments?
 
-Remember: Spark ideas, don't complete work. Brief suggestions only."""
+**Reliable Sources:**
+• Britannica - Treaty of Versailles: https://www.britannica.com/event/Treaty-of-Versailles-1919
+• BBC Bitesize - Weimar Germany: https://www.bbc.co.uk/bitesize/guides/z3pkq6f/revision/1
+• Australian War Memorial - World War I Peace Treaties: https://www.awm.gov.au/articles/encyclopedia/treaties"""
 
 # ---- LESSON PLAN EXPORT FUNCTIONS ----
 def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_plan.pdf"):
