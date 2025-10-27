@@ -4,7 +4,6 @@ import sys
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface
-from admin_interface import show_admin_dashboard
 
 # ---- STRUCTURED LOGGING CONFIGURATION ----
 # Centralized logging setup for the entire application
@@ -221,7 +220,7 @@ else:
         # Educator interface
         
         # Default to lesson planning for educators (set this FIRST before checking current mode)
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'admin_dashboard']:
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
             st.session_state.auth_mode = 'lesson_planning'
         
         col1, col2, col3 = st.columns(3)
@@ -253,22 +252,12 @@ else:
                 st.session_state.auth_mode = "student_dashboard"
                 st.rerun()
         
-        # Admin & PD Expert Mode (restricted access)
-        ADMIN_EMAILS = ["guideaichat@gmail.com", "ben@hmswairoa.net"]
-        if st.session_state.get('user_email') in ADMIN_EMAILS:
+        # PD Expert Mode (restricted access)
+        if st.session_state.get('user_email') == "guideaichat@gmail.com":
             st.markdown("---")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                if st.button("🔧 Admin Dashboard", use_container_width=True, type="secondary"):
-                    st.session_state.auth_mode = "admin_dashboard"
-                    st.rerun()
-            
-            if st.session_state.get('user_email') == "guideaichat@gmail.com":
-                with col2:
-                    if st.button("🧭 PD Expert Mode", use_container_width=True, type="primary"):
-                        st.session_state.auth_mode = "pd_expert"
-                        st.rerun()
+            if st.button("🧭 PD Expert Mode", use_container_width=True, type="primary"):
+                st.session_state.auth_mode = "pd_expert"
+                st.rerun()
         
         # Privacy & Settings row (only show on home/lesson planning page)
         current_mode = st.session_state.get('auth_mode', 'lesson_planning')
@@ -305,8 +294,6 @@ else:
         show_planning_notes_interface()
     elif st.session_state.auth_mode == "pd_expert":
         show_pd_expert_interface()
-    elif st.session_state.auth_mode == "admin_dashboard":
-        show_admin_dashboard()
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
     elif st.session_state.auth_mode == "privacy_policy":
