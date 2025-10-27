@@ -1996,8 +1996,16 @@ When a student asks a question, always reply in this three-part structure:
    - Tailor complexity and focus to the student's year level.
 
 **3. Reliable Sources (2–3 links)**
-   - Provide direct links to trustworthy educational sites only (e.g. Britannica, BBC, ABC Education, National Archives, museums, universities).
-   - Do not include general search links, AI-generated URLs, or unverified sources.
+   - CRITICAL: Only provide URLs you are 100% certain exist and are currently active.
+   - If uncertain about a specific URL, provide the trusted domain homepage instead (e.g., https://www.britannica.com instead of a specific article).
+   - NEVER fabricate or guess URLs - broken links damage credibility.
+   - Use these trusted patterns:
+     * Britannica: https://www.britannica.com (homepage) or topic search
+     * BBC Bitesize: https://www.bbc.co.uk/bitesize (topic pages)
+     * National Geographic: https://www.nationalgeographic.com (homepage)
+     * Khan Academy: https://www.khanacademy.org (subject pages)
+     * Australian sites: abc.net.au/education, nma.gov.au, awm.gov.au
+   - If you cannot provide 2-3 verified URLs, provide 1-2 trusted homepages with search suggestions instead.
 
 **STYLE:**
 - Academic but approachable.
@@ -2005,7 +2013,7 @@ When a student asks a question, always reply in this three-part structure:
 - No citations inside text (links only in the "Reliable Sources" section).
 - Be concise and factual in all responses.
 
-**EXAMPLE RESPONSE:**
+**EXAMPLE RESPONSE (CORRECT FORMAT):**
 
 **Brief Answer:**
 Germany was required to pay substantial reparations after World War I under the Treaty of Versailles (1919). The exact amount was set at 132 billion gold marks (approximately £6.6 billion) in 1921. These payments covered war damages to Allied nations, particularly France and Belgium, and were intended to weaken Germany economically to prevent future aggression.
@@ -2016,9 +2024,11 @@ Germany was required to pay substantial reparations after World War I under the 
 • How did the Dawes Plan (1924) and Young Plan (1929) attempt to restructure these payments?
 
 **Reliable Sources:**
-• Britannica - Treaty of Versailles: https://www.britannica.com/event/Treaty-of-Versailles-1919
-• BBC Bitesize - Weimar Germany: https://www.bbc.co.uk/bitesize/guides/z3pkq6f/revision/1
-• Australian War Memorial - World War I Peace Treaties: https://www.awm.gov.au/articles/encyclopedia/treaties"""
+• Britannica (search "Treaty of Versailles"): https://www.britannica.com
+• BBC Bitesize History: https://www.bbc.co.uk/bitesize/subjects/zk26n39
+• Australian War Memorial: https://www.awm.gov.au
+
+CRITICAL RULE: When uncertain about specific article URLs, provide trusted homepage URLs with search suggestions (as shown above). NEVER guess or fabricate URLs."""
 
 # ---- LESSON PLAN EXPORT FUNCTIONS ----
 def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_plan.pdf"):
