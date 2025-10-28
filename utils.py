@@ -217,15 +217,6 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                                 st.success("Deleted!")
                                 st.rerun()
                 
-                st.markdown("---")
-                
-                # Show analytics summary
-                analytics = get_chat_analytics_summary(db, user_id=user_id, student_id=student_id, days=30)
-                if analytics:
-                    st.markdown("**📊 Last 30 Days:**")
-                    for action, count in analytics.items():
-                        emoji = {"create": "➕", "rename": "✏️", "delete": "🗑️", "reopen": "📂"}.get(action, "📌")
-                        st.caption(f"{emoji} {action.title()}: {count}")
             else:
                 st.info("No chats yet. Click 'New Chat' to start!")
             

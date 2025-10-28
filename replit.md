@@ -27,7 +27,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Adaptive Learning System (Node.js - Development Only)**: An Express.js server managing self-updating AI prompts, semantic logging, feedback, trending keywords, and subject calibration. Features a REST API for generation, feedback, and analytics, with an auto-refresh system for prompt updates.
 - **Core Features**:
   - **Dual Interface**: Teacher and student modes for lesson planning, observation, and AI tutoring.
-  - **Chat Conversation Management**: Sidebar-based system for creating, renaming, deleting, and reopening conversations with full message context persistence in PostgreSQL.
+  - **Chat Conversation Management**: Sidebar-based system for creating, renaming, deleting, and reopening conversations with full message context persistence in PostgreSQL. Analytics tracked in backend only (not visible to users).
   - **Curriculum Integration**: Incorporates Australian Curriculum V9 and Montessori National Curriculum (2011), with AI responses rooted in Montessori's Cosmic Education.
   - **AI-Powered Tools**: Includes Great Story Creator, Planning Notes Workspace, Educator Observation Dashboard, Lesson Planning Assistant (with three modes), Big Picture Curriculum Mapping, Student Work Analysis, and an advanced Rubric Generator.
   - **Accessibility**: Universal Design for Learning interface.
