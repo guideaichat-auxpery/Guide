@@ -20,9 +20,25 @@ def show_lesson_planning_interface():
     # Get educator info
     user_id = st.session_state.get('user_id')
     
-    # Initialize session-specific conversation ID
+    # Initialize session-specific conversation ID and conversation if not exists
     if 'planning_session_id' not in st.session_state:
         st.session_state.planning_session_id = str(uuid.uuid4())
+        # Auto-create first conversation for new educators
+        if database_available and user_id:
+            from database import create_chat_conversation
+            db = get_db()
+            if db:
+                try:
+                    title = f"Planning {datetime.now().strftime('%d/%m %H:%M')}"
+                    new_conv = create_chat_conversation(
+                        db, title=title, session_id=st.session_state.planning_session_id,
+                        interface_type='planning', user_id=user_id, student_id=None
+                    )
+                    st.session_state['planning_current_conversation_id'] = new_conv.id
+                except Exception as e:
+                    print(f"Error creating initial planning conversation: {str(e)}")
+                finally:
+                    db.close()
     
     # Render conversation sidebar (handles conversation management)
     if database_available and user_id:
@@ -242,9 +258,25 @@ def show_companion_interface():
     # Get educator info
     user_id = st.session_state.get('user_id')
     
-    # Initialize session-specific conversation ID
+    # Initialize session-specific conversation ID and conversation if not exists
     if 'companion_session_id' not in st.session_state:
         st.session_state.companion_session_id = str(uuid.uuid4())
+        # Auto-create first conversation for new educators
+        if database_available and user_id:
+            from database import create_chat_conversation
+            db = get_db()
+            if db:
+                try:
+                    title = f"Companion {datetime.now().strftime('%d/%m %H:%M')}"
+                    new_conv = create_chat_conversation(
+                        db, title=title, session_id=st.session_state.companion_session_id,
+                        interface_type='companion', user_id=user_id, student_id=None
+                    )
+                    st.session_state['companion_current_conversation_id'] = new_conv.id
+                except Exception as e:
+                    print(f"Error creating initial companion conversation: {str(e)}")
+                finally:
+                    db.close()
     
     # Render conversation sidebar (handles conversation management)
     if database_available and user_id:
@@ -493,9 +525,25 @@ def show_student_interface():
     student_name = st.session_state.get('user_name', 'Student')
     age_group = st.session_state.get('age_group', 'unknown')
     
-    # Initialize student-specific session ID if not exists
+    # Initialize student-specific session ID and conversation if not exists
     if 'student_session_id' not in st.session_state:
         st.session_state.student_session_id = str(uuid.uuid4())
+        # Auto-create first conversation for new students
+        if database_available and student_id:
+            from database import create_chat_conversation
+            db = get_db()
+            if db:
+                try:
+                    title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
+                    new_conv = create_chat_conversation(
+                        db, title=title, session_id=st.session_state.student_session_id,
+                        interface_type='student', user_id=None, student_id=student_id
+                    )
+                    st.session_state['student_current_conversation_id'] = new_conv.id
+                except Exception as e:
+                    print(f"Error creating initial student conversation: {str(e)}")
+                finally:
+                    db.close()
     
     # Render conversation sidebar (handles conversation management)
     if database_available and student_id:
