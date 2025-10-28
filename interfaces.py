@@ -943,13 +943,13 @@ def show_student_dashboard_interface():
                     with col3:
                         # Get latest activity timestamp
                         if activities:
-                            latest = activities[0].created_at.strftime("%Y-%m-%d %H:%M")
+                            latest = activities[0].created_at.strftime("%d/%m/%Y")
                             st.metric("Last Activity", latest)
                     
                     # Activity timeline
                     st.markdown("### 📅 Recent Activity")
                     for activity in activities[:10]:  # Show last 10
-                        with st.expander(f"{activity.activity_type} - {activity.created_at.strftime('%Y-%m-%d %H:%M')}"):
+                        with st.expander(f"{activity.activity_type} - {activity.created_at.strftime('%d/%m/%Y')}"):
                             if activity.prompt_text:
                                 st.markdown(f"**Prompt:** {activity.prompt_text}")
                             if activity.response_text:
