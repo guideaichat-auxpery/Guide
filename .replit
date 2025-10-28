@@ -97,6 +97,10 @@ localPort = 43237
 externalPort = 3000
 
 [[ports]]
+localPort = 44563
+externalPort = 8080
+
+[[ports]]
 localPort = 44671
 externalPort = 5000
 

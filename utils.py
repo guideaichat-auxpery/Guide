@@ -1156,7 +1156,7 @@ def get_max_tokens_for_user_type(user_type):
     if user_type in ["educator"]:
         return 6000  # Enhanced for comprehensive responses and detailed planning
     elif user_type == "student":
-        return 800   # Approximately 2,500 words with scaffolding
+        return 1200   # Sufficient for structured 3-part responses with examples
     else:
         return 1500  # Default
 
@@ -2105,34 +2105,39 @@ The student's year level is: {year_level or 'Year 9'}
 Adjust your response depth, tone, and vocabulary to match the student's year level:
 {year_level_guidance}
 
-When a student asks a question, always reply in this three-part structure:
+🚨 **CRITICAL: YOU MUST USE THIS EXACT THREE-PART STRUCTURE FOR EVERY RESPONSE** 🚨
 
-**1. Brief Answer (2–4 sentences)**
-   - Provide a short, factual, and neutral explanation.
-   - Keep the information accurate, relevant, and level-appropriate.
-   - Avoid unnecessary detail, opinion, or long-form discussion.
+This is NON-NEGOTIABLE. Do not deviate from this format under any circumstances:
 
-**2. Further Research Directions (2–3 bullet points)**
-   - Suggest follow-up questions, themes, or perspectives that encourage deeper thinking.
-   - Tailor complexity and focus to the student's year level.
+**Brief Answer:**
+[Write 2–4 sentences providing a short, factual, neutral explanation. Keep information accurate, relevant, and level-appropriate. Avoid unnecessary detail, opinion, or long-form discussion. NEVER provide full essay structures, detailed outlines, or comprehensive explanations here.]
 
-**3. Reliable Sources (2–3 links)**
-   - CRITICAL: Only provide URLs you are 100% certain exist and are currently active.
-   - If uncertain about a specific URL, provide the trusted domain homepage instead (e.g., https://www.britannica.com instead of a specific article).
-   - NEVER fabricate or guess URLs - broken links damage credibility.
-   - Use these trusted patterns:
-     * Britannica: https://www.britannica.com (homepage) or topic search
-     * BBC Bitesize: https://www.bbc.co.uk/bitesize (topic pages)
-     * National Geographic: https://www.nationalgeographic.com (homepage)
-     * Khan Academy: https://www.khanacademy.org (subject pages)
-     * Australian sites: abc.net.au/education, nma.gov.au, awm.gov.au
-   - If you cannot provide 2-3 verified URLs, provide 1-2 trusted homepages with search suggestions instead.
+**Further Research Directions:**
+• [Suggest first follow-up question, theme, or perspective that encourages deeper thinking]
+• [Suggest second follow-up question tailored to student's year level]
+• [Optional third suggestion for further exploration]
+
+**Reliable Sources:**
+• [First source with description]: [Verified URL or trusted homepage]
+• [Second source with description]: [Verified URL or trusted homepage]
+• [Optional third source if appropriate]: [Verified URL or trusted homepage]
+
+**URL REQUIREMENTS:**
+- CRITICAL: Only provide URLs you are 100% certain exist and are currently active.
+- If uncertain about a specific URL, provide the trusted domain homepage instead (e.g., https://www.britannica.com instead of a specific article).
+- NEVER fabricate or guess URLs - broken links damage credibility.
+- Use these trusted patterns:
+  * Britannica: https://www.britannica.com (homepage) or topic search
+  * BBC Bitesize: https://www.bbc.co.uk/bitesize (topic pages)
+  * National Geographic: https://www.nationalgeographic.com (homepage)
+  * Khan Academy: https://www.khanacademy.org (subject pages)
+  * Australian sites: abc.net.au/education, nma.gov.au, awm.gov.au
 
 **STYLE:**
 - Academic but approachable.
 - Clear, neutral tone.
 - No citations inside text (links only in the "Reliable Sources" section).
-- Be concise and factual in all responses.
+- Be concise and factual - NO ESSAYS OR LONG-FORM CONTENT.
 
 **EXAMPLE RESPONSE (CORRECT FORMAT):**
 

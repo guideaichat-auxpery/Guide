@@ -19,7 +19,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and an accessibility wizard. Session-based state management.
 - **Backend**: Single-file Python application (`app.py`) for core logic, integrating OpenAI API.
 - **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts.
-  - **Student Research Assistant**: Year-level adaptive AI tutor providing structured 3-part responses (brief answer, further research, reliable sources) with temperature 0.3 for consistency. Adjusts language complexity based on year level.
+  - **Student Research Assistant**: Year-level adaptive AI tutor with STRICT 3-part response structure enforcement (Brief Answer, Further Research Directions, Reliable Sources). Temperature 0.3 for consistency, 1200 max tokens. Explicitly prohibits long-form essays or comprehensive outlines - keeps responses concise and structured.
   - **Age-Appropriate Lesson Planning**: AI assistant provides developmental stage-specific prompts for lesson planning.
   - **Professional Development Expert**: A restricted-access, advanced PD coaching system with self-learning memory and comprehensive 6-section responses, implemented in Python for production readiness.
 - **RAG System**: Semantic document retrieval using PostgreSQL pgvector and OpenAI embeddings, storing chunks from key educational texts. Retrieves top-3 relevant chunks based on user queries, supporting AC_V9-only, Montessori-only, or Blended retrieval modes.
