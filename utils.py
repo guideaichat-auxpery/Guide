@@ -108,6 +108,136 @@ def add_scroll_to_top_button():
         height=0
     )
 
+# ---- CHAT CONVERSATION SIDEBAR ----
+def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
+    """
+    Render a conversation management sidebar with create, rename, delete, and switch features.
+    
+    Args:
+        interface_type: 'companion', 'student', or 'planning'
+        user_id: Educator user ID (for educators)
+        student_id: Student ID (for students)
+    
+    Returns:
+        selected_session_id: The session ID of the selected conversation (or None for new)
+    """
+    from database import (get_db, get_user_chat_conversations, create_chat_conversation,
+                         rename_chat_conversation, delete_chat_conversation, 
+                         reopen_chat_conversation, get_chat_analytics_summary)
+    import uuid
+    
+    db = get_db()
+    if not db:
+        return None
+    
+    try:
+        # Get all conversations for this user/student and interface
+        conversations = get_user_chat_conversations(db, user_id=user_id, student_id=student_id, 
+                                                   interface_type=interface_type)
+        
+        # Sidebar for conversation management
+        with st.sidebar:
+            st.markdown("### 💬 Chat Conversations")
+            st.markdown("---")
+            
+            # New conversation button
+            if st.button("➕ New Chat", use_container_width=True, type="primary"):
+                # Create new conversation
+                new_session_id = str(uuid.uuid4())
+                title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
+                new_conv = create_chat_conversation(
+                    db, title=title, session_id=new_session_id, 
+                    interface_type=interface_type, user_id=user_id, student_id=student_id
+                )
+                st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
+                st.session_state[f'{interface_type}_session_id'] = new_session_id
+                st.session_state[f'{interface_type}_messages'] = []
+                st.rerun()
+            
+            st.markdown("---")
+            
+            # Display conversation list
+            if conversations:
+                st.markdown("**Recent Chats:**")
+                
+                for conv in conversations:
+                    # Highlight current conversation
+                    current_conv_id = st.session_state.get(f'{interface_type}_current_conversation_id')
+                    is_current = (current_conv_id == conv.id)
+                    
+                    # Create expandable conversation item
+                    with st.expander(
+                        f"{'🟢 ' if is_current else ''}{conv.title[:30]}{'...' if len(conv.title) > 30 else ''}",
+                        expanded=False
+                    ):
+                        # Show conversation details
+                        st.caption(f"Created: {conv.created_at.strftime('%d/%m/%Y %H:%M')}")
+                        
+                        # Rename input
+                        new_title = st.text_input(
+                            "Rename", 
+                            value=conv.title,
+                            key=f"rename_{conv.id}",
+                            label_visibility="collapsed"
+                        )
+                        
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            # Rename button
+                            if st.button("✏️", key=f"rename_btn_{conv.id}", help="Rename"):
+                                if new_title and new_title != conv.title:
+                                    rename_chat_conversation(db, conv.id, new_title, user_id, student_id)
+                                    st.success("Renamed!")
+                                    st.rerun()
+                        
+                        with col2:
+                            # Open button
+                            if st.button("📂", key=f"open_btn_{conv.id}", help="Open"):
+                                # Load this conversation
+                                reopen_chat_conversation(db, conv.id, user_id, student_id)
+                                st.session_state[f'{interface_type}_current_conversation_id'] = conv.id
+                                st.session_state[f'{interface_type}_session_id'] = conv.session_id
+                                
+                                # Load messages for this conversation
+                                from database import load_conversation_to_session
+                                loaded_messages = load_conversation_to_session(db, conv.session_id, interface_type)
+                                st.session_state[f'{interface_type}_messages'] = loaded_messages
+                                st.rerun()
+                        
+                        with col3:
+                            # Delete button
+                            if st.button("🗑️", key=f"delete_btn_{conv.id}", help="Delete"):
+                                delete_chat_conversation(db, conv.id, user_id, student_id)
+                                # If deleting current conversation, clear session
+                                if is_current:
+                                    st.session_state[f'{interface_type}_current_conversation_id'] = None
+                                    st.session_state[f'{interface_type}_session_id'] = str(uuid.uuid4())
+                                    st.session_state[f'{interface_type}_messages'] = []
+                                st.success("Deleted!")
+                                st.rerun()
+                
+                st.markdown("---")
+                
+                # Show analytics summary
+                analytics = get_chat_analytics_summary(db, user_id=user_id, student_id=student_id, days=30)
+                if analytics:
+                    st.markdown("**📊 Last 30 Days:**")
+                    for action, count in analytics.items():
+                        emoji = {"create": "➕", "rename": "✏️", "delete": "🗑️", "reopen": "📂"}.get(action, "📌")
+                        st.caption(f"{emoji} {action.title()}: {count}")
+            else:
+                st.info("No chats yet. Click 'New Chat' to start!")
+            
+        # Return the current session ID
+        return st.session_state.get(f'{interface_type}_session_id')
+        
+    except Exception as e:
+        print(f"Error in conversation sidebar: {str(e)}")
+        return None
+    finally:
+        db.close()
+
 def scroll_to_element(element_id):
     """Scroll to a specific element by ID"""
     st.markdown(

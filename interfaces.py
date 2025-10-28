@@ -15,6 +15,19 @@ def show_lesson_planning_interface():
     """Educational planning interface for educators with Australian Curriculum alignment"""
     scroll_to_top()
     
+    from utils import render_conversation_sidebar
+    
+    # Get educator info
+    user_id = st.session_state.get('user_id')
+    
+    # Initialize session-specific conversation ID
+    if 'planning_session_id' not in st.session_state:
+        st.session_state.planning_session_id = str(uuid.uuid4())
+    
+    # Render conversation sidebar (handles conversation management)
+    if database_available and user_id:
+        render_conversation_sidebar('planning', user_id=user_id)
+    
     # Ensure planning messages are initialized separately
     if 'planning_messages' not in st.session_state:
         st.session_state.planning_messages = []
@@ -223,7 +236,7 @@ def show_companion_interface():
     """Enhanced Montessori companion interface with conversation history management and persistence"""
     scroll_to_top()
     
-    from utils import manage_conversation_history, estimate_tokens
+    from utils import manage_conversation_history, estimate_tokens, render_conversation_sidebar
     from database import save_conversation_message, log_educator_prompt, load_conversation_to_session
     
     # Get educator info
@@ -232,6 +245,10 @@ def show_companion_interface():
     # Initialize session-specific conversation ID
     if 'companion_session_id' not in st.session_state:
         st.session_state.companion_session_id = str(uuid.uuid4())
+    
+    # Render conversation sidebar (handles conversation management)
+    if database_available and user_id:
+        render_conversation_sidebar('companion', user_id=user_id)
     
     # Ensure companion messages are initialized
     if 'companion_messages' not in st.session_state:
@@ -468,7 +485,7 @@ def show_student_interface():
     """Enhanced student learning interface with curriculum context, conversation history, and persistence"""
     scroll_to_top()
     
-    from utils import manage_conversation_history
+    from utils import manage_conversation_history, render_conversation_sidebar
     from database import save_conversation_message, load_conversation_to_session
     
     # Get student info from session
@@ -479,6 +496,10 @@ def show_student_interface():
     # Initialize student-specific session ID if not exists
     if 'student_session_id' not in st.session_state:
         st.session_state.student_session_id = str(uuid.uuid4())
+    
+    # Render conversation sidebar (handles conversation management)
+    if database_available and student_id:
+        render_conversation_sidebar('student', student_id=student_id)
     
     # Ensure student messages are initialized
     if 'student_messages' not in st.session_state:
