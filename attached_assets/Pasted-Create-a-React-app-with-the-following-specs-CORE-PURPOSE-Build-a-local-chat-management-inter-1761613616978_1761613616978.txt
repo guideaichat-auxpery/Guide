@@ -1,0 +1,55 @@
+Create a React app with the following specs:
+
+🧱 CORE PURPOSE
+Build a local chat management interface (educator/student) with:
+- Sidebar listing all chats
+- Add new chat
+- Rename and delete chat
+- Select and reopen chat with full context preserved
+- Store and load all data from browser localStorage (no external DB)
+- Sort chats by creation date (most recent first)
+- Keep component structure clean and expandable
+
+💡 SELF-LEARNING ENHANCEMENT
+Include a lightweight local “learning” module that:
+- Tracks usage patterns (e.g., how often new chats are created, renamed, deleted, reopened)
+- Saves this info in localStorage under a key like `paredAnalytics`
+- Allows UI refinement triggers (e.g., if users rename chats often, show a rename prompt sooner)
+- Does NOT send data externally (local only)
+
+⚙️ COMPONENTS TO INCLUDE
+1. `App.jsx` — main layout: Sidebar + ChatView
+2. `Sidebar.jsx` — handles chat list, add/rename/delete
+3. `ChatView.jsx` — simple display area for selected chat messages
+4. `useLocalStorage.js` — custom React hook for persistent storage
+5. `analytics.js` — handles self-learning local refinement logic
+
+🧠 FEATURES
+- Each chat object: { id, title, createdAt, messages: [ {role, content, timestamp} ] }
+- Sidebar lists chats by date
+- Selecting a chat loads its message history
+- New chat auto-selects
+- Rename input field inline
+- Delete button per chat
+- Context preserved when reopened
+- Persistent across page reloads
+- No 3rd-party libraries other than React itself
+
+🎨 STYLE
+- Clean, minimal Tailwind-like layout (use inline styles or CSS modules if Tailwind not configured)
+- Sidebar on the left, chat view on right
+- Smooth transitions for adding/removing chats
+- Responsive for desktop and tablet
+
+📈 SELF-LEARNING SYSTEM
+In `analytics.js`:
+- Increment counts like `createdCount`, `renamedCount`, `deletedCount`
+- If `renamedCount / createdCount > 0.5`, suggest renaming right after creating a chat
+- Save analytics object back into localStorage
+- This module should be written in a way that can be later connected to a small adaptive UI engine
+
+📦 FINAL REQUIREMENTS
+- Must be fully self-contained within Replit (no Firebase, no API keys)
+- Data and refinement logic persist via localStorage
+- App runs with `npm run dev`
+- Output: production-ready code with clear, commented structure
