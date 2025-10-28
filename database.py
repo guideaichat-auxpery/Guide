@@ -143,6 +143,19 @@ class PlanningNote(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class ChatConversation(Base):
+    __tablename__ = "chat_conversations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False, default="New Chat")
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # For educators
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # For students
+    interface_type = Column(String, nullable=False)  # 'companion', 'student', 'planning'
+    session_id = Column(String, nullable=False, unique=True, index=True)  # Links to conversation_history
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class ConversationHistory(Base):
     __tablename__ = "conversation_history"
     
@@ -196,6 +209,17 @@ class TrendingKeyword(Base):
     student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # Optional student tracking
     last_detected = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class ChatAnalytics(Base):
+    __tablename__ = "chat_analytics"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # For educators
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # For students
+    action_type = Column(String, nullable=False)  # 'create', 'rename', 'delete', 'reopen'
+    conversation_id = Column(Integer, ForeignKey("chat_conversations.id"), nullable=True)
+    interface_type = Column(String, nullable=False)  # 'companion', 'student', 'planning'
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 class SystemConfig(Base):
     __tablename__ = "system_config"
@@ -697,6 +721,138 @@ def clear_conversation_history(db, session_id: str, interface_type: str):
     ).delete()
     db.commit()
     return True
+
+# Chat Conversation Management functions
+def create_chat_conversation(db, title: str, session_id: str, interface_type: str, 
+                             user_id: int = None, student_id: int = None):
+    """Create a new chat conversation"""
+    conversation = ChatConversation(
+        title=title,
+        user_id=user_id,
+        student_id=student_id,
+        interface_type=interface_type,
+        session_id=session_id
+    )
+    db.add(conversation)
+    db.commit()
+    db.refresh(conversation)
+    
+    # Log analytics
+    log_chat_action(db, 'create', conversation.id, interface_type, user_id, student_id)
+    
+    return conversation
+
+def get_user_chat_conversations(db, user_id: int = None, student_id: int = None, 
+                                interface_type: str = None):
+    """Get all chat conversations for a user or student"""
+    query = db.query(ChatConversation).filter(ChatConversation.is_active == True)
+    
+    if user_id:
+        query = query.filter(ChatConversation.user_id == user_id)
+    if student_id:
+        query = query.filter(ChatConversation.student_id == student_id)
+    if interface_type:
+        query = query.filter(ChatConversation.interface_type == interface_type)
+    
+    return query.order_by(ChatConversation.updated_at.desc()).all()
+
+def get_chat_conversation_by_id(db, conversation_id: int):
+    """Get a specific chat conversation by ID"""
+    return db.query(ChatConversation).filter(ChatConversation.id == conversation_id).first()
+
+def get_chat_conversation_by_session(db, session_id: str):
+    """Get a chat conversation by session ID"""
+    return db.query(ChatConversation).filter(ChatConversation.session_id == session_id).first()
+
+def rename_chat_conversation(db, conversation_id: int, new_title: str, user_id: int = None, student_id: int = None):
+    """Rename a chat conversation"""
+    conversation = get_chat_conversation_by_id(db, conversation_id)
+    if conversation:
+        conversation.title = new_title
+        conversation.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(conversation)
+        
+        # Log analytics
+        log_chat_action(db, 'rename', conversation_id, conversation.interface_type, user_id, student_id)
+        
+        return conversation
+    return None
+
+def delete_chat_conversation(db, conversation_id: int, user_id: int = None, student_id: int = None):
+    """Soft delete a chat conversation (mark as inactive)"""
+    conversation = get_chat_conversation_by_id(db, conversation_id)
+    if conversation:
+        conversation.is_active = False
+        conversation.updated_at = datetime.utcnow()
+        db.commit()
+        
+        # Log analytics
+        log_chat_action(db, 'delete', conversation_id, conversation.interface_type, user_id, student_id)
+        
+        return True
+    return False
+
+def reopen_chat_conversation(db, conversation_id: int, user_id: int = None, student_id: int = None):
+    """Reopen a chat conversation (log analytics)"""
+    conversation = get_chat_conversation_by_id(db, conversation_id)
+    if conversation:
+        conversation.updated_at = datetime.utcnow()
+        db.commit()
+        
+        # Log analytics
+        log_chat_action(db, 'reopen', conversation_id, conversation.interface_type, user_id, student_id)
+        
+        return conversation
+    return None
+
+def log_chat_action(db, action_type: str, conversation_id: int, interface_type: str,
+                   user_id: int = None, student_id: int = None):
+    """Log chat management actions for analytics"""
+    analytics = ChatAnalytics(
+        user_id=user_id,
+        student_id=student_id,
+        action_type=action_type,
+        conversation_id=conversation_id,
+        interface_type=interface_type
+    )
+    db.add(analytics)
+    db.commit()
+    return analytics
+
+def get_chat_analytics(db, user_id: int = None, student_id: int = None, days: int = 30):
+    """Get chat management analytics for a user or student"""
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    query = db.query(ChatAnalytics).filter(ChatAnalytics.created_at >= cutoff_date)
+    
+    if user_id:
+        query = query.filter(ChatAnalytics.user_id == user_id)
+    if student_id:
+        query = query.filter(ChatAnalytics.student_id == student_id)
+    
+    return query.order_by(ChatAnalytics.created_at.desc()).all()
+
+def get_chat_analytics_summary(db, user_id: int = None, student_id: int = None, days: int = 30):
+    """Get summary statistics for chat management"""
+    from sqlalchemy import func
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    query = db.query(
+        ChatAnalytics.action_type,
+        func.count(ChatAnalytics.id).label('count')
+    ).filter(ChatAnalytics.created_at >= cutoff_date)
+    
+    if user_id:
+        query = query.filter(ChatAnalytics.user_id == user_id)
+    if student_id:
+        query = query.filter(ChatAnalytics.student_id == student_id)
+    
+    results = query.group_by(ChatAnalytics.action_type).all()
+    
+    return {action: count for action, count in results}
 
 # Educator Analytics functions
 def log_educator_prompt(db, user_id: int, interface_type: str, prompt_text: str,
