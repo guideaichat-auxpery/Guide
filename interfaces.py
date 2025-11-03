@@ -106,7 +106,13 @@ def show_lesson_planning_interface():
                 if planning_type == "lesson_plan":
                     # Age-specific Montessori system context
                     montessori_context = {
-                        "3-6": """You are creating a lesson plan for the First Plane of Development (ages 3-6) following Montessori curriculum, pedagogy, and philosophy.
+                        "3-6": """You are creating a lesson plan for the First Plane of Development (ages 3-6 / Foundation / Cycle 1) following Montessori curriculum, pedagogy, and philosophy.
+
+🎯 CRITICAL CURRICULUM RULE FOR AGES 3-6:
+- PRIMARY FRAMEWORK: Montessori curriculum and pedagogy
+- SECONDARY ALIGNMENT: Australian Curriculum (Foundation) may be referenced for alignment purposes ONLY
+- When AC alignment is included, show the AC content descriptor codes (e.g., AC9EFLY01)
+- The lesson design, materials, and approach MUST be based on Montessori principles, NOT Australian Curriculum
 
 KEY MONTESSORI PRINCIPLES FOR AGES 3-6:
 - Absorbent Mind: Children effortlessly absorb knowledge from their environment
@@ -119,7 +125,13 @@ KEY MONTESSORI PRINCIPLES FOR AGES 3-6:
 - Self-directed activity and freedom within limits
 - Hands-on concrete materials before abstract concepts""",
                         
-                        "6-9": """You are creating a lesson plan for the Second Plane of Development (ages 6-9) following Montessori curriculum, pedagogy, and philosophy.
+                        "6-9": """You are creating a lesson plan for the Second Plane of Development (ages 6-9 / Years 1-3 / Cycle 2) following Montessori curriculum, pedagogy, and philosophy.
+
+🎯 CRITICAL CURRICULUM RULE FOR AGES 6-9:
+- PRIMARY FRAMEWORK: Montessori curriculum and pedagogy
+- SECONDARY ALIGNMENT: Australian Curriculum (Years 1-3) may be referenced for alignment purposes ONLY
+- When AC alignment is included, show the AC content descriptor codes (e.g., AC9E3LA01)
+- The lesson design, materials, and approach MUST be based on Montessori principles, NOT Australian Curriculum
 
 KEY MONTESSORI PRINCIPLES FOR AGES 6-9:
 - Reasoning Mind: Children develop abstract thinking and imagination
@@ -132,7 +144,13 @@ KEY MONTESSORI PRINCIPLES FOR AGES 6-9:
 - Key Lessons: Story of the Universe, Coming of Life, Story of Humans, Story of Language, Story of Numbers
 - Research and exploration become central to learning""",
                         
-                        "9-12": """You are creating a lesson plan for the Second Plane of Development (ages 9-12) following Montessori curriculum, pedagogy, and philosophy.
+                        "9-12": """You are creating a lesson plan for the Second Plane of Development (ages 9-12 / Years 4-6 / Cycle 3) following Montessori curriculum, pedagogy, and philosophy.
+
+🎯 CRITICAL CURRICULUM RULE FOR AGES 9-12:
+- PRIMARY FRAMEWORK: Montessori curriculum and pedagogy
+- SECONDARY ALIGNMENT: Australian Curriculum (Years 4-6) may be referenced for alignment purposes ONLY
+- When AC alignment is included, show the AC content descriptor codes (e.g., AC9S5U01)
+- The lesson design, materials, and approach MUST be based on Montessori principles, NOT Australian Curriculum
 
 KEY MONTESSORI PRINCIPLES FOR AGES 9-12:
 - Intellectual Independence: Deep research, critical thinking, and academic specialisation
@@ -145,7 +163,15 @@ KEY MONTESSORI PRINCIPLES FOR AGES 9-12:
 - Timeline Work: Great lessons extended into detailed timeline exploration
 - Entrepreneurial Spirit: Micro-economy, business ventures, real-world problem solving""",
                         
-                        "12-15": """You are creating a lesson plan for the Third Plane of Development (ages 12-15) following Montessori curriculum, pedagogy, and philosophy.
+                        "12-15": """You are creating a lesson plan for the Third Plane of Development (ages 12-15 / Years 7-9 / Cycle 4) following Australian Curriculum V9 as the primary framework, interpreted through Montessori "Cosmic Education" and systems thinking perspective.
+
+🎯 CRITICAL CURRICULUM RULE FOR AGES 12-15 (ADOLESCENCE):
+- PRIMARY FRAMEWORK: Australian Curriculum V9 (Years 7-9)
+- INTERPRETATION LENS: Montessori "Cosmic Education" / systems perspective
+- ALWAYS include AC content descriptor codes (e.g., AC9HH7K01, AC9E7LA01)
+- Structure the lesson using AC content descriptors as the foundation
+- Apply Montessori's cosmic education philosophy to interpret and deliver the AC content
+- Emphasize interconnections, big picture thinking, and the adolescent's place in society
 
 KEY MONTESSORI PRINCIPLES FOR AGES 12-15:
 - Erdkinder (Children of the Earth): Learning through land-based work and community contribution
@@ -156,7 +182,8 @@ KEY MONTESSORI PRINCIPLES FOR AGES 12-15:
 - Physical Activity: Outdoor work, farming, construction projects
 - Community Living: Shared responsibility, democratic governance
 - Emotional Development: Understanding self, managing emotions, building resilience
-- Passage to Independence: Preparation for adult life and societal contribution"""
+- Passage to Independence: Preparation for adult life and societal contribution
+- Cosmic Education: Understanding systems, interdependence, and meaningful contribution to the world"""
                     }
                     system_context = montessori_context.get(age_group, "You are creating a lesson plan with Montessori principles and Australian Curriculum V9 alignment.")
                 else:  # assessment_rubric
@@ -1235,8 +1262,8 @@ def show_great_story_interface():
             db = get_db()
             if db:
                 try:
-                    from database import get_educator_stories
-                    stories = get_educator_stories(db, educator_id)
+                    from database import get_educator_great_stories
+                    stories = get_educator_great_stories(db, educator_id)
                     
                     if stories:
                         st.markdown("### 📚 Your Saved Stories")
