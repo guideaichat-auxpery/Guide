@@ -1,0 +1,52 @@
+To make Guide’s website-suggestion engine produce reliable, relevant, and content-rich sources across more subjects, you’ll want to:
+
+Broaden each domain area (so synonyms and near-synonyms trigger results).
+
+Add academic and research-related keywords (so it prioritises educational sources).
+
+Include trusted context words (so it leans toward government, university, and scholarly domains).
+
+Here’s a refined, expanded list — grouped for clarity:
+
+🧠 General Academic Keywords
+
+education, learning, lesson, tutorial, project, research, article, resource, study, case study, overview, explained, facts, information, encyclopedia
+
+🌍 Humanities & Social Sciences
+
+History / Civics / Culture:
+war, revolution, civilization, ancient, modern, cultural, heritage, society, migration, government, law, rights, justice, constitution, citizenship, anthropology, archaeology
+
+Geography / Environment:
+climate, environment, ecosystem, biome, continent, map, population, urban, rural, sustainability, geology, landform, earthquake, weather, natural disaster
+
+Politics / Economics / Business:
+economy, trade, industry, entrepreneurship, marketing, accounting, taxation, government policy, public sector, leadership, innovation, management, economics, budget, employment
+
+🔬 STEM
+
+Science (General & Subfields):
+biology, chemistry, physics, astronomy, ecology, genetics, space, technology, engineering, robotics, energy, experiment, lab, data, theory, hypothesis, scientific method
+
+Maths / Statistics:
+algebra, geometry, calculus, measurement, probability, data, graph, statistics, equation, numeracy, problem solving, formula, percentages
+
+🎭 Arts, Language & Expression
+
+English / Literature:
+novel, fiction, nonfiction, author, analysis, theme, symbolism, characters, drama, play, poem, essay, literary, text, creative writing
+
+Arts / Media / Design:
+painting, drawing, sculpture, design, architecture, photography, cinema, editing, journalism, broadcast, advertising, graphic design, sound, music, performance
+
+🌱 Modern & Interdisciplinary Topics
+
+technology, innovation, AI, ethics, globalisation, sustainability, digital citizenship, cybersecurity, mental health, social media, diversity, inclusion, environmental impact, gender, equity
+
+🎓 Trusted Source Filters (optional but powerful)
+
+If you’re building Guide’s query logic, you can boost accuracy by including domain or quality filters when fetching links:
+
+Include: .edu, .gov, .org, Britannica, National Geographic, Smithsonian, BBC, ABC Education, NASA, UNESCO, OECD, Australian Museum
+
+Exclude: reddit, quora, fandom, pinterest, blogspot, wikiHow

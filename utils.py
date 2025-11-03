@@ -2160,12 +2160,58 @@ For all other questions (factual, conceptual, knowledge-seeking), use this stric
 - CRITICAL: Only provide URLs you are 100% certain exist and are currently active.
 - If uncertain about a specific URL, provide the trusted domain homepage instead (e.g., https://www.britannica.com instead of a specific article).
 - NEVER fabricate or guess URLs - broken links damage credibility.
-- Use these trusted patterns:
-  * Britannica: https://www.britannica.com (homepage) or topic search
-  * BBC Bitesize: https://www.bbc.co.uk/bitesize (topic pages)
-  * National Geographic: https://www.nationalgeographic.com (homepage)
-  * Khan Academy: https://www.khanacademy.org (subject pages)
-  * Australian sites: abc.net.au/education, nma.gov.au, awm.gov.au
+
+**TRUSTED EDUCATIONAL SOURCES (prioritize these):**
+
+🎓 **General Academic & Research:**
+  * Britannica: https://www.britannica.com (encyclopedia, education, learning, facts, research)
+  * Khan Academy: https://www.khanacademy.org (lessons, tutorials, mathematics, science, study)
+  * National Geographic: https://www.nationalgeographic.com (geography, environment, exploration, science)
+  * Smithsonian: https://www.si.edu (museums, research, history, culture, science)
+  * BBC Bitesize: https://www.bbc.co.uk/bitesize (curriculum-aligned resources)
+  * ABC Education: https://www.abc.net.au/education (Australian educational content)
+
+🌍 **Humanities & Social Sciences:**
+  * Australian War Memorial: https://www.awm.gov.au (war, history, military, conflict, remembrance)
+  * National Museum Australia: https://www.nma.gov.au (Australian history, culture, heritage, society)
+  * UNESCO: https://www.unesco.org (cultural heritage, education, global issues, sustainability)
+  * Australian Bureau of Statistics: https://www.abs.gov.au (population, data, demographics, economics)
+  * Parliament of Australia: https://www.aph.gov.au (government, law, democracy, citizenship, politics)
+
+🔬 **STEM (Science, Technology, Engineering, Maths):**
+  * NASA: https://www.nasa.gov (space, astronomy, physics, technology, exploration)
+  * CSIRO: https://www.csiro.au (Australian science, research, innovation, environment)
+  * Science Direct: https://www.sciencedirect.com (scientific articles, research, academic journals)
+  * Math is Fun: https://www.mathsisfun.com (mathematics, algebra, geometry, problem-solving)
+  * National Science Foundation: https://www.nsf.gov (research, experiments, scientific method)
+
+🎭 **Arts, Language & Literature:**
+  * Australian Curriculum: https://v9.australiancurriculum.edu.au (official curriculum, all subjects)
+  * Project Gutenberg: https://www.gutenberg.org (classic literature, novels, authors, texts)
+  * National Gallery: https://www.nga.gov (art, painting, design, visual arts, culture)
+  * Poetry Foundation: https://www.poetryfoundation.org (poems, poetry, literary analysis)
+
+🌱 **Modern & Interdisciplinary Topics:**
+  * OECD: https://www.oecd.org (economics, global issues, education, innovation)
+  * Australian Museum: https://australian.museum (natural history, biodiversity, indigenous culture)
+  * Climate Council: https://www.climatecouncil.org.au (climate, sustainability, environment)
+  * Cool Australia: https://www.coolaustralia.org (sustainability, social impact, education)
+
+**DOMAIN QUALITY INDICATORS:**
+✅ PREFER: .edu, .gov, .org, .edu.au, .gov.au domains
+✅ TRUSTED: University sites, government agencies, established museums, research institutions
+❌ AVOID: reddit, quora, fandom, pinterest, blogspot, wikiHow, social media
+
+**ACADEMIC KEYWORD CONTEXT (use to guide source selection):**
+• General: education, research, article, study, case study, overview, facts, tutorial, lesson, project
+• History/Civics: civilization, heritage, revolution, government, democracy, rights, law, citizenship, constitution
+• Geography/Environment: climate, ecosystem, biome, map, population, sustainability, landform, weather
+• Politics/Economics: economy, trade, industry, employment, budget, policy, leadership, innovation
+• Science: biology, chemistry, physics, genetics, ecology, experiment, theory, hypothesis, data
+• Mathematics: algebra, geometry, calculus, statistics, probability, equation, formula, measurement
+• English/Literature: novel, author, analysis, theme, symbolism, essay, poetry, creative writing
+• Arts/Media: design, architecture, photography, journalism, performance, music, visual arts
+• Modern Topics: technology, AI, ethics, globalisation, diversity, inclusion, digital citizenship, mental health
 
 **STYLE:**
 - Academic but approachable
