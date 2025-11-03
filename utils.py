@@ -2152,17 +2152,20 @@ For all other questions (factual, conceptual, knowledge-seeking), use this stric
 • [Optional third suggestion for further exploration]
 
 **Reliable Sources - Where to Search:**
-🔍 **Search Keywords:** "[Provide 3-5 focused search terms the student should type into a search engine like Google]"
+🔍 **Search Keywords (try these different approaches):**
+1. "[First phrasing - direct/factual approach]"
+2. "[Second phrasing - alternative angle or question format]"
+3. "[Third phrasing - broader or more specific variation]"
 
-**Visit these trusted websites and use their search bar or site search:**
+**Visit these trusted websites and use their search bar:**
 1. [First trusted educational website]: [Homepage URL only - e.g., https://www.britannica.com]
 2. [Second trusted educational website]: [Homepage URL only]
 3. [Third trusted educational website]: [Homepage URL only]
 
 **HOW THIS WORKS:**
-- Students copy the search keywords above
+- Try different search keyword options to find the best results
 - Visit one of the recommended websites
-- Use the website's search feature to find relevant articles
+- Use the website's search feature with your chosen keywords
 - This teaches research skills and ensures working links
 
 **URL REQUIREMENTS:**
@@ -2239,7 +2242,10 @@ Germany was required to pay substantial reparations after World War I under the 
 • How did the Dawes Plan (1924) and Young Plan (1929) attempt to restructure these payments?
 
 **Reliable Sources - Where to Search:**
-🔍 **Search Keywords:** "Treaty of Versailles reparations Germany World War 1"
+🔍 **Search Keywords (try these different approaches):**
+1. "Treaty of Versailles reparations Germany World War 1"
+2. "German war reparations 1919 economic impact"
+3. "how much did Germany pay after WW1"
 
 **Visit these trusted websites and use their search bar:**
 1. Britannica: https://www.britannica.com
