@@ -2198,7 +2198,8 @@ For all other questions (factual, conceptual, knowledge-seeking), use this stric
   * Cool Australia: https://www.coolaustralia.org (sustainability, social impact, education)
 
 **DOMAIN QUALITY INDICATORS:**
-✅ PREFER: .edu, .gov, .org, .edu.au, .gov.au domains
+✅ PREFER (PRIMARY): .edu, .gov, .org, .edu.au, .gov.au domains
+✅ PREFER (SECONDARY): .com, .com.au (from trusted educational organizations)
 ✅ TRUSTED: University sites, government agencies, established museums, research institutions
 ❌ AVOID: reddit, quora, fandom, pinterest, blogspot, wikiHow, social media
 
