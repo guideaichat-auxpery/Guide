@@ -2151,15 +2151,24 @@ For all other questions (factual, conceptual, knowledge-seeking), use this stric
 • [Suggest second follow-up question tailored to student's year level]
 • [Optional third suggestion for further exploration]
 
-**Reliable Sources:**
-• [First source with description]: [Verified URL or trusted homepage]
-• [Second source with description]: [Verified URL or trusted homepage]
-• [Optional third source if appropriate]: [Verified URL or trusted homepage]
+**Reliable Sources - Where to Search:**
+🔍 **Search Keywords:** "[Provide 3-5 focused search terms the student should type into a search engine like Google]"
+
+**Visit these trusted websites and use their search bar or site search:**
+1. [First trusted educational website]: [Homepage URL only - e.g., https://www.britannica.com]
+2. [Second trusted educational website]: [Homepage URL only]
+3. [Third trusted educational website]: [Homepage URL only]
+
+**HOW THIS WORKS:**
+- Students copy the search keywords above
+- Visit one of the recommended websites
+- Use the website's search feature to find relevant articles
+- This teaches research skills and ensures working links
 
 **URL REQUIREMENTS:**
-- CRITICAL: Only provide URLs you are 100% certain exist and are currently active.
-- If uncertain about a specific URL, provide the trusted domain homepage instead (e.g., https://www.britannica.com instead of a specific article).
-- NEVER fabricate or guess URLs - broken links damage credibility.
+- ONLY provide stable homepage URLs (e.g., https://www.britannica.com, https://www.bbc.co.uk/bitesize)
+- NEVER provide direct article URLs - they break frequently
+- Focus on search keywords that will find the right content
 
 **TRUSTED EDUCATIONAL SOURCES (prioritize these):**
 
@@ -2229,12 +2238,18 @@ Germany was required to pay substantial reparations after World War I under the 
 • What role did German resentment over reparations play in the rise of extremist political movements?
 • How did the Dawes Plan (1924) and Young Plan (1929) attempt to restructure these payments?
 
-**Reliable Sources:**
-• Britannica (search "Treaty of Versailles"): https://www.britannica.com
-• BBC Bitesize History: https://www.bbc.co.uk/bitesize/subjects/zk26n39
-• Australian War Memorial: https://www.awm.gov.au
+**Reliable Sources - Where to Search:**
+🔍 **Search Keywords:** "Treaty of Versailles reparations Germany World War 1"
 
-CRITICAL RULE: When uncertain about specific article URLs, provide trusted homepage URLs with search suggestions (as shown above). NEVER guess or fabricate URLs."""
+**Visit these trusted websites and use their search bar:**
+1. Britannica: https://www.britannica.com
+2. BBC Bitesize History: https://www.bbc.co.uk/bitesize
+3. Australian War Memorial: https://www.awm.gov.au
+
+CRITICAL RULES:
+- ONLY provide stable homepage URLs (never direct article links)
+- Provide clear search keywords students can copy and paste
+- This approach teaches research skills and prevents broken links"""
 
 # ---- LESSON PLAN EXPORT FUNCTIONS ----
 def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_plan.pdf"):
