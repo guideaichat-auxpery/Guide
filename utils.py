@@ -2169,18 +2169,18 @@ For all other questions (factual, conceptual, knowledge-seeking), use this stric
 - This teaches research skills and ensures working links
 
 **URL REQUIREMENTS:**
-- ONLY provide stable homepage URLs (e.g., https://www.britannica.com, https://www.bbc.co.uk/bitesize)
+- ONLY provide stable homepage URLs (e.g., https://www.britannica.com, https://www.nationalgeographic.com)
 - NEVER provide direct article URLs - they break frequently
 - Focus on search keywords that will find the right content
+- Prioritize high-priority sources; use BBC Bitesize only when high-priority sources lack coverage
 
 **TRUSTED EDUCATIONAL SOURCES (prioritize these):**
 
-🎓 **General Academic & Research:**
+🎓 **General Academic & Research (HIGH PRIORITY):**
   * Britannica: https://www.britannica.com (encyclopedia, education, learning, facts, research)
   * Khan Academy: https://www.khanacademy.org (lessons, tutorials, mathematics, science, study)
   * National Geographic: https://www.nationalgeographic.com (geography, environment, exploration, science)
   * Smithsonian: https://www.si.edu (museums, research, history, culture, science)
-  * BBC Bitesize: https://www.bbc.co.uk/bitesize (curriculum-aligned resources)
   * ABC Education: https://www.abc.net.au/education (Australian educational content)
 
 🌍 **Humanities & Social Sciences:**
@@ -2208,6 +2208,9 @@ For all other questions (factual, conceptual, knowledge-seeking), use this stric
   * Australian Museum: https://australian.museum (natural history, biodiversity, indigenous culture)
   * Climate Council: https://www.climatecouncil.org.au (climate, sustainability, environment)
   * Cool Australia: https://www.coolaustralia.org (sustainability, social impact, education)
+
+📚 **Additional Resources (LOW PRIORITY - use only when high-priority sources don't have adequate coverage):**
+  * BBC Bitesize: https://www.bbc.co.uk/bitesize (UK curriculum-aligned resources)
 
 **DOMAIN QUALITY INDICATORS:**
 ✅ PREFER (PRIMARY): .edu, .gov, .org, .edu.au, .gov.au domains
@@ -2249,8 +2252,8 @@ Germany was required to pay substantial reparations after World War I under the 
 
 **Visit these trusted websites and use their search bar:**
 1. Britannica: https://www.britannica.com
-2. BBC Bitesize History: https://www.bbc.co.uk/bitesize
-3. Australian War Memorial: https://www.awm.gov.au
+2. Australian War Memorial: https://www.awm.gov.au
+3. National Geographic: https://www.nationalgeographic.com
 
 CRITICAL RULES:
 - ONLY provide stable homepage URLs (never direct article links)
