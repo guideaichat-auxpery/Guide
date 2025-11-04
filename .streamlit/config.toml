@@ -4,6 +4,8 @@ address = "0.0.0.0"
 port = 5000
 enableXsrfProtection = true
 maxUploadSize = 200
+maxMessageSize = 200
+runOnSave = true
 
 [browser]
 gatherUsageStats = false
@@ -17,10 +19,6 @@ fastReruns = true
 [client]
 showErrorDetails = true
 toolbarMode = "minimal"
-
-[server.session]
-maxRunTime = 7200
-sessionTimeout = 7200
 
 [theme]
 primaryColor = "#9bbf9b"
