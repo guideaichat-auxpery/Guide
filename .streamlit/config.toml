@@ -18,6 +18,10 @@ fastReruns = true
 showErrorDetails = true
 toolbarMode = "minimal"
 
+[server.session]
+maxRunTime = 7200
+sessionTimeout = 7200
+
 [theme]
 primaryColor = "#9bbf9b"
 backgroundColor = "#fffdf8"
