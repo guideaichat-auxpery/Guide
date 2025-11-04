@@ -45,6 +45,9 @@ def show_lesson_planning_interface():
                         )
                         if loaded_messages:
                             st.session_state.planning_messages = loaded_messages
+                            # Show restore notification
+                            restore_time = most_recent.last_activity.strftime('%d/%m/%Y %H:%M') if hasattr(most_recent, 'last_activity') and most_recent.last_activity else 'earlier'
+                            st.toast(f"✓ Restored your conversation from {restore_time}", icon="🔄")
                     else:
                         # Create first conversation for new users
                         st.session_state.planning_session_id = str(uuid.uuid4())
@@ -118,6 +121,7 @@ def show_lesson_planning_interface():
         })
         
         # Save user message to database
+        save_success = False
         if database_available and user_id:
             from database import save_conversation_message
             db = get_db()
@@ -132,10 +136,16 @@ def show_lesson_planning_interface():
                         user_id=user_id,
                         student_id=None
                     )
+                    save_success = True
                 except Exception as e:
                     print(f"Error saving planning user message: {str(e)}")
+                    st.warning("⚠️ Unable to save message. Please check your connection.")
                 finally:
                     db.close()
+        
+        # Show save confirmation if successful
+        if save_success:
+            st.toast("✓ Message saved", icon="💾")
         
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -260,6 +270,7 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                 })
                 
                 # Save assistant message to database
+                assistant_save_success = False
                 if database_available and user_id:
                     from database import save_conversation_message
                     db = get_db()
@@ -274,10 +285,16 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                                 user_id=user_id,
                                 student_id=None
                             )
+                            assistant_save_success = True
                         except Exception as e:
                             print(f"Error saving planning assistant message: {str(e)}")
+                            st.warning("⚠️ Unable to save response. Please check your connection.")
                         finally:
                             db.close()
+                
+                # Show save confirmation if successful
+                if assistant_save_success:
+                    st.toast("✓ Response saved", icon="💾")
                 
                 # Scroll to beginning of new response
                 scroll_to_latest_response()
@@ -372,6 +389,9 @@ def show_companion_interface():
                         )
                         if loaded_messages:
                             st.session_state.companion_messages = loaded_messages
+                            # Show restore notification
+                            restore_time = most_recent.last_activity.strftime('%d/%m/%Y %H:%M') if hasattr(most_recent, 'last_activity') and most_recent.last_activity else 'earlier'
+                            st.toast(f"✓ Restored your conversation from {restore_time}", icon="🔄")
                     else:
                         # Create first conversation for new users
                         st.session_state.companion_session_id = str(uuid.uuid4())
@@ -461,6 +481,7 @@ def show_companion_interface():
                 scroll_to_latest_response()
                 
                 # Save assistant response to database
+                assistant_save_success = False
                 if database_available and user_id:
                     db = get_db()
                     if db:
@@ -474,10 +495,16 @@ def show_companion_interface():
                                 user_id=user_id,
                                 student_id=None
                             )
+                            assistant_save_success = True
                         except Exception as e:
                             print(f"Error saving conversation: {str(e)}")
+                            st.warning("⚠️ Unable to save response. Please check your connection.")
                         finally:
                             db.close()
+                
+                # Show save confirmation if successful
+                if assistant_save_success:
+                    st.toast("✓ Response saved", icon="💾")
     
     # Quick conversation starters - Comprehensive Montessori Guide Topics
     st.markdown("#### 📚 Montessori Quick Guides")
@@ -542,6 +569,7 @@ def show_companion_interface():
         })
         
         # Save user message to database
+        save_success = False
         if database_available and user_id:
             db = get_db()
             if db:
@@ -561,10 +589,16 @@ def show_companion_interface():
                         db, user_id, 'companion', prompt,
                         tokens_used=estimate_tokens(prompt)
                     )
+                    save_success = True
                 except Exception as e:
                     print(f"Error saving conversation: {str(e)}")
+                    st.warning("⚠️ Unable to save message. Please check your connection.")
                 finally:
                     db.close()
+        
+        # Show save confirmation if successful
+        if save_success:
+            st.toast("✓ Message saved", icon="💾")
         
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -588,6 +622,7 @@ def show_companion_interface():
                 scroll_to_latest_response()
                 
                 # Save assistant response to database
+                assistant_save_success = False
                 if database_available and user_id:
                     db = get_db()
                     if db:
@@ -601,10 +636,16 @@ def show_companion_interface():
                                 user_id=user_id,
                                 student_id=None
                             )
+                            assistant_save_success = True
                         except Exception as e:
                             print(f"Error saving conversation: {str(e)}")
+                            st.warning("⚠️ Unable to save response. Please check your connection.")
                         finally:
                             db.close()
+                
+                # Show save confirmation if successful
+                if assistant_save_success:
+                    st.toast("✓ Response saved", icon="💾")
     
     # Add scroll to top button
     add_scroll_to_top_button()
@@ -647,6 +688,9 @@ def show_student_interface():
                         )
                         if loaded_messages:
                             st.session_state.student_messages = loaded_messages
+                            # Show restore notification
+                            restore_time = most_recent.last_activity.strftime('%d/%m/%Y %H:%M') if hasattr(most_recent, 'last_activity') and most_recent.last_activity else 'earlier'
+                            st.toast(f"✓ Restored your conversation from {restore_time}", icon="🔄")
                         
                         # Log session start
                         log_student_activity(
@@ -871,6 +915,7 @@ Keep feedback age-appropriate for {age_group} year olds."""
                     })
                     
                     # Save to database
+                    feedback_save_success = False
                     if database_available and student_id:
                         db = get_db()
                         if db:
@@ -884,10 +929,16 @@ Keep feedback age-appropriate for {age_group} year olds."""
                                     user_id=None,
                                     student_id=student_id
                                 )
+                                feedback_save_success = True
                             except Exception as e:
                                 print(f"Error saving feedback: {str(e)}")
+                                st.warning("⚠️ Unable to save feedback. Please check your connection.")
                             finally:
                                 db.close()
+                    
+                    # Show save confirmation if successful
+                    if feedback_save_success:
+                        st.toast("✓ Feedback saved", icon="💾")
     
     st.markdown("---")
     
@@ -925,6 +976,7 @@ Keep feedback age-appropriate for {age_group} year olds."""
                     prompt = f"{prompt}\n\n[Student's uploaded content: {file_context[:1000]}]"
         
         # Save conversation and detect curriculum keywords
+        save_success = False
         if database_available and student_id:
             db = get_db()
             if db:
@@ -969,10 +1021,16 @@ Keep feedback age-appropriate for {age_group} year olds."""
                         detected_keywords, 
                         st.session_state.student_session_id
                     )
+                    save_success = True
                 except Exception as e:
                     print(f"Error saving conversation/logging prompt: {str(e)}")
+                    st.warning("⚠️ Unable to save message. Please check your connection.")
                 finally:
                     db.close()
+        
+        # Show save confirmation if successful
+        if save_success:
+            st.toast("✓ Message saved", icon="💾")
         
         # Get selected subjects and year level
         selected_subjects = st.session_state.get('student_subjects', [])
@@ -1016,6 +1074,7 @@ Keep feedback age-appropriate for {age_group} year olds."""
                 scroll_to_latest_response()
                 
                 # Save assistant response
+                assistant_save_success = False
                 if database_available and student_id:
                     db = get_db()
                     if db:
@@ -1039,10 +1098,16 @@ Keep feedback age-appropriate for {age_group} year olds."""
                                 response_text=response,
                                 session_id=st.session_state.student_session_id
                             )
+                            assistant_save_success = True
                         except Exception as e:
                             print(f"Error saving conversation/logging response: {str(e)}")
+                            st.warning("⚠️ Unable to save response. Please check your connection.")
                         finally:
                             db.close()
+                
+                # Show save confirmation if successful
+                if assistant_save_success:
+                    st.toast("✓ Response saved", icon="💾")
     
     # Add scroll to top button
     add_scroll_to_top_button()
