@@ -2,6 +2,21 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+enableXsrfProtection = true
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
+serverAddress = "0.0.0.0"
+serverPort = 5000
+
+[runner]
+magicEnabled = true
+fastReruns = true
+
+[client]
+showErrorDetails = true
+toolbarMode = "minimal"
 
 [theme]
 primaryColor = "#9bbf9b"

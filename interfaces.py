@@ -22,23 +22,45 @@ def show_lesson_planning_interface():
     
     # Initialize session-specific conversation ID and conversation if not exists
     if 'planning_session_id' not in st.session_state:
-        st.session_state.planning_session_id = str(uuid.uuid4())
-        # Auto-create first conversation for new educators
+        # Try to auto-load most recent conversation first
         if database_available and user_id:
-            from database import create_chat_conversation
+            from database import get_user_chat_conversations, create_chat_conversation, load_conversation_to_session
             db = get_db()
             if db:
                 try:
-                    title = f"Planning {datetime.now().strftime('%d/%m %H:%M')}"
-                    new_conv = create_chat_conversation(
-                        db, title=title, session_id=st.session_state.planning_session_id,
-                        interface_type='planning', user_id=user_id, student_id=None
+                    # Get existing conversations
+                    existing_conversations = get_user_chat_conversations(
+                        db, user_id=user_id, interface_type='planning'
                     )
-                    st.session_state['planning_current_conversation_id'] = new_conv.id
+                    
+                    if existing_conversations and len(existing_conversations) > 0:
+                        # Auto-load most recent conversation
+                        most_recent = existing_conversations[0]
+                        st.session_state.planning_session_id = most_recent.session_id
+                        st.session_state['planning_current_conversation_id'] = most_recent.id
+                        
+                        # Load messages from database
+                        loaded_messages = load_conversation_to_session(
+                            db, most_recent.session_id, 'planning'
+                        )
+                        if loaded_messages:
+                            st.session_state.planning_messages = loaded_messages
+                    else:
+                        # Create first conversation for new users
+                        st.session_state.planning_session_id = str(uuid.uuid4())
+                        title = f"Planning {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=st.session_state.planning_session_id,
+                            interface_type='planning', user_id=user_id, student_id=None
+                        )
+                        st.session_state['planning_current_conversation_id'] = new_conv.id
                 except Exception as e:
-                    print(f"Error creating initial planning conversation: {str(e)}")
+                    print(f"Error loading/creating planning conversation: {str(e)}")
+                    st.session_state.planning_session_id = str(uuid.uuid4())
                 finally:
                     db.close()
+        else:
+            st.session_state.planning_session_id = str(uuid.uuid4())
     
     # Render conversation sidebar (handles conversation management)
     if database_available and user_id:
@@ -94,6 +116,26 @@ def show_lesson_planning_interface():
             "role": "user",
             "content": prompt
         })
+        
+        # Save user message to database
+        if database_available and user_id:
+            from database import save_conversation_message
+            db = get_db()
+            if db:
+                try:
+                    save_conversation_message(
+                        db,
+                        session_id=st.session_state.planning_session_id,
+                        interface_type='planning',
+                        role='user',
+                        content=prompt,
+                        user_id=user_id,
+                        student_id=None
+                    )
+                except Exception as e:
+                    print(f"Error saving planning user message: {str(e)}")
+                finally:
+                    db.close()
         
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -217,6 +259,26 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                     "content": response
                 })
                 
+                # Save assistant message to database
+                if database_available and user_id:
+                    from database import save_conversation_message
+                    db = get_db()
+                    if db:
+                        try:
+                            save_conversation_message(
+                                db,
+                                session_id=st.session_state.planning_session_id,
+                                interface_type='planning',
+                                role='assistant',
+                                content=response,
+                                user_id=user_id,
+                                student_id=None
+                            )
+                        except Exception as e:
+                            print(f"Error saving planning assistant message: {str(e)}")
+                        finally:
+                            db.close()
+                
                 # Scroll to beginning of new response
                 scroll_to_latest_response()
     
@@ -287,45 +349,53 @@ def show_companion_interface():
     
     # Initialize session-specific conversation ID and conversation if not exists
     if 'companion_session_id' not in st.session_state:
-        st.session_state.companion_session_id = str(uuid.uuid4())
-        # Auto-create first conversation for new educators
+        # Try to auto-load most recent conversation first
         if database_available and user_id:
-            from database import create_chat_conversation
+            from database import get_user_chat_conversations, create_chat_conversation
             db = get_db()
             if db:
                 try:
-                    title = f"Companion {datetime.now().strftime('%d/%m %H:%M')}"
-                    new_conv = create_chat_conversation(
-                        db, title=title, session_id=st.session_state.companion_session_id,
-                        interface_type='companion', user_id=user_id, student_id=None
+                    # Get existing conversations
+                    existing_conversations = get_user_chat_conversations(
+                        db, user_id=user_id, interface_type='companion'
                     )
-                    st.session_state['companion_current_conversation_id'] = new_conv.id
+                    
+                    if existing_conversations and len(existing_conversations) > 0:
+                        # Auto-load most recent conversation
+                        most_recent = existing_conversations[0]
+                        st.session_state.companion_session_id = most_recent.session_id
+                        st.session_state['companion_current_conversation_id'] = most_recent.id
+                        
+                        # Load messages from database
+                        loaded_messages = load_conversation_to_session(
+                            db, most_recent.session_id, 'companion'
+                        )
+                        if loaded_messages:
+                            st.session_state.companion_messages = loaded_messages
+                    else:
+                        # Create first conversation for new users
+                        st.session_state.companion_session_id = str(uuid.uuid4())
+                        title = f"Companion {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=st.session_state.companion_session_id,
+                            interface_type='companion', user_id=user_id, student_id=None
+                        )
+                        st.session_state['companion_current_conversation_id'] = new_conv.id
                 except Exception as e:
-                    print(f"Error creating initial companion conversation: {str(e)}")
+                    print(f"Error loading/creating companion conversation: {str(e)}")
+                    st.session_state.companion_session_id = str(uuid.uuid4())
                 finally:
                     db.close()
+        else:
+            st.session_state.companion_session_id = str(uuid.uuid4())
     
     # Render conversation sidebar (handles conversation management)
     if database_available and user_id:
         render_conversation_sidebar('companion', user_id=user_id)
     
-    # Ensure companion messages are initialized
+    # Ensure companion messages are initialized (will be populated by auto-load above if available)
     if 'companion_messages' not in st.session_state:
         st.session_state.companion_messages = []
-        # Try to load conversation history from database
-        if database_available and user_id:
-            db = get_db()
-            if db:
-                try:
-                    loaded_messages = load_conversation_to_session(
-                        db, st.session_state.companion_session_id, 'companion'
-                    )
-                    if loaded_messages:
-                        st.session_state.companion_messages = loaded_messages
-                except Exception as e:
-                    print(f"Error loading conversation history: {str(e)}")
-                finally:
-                    db.close()
     
     st.markdown("### 🗨️ Montessori Companion")
     st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
@@ -554,52 +624,61 @@ def show_student_interface():
     
     # Initialize student-specific session ID and conversation if not exists
     if 'student_session_id' not in st.session_state:
-        st.session_state.student_session_id = str(uuid.uuid4())
-        # Auto-create first conversation for new students
+        # Try to auto-load most recent conversation first
         if database_available and student_id:
-            from database import create_chat_conversation
+            from database import get_user_chat_conversations, create_chat_conversation
             db = get_db()
             if db:
                 try:
-                    title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
-                    new_conv = create_chat_conversation(
-                        db, title=title, session_id=st.session_state.student_session_id,
-                        interface_type='student', user_id=None, student_id=student_id
+                    # Get existing conversations
+                    existing_conversations = get_user_chat_conversations(
+                        db, student_id=student_id, interface_type='student'
                     )
-                    st.session_state['student_current_conversation_id'] = new_conv.id
+                    
+                    if existing_conversations and len(existing_conversations) > 0:
+                        # Auto-load most recent conversation
+                        most_recent = existing_conversations[0]
+                        st.session_state.student_session_id = most_recent.session_id
+                        st.session_state['student_current_conversation_id'] = most_recent.id
+                        
+                        # Load messages from database
+                        loaded_messages = load_conversation_to_session(
+                            db, most_recent.session_id, 'student'
+                        )
+                        if loaded_messages:
+                            st.session_state.student_messages = loaded_messages
+                        
+                        # Log session start
+                        log_student_activity(
+                            db, 
+                            student_id, 
+                            'session_start', 
+                            session_id=most_recent.session_id
+                        )
+                    else:
+                        # Create first conversation for new students
+                        st.session_state.student_session_id = str(uuid.uuid4())
+                        title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=st.session_state.student_session_id,
+                            interface_type='student', user_id=None, student_id=student_id
+                        )
+                        st.session_state['student_current_conversation_id'] = new_conv.id
                 except Exception as e:
-                    print(f"Error creating initial student conversation: {str(e)}")
+                    print(f"Error loading/creating student conversation: {str(e)}")
+                    st.session_state.student_session_id = str(uuid.uuid4())
                 finally:
                     db.close()
+        else:
+            st.session_state.student_session_id = str(uuid.uuid4())
     
     # Render conversation sidebar (handles conversation management)
     if database_available and student_id:
         render_conversation_sidebar('student', student_id=student_id)
     
-    # Ensure student messages are initialized
+    # Ensure student messages are initialized (will be populated by auto-load above if available)
     if 'student_messages' not in st.session_state:
         st.session_state.student_messages = []
-        # Try to load conversation history from database
-        if database_available and student_id:
-            db = get_db()
-            if db:
-                try:
-                    loaded_messages = load_conversation_to_session(
-                        db, st.session_state.student_session_id, 'student'
-                    )
-                    if loaded_messages:
-                        st.session_state.student_messages = loaded_messages
-                    # Log session start
-                    log_student_activity(
-                        db, 
-                        student_id, 
-                        'session_start', 
-                        session_id=st.session_state.student_session_id
-                    )
-                except Exception as e:
-                    print(f"Error loading conversation/logging session: {str(e)}")
-                finally:
-                    db.close()
     
     # Custom CSS for enhanced chat styling
     st.markdown("""
