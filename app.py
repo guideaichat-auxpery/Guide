@@ -372,8 +372,8 @@ st.markdown(
     <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
         <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
         Guide - Your prepared digital environment | Powered by OpenAI GPT-4o Mini<br>
-        Grounded in authentic Montessori principles and foundational texts<br>
-        Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
+        Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em><br><br>
+        Contact us at guide@auxpery.com.au
     </div>
     """,
     unsafe_allow_html=True

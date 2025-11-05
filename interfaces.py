@@ -74,7 +74,7 @@ def show_lesson_planning_interface():
         st.session_state.planning_messages = []
         
     st.markdown("### 📚 Montessori Educational Planning Tool")
-    st.markdown("*Create comprehensive lesson plans and scope & sequence with Australian Curriculum V.9 alignment*")
+    st.markdown("*Create comprehensive lesson plans with Montessori National Curriculum and Australian Curriculum V.9 alignment*")
     
     # Age group selector with year level display
     from utils import map_age_to_year_levels
@@ -90,11 +90,8 @@ def show_lesson_planning_interface():
         }[x]
     )
     
-    # Display year level mapping
+    # Year level mapping (not displayed to user)
     year_levels = map_age_to_year_levels(age_group)
-    if year_levels:
-        year_levels_str = ", ".join(year_levels)
-        st.caption(f"🎯 Australian Curriculum Year Levels: **{year_levels_str}**")
     
     # Planning type selector
     planning_type = st.selectbox(
