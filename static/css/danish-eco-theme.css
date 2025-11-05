@@ -388,3 +388,9 @@ button {
 .danish-dashboard-wrapper .stButton > button {
   margin: 0 !important;
 }
+
+/* Hide the main header and byline when Danish dashboard is active */
+.danish-dashboard-wrapper ~ div .main-header,
+.danish-dashboard-wrapper ~ div .main-byline {
+  display: none;
+}
