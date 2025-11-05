@@ -81,124 +81,7 @@ def load_css(file_path):
 load_css('static/css/montessori-theme.css')
 load_css('static/css/danish-eco-theme.css')
 
-# Danish Educator Dashboard Function
-def render_danish_educator_dashboard():
-    """Render the Danish eco-design educator dashboard with card-based navigation"""
-    
-    # Get educator name and institution info
-    educator_name = st.session_state.get('user_email', 'Educator').split('@')[0].title()
-    
-    # Get institution info from database
-    institution_info = ""
-    try:
-        from database import get_db, is_institution_enforcement_on, User
-        db = get_db()
-        if db:
-            educator_id = st.session_state.get('user_id')
-            educator = db.query(User).filter(User.id == educator_id).first()
-            if educator and educator.institution_name:
-                enforcement_on = is_institution_enforcement_on(db)
-                status_icon = "🔒" if enforcement_on else "⏳"
-                status_text = "Active" if enforcement_on else "Grace Period"
-                institution_info = f"{status_icon} <strong>Institution:</strong> {educator.institution_name} | <strong>Sharing Enforcement:</strong> {status_text}"
-            db.close()
-    except Exception as e:
-        print(f"Error fetching institution info: {e}")
-    
-    # Wrapper for entire dashboard - contains everything
-    st.markdown(f"""
-    <div class="danish-dashboard-wrapper">
-        <div class="danish-header">
-            <div class="danish-header-left">
-                <span class="danish-wordmark">Guide</span>
-                <span class="danish-byline">by AUXPERY</span>
-            </div>
-            <div class="danish-header-right">
-                <svg class="danish-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <svg class="danish-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
-                </svg>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Main Dashboard Content - open div
-    st.markdown('<div class="danish-dashboard">', unsafe_allow_html=True)
-    
-    # Greeting
-    st.markdown(f'<h1 class="danish-greeting">Welcome back, {educator_name}</h1>', unsafe_allow_html=True)
-    
-    # Institution badge if available
-    if institution_info:
-        st.markdown(f'<div class="danish-institution-badge">{institution_info}</div>', unsafe_allow_html=True)
-    
-    # Create 3x2 grid of cards using Streamlit columns
-    col1, col2, col3 = st.columns(3)
-    
-    # Card data
-    cards = [
-        {"title": "Lesson Planning", "body": "Design age-appropriate learning experiences", "icon_paths": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>', "mode": "lesson_planning", "key": "lp"},
-        {"title": "Montessori Companion", "body": "Tap into Montessori wisdom and training", "icon_paths": '<path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"></path><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M12 2v2"></path><path d="M12 22v-2"></path><path d="m17 20.66-1-1.73"></path><path d="M11 10.27 7 3.34"></path><path d="m20.66 17-1.73-1"></path><path d="m3.34 7 1.73 1"></path><path d="M14 12h8"></path><path d="M2 12h2"></path><path d="m20.66 7-1.73 1"></path><path d="m3.34 17 1.73-1"></path><path d="m17 3.34-1 1.73"></path><path d="m11 13.73-4 6.93"></path>', "mode": "companion", "key": "comp"},
-        {"title": "Student Dashboard", "body": "Stay connected to your students' learning", "icon_paths": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>', "mode": "student_dashboard", "key": "sd"},
-        {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon_paths": '<path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L9 5Z"></path><path d="M6 9.01V9"></path><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"></path>', "mode": "planning_notes", "key": "pn"},
-        {"title": "Create Student", "body": "Add new students", "icon_paths": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line>', "mode": "create_student", "key": "cs"},
-        {"title": "Great Stories", "body": "Create narratives to introduce new learning", "icon_paths": '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>', "mode": "great_stories", "key": "gs"}
-    ]
-    
-    # Distribute cards across columns - use simple, functional approach
-    columns = [col1, col2, col3]
-    for idx, card in enumerate(cards):
-        col_idx = idx % 3
-        with columns[col_idx]:
-            # Simple button with icon emoji as visual identifier
-            icon_map = {
-                "lp": "📚",
-                "comp": "🌱", 
-                "sd": "👥",
-                "pn": "📝",
-                "cs": "➕",
-                "gs": "📖"
-            }
-            icon = icon_map.get(card['key'], "📌")
-            
-            button_label = f"{icon} **{card['title']}**\n\n{card['body']}"
-            
-            if st.button(
-                button_label,
-                key=f"{card['key']}_card_btn",
-                use_container_width=True,
-                type="secondary"
-            ):
-                st.session_state.auth_mode = card['mode']
-                st.rerun()
-    
-    # Account Section
-    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
-    acc_col1, acc_col2 = st.columns(2)
-    with acc_col1:
-        if st.button("My Data", key="data_btn", use_container_width=True):
-            st.session_state.auth_mode = "data_access"
-            st.rerun()
-    with acc_col2:
-        if st.button("Account Settings", key="account_btn", use_container_width=True):
-            st.session_state.auth_mode = "account_deletion"
-            st.rerun()
-    
-    # PD Expert Mode (restricted access)
-    if st.session_state.get('user_email') == "guideaichat@gmail.com":
-        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-        if st.button("🔬 PD Expert Mode", use_container_width=True, type="primary"):
-            st.session_state.auth_mode = "pd_expert"
-            st.rerun()
-    
-    # Close danish-dashboard div
-    st.markdown('</div>', unsafe_allow_html=True)
-    # Close danish-dashboard-wrapper div
-    st.markdown('</div>', unsafe_allow_html=True)
+# (Danish dashboard function removed - dashboard now renders inline)
 
 # Additional custom CSS for specific components
 st.markdown("""
@@ -245,7 +128,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main Header
-st.markdown('<h1 class="main-header">🌟 Guide</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
 st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
 
 # Only show subtitle for unauthenticated users
@@ -341,12 +224,75 @@ else:
         if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
             st.session_state.auth_mode = 'dashboard_home'
         
-        # Show Danish dashboard home or specific interface
+        # Show dashboard home or specific interface
         current_mode = st.session_state.get('auth_mode', 'dashboard_home')
         
         # Only show dashboard navigation cards on home view
         if current_mode == 'dashboard_home':
-            render_danish_educator_dashboard()
+            # Educator Dashboard - Welcome and Cards
+            educator_name = st.session_state.get('user_email', 'Educator').split('@')[0].title()
+            st.markdown(f'<h2 style="margin-bottom: 1rem;">Welcome back, {educator_name}</h2>', unsafe_allow_html=True)
+            
+            # Institution badge
+            try:
+                from database import get_db, is_institution_enforcement_on, User
+                db = get_db()
+                if db:
+                    educator_id = st.session_state.get('user_id')
+                    educator = db.query(User).filter(User.id == educator_id).first()
+                    if educator and educator.institution_name:
+                        enforcement_on = is_institution_enforcement_on(db)
+                        status_icon = "🔒" if enforcement_on else "⏳"
+                        status_text = "Active" if enforcement_on else "Grace Period"
+                        st.markdown(f"""
+                        <div style="background-color: rgba(120, 154, 118, 0.08); border-left: 3px solid #789A76; 
+                                    padding: 0.5rem 1rem; margin-bottom: 1.5rem; border-radius: 4px; display: inline-block;">
+                            <span style="font-size: 14px; opacity: 0.75;">{status_icon} <strong>Institution:</strong> {educator.institution_name} | <strong>Sharing Enforcement:</strong> {status_text}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    db.close()
+            except Exception as e:
+                print(f"Error fetching institution info: {e}")
+            
+            # Navigation cards in 3x2 grid
+            col1, col2, col3 = st.columns(3)
+            
+            cards = [
+                {"title": "Lesson Planning", "body": "Design age-appropriate learning experiences", "icon": "📚", "mode": "lesson_planning", "key": "lp"},
+                {"title": "Montessori Companion", "body": "Tap into Montessori wisdom and training", "icon": "🌱", "mode": "companion", "key": "comp"},
+                {"title": "Student Dashboard", "body": "Stay connected to your students' learning", "icon": "👥", "mode": "student_dashboard", "key": "sd"},
+                {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon": "📝", "mode": "planning_notes", "key": "pn"},
+                {"title": "Create Student", "body": "Add new students", "icon": "➕", "mode": "create_student", "key": "cs"},
+                {"title": "Great Stories", "body": "Create narratives to introduce new learning", "icon": "📖", "mode": "great_stories", "key": "gs"}
+            ]
+            
+            columns = [col1, col2, col3]
+            for idx, card in enumerate(cards):
+                col_idx = idx % 3
+                with columns[col_idx]:
+                    button_label = f"{card['icon']} **{card['title']}**\n\n{card['body']}"
+                    if st.button(button_label, key=f"{card['key']}_card_btn", use_container_width=True, type="secondary"):
+                        st.session_state.auth_mode = card['mode']
+                        st.rerun()
+            
+            # Account buttons
+            st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+            acc_col1, acc_col2 = st.columns(2)
+            with acc_col1:
+                if st.button("My Data", key="data_btn", use_container_width=True):
+                    st.session_state.auth_mode = "data_access"
+                    st.rerun()
+            with acc_col2:
+                if st.button("Account Settings", key="account_btn", use_container_width=True):
+                    st.session_state.auth_mode = "account_deletion"
+                    st.rerun()
+            
+            # PD Expert Mode
+            if st.session_state.get('user_email') == "guideaichat@gmail.com":
+                st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+                if st.button("🔬 PD Expert Mode", use_container_width=True, type="primary"):
+                    st.session_state.auth_mode = "pd_expert"
+                    st.rerun()
     elif is_student is True:
         # Student interface - explicitly for students only
         st.session_state.auth_mode = 'student_companion'
