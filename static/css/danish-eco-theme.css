@@ -37,20 +37,21 @@
   box-sizing: border-box;
 }
 
-/* Danish Header */
+/* Danish Header - fixed at top */
 .danish-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background-color: var(--eco-bg);
-  border-bottom: 1px solid var(--eco-border);
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 1000;
-  box-shadow: var(--shadow-subtle);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  background-color: var(--eco-bg) !important;
+  border-bottom: 1px solid var(--eco-border) !important;
+  padding: 0.75rem 2rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  z-index: 10000 !important;
+  box-shadow: var(--shadow-subtle) !important;
+  height: 52px !important;
 }
 
 .danish-header-left {
@@ -92,9 +93,9 @@
   color: var(--eco-accent);
 }
 
-/* Main Dashboard Content - minimal top padding to account for header */
+/* Main Dashboard Content - minimal top padding */
 .danish-dashboard {
-  padding: 70px 2rem 1.5rem 2rem;
+  padding: 60px 2rem 1.5rem 2rem;
   min-height: 100vh;
 }
 
