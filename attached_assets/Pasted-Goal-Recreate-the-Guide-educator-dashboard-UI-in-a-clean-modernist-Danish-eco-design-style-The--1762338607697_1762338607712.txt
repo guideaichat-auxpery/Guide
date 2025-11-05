@@ -1,0 +1,109 @@
+Goal:
+Recreate the “Guide” educator dashboard UI in a clean, modernist Danish eco design style. The design should match the attached reference image (if provided), with these updates and style parameters.
+
+🎨 Design Style
+
+Aesthetic: Modernist Danish eco design — minimal, clean grids, generous whitespace.
+
+Colors: Off-white background (#FAF9F6), muted forest green accent (#789A76), soft grey text (#2E2E2B).
+
+Typography:
+
+Headings → Inter SemiBold
+
+Body → Inter Regular
+
+Tone: Calm, elegant, functional; no emojis.
+
+Corners: Rounded 16px.
+
+Shadows: Very subtle, diffuse.
+
+Icons: Simple line icons (Lucide or Feather).
+
+Alignment: Left-aligned layout with clear visual hierarchy.
+
+Responsive: Must display cleanly on mobile and desktop.
+
+🧱 Layout Details
+
+Header Bar
+
+Left: Large wordmark “Guide” (Inter SemiBold 22–24px).
+
+Next to it (smaller): “by AUXPERY” in muted grey-green (#789A76).
+
+Right side: search icon + notification bell icon (line style).
+
+Fixed at top with slight shadow or border-bottom line (#E4E1DC).
+
+Main Section (Educator Dashboard)
+
+Greeting:
+
+Large text: “Welcome back, [Educator Name]”
+
+Below greeting: main cards in a 3x3 grid (responsive stack on mobile).  
+
+Card 1:
+
+Icon: book
+
+Title: Lesson Planning
+
+
+Card 2:
+
+Icon: Two children silhouette
+
+Title: Student Dashboard
+
+Body: Stay connected to your students' learning
+
+
+Card 3: 
+
+Icon: sprout/leaf
+
+Title: Montessori Companion
+
+Body: Tap into Montessori's wisdom and training
+
+Card 4:
+
+Icon: checklist
+
+Title: Planning Notes
+
+Body: Record and save your lesson plans
+
+Card 5
+
+Icon: Single child silhouette
+
+Title: Create Student
+
+Body: Add new students
+
+Card 5
+
+Icon: Open Book
+
+Title: Great Stories
+
+Body: Create narratives to introduce new learning
+Progress Section
+
+Card below grid titled: Account
+
+Rounded ends, smooth animation on load.
+
+♿ Accessibility
+
+Minimum font size: 16px body, 24px headings.
+
+Color contrast: meet WCAG 2.1 AA.
+
+Keyboard-focusable cards and buttons.
+
+Hover/active states use soft shadow or slight color change.

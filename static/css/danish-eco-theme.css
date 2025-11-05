@@ -1,0 +1,352 @@
+/* Danish Eco Design System for Guide - Scoped to Dashboard Only */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Danish Eco Color Palette */
+  --eco-bg: #FAF9F6;           /* Off-white background */
+  --eco-accent: #789A76;       /* Muted forest green */
+  --eco-text: #2E2E2B;         /* Soft grey text */
+  --eco-border: #E4E1DC;       /* Subtle border */
+  --eco-card-bg: #FFFFFF;      /* Card background */
+  --eco-hover: #6A8A68;        /* Darker green for hover */
+  
+  /* Typography */
+  --font-inter: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  
+  /* Spacing & Layout */
+  --radius: 16px;
+  --shadow-subtle: 0 2px 8px rgba(46, 46, 43, 0.04);
+  --shadow-card: 0 4px 16px rgba(46, 46, 43, 0.06);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Accessibility */
+  --focus-ring: 2px solid var(--eco-accent);
+  --min-touch: 44px;
+}
+
+/* Scoped Danish Dashboard Wrapper */
+.danish-dashboard-wrapper {
+  background-color: var(--eco-bg);
+  min-height: 100vh;
+  font-family: var(--font-inter);
+  color: var(--eco-text);
+}
+
+.danish-dashboard-wrapper * {
+  box-sizing: border-box;
+}
+
+/* Danish Header */
+.danish-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--eco-bg);
+  border-bottom: 1px solid var(--eco-border);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: var(--shadow-subtle);
+}
+
+.danish-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.danish-wordmark {
+  font-family: var(--font-inter);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--eco-text);
+  letter-spacing: -0.02em;
+}
+
+.danish-byline {
+  font-family: var(--font-inter);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--eco-accent);
+}
+
+.danish-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.danish-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--eco-text);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.danish-icon:hover {
+  color: var(--eco-accent);
+}
+
+/* Main Dashboard Content */
+.danish-dashboard {
+  padding: 120px 2rem 2rem 2rem;
+  min-height: 100vh;
+}
+
+.danish-greeting {
+  font-family: var(--font-inter);
+  font-size: 48px;
+  font-weight: 400;
+  color: var(--eco-text);
+  margin-bottom: 3rem;
+  letter-spacing: -0.02em;
+}
+
+/* Card Grid */
+.danish-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Individual Cards */
+.danish-card {
+  background-color: var(--eco-card-bg);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow-card);
+  transition: var(--transition);
+  cursor: pointer;
+  border: 1px solid transparent;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: relative;
+}
+
+.danish-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(46, 46, 43, 0.1);
+  border-color: var(--eco-accent);
+}
+
+.danish-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.danish-card-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--eco-accent);
+  margin-bottom: 1rem;
+  stroke-width: 1.5;
+}
+
+.danish-card-title {
+  font-family: var(--font-inter);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--eco-text);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.danish-card-body {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--eco-text);
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+/* Account Section */
+.danish-account-section {
+  background-color: var(--eco-card-bg);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow-card);
+  margin-top: 2rem;
+}
+
+.danish-account-title {
+  font-family: var(--font-inter);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--eco-text);
+  margin-bottom: 1rem;
+}
+
+/* Progress Bar */
+.danish-progress {
+  width: 100%;
+  height: 8px;
+  background-color: var(--eco-border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.danish-progress-bar {
+  height: 100%;
+  background-color: var(--eco-accent);
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .danish-header {
+    padding: 1rem;
+  }
+  
+  .danish-wordmark {
+    font-size: 20px;
+  }
+  
+  .danish-byline {
+    display: none;
+  }
+  
+  .danish-dashboard {
+    padding: 100px 1rem 2rem 1rem;
+  }
+  
+  .danish-greeting {
+    font-size: 32px;
+    margin-bottom: 2rem;
+  }
+  
+  .danish-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .danish-card {
+    min-height: 140px;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .danish-greeting {
+    font-size: 28px;
+  }
+  
+  .danish-card-title {
+    font-size: 18px;
+  }
+  
+  .danish-card-body {
+    font-size: 15px;
+  }
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .danish-card {
+    border: 2px solid var(--eco-text);
+  }
+}
+
+/* Focus Visible States */
+button:focus-visible,
+.danish-card:focus-visible,
+a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Ensure minimum touch target size */
+.danish-card,
+button {
+  min-height: var(--min-touch);
+}
+
+/* Smooth page load animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.danish-card {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.danish-card:nth-child(1) { animation-delay: 0.05s; }
+.danish-card:nth-child(2) { animation-delay: 0.1s; }
+.danish-card:nth-child(3) { animation-delay: 0.15s; }
+.danish-card:nth-child(4) { animation-delay: 0.2s; }
+.danish-card:nth-child(5) { animation-delay: 0.25s; }
+.danish-card:nth-child(6) { animation-delay: 0.3s; }
+
+/* Hide Streamlit elements only within Danish dashboard wrapper */
+.danish-dashboard-wrapper ~ div header[data-testid="stHeader"] {
+  display: none;
+}
+
+.danish-dashboard-wrapper .stDeployButton {
+  display: none;
+}
+
+/* Dashboard Card Button Styling - Simple, Clean, Accessible */
+.danish-dashboard-wrapper .stButton > button[kind="secondary"] {
+  background-color: var(--eco-card-bg) !important;
+  border-radius: var(--radius) !important;
+  padding: 2rem !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: var(--transition) !important;
+  border: 1px solid transparent !important;
+  min-height: 160px !important;
+  color: var(--eco-text) !important;
+  font-family: var(--font-inter) !important;
+  text-align: left !important;
+  white-space: pre-line !important;
+  line-height: 1.6 !important;
+  font-size: 16px !important;
+}
+
+.danish-dashboard-wrapper .stButton > button[kind="secondary"]:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 24px rgba(46, 46, 43, 0.1) !important;
+  border-color: var(--eco-accent) !important;
+  background-color: var(--eco-card-bg) !important;
+}
+
+.danish-dashboard-wrapper .stButton > button[kind="secondary"]:focus-visible {
+  outline: var(--focus-ring) !important;
+  outline-offset: 2px !important;
+  border-color: var(--eco-accent) !important;
+}
+
+/* Streamlit columns for dashboard */
+.danish-dashboard-wrapper [data-testid="column"] {
+  padding: 0.75rem !important;
+}
+
+.danish-dashboard-wrapper .row-widget.stHorizontal {
+  gap: 0 !important;
+}

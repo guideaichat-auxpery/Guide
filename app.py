@@ -72,12 +72,118 @@ if 'authenticated' not in st.session_state:
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
 
-# Load Montessori Design System
+# Load Design Systems
 def load_css(file_path):
     with open(file_path) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+# Load both Montessori theme and Danish eco design
 load_css('static/css/montessori-theme.css')
+load_css('static/css/danish-eco-theme.css')
+
+# Danish Educator Dashboard Function
+def render_danish_educator_dashboard():
+    """Render the Danish eco-design educator dashboard with card-based navigation"""
+    
+    # Get educator name
+    educator_name = st.session_state.get('user_email', 'Educator').split('@')[0].title()
+    
+    # Wrapper for entire dashboard
+    st.markdown('<div class="danish-dashboard-wrapper">', unsafe_allow_html=True)
+    
+    # Danish Header
+    st.markdown(f"""
+    <div class="danish-header">
+        <div class="danish-header-left">
+            <span class="danish-wordmark">Guide</span>
+            <span class="danish-byline">by AUXPERY</span>
+        </div>
+        <div class="danish-header-right">
+            <svg class="danish-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <svg class="danish-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+            </svg>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Main Dashboard Content
+    st.markdown(f"""
+    <div class="danish-dashboard">
+        <h1 class="danish-greeting">Welcome back, {educator_name}</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Create 3x2 grid of cards using Streamlit columns
+    col1, col2, col3 = st.columns(3)
+    
+    # Card data
+    cards = [
+        {"title": "Lesson Planning", "body": "Design age-appropriate learning experiences", "icon_paths": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>', "mode": "lesson_planning", "key": "lp"},
+        {"title": "Montessori Companion", "body": "Tap into Montessori wisdom and training", "icon_paths": '<path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"></path><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M12 2v2"></path><path d="M12 22v-2"></path><path d="m17 20.66-1-1.73"></path><path d="M11 10.27 7 3.34"></path><path d="m20.66 17-1.73-1"></path><path d="m3.34 7 1.73 1"></path><path d="M14 12h8"></path><path d="M2 12h2"></path><path d="m20.66 7-1.73 1"></path><path d="m3.34 17 1.73-1"></path><path d="m17 3.34-1 1.73"></path><path d="m11 13.73-4 6.93"></path>', "mode": "companion", "key": "comp"},
+        {"title": "Student Dashboard", "body": "Stay connected to your students' learning", "icon_paths": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>', "mode": "student_dashboard", "key": "sd"},
+        {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon_paths": '<path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L9 5Z"></path><path d="M6 9.01V9"></path><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"></path>', "mode": "planning_notes", "key": "pn"},
+        {"title": "Create Student", "body": "Add new students", "icon_paths": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line>', "mode": "create_student", "key": "cs"},
+        {"title": "Great Stories", "body": "Create narratives to introduce new learning", "icon_paths": '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>', "mode": "great_stories", "key": "gs"}
+    ]
+    
+    # Distribute cards across columns - use simple, functional approach
+    columns = [col1, col2, col3]
+    for idx, card in enumerate(cards):
+        col_idx = idx % 3
+        with columns[col_idx]:
+            # Simple button with icon emoji as visual identifier
+            icon_map = {
+                "lp": "📚",
+                "comp": "🌱", 
+                "sd": "👥",
+                "pn": "📝",
+                "cs": "➕",
+                "gs": "📖"
+            }
+            icon = icon_map.get(card['key'], "📌")
+            
+            button_label = f"{icon} **{card['title']}**\n\n{card['body']}"
+            
+            if st.button(
+                button_label,
+                key=f"{card['key']}_card_btn",
+                use_container_width=True,
+                type="secondary"
+            ):
+                st.session_state.auth_mode = card['mode']
+                st.rerun()
+    
+    # Account Section
+    st.markdown("""
+    <div class="danish-account-section">
+        <div class="danish-account-title">Account</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Account buttons
+    acc_col1, acc_col2 = st.columns(2)
+    with acc_col1:
+        if st.button("My Data", key="data_btn", use_container_width=True):
+            st.session_state.auth_mode = "data_access"
+            st.rerun()
+    with acc_col2:
+        if st.button("Account Settings", key="account_btn", use_container_width=True):
+            st.session_state.auth_mode = "account_deletion"
+            st.rerun()
+    
+    # PD Expert Mode (restricted access)
+    if st.session_state.get('user_email') == "guideaichat@gmail.com":
+        st.markdown("---")
+        if st.button("PD Expert Mode", use_container_width=True, type="primary"):
+            st.session_state.auth_mode = "pd_expert"
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Additional custom CSS for specific components
 st.markdown("""
@@ -219,59 +325,16 @@ else:
     if is_student is False:
         # Educator interface
         
-        # Default to lesson planning for educators (set this FIRST before checking current mode)
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
-            st.session_state.auth_mode = 'lesson_planning'
+        # Default to dashboard home for educators
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
+            st.session_state.auth_mode = 'dashboard_home'
         
-        col1, col2, col3 = st.columns(3)
+        # Show Danish dashboard home or specific interface
+        current_mode = st.session_state.get('auth_mode', 'dashboard_home')
         
-        with col1:
-            if st.button("📚 Lesson Planning", use_container_width=True):
-                st.session_state.auth_mode = "lesson_planning"
-                st.rerun()
-            
-            if st.button("🗨️ Montessori Companion", use_container_width=True):
-                st.session_state.auth_mode = "companion"
-                st.rerun()
-        
-        with col2:
-            if st.button("📖 Great Stories", use_container_width=True):
-                st.session_state.auth_mode = "great_stories"
-                st.rerun()
-            
-            if st.button("📝 Planning Notes", use_container_width=True):
-                st.session_state.auth_mode = "planning_notes"
-                st.rerun()
-        
-        with col3:
-            if st.button("👨‍🎓 Create Student", use_container_width=True):
-                st.session_state.auth_mode = "create_student"
-                st.rerun()
-            
-            if st.button("📊 Student Dashboard", use_container_width=True):
-                st.session_state.auth_mode = "student_dashboard"
-                st.rerun()
-        
-        # PD Expert Mode (restricted access)
-        if st.session_state.get('user_email') == "guideaichat@gmail.com":
-            st.markdown("---")
-            if st.button("🧭 PD Expert Mode", use_container_width=True, type="primary"):
-                st.session_state.auth_mode = "pd_expert"
-                st.rerun()
-        
-        # Privacy & Settings row (only show on home/lesson planning page)
-        current_mode = st.session_state.get('auth_mode', 'lesson_planning')
-        if current_mode == 'lesson_planning':
-            st.markdown("---")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("📥 My Data", use_container_width=True):
-                    st.session_state.auth_mode = "data_access"
-                    st.rerun()
-            with col2:
-                if st.button("⚙️ Account", use_container_width=True):
-                    st.session_state.auth_mode = "account_deletion"
-                    st.rerun()
+        # Only show dashboard navigation cards on home view
+        if current_mode == 'dashboard_home':
+            render_danish_educator_dashboard()
     elif is_student is True:
         # Student interface - explicitly for students only
         st.session_state.auth_mode = 'student_companion'
@@ -280,27 +343,66 @@ else:
         st.session_state.auth_mode = 'student_companion'
     
     # Display appropriate interface based on mode
-    if st.session_state.auth_mode == "create_student":
+    if st.session_state.auth_mode == "dashboard_home":
+        # Dashboard is already rendered above for educators
+        pass
+    elif st.session_state.auth_mode == "create_student":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_cs"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         create_student_page()
     elif st.session_state.auth_mode == "lesson_planning":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_lp"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_lesson_planning_interface()
     elif st.session_state.auth_mode == "companion":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_comp"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_companion_interface()
     elif st.session_state.auth_mode == "student_dashboard":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_sd"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_student_dashboard_interface()
     elif st.session_state.auth_mode == "great_stories":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_gs"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_great_story_interface()
     elif st.session_state.auth_mode == "planning_notes":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_pn"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_planning_notes_interface()
     elif st.session_state.auth_mode == "pd_expert":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_pd"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_pd_expert_interface()
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
     elif st.session_state.auth_mode == "privacy_policy":
         show_privacy_policy()
     elif st.session_state.auth_mode == "data_access":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_data"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_data_access_interface()
     elif st.session_state.auth_mode == "account_deletion":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_acct"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
         show_account_deletion_interface()
     
 # Main app logic continues here

@@ -12,7 +12,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 
 ## UI/UX Decisions
 - **Framework**: Streamlit with a wide layout and dual-mode interface (educator and student).
-- **Design System**: Montessori-inspired visual theme using warm earth tones, specific fonts (Cormorant Garamond, Inter), organic rounded corners, soft shadows, and smooth transitions, loaded via `static/css/montessori-theme.css`.
+- **Design System**: 
+  - **Montessori Theme** (`static/css/montessori-theme.css`): Warm earth tones using Cormorant Garamond and Inter fonts with organic rounded corners, soft shadows, and smooth transitions for general interface elements.
+  - **Danish Eco-Design Theme** (`static/css/danish-eco-theme.css`): Clean modernist educator dashboard with off-white background (#FAF9F6), muted forest green accent (#789A76), soft grey text (#2E2E2B), 16px rounded corners, generous whitespace, and card-based navigation. Features fixed header with "Guide by AUXPERY" wordmark, welcoming greeting, 3x2 grid of interactive feature cards (Lesson Planning, Student Dashboard, Montessori Companion, Planning Notes, Create Student, Great Stories), and account section. Fully responsive with WCAG 2.1 AA accessibility compliance.
 
 ## Technical Implementations
 - **Authentication**: Email/password for educators and username/password for students, with bcrypt hashing and session management, compliant with Australian Privacy Act 1988.
