@@ -241,10 +241,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Main Header
-st.markdown('<h1 class="main-header">🌟 Guide</h1>', unsafe_allow_html=True)
-st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
+# Main Header - only show for unauthenticated users
+if not st.session_state.authenticated:
+    st.markdown('<h1 class="main-header">🌟 Guide</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
 
 # Authentication and main application logic
 if not st.session_state.authenticated:

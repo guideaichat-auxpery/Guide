@@ -92,9 +92,9 @@
   color: var(--eco-accent);
 }
 
-/* Main Dashboard Content - reduced top padding */
+/* Main Dashboard Content - minimal top padding to account for header */
 .danish-dashboard {
-  padding: 90px 2rem 2rem 2rem;
+  padding: 70px 2rem 1.5rem 2rem;
   min-height: 100vh;
 }
 
@@ -103,7 +103,7 @@
   font-size: 48px;
   font-weight: 400;
   color: var(--eco-text);
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.75rem 0;
   letter-spacing: -0.02em;
 }
 
@@ -113,7 +113,7 @@
   font-size: 14px;
   color: var(--eco-text);
   opacity: 0.75;
-  margin-bottom: 1.5rem;
+  margin: 0 0 0.75rem 0;
   padding: 0.5rem 1rem;
   background-color: rgba(120, 154, 118, 0.08);
   border-left: 3px solid var(--eco-accent);
@@ -369,11 +369,22 @@ button {
   gap: 0 !important;
 }
 
-/* Reduce vertical gap between rows */
+/* Reduce vertical gap between rows and elements */
 .danish-dashboard-wrapper .element-container {
-  margin-bottom: 0.25rem !important;
+  margin: 0 0 0.5rem 0 !important;
 }
 
 .danish-dashboard-wrapper div[data-testid="stHorizontalBlock"] {
-  gap: 0.5rem !important;
+  gap: 0.75rem !important;
+}
+
+/* Remove default Streamlit padding for authenticated dashboard */
+.danish-dashboard-wrapper .main .block-container {
+  padding-top: 0 !important;
+  padding-bottom: 1rem !important;
+}
+
+/* Remove button margins */
+.danish-dashboard-wrapper .stButton > button {
+  margin: 0 !important;
 }
