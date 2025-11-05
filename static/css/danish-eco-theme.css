@@ -316,17 +316,17 @@ button {
 .danish-dashboard-wrapper .stButton > button[kind="secondary"] {
   background-color: var(--eco-card-bg) !important;
   border-radius: var(--radius) !important;
-  padding: 2rem !important;
+  padding: 1.5rem !important;
   box-shadow: var(--shadow-card) !important;
   transition: var(--transition) !important;
   border: 1px solid transparent !important;
-  min-height: 160px !important;
+  min-height: 140px !important;
   color: var(--eco-text) !important;
   font-family: var(--font-inter) !important;
   text-align: left !important;
   white-space: pre-line !important;
-  line-height: 1.6 !important;
-  font-size: 16px !important;
+  line-height: 1.5 !important;
+  font-size: 15px !important;
 }
 
 .danish-dashboard-wrapper .stButton > button[kind="secondary"]:hover {
@@ -342,11 +342,20 @@ button {
   border-color: var(--eco-accent) !important;
 }
 
-/* Streamlit columns for dashboard */
+/* Streamlit columns for dashboard - tighter spacing */
 .danish-dashboard-wrapper [data-testid="column"] {
-  padding: 0.75rem !important;
+  padding: 0.25rem !important;
 }
 
 .danish-dashboard-wrapper .row-widget.stHorizontal {
   gap: 0 !important;
+}
+
+/* Reduce vertical gap between rows */
+.danish-dashboard-wrapper .element-container {
+  margin-bottom: 0.25rem !important;
+}
+
+.danish-dashboard-wrapper div[data-testid="stHorizontalBlock"] {
+  gap: 0.5rem !important;
 }

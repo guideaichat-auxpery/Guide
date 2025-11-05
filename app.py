@@ -158,28 +158,10 @@ def render_danish_educator_dashboard():
                 st.session_state.auth_mode = card['mode']
                 st.rerun()
     
-    # Account Section
-    st.markdown("""
-    <div class="danish-account-section">
-        <div class="danish-account-title">Account</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Account buttons
-    acc_col1, acc_col2 = st.columns(2)
-    with acc_col1:
-        if st.button("My Data", key="data_btn", use_container_width=True):
-            st.session_state.auth_mode = "data_access"
-            st.rerun()
-    with acc_col2:
-        if st.button("Account Settings", key="account_btn", use_container_width=True):
-            st.session_state.auth_mode = "account_deletion"
-            st.rerun()
-    
     # PD Expert Mode (restricted access)
     if st.session_state.get('user_email') == "guideaichat@gmail.com":
-        st.markdown("---")
-        if st.button("PD Expert Mode", use_container_width=True, type="primary"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔬 PD Expert Mode", use_container_width=True, type="primary"):
             st.session_state.auth_mode = "pd_expert"
             st.rerun()
     
