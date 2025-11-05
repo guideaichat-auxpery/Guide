@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Configure page
 st.set_page_config(
-    page_title="Guide - Your Montessori Companion",
+    page_title="Guide - Your prepared digital environment",
     page_icon="🌟",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -158,9 +158,21 @@ def render_danish_educator_dashboard():
                 st.session_state.auth_mode = card['mode']
                 st.rerun()
     
+    # Account Section
+    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+    acc_col1, acc_col2 = st.columns(2)
+    with acc_col1:
+        if st.button("My Data", key="data_btn", use_container_width=True):
+            st.session_state.auth_mode = "data_access"
+            st.rerun()
+    with acc_col2:
+        if st.button("Account Settings", key="account_btn", use_container_width=True):
+            st.session_state.auth_mode = "account_deletion"
+            st.rerun()
+    
     # PD Expert Mode (restricted access)
     if st.session_state.get('user_email') == "guideaichat@gmail.com":
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         if st.button("🔬 PD Expert Mode", use_container_width=True, type="primary"):
             st.session_state.auth_mode = "pd_expert"
             st.rerun()
@@ -213,7 +225,7 @@ st.markdown("""
 
 # Main Header
 st.markdown('<h1 class="main-header">🌟 Guide</h1>', unsafe_allow_html=True)
-st.markdown('<p class="main-byline">Your Montessori Companion</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
 
 # Authentication and main application logic
@@ -221,7 +233,7 @@ if not st.session_state.authenticated:
     # Welcome section
     st.markdown("""
     <div class="welcome-box">
-        <h3>✨ Welcome to Guide - Your prepared digital environment</h3>
+        <h3>✨ Welcome to Guide</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
     </div>
@@ -395,7 +407,7 @@ st.markdown(
     """
     <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
         <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
-        Guide - Your Montessori Companion | Powered by OpenAI GPT-4o Mini<br>
+        Guide - Your prepared digital environment | Powered by OpenAI GPT-4o Mini<br>
         Grounded in authentic Montessori principles and foundational texts<br>
         Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
     </div>

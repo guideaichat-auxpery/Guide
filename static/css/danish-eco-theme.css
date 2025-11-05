@@ -92,9 +92,9 @@
   color: var(--eco-accent);
 }
 
-/* Main Dashboard Content */
+/* Main Dashboard Content - reduced top padding */
 .danish-dashboard {
-  padding: 120px 2rem 2rem 2rem;
+  padding: 90px 2rem 2rem 2rem;
   min-height: 100vh;
 }
 
@@ -103,7 +103,7 @@
   font-size: 48px;
   font-weight: 400;
   color: var(--eco-text);
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   letter-spacing: -0.02em;
 }
 
@@ -320,13 +320,17 @@ button {
   box-shadow: var(--shadow-card) !important;
   transition: var(--transition) !important;
   border: 1px solid transparent !important;
+  height: 140px !important;
   min-height: 140px !important;
+  max-height: 140px !important;
   color: var(--eco-text) !important;
   font-family: var(--font-inter) !important;
   text-align: left !important;
   white-space: pre-line !important;
   line-height: 1.5 !important;
   font-size: 15px !important;
+  display: flex !important;
+  align-items: flex-start !important;
 }
 
 .danish-dashboard-wrapper .stButton > button[kind="secondary"]:hover {
