@@ -1,14 +1,10 @@
-On the educator account: Error loading stories: cannot import name 'get_educator_stories' from 'database' (/home/runner/workspace/database.py)
+remove this: 🎯 Australian Curriculum Year Levels: Year 4, Year 5, Year 6
+change this: Create comprehensive lesson plans and scope & sequence with Australian Curriculum V.9 alignment to say: Create comprehensive lesson plans with Montessori National Curriculum and Australian Curriculum V.9 alignment
 
-Planning tool should land with this in the top of the view: 📚 Montessori Educational Planning Tool
-
-Observation page should land with this in the top of the view:🗨️ Montessori Companion
-
-Lesson Planning — Age Range Dropdown Rules:
-
-Adolescence (Years 7–12 / Cycle 4):
-Reference the Australian Curriculum as the primary framework showing the AC content descriptor codes, but interpret and structure it within the Montessori “Cosmic Education” / systems perspective.
-
-Foundation – Year 6 (Cycle 1 – Cycle 3):
-Reference the Montessori curriculum as the primary framework.
-The Australian Curriculum may be used only for alignment showing the AC content descriptor codes, not as the basis for lesson plan design.
+change: Guide - Your prepared digital environment | Powered by OpenAI GPT-4o Mini
+Grounded in authentic Montessori principles and foundational texts
+Brought to you by Auxpery - Gentle Technology for Thoughtful Education
+to: Guide - Your prepared digital environment | Powered by OpenAI GPT-4o Mini
+Brought to you by Auxpery - Gentle Technology for Thoughtful Education
+[space]
+contact us at guide@auxpery.com.au
