@@ -31,10 +31,17 @@
   min-height: 100vh;
   font-family: var(--font-inter);
   color: var(--eco-text);
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
 
 .danish-dashboard-wrapper * {
   box-sizing: border-box;
+}
+
+/* Hide Streamlit's default header when dashboard is active */
+body:has(.danish-dashboard-wrapper) header[data-testid="stHeader"] {
+  display: none !important;
 }
 
 /* Danish Header - fixed at top */
