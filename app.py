@@ -303,11 +303,8 @@ else:
                             else:
                                 st.error("Failed to update institution")
                 else:
-                    # Show enforcement status and institution
-                    enforcement_on = is_institution_enforcement_on(db)
-                    status_icon = "🔒" if enforcement_on else "⏳"
-                    status_text = "Active" if enforcement_on else "Grace Period"
-                    st.info(f"{status_icon} **Institution:** {educator.institution_name} | **Sharing Enforcement:** {status_text}")
+                    # Institution is set - no need to display on dashboard
+                    pass
             except Exception as e:
                 print(f"Institution check error: {str(e)}")
             finally:
