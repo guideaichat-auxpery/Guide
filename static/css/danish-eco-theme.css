@@ -103,8 +103,22 @@
   font-size: 48px;
   font-weight: 400;
   color: var(--eco-text);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   letter-spacing: -0.02em;
+}
+
+/* Compact Institution Badge */
+.danish-institution-badge {
+  font-family: var(--font-inter);
+  font-size: 14px;
+  color: var(--eco-text);
+  opacity: 0.75;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(120, 154, 118, 0.08);
+  border-left: 3px solid var(--eco-accent);
+  border-radius: 4px;
+  display: inline-block;
 }
 
 /* Card Grid */

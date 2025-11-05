@@ -85,8 +85,25 @@ load_css('static/css/danish-eco-theme.css')
 def render_danish_educator_dashboard():
     """Render the Danish eco-design educator dashboard with card-based navigation"""
     
-    # Get educator name
+    # Get educator name and institution info
     educator_name = st.session_state.get('user_email', 'Educator').split('@')[0].title()
+    
+    # Get institution info from database
+    institution_info = ""
+    try:
+        from database import get_db, is_institution_enforcement_on, User
+        db = get_db()
+        if db:
+            educator_id = st.session_state.get('user_id')
+            educator = db.query(User).filter(User.id == educator_id).first()
+            if educator and educator.institution_name:
+                enforcement_on = is_institution_enforcement_on(db)
+                status_icon = "🔒" if enforcement_on else "⏳"
+                status_text = "Active" if enforcement_on else "Grace Period"
+                institution_info = f"{status_icon} <strong>Institution:</strong> {educator.institution_name} | <strong>Sharing Enforcement:</strong> {status_text}"
+            db.close()
+    except Exception as e:
+        print(f"Error fetching institution info: {e}")
     
     # Wrapper for entire dashboard
     st.markdown('<div class="danish-dashboard-wrapper">', unsafe_allow_html=True)
@@ -115,6 +132,7 @@ def render_danish_educator_dashboard():
     st.markdown(f"""
     <div class="danish-dashboard">
         <h1 class="danish-greeting">Welcome back, {educator_name}</h1>
+        {f'<div class="danish-institution-badge">{institution_info}</div>' if institution_info else ''}
     </div>
     """, unsafe_allow_html=True)
     
@@ -273,6 +291,42 @@ else:
     # Navigation menu for authenticated users
     # Explicitly check user type to ensure proper role-based UI
     is_student = st.session_state.get('is_student', None)
+    
+    # Institution setting for educators (compact display)
+    if is_student is False:
+        from database import get_db, update_educator_institution, is_institution_enforcement_on, User
+        db = get_db()
+        if db:
+            try:
+                educator_id = st.session_state.get('user_id')
+                educator = db.query(User).filter(User.id == educator_id).first()
+                
+                # Check if institution needs to be set
+                if not educator.institution_name or educator.institution_name.strip() == '':
+                    st.warning("⚠️ **Action Required:** Please set your institution name to enable student sharing.")
+                    
+                    with st.form("institution_form"):
+                        institution_name = st.text_input(
+                            "Institution Name:",
+                            placeholder="Montessori School",
+                            help="This enables secure student sharing with educators from your institution"
+                        )
+                        submitted = st.form_submit_button("Set Institution")
+                        
+                        if submitted and institution_name:
+                            success, auto_enabled = update_educator_institution(db, educator_id, institution_name)
+                            if success:
+                                if auto_enabled:
+                                    st.success("✅ Institution set! 🚀 All educators now have institutions - enforcement automatically enabled!")
+                                else:
+                                    st.success(f"✅ Institution set to: {institution_name}")
+                                st.rerun()
+                            else:
+                                st.error("Failed to update institution")
+            except Exception as e:
+                print(f"Institution check error: {str(e)}")
+            finally:
+                db.close()
     
     if is_student is False:
         # Educator interface
