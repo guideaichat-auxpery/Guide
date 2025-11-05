@@ -128,13 +128,15 @@ def render_danish_educator_dashboard():
     </div>
     """, unsafe_allow_html=True)
     
-    # Main Dashboard Content
-    st.markdown(f"""
-    <div class="danish-dashboard">
-        <h1 class="danish-greeting">Welcome back, {educator_name}</h1>
-        {f'<div class="danish-institution-badge">{institution_info}</div>' if institution_info else ''}
-    </div>
-    """, unsafe_allow_html=True)
+    # Main Dashboard Content - open div
+    st.markdown('<div class="danish-dashboard">', unsafe_allow_html=True)
+    
+    # Greeting
+    st.markdown(f'<h1 class="danish-greeting">Welcome back, {educator_name}</h1>', unsafe_allow_html=True)
+    
+    # Institution badge if available
+    if institution_info:
+        st.markdown(f'<div class="danish-institution-badge">{institution_info}</div>', unsafe_allow_html=True)
     
     # Create 3x2 grid of cards using Streamlit columns
     col1, col2, col3 = st.columns(3)
@@ -195,6 +197,9 @@ def render_danish_educator_dashboard():
             st.session_state.auth_mode = "pd_expert"
             st.rerun()
     
+    # Close danish-dashboard div
+    st.markdown('</div>', unsafe_allow_html=True)
+    # Close danish-dashboard-wrapper div
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Additional custom CSS for specific components

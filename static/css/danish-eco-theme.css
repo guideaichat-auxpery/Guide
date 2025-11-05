@@ -389,8 +389,9 @@ button {
   margin: 0 !important;
 }
 
-/* Hide the main header and byline when Danish dashboard is active */
-.danish-dashboard-wrapper ~ div .main-header,
-.danish-dashboard-wrapper ~ div .main-byline {
-  display: none;
+/* Hide the main header and byline for authenticated users on dashboard */
+body:has(.danish-dashboard-wrapper) .main-header,
+body:has(.danish-dashboard-wrapper) .main-byline,
+body:has(.danish-dashboard-wrapper) .subtitle {
+  display: none !important;
 }
