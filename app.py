@@ -44,25 +44,38 @@ else:
     
     time_since_last_check = datetime.now() - st.session_state.last_cleanup_check
     
-    # Run cleanup if it's been more than 24 hours
+    # Run cleanup if it's been more than 24 hours (deferred to background)
     if time_since_last_check > timedelta(hours=24):
-        db = get_db()
-        if db:
-            try:
-                # Get status before cleanup (for logging)
-                status = get_data_retention_status(db)
-                if status and (status['old_conversations'] > 0 or status['old_student_activities'] > 0):
-                    # Run cleanup
-                    deleted = cleanup_old_data(db)
-                    if deleted:
-                        logger.info(f"Data retention cleanup: {deleted}")
-                
-                # Update last check time
-                st.session_state.last_cleanup_check = datetime.now()
-            except Exception as e:
-                logger.error(f"Error during data retention cleanup: {str(e)}")
-            finally:
-                db.close()
+        # Only run cleanup if user is authenticated (defer for login screen)
+        if st.session_state.get('authenticated', False):
+            db = get_db()
+            if db:
+                try:
+                    # Quick check without expensive queries - only count if needed
+                    from datetime import datetime, timedelta
+                    from database import ConversationHistory
+                    conversation_cutoff = datetime.utcnow() - timedelta(days=730)
+                    
+                    # Single quick query instead of multiple
+                    old_count = db.query(ConversationHistory).filter(
+                        ConversationHistory.created_at < conversation_cutoff
+                    ).count()
+                    
+                    if old_count > 0:
+                        # Only run full cleanup if there's actually old data
+                        deleted = cleanup_old_data(db)
+                        if deleted:
+                            logger.info(f"Data retention cleanup: {deleted}")
+                    
+                    # Update last check time
+                    st.session_state.last_cleanup_check = datetime.now()
+                except Exception as e:
+                    logger.error(f"Error during data retention cleanup: {str(e)}")
+                finally:
+                    db.close()
+        else:
+            # Defer cleanup until after login
+            st.session_state.last_cleanup_check = datetime.now()
 
 # Initialize session state
 if 'messages' not in st.session_state:
@@ -72,14 +85,15 @@ if 'authenticated' not in st.session_state:
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
 
-# Load Design Systems
+# Load Design Systems - cached for performance
+@st.cache_data
 def load_css(file_path):
+    """Load CSS file with caching to improve performance"""
     with open(file_path) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+        return f'<style>{f.read()}</style>'
 
-# Load both Montessori theme and Danish eco design
-load_css('static/css/montessori-theme.css')
-load_css('static/css/danish-eco-theme.css')
+# Load Montessori theme (Danish eco theme removed - not used)
+st.markdown(load_css('static/css/montessori-theme.css'), unsafe_allow_html=True)
 
 # (Danish dashboard function removed - dashboard now renders inline)
 
