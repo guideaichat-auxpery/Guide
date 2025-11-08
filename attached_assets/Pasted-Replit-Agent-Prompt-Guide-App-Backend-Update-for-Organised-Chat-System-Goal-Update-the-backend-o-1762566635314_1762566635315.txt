@@ -1,0 +1,158 @@
+Replit Agent Prompt — Guide App Backend Update for Organised Chat System
+
+Goal:
+Update the backend of the Guide app to support subject-based chat organisation, allowing chats to be tagged, filtered, and summarised per subject, student, and educator.
+
+🧩 Database Schema Update
+
+If using MongoDB:
+
+// models/chat.js
+const mongoose = require("mongoose");
+
+const ChatSchema = new mongoose.Schema({
+  chatId: { type: String, required: true, unique: true },
+  studentId: { type: String, required: true },
+  educatorIds: [{ type: String, required: true }],
+  subjectTag: { type: String, default: "General" },
+  summary: { type: String, default: "" },
+  messages: [
+    {
+      senderId: String,
+      text: String,
+      timestamp: { type: Date, default: Date.now },
+    },
+  ],
+  startedAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+module.exports = mongoose.model("Chat", ChatSchema);
+
+
+If using SQL (PostgreSQL / Prisma):
+
+model Chat {
+  id           String    @id @default(cuid())
+  studentId    String
+  educatorIds  String[]  // store as array or separate join table
+  subjectTag   String    @default("General")
+  summary      String?
+  messages     Json
+  startedAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+
+Migration task:
+For all existing chat records, set:
+
+if (!chat.subjectTag) chat.subjectTag = "General";
+
+
+This ensures backward compatibility.
+
+🧠 API Endpoints to Add or Modify
+1. Create New Chat
+
+When a student starts a chat, include subjectTag in the POST body.
+
+POST /api/chats
+{
+  "studentId": "123",
+  "educatorIds": ["456"],
+  "subjectTag": "Mathematics"
+}
+
+
+Controller example:
+
+app.post("/api/chats", async (req, res) => {
+  try {
+    const { studentId, educatorIds, subjectTag } = req.body;
+    const chat = new Chat({
+      chatId: uuid.v4(),
+      studentId,
+      educatorIds,
+      subjectTag: subjectTag || "General",
+    });
+    await chat.save();
+    res.status(201).json(chat);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create chat." });
+  }
+});
+
+2. Fetch Chats with Filters
+GET /api/chats?studentId=123&subjectTag=Mathematics
+
+
+Example:
+
+app.get("/api/chats", async (req, res) => {
+  const { studentId, subjectTag, educatorId } = req.query;
+  const query = {};
+  if (studentId) query.studentId = studentId;
+  if (subjectTag) query.subjectTag = subjectTag;
+  if (educatorId) query.educatorIds = educatorId;
+  
+  const chats = await Chat.find(query).sort({ updatedAt: -1 });
+  res.json(chats);
+});
+
+3. Update Chat Summary
+
+After a chat is closed or inactive, update its summary field:
+
+PATCH /api/chats/:id/summary
+{
+  "summary": "Discussed fractions and practical life examples."
+}
+
+4. List Subjects for a Student or Organisation
+
+This can help populate dropdowns or filter menus.
+
+GET /api/subjects?orgId=abc
+// Returns all distinct subjectTag values across that organisation.
+
+🔐 Access Control Rules
+
+Implement middleware or query conditions to enforce:
+
+Educators only see chats where:
+
+They are in educatorIds, or
+
+They belong to the same organisation and the subjectTag matches their assigned subjects.
+
+Admins or organisation heads can bypass filters to view all chats.
+
+🔄 Optional Enhancement: Auto-Tagging Support (Phase 2)
+
+Prepare an endpoint to allow AI-driven subject inference:
+
+POST /api/chats/:id/autotag
+// Runs NLP to infer subject from recent messages and updates subjectTag.
+
+✅ Backend Acceptance Criteria
+
+ Chat records now support subjectTag and summary fields.
+
+ New chats are saved with a subject tag.
+
+ Chats can be queried by student, subject, or educator.
+
+ Educators only see permitted chats.
+
+ Existing chats are migrated safely to include subjectTag = "General".
+
+ API endpoints return lightweight summaries (chat ID, subject, summary, updatedAt) for the front-end lists.
+
+💡 Deployment Notes
+
+Run schema migration or one-time script to update existing chats.
+
+Verify role-based access logic still functions correctly post-change.
+
+Cache filtered chat results for performance if large data sets.

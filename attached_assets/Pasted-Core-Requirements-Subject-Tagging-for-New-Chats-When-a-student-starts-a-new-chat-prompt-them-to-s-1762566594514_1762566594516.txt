@@ -1,0 +1,133 @@
+Core Requirements
+
+Subject Tagging for New Chats
+
+When a student starts a new chat, prompt them to select or confirm a subject or class.
+
+Use a dropdown or tag selector such as:
+
+Mathematics
+
+Science
+
+Language
+
+Humanities
+
+Cosmic Education
+
+Personal Project
+
+Store this tag as metadata with the chat thread in the database.
+
+If no subject is selected, default to “General.”
+
+Chat Metadata Model
+Add or update the chat data structure to include:
+
+{
+  chatId: string,
+  studentId: string,
+  educatorIds: [string],
+  subjectTag: string,
+  startedAt: timestamp,
+  updatedAt: timestamp,
+  summary: string (optional)
+}
+
+
+This enables filtering and display by subject or educator later.
+
+Teacher Dashboard Filtering
+
+Add filtering controls at the top of the educator dashboard:
+
+[Student Filter]
+
+[Subject Filter]
+
+[Educator Filter]
+
+Display grouped chat summaries under each filter result:
+
+📘 Mathematics – Ava L.
+   "Discussed fractions with Guide"  (10 Nov)
+📙 History – Ava L.
+   "WWI Reparations discussion"      (09 Nov)
+
+
+Each row links to the full chat transcript.
+
+Automatic Chat Summaries (Optional AI Step)
+
+After a chat ends or is inactive for a period, automatically generate a one-line “topic summary” stored in the summary field.
+
+Example: “Discussed fractions and practical life examples.”
+
+Shared Access Rules
+
+All educators within the same Organisation can view student records, but:
+
+They only see chat logs tagged with subjects they teach.
+
+Admins can override filters to view all.
+
+Student Dashboard Organisation
+
+In the student view, group chat threads by subject:
+
+Mathematics Work
+Science Exploration
+Language Projects
+Personal Reflection
+
+
+Each group expands to show the chat summaries for that subject.
+
+Backwards Compatibility
+
+Existing untagged chats should be automatically tagged as “General.”
+
+Teachers should still be able to search full-text if needed.
+
+Future-Proofing (Phase 2 - not for now)
+
+Allow students to link chats to specific lessons or learning goals if a Lesson Planning module is active.
+
+Optional AI auto-tagging: infer subject from conversation content if no tag is chosen.
+
+🧩 UX Notes
+
+Use minimal UI changes — soft dropdowns or modal prompts at chat start.
+
+Maintain Montessori simplicity and calm — use clean typography and quiet colours.
+
+Avoid nested menus; filters should feel natural and light.
+
+⚙️ Implementation Steps Summary
+
+Update chat database model to include subjectTag and summary.
+
+Add subject selection UI when creating a new chat.
+
+Modify educator dashboard to include filtering by subject, student, and educator.
+
+Add grouped chat list view with summaries.
+
+Update student dashboard to display chats grouped by subject.
+
+Migrate old chats to default subjectTag = "General".
+
+📋 Acceptance Criteria
+
+ A student can start a new chat and assign a subject tag.
+
+ Educators can filter chat logs by subject, student, or educator.
+
+ Each chat shows its subject and a short auto-generated summary.
+
+ Students see their own chat history grouped by subject.
+
+ The interface remains clean and Montessori-aligned.
+
+ Old data remains accessible (tagged as “General”).

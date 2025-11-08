@@ -1,0 +1,182 @@
+Replit Agent Prompt — Guide App Chat Organisation System (with UI scaffolding)
+
+Goal:
+Refactor the Guide app chat system so that student chat logs can be tagged, grouped, and filtered by subject, student, or educator.
+Keep the interface clean, Montessori-aligned, and minimal.
+
+🧩 Core Features to Implement
+
+Chat Metadata Model
+
+Add subjectTag and summary to the existing chat schema.
+
+// models/chat.ts
+export interface ChatThread {
+  chatId: string;
+  studentId: string;
+  educatorIds: string[];
+  subjectTag: string;        // "Mathematics", "Science", etc.
+  startedAt: string;
+  updatedAt: string;
+  summary?: string;
+  messages: ChatMessage[];
+}
+
+
+If older chat threads exist, migrate them with subjectTag = "General".
+
+Subject Tag Selector (Student Side)
+
+When a student clicks “Start New Chat,” show a lightweight modal or dropdown:
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
+export default function NewChatModal({ onCreate }) {
+  const [subject, setSubject] = useState("");
+
+  const subjects = [
+    "Mathematics",
+    "Science",
+    "Language",
+    "Humanities",
+    "Cosmic Education",
+    "Personal Project",
+    "General",
+  ];
+
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-lg font-semibold">Start a New Work Conversation</h2>
+      <Select onValueChange={setSubject}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select Subject or Class" />
+        </SelectTrigger>
+        <SelectContent>
+          {subjects.map((s) => (
+            <SelectItem key={s} value={s}>{s}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Button
+        disabled={!subject}
+        onClick={() => onCreate(subject)}
+        className="w-full mt-2"
+      >
+        Begin Chat
+      </Button>
+    </div>
+  );
+}
+
+
+When the chat starts, store the subjectTag in the chat record.
+
+Teacher Dashboard Filters
+
+Create a ChatFilterBar and filtered list display.
+
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
+export default function ChatFilterBar({ students, subjects, onFilter }) {
+  const [student, setStudent] = useState("");
+  const [subject, setSubject] = useState("");
+
+  const handleFilter = () => onFilter({ student, subject });
+
+  return (
+    <div className="flex flex-wrap gap-2 items-center mb-4">
+      <Select onValueChange={setStudent}>
+        <SelectTrigger className="w-40"><SelectValue placeholder="Student" /></SelectTrigger>
+        <SelectContent>
+          {students.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
+      <Select onValueChange={setSubject}>
+        <SelectTrigger className="w-40"><SelectValue placeholder="Subject" /></SelectTrigger>
+        <SelectContent>
+          {subjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+        </SelectContent>
+      </Select>
+
+      <Button onClick={handleFilter}>Filter</Button>
+    </div>
+  );
+}
+
+
+Then render grouped chats:
+
+function ChatList({ chats }) {
+  return (
+    <div className="space-y-2">
+      {chats.map((chat) => (
+        <div key={chat.chatId} className="p-3 bg-white rounded-xl shadow-sm hover:bg-gray-50">
+          <div className="flex justify-between">
+            <span className="font-medium text-blue-700">{chat.subjectTag}</span>
+            <span className="text-sm text-gray-500">{chat.updatedAt}</span>
+          </div>
+          <div className="text-sm text-gray-700">{chat.summary || "—"}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+Student Dashboard Grouping
+
+Group the student’s chat history by subjectTag:
+
+function StudentChatGroups({ chats }) {
+  const grouped = chats.reduce((acc, chat) => {
+    if (!acc[chat.subjectTag]) acc[chat.subjectTag] = [];
+    acc[chat.subjectTag].push(chat);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-6">
+      {Object.entries(grouped).map(([subject, subjectChats]) => (
+        <div key={subject}>
+          <h3 className="text-lg font-semibold mb-2">{subject} Work</h3>
+          <ChatList chats={subjectChats} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+Automatic Chat Summaries (Optional Enhancement)
+Use your existing AI backend to generate a 1-line summary once a chat closes or goes inactive:
+
+"Summarise this conversation in one sentence for educator view."
+
+
+Store result in chat.summary.
+
+Access Control Logic
+
+Teachers see chats where subjectTag matches their subjects.
+
+Admins or lead educators see all.
+
+Students always see all their own threads grouped by subject.
+
+✅ Acceptance Criteria Recap
+
+ Student must select a subject before creating a chat.
+
+ Chats are stored with subjectTag and visible only to relevant educators.
+
+ Teachers can filter chats by student and subject.
+
+ Chat summaries display cleanly and group by subject in both dashboards.
+
+ Existing untagged chats appear under “General.”
