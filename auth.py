@@ -100,10 +100,10 @@ def signup_page():
     st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
     
     # Privacy notice before signup
-    st.info("📋 **Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Privacy Policy for details on how we handle your information.")
+    st.info("📋 **Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Terms and Conditions for details on how we handle your information.")
     
-    # Link to privacy policy
-    if st.button("🔒 View Privacy Policy", key="signup_privacy_link"):
+    # Link to terms and conditions
+    if st.button("📋 View Terms & Conditions", key="signup_privacy_link"):
         st.session_state.auth_mode = "privacy_policy"
         st.rerun()
     
@@ -131,7 +131,7 @@ def signup_page():
         )
         
         consent_privacy_policy = st.checkbox(
-            "I have read and agree to the Privacy Policy.",
+            "I have read and agree to the Terms of Use and Privacy Policy.",
             value=False
         )
         
@@ -150,7 +150,7 @@ def signup_page():
             elif not consent_overseas_transfer:
                 st.error("Please consent to overseas data transfer (required for AI functionality)")
             elif not consent_privacy_policy:
-                st.error("Please read and agree to the Privacy Policy")
+                st.error("Please read and agree to the Terms of Use and Privacy Policy")
             else:
                 valid_password, password_message = validate_password(password)
                 if not valid_password:

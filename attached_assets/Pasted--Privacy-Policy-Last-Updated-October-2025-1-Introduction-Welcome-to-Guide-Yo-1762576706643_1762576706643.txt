@@ -1,0 +1,236 @@
+# Privacy Policy
+
+**Last Updated:** October 2025
+
+### 1. Introduction
+
+Welcome to **Guide — Your prepared digital environment** (“**Guide**,” “**we**,” “**us**,” or “**our**”).
+
+Guide is provided by **Auxpery** and designed to support educators and students in Montessori and Australian Curriculum–aligned learning environments.
+
+This Privacy Policy explains how we collect, use, store, and protect your personal information in accordance with the **Australian Privacy Act 1988** and the **Australian Privacy Principles (APPs)**.
+
+By using Guide, you consent to the practices described below.
+
+---
+
+### 2. Information We Collect (APP 3)
+
+**From Educators:**
+
+- Full name
+- Email address
+- Securely hashed password (never stored in plain text)
+- Usage data (prompts submitted, subjects taught, year levels)
+- Conversation history with our AI assistant
+- Uploaded documents and files for curriculum analysis
+
+**From Students:**
+
+- Full name and username
+- Securely hashed password
+- Age group (3–6, 6–9, 9–12, 12–15 years)
+- Learning activities and questions
+- Conversation history with our AI tutor
+- Uploaded files for learning support
+
+**Automatically Collected:**
+
+- Session identifiers (anonymised for students)
+- Curriculum keywords in queries
+- Usage timestamps
+- Aggregate analytics and trending topics
+
+**We Do NOT Collect:**
+
+- Home addresses
+- Birthdates
+- Phone numbers
+- Details about real people
+- Any other sensitive personal information
+
+We actively instruct students **not** to share personal or identifying information in any message or upload.
+
+---
+
+### 3. How We Use Your Information (APP 6)
+
+**For Educators:**
+
+- Provide AI-assisted lesson planning and curriculum alignment
+- Generate educational resources
+- Track usage analytics to improve performance
+- Save conversation history for lesson continuity
+- Enable educator collaboration features
+
+**For Students:**
+
+- Deliver personalised learning support
+- Track learning progress and engagement
+- Adjust AI responses to age and curriculum level
+- Allow educators to monitor student activity
+
+**For All Users:**
+
+- Authenticate and secure accounts
+- Improve our AI models and services
+- Comply with legal obligations
+- Communicate important service updates
+
+---
+
+### 4. Overseas Disclosure (APP 8)
+
+Some data is processed outside Australia to deliver Guide’s services.
+
+**OpenAI (United States):**
+
+We use OpenAI’s models to power the AI assistant. When you submit a question or upload content, your input and limited context are transmitted securely to OpenAI’s servers in the U.S. for processing.
+
+**Data sent may include:**
+
+- Prompts and questions
+- Recent conversation history (last 10 messages)
+- Curriculum context
+- Uploaded educational content
+
+**Privacy note:**
+
+- OpenAI operates under U.S. law, not the Australian Privacy Act.
+- Their data handling is governed by the [OpenAI Privacy Policy](https://openai.com/privacy).
+- Data may be used to improve AI performance (per OpenAI’s terms).
+
+By using Guide, you consent to this overseas data transfer. You may choose to avoid submitting sensitive information.
+
+**Replit (United States):**
+
+Our database and infrastructure are hosted on Replit’s platform in the U.S., which stores and processes account data.
+
+---
+
+### 5. Data Security (APP 11)
+
+**Technical safeguards:**
+
+- All passwords hashed with bcrypt encryption
+- SSL/TLS encryption for database connections
+- Role-based access control (educator/student separation)
+- Secure session management via Streamlit
+
+**Organisational safeguards:**
+
+- Limited staff access to personal data
+- Periodic security reviews
+- Incident response procedures
+
+While we implement strong protection, no system is entirely secure. Transmission of data over the internet carries some inherent risk.
+
+---
+
+### 6. Data Retention (APP 11.2)
+
+**Retention periods:**
+
+- Educator and student accounts: kept while active
+- Conversation history: kept 2 years from last activity
+- Learning analytics: kept 2 years
+- Inactive accounts: deleted after 3 years of inactivity
+
+**Deletion:**
+
+- You may request deletion of your account and all data at any time
+- Deletion requests are processed within 7 days
+- Some anonymised analytics may be retained for service improvement
+
+---
+
+### 7. Your Privacy Rights (APP 12 & 13)
+
+Under Australian privacy law, you may:
+
+- **Access** your personal data
+- **Request correction** of inaccurate or incomplete data
+- **Request deletion** of your account
+- **Withdraw consent** for data processing or overseas disclosure (which may limit functionality)
+
+Requests can be made via **privacy@auxpery.com.au** or through in-app support. We respond within **30 days** of a verified request.
+
+---
+
+### 8. Parental Rights and Student Privacy
+
+**Students under 18:**
+
+- Educators must obtain parental or guardian consent before creating accounts
+- Parents may access or request deletion of their child’s data
+- Students are reminded not to share personal information
+
+**School responsibilities:**
+
+- Schools are considered **data controllers** for student data
+- Guide acts as a **data processor** on their behalf
+- Schools must ensure appropriate consent processes are in place
+
+A **Data Processing Agreement (DPA)** is available on request.
+
+---
+
+### 9. Cookies and Tracking
+
+Guide uses only **essential cookies** for authentication and app functionality (Streamlit session cookies).
+
+We do **not** use third-party advertising or tracking cookies.
+
+If basic analytics (e.g., traffic counts) are enabled, they are anonymised and do not identify users.
+
+---
+
+### 10. Updates to This Policy (APP 1)
+
+We may update this policy to reflect:
+
+- Legal or regulatory changes
+- New features or services
+- User or regulator feedback
+
+You’ll be notified of material updates via email or in-app message. Continued use after changes means acceptance of the updated terms.
+
+Previous versions are available on request.
+
+---
+
+### 11. Contact and Complaints
+
+**Privacy Officer**
+
+📧 Email: privacy@auxpery.com.au
+
+⏱ Response within 30 days
+
+**To lodge a complaint:**
+
+1. Email our Privacy Officer describing your concern.
+2. We’ll acknowledge receipt within 5 business days.
+3. We’ll investigate and reply within 30 days.
+
+If unsatisfied, you may contact:
+
+**Office of the Australian Information Commissioner (OAIC)**
+
+🌐 [www.oaic.gov.au](https://www.oaic.gov.au/)
+
+📞 1300 363 992
+
+📧 enquiries@oaic.gov.au
+
+---
+
+### 12. Questions
+
+If you have any questions about this Privacy Policy or how we handle your data:
+
+📧 guide**@auxpery.com.au**
+
+---
+
+**© 2025 Auxpery — Gentle Technology for Thoughtful Education**

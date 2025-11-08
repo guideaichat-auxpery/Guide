@@ -1,0 +1,185 @@
+# Terms of Use
+
+**Last Updated:** October 2025
+
+Welcome to **Guide — Your digital prepared environment** (“**Guide**,” “**we**,” “**us**,” or “**our**”), a product of **Auxpery** (“**Auxpery**,” “**Company**”).
+
+By creating an account or using Guide, you agree to these Terms of Use and our [Privacy Policy](https://www.notion.so/Terms-of-Use-2a218f461d0d80fa83d8dbdd24f3b588?pvs=21). Please read them carefully. If you do not agree, you must not use the platform.
+
+---
+
+## 1. Purpose and Scope
+
+Guide is an educational platform designed to support Montessori and Australian Curriculum–aligned teaching and learning.
+
+These Terms apply to all users, including:
+
+- **Educators** – individuals creating lessons, managing students, or accessing educator tools
+- **Students** – individuals using learning features under educator or parental supervision
+- **Schools or Organisations** – entities managing multiple educator or student accounts
+
+Use of Guide constitutes agreement to these Terms.
+
+---
+
+## 2. Account Registration and Responsibility
+
+### Educators
+
+- Must provide accurate information when registering.
+- Are responsible for maintaining confidentiality of login credentials.
+- Must ensure all student accounts under their supervision are used appropriately and with parental consent (if applicable).
+
+### Students
+
+- Must only use Guide under supervision of an educator or parent/guardian.
+- Should never share personal or identifying information in prompts, messages, or uploads.
+
+We reserve the right to suspend or terminate accounts that breach these Terms or pose security or safety risks.
+
+---
+
+## 3. Acceptable Use
+
+You agree to use Guide only for lawful educational purposes and not to:
+
+- Upload or share offensive, discriminatory, or unlawful content
+- Misuse AI functions to generate or share harmful material
+- Attempt to access other users’ data or interfere with the system
+- Use the platform for commercial, advertising, or non-educational purposes
+- Reverse-engineer or extract any source code, AI model, or backend data
+
+We may monitor activity to ensure platform integrity and educational safety.
+
+---
+
+## 4. Intellectual Property
+
+All content, design elements, and software comprising Guide — including logos, interface, and educational tools — are the property of **Auxpery Pty Ltd** or its licensors and are protected by copyright, trademark, and other laws.
+
+You may use materials within Guide **solely for educational, non-commercial use**.
+
+You may not reproduce, modify, distribute, or create derivative works without written permission.
+
+Any user-generated content (such as lesson plans or educator resources) remains your intellectual property, but by uploading it, you grant Auxpery a **non-exclusive, royalty-free licence** to host, display, and use it within the platform.
+
+---
+
+## 5. AI-Generated Content
+
+Guide uses OpenAI’s language models to generate responses, lesson ideas, and learning materials.
+
+- AI-generated content is intended for **educational guidance only**.
+- Educators remain responsible for reviewing and adapting AI output before classroom use.
+- We do not guarantee factual accuracy or curriculum compliance of every AI response.
+- Users must not rely on AI-generated content for legal, medical, or financial advice.
+
+---
+
+## 6. Payments and Subscriptions
+
+Guide currently offers subscription-based access.
+
+**Educator accounts:**
+
+- Include unlimited student accounts per educator.
+- Subscription fees are billed monthly or annually, as displayed at checkout.
+- Payment is processed securely via an approved provider (e.g., Stripe or PayPal).
+
+**Cancellations:**
+
+- You may cancel at any time. Access continues until the end of the paid period.
+- Refunds are provided only where required by Australian Consumer Law.
+
+**Changes to pricing or plans:**
+
+- We may update fees or plans with 30 days’ prior notice. Continued use after notice means acceptance of the new terms.
+
+---
+
+## 7. Privacy and Data Protection
+
+Your use of Guide is governed by our [**Privacy Policy**](https://www.notion.so/Terms-of-Use-2a218f461d0d80fa83d8dbdd24f3b588?pvs=21), which explains how we collect, store, and use your data in compliance with the Australian Privacy Act 1988.
+
+By using Guide, you consent to the collection and overseas transfer of data as described in that policy.
+
+---
+
+## 8. Third-Party Services
+
+Guide integrates third-party services such as OpenAI (for AI assistance) and Replit (for hosting).
+
+We do not control these services and are not responsible for their content, availability, or data handling.
+
+Use of these features is at your discretion and governed by their respective terms and privacy policies.
+
+---
+
+## 9. Availability and Service Changes
+
+We aim for continuous service but do not guarantee uninterrupted access.
+
+We may modify, suspend, or discontinue parts of the platform (including beta features) at any time for maintenance, updates, or improvement.
+
+We will give notice of significant service changes where practical.
+
+---
+
+## 10. Disclaimer and Limitation of Liability
+
+Guide and all related content are provided “as is.”
+
+To the extent permitted by law:
+
+- We make no warranties about completeness, reliability, or suitability of AI-generated or user-contributed content.
+- Auxpery and its partners are not liable for indirect, incidental, or consequential losses arising from use or inability to use the platform.
+
+Nothing in these Terms limits your rights under the **Australian Consumer Law (ACL)**.
+
+---
+
+## 11. Termination of Use
+
+We may suspend or terminate access if:
+
+- These Terms are violated
+- Required by law or regulation
+- Platform integrity or security is at risk
+
+Upon termination, your right to use Guide ends immediately.
+
+Data will be handled according to our **Privacy Policy** and data retention schedule.
+
+---
+
+## 12. Children and Parental Consent
+
+For students under 18:
+
+- Accounts must be created and supervised by an educator or guardian.
+- Parents and guardians may review or request deletion of their child’s data at any time.
+- Guide provides safeguards and in-app warnings to discourage personal data sharing.
+
+---
+
+## 13. Changes to These Terms
+
+We may update these Terms periodically.
+
+Material updates will be communicated via email or in-app notice.
+
+Your continued use of Guide after changes take effect constitutes acceptance of the new Terms.
+
+---
+
+## 14. Contact Us
+
+If you have any questions about these Terms or your use of Guide, please contact:
+
+**Auxpery**
+
+📧 Email: guide@auxpery.com.au
+
+---
+
+**© 2025 Auxpery — Gentle Technology for Thoughtful Education**

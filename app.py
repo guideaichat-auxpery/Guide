@@ -189,7 +189,7 @@ if not st.session_state.authenticated:
             st.rerun()
     
     with col3:
-        if st.button("🔒 Privacy Policy", use_container_width=True):
+        if st.button("📋 Terms & Conditions", use_container_width=True):
             st.session_state.auth_mode = "privacy_policy"
             st.rerun()
     
