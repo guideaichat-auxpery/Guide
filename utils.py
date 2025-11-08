@@ -141,35 +141,152 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
             st.markdown("---")
             
             # New conversation button
-            if st.button("➕ New Chat", use_container_width=True, type="primary"):
-                # Create new conversation
-                new_session_id = str(uuid.uuid4())
-                title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
-                new_conv = create_chat_conversation(
-                    db, title=title, session_id=new_session_id, 
-                    interface_type=interface_type, user_id=user_id, student_id=student_id
+            # For students, show subject selector first
+            if interface_type == 'student' and not st.session_state.get('show_subject_selector', False):
+                if st.button("➕ New Chat", use_container_width=True, type="primary"):
+                    st.session_state.show_subject_selector = True
+                    st.rerun()
+            
+            # Subject selector for student chats
+            if interface_type == 'student' and st.session_state.get('show_subject_selector', False):
+                from database import get_available_subjects
+                
+                st.markdown("**Select Subject:**")
+                subjects = get_available_subjects()
+                
+                selected_subject = st.selectbox(
+                    "Choose a subject for this conversation:",
+                    subjects,
+                    key="new_chat_subject",
+                    label_visibility="collapsed"
                 )
-                st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
-                st.session_state[f'{interface_type}_session_id'] = new_session_id
-                st.session_state[f'{interface_type}_messages'] = []
-                st.rerun()
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Create", type="primary", use_container_width=True):
+                        # Create new conversation with subject
+                        new_session_id = str(uuid.uuid4())
+                        title = f"{selected_subject} - {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=new_session_id, 
+                            interface_type=interface_type, user_id=user_id, student_id=student_id,
+                            subject_tag=selected_subject
+                        )
+                        st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
+                        st.session_state[f'{interface_type}_session_id'] = new_session_id
+                        st.session_state[f'{interface_type}_messages'] = []
+                        st.session_state.show_subject_selector = False
+                        st.rerun()
+                
+                with col2:
+                    if st.button("Cancel", use_container_width=True):
+                        st.session_state.show_subject_selector = False
+                        st.rerun()
+            
+            # For non-student chats, create without subject selector
+            elif interface_type != 'student':
+                if st.button("➕ New Chat", use_container_width=True, type="primary"):
+                    # Create new conversation
+                    new_session_id = str(uuid.uuid4())
+                    title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
+                    new_conv = create_chat_conversation(
+                        db, title=title, session_id=new_session_id, 
+                        interface_type=interface_type, user_id=user_id, student_id=student_id
+                    )
+                    st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
+                    st.session_state[f'{interface_type}_session_id'] = new_session_id
+                    st.session_state[f'{interface_type}_messages'] = []
+                    st.rerun()
             
             st.markdown("---")
             
             # Display conversation list
             if conversations:
-                st.markdown("**Recent Chats:**")
-                
-                for conv in conversations:
-                    # Highlight current conversation
-                    current_conv_id = st.session_state.get(f'{interface_type}_current_conversation_id')
-                    is_current = (current_conv_id == conv.id)
+                # For students, group conversations by subject
+                if interface_type == 'student':
+                    st.markdown("**Your Conversations:**")
                     
-                    # Create expandable conversation item
-                    with st.expander(
-                        f"{'🟢 ' if is_current else ''}{conv.title[:30]}{'...' if len(conv.title) > 30 else ''}",
-                        expanded=False
-                    ):
+                    # Group conversations by subject
+                    from collections import defaultdict
+                    grouped_convs = defaultdict(list)
+                    for conv in conversations:
+                        subject = conv.subject_tag or "General"
+                        grouped_convs[subject].append(conv)
+                    
+                    # Display each subject group
+                    for subject in sorted(grouped_convs.keys()):
+                        st.markdown(f"**{subject}**")
+                        for conv in grouped_convs[subject]:
+                            # Highlight current conversation
+                            current_conv_id = st.session_state.get(f'{interface_type}_current_conversation_id')
+                            is_current = (current_conv_id == conv.id)
+                            
+                            # Create expandable conversation item
+                            with st.expander(
+                                f"{'🟢 ' if is_current else ''}{conv.title[:30]}{'...' if len(conv.title) > 30 else ''}",
+                                expanded=False
+                            ):
+                                # Show conversation details
+                                st.caption(f"Created: {conv.created_at.strftime('%d/%m/%Y %H:%M')}")
+                                
+                                # Rename input
+                                new_title = st.text_input(
+                                    "Rename", 
+                                    value=conv.title,
+                                    key=f"rename_{conv.id}",
+                                    label_visibility="collapsed"
+                                )
+                                
+                                col1, col2, col3 = st.columns(3)
+                                
+                                with col1:
+                                    # Rename button
+                                    if st.button("✏️", key=f"rename_btn_{conv.id}", help="Rename"):
+                                        if new_title and new_title != conv.title:
+                                            rename_chat_conversation(db, conv.id, new_title, user_id, student_id)
+                                            st.success("Renamed!")
+                                            st.rerun()
+                                
+                                with col2:
+                                    # Open button
+                                    if st.button("📂", key=f"open_btn_{conv.id}", help="Open"):
+                                        # Load this conversation
+                                        reopen_chat_conversation(db, conv.id, user_id, student_id)
+                                        st.session_state[f'{interface_type}_current_conversation_id'] = conv.id
+                                        st.session_state[f'{interface_type}_session_id'] = conv.session_id
+                                        
+                                        # Load messages for this conversation
+                                        from database import load_conversation_to_session
+                                        loaded_messages = load_conversation_to_session(db, conv.session_id, interface_type)
+                                        st.session_state[f'{interface_type}_messages'] = loaded_messages
+                                        st.rerun()
+                                
+                                with col3:
+                                    # Delete button
+                                    if st.button("🗑️", key=f"delete_btn_{conv.id}", help="Delete"):
+                                        delete_chat_conversation(db, conv.id, user_id, student_id)
+                                        # If deleting current conversation, clear session
+                                        if is_current:
+                                            st.session_state[f'{interface_type}_current_conversation_id'] = None
+                                            st.session_state[f'{interface_type}_session_id'] = str(uuid.uuid4())
+                                            st.session_state[f'{interface_type}_messages'] = []
+                                        st.success("Deleted!")
+                                        st.rerun()
+                        st.markdown("---")
+                else:
+                    # For non-student interfaces, display flat list
+                    st.markdown("**Recent Chats:**")
+                    
+                    for conv in conversations:
+                        # Highlight current conversation
+                        current_conv_id = st.session_state.get(f'{interface_type}_current_conversation_id')
+                        is_current = (current_conv_id == conv.id)
+                        
+                        # Create expandable conversation item
+                        with st.expander(
+                            f"{'🟢 ' if is_current else ''}{conv.title[:30]}{'...' if len(conv.title) > 30 else ''}",
+                            expanded=False
+                        ):
                         # Show conversation details
                         st.caption(f"Created: {conv.created_at.strftime('%d/%m/%Y %H:%M')}")
                         

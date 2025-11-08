@@ -152,6 +152,8 @@ class ChatConversation(Base):
     student_id = Column(Integer, ForeignKey("students.id"), nullable=True)  # For students
     interface_type = Column(String, nullable=False)  # 'companion', 'student', 'planning'
     session_id = Column(String, nullable=False, unique=True, index=True)  # Links to conversation_history
+    subject_tag = Column(String, nullable=True, default="General", index=True)  # Subject classification for student chats
+    summary = Column(Text, nullable=True)  # Auto-generated summary of chat content
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -724,14 +726,15 @@ def clear_conversation_history(db, session_id: str, interface_type: str):
 
 # Chat Conversation Management functions
 def create_chat_conversation(db, title: str, session_id: str, interface_type: str, 
-                             user_id: int = None, student_id: int = None):
-    """Create a new chat conversation"""
+                             user_id: int = None, student_id: int = None, subject_tag: str = "General"):
+    """Create a new chat conversation with optional subject tagging"""
     conversation = ChatConversation(
         title=title,
         user_id=user_id,
         student_id=student_id,
         interface_type=interface_type,
-        session_id=session_id
+        session_id=session_id,
+        subject_tag=subject_tag
     )
     db.add(conversation)
     db.commit()
@@ -1389,3 +1392,114 @@ def check_same_institution(db, educator_id_1: int, educator_id_2: int):
     except Exception as e:
         print(f"Error checking institution: {str(e)}")
         return (False, None)
+
+# ---- SUBJECT-BASED CHAT ORGANIZATION (Student Chat Management) ----
+
+def get_available_subjects():
+    """Get list of available subject tags for student chats"""
+    return [
+        "Mathematics",
+        "Science",
+        "Language",
+        "Humanities",
+        "Cosmic Education",
+        "Personal Project",
+        "General"
+    ]
+
+def get_student_chats_by_subject(db, student_id: int):
+    """
+    Get student chats grouped by subject
+    Returns: dict with subject as key, list of conversations as value
+    """
+    try:
+        chats = db.query(ChatConversation).filter(
+            ChatConversation.student_id == student_id,
+            ChatConversation.interface_type == 'student',
+            ChatConversation.is_active == True
+        ).order_by(ChatConversation.updated_at.desc()).all()
+        
+        # Group by subject
+        grouped = {}
+        for chat in chats:
+            subject = chat.subject_tag or "General"
+            if subject not in grouped:
+                grouped[subject] = []
+            grouped[subject].append(chat)
+        
+        return grouped
+    except Exception as e:
+        print(f"Error getting student chats by subject: {str(e)}")
+        return {}
+
+def get_filtered_student_chats(db, educator_id: int = None, student_id: int = None, 
+                               subject_tag: str = None):
+    """
+    Get filtered student chats for educator dashboard
+    Filters by student and/or subject
+    """
+    try:
+        query = db.query(ChatConversation).filter(
+            ChatConversation.interface_type == 'student',
+            ChatConversation.is_active == True
+        )
+        
+        # Filter by student if specified
+        if student_id:
+            query = query.filter(ChatConversation.student_id == student_id)
+        
+        # Filter by subject if specified
+        if subject_tag:
+            query = query.filter(ChatConversation.subject_tag == subject_tag)
+        
+        # If educator specified, only show students from same institution
+        if educator_id:
+            educator = db.query(User).filter(User.id == educator_id).first()
+            if educator and educator.institution_name:
+                # Get students from same institution
+                students = db.query(Student).join(User).filter(
+                    User.institution_name == educator.institution_name
+                ).all()
+                student_ids = [s.id for s in students]
+                query = query.filter(ChatConversation.student_id.in_(student_ids))
+        
+        return query.order_by(ChatConversation.updated_at.desc()).all()
+    except Exception as e:
+        print(f"Error getting filtered student chats: {str(e)}")
+        return []
+
+def update_chat_summary(db, conversation_id: int, summary: str):
+    """Update the summary field of a chat conversation"""
+    try:
+        conversation = db.query(ChatConversation).filter(
+            ChatConversation.id == conversation_id
+        ).first()
+        
+        if conversation:
+            conversation.summary = summary
+            db.commit()
+            return True
+        return False
+    except Exception as e:
+        print(f"Error updating chat summary: {str(e)}")
+        db.rollback()
+        return False
+
+def migrate_legacy_chats_to_general(db):
+    """
+    Migrate existing chats without subject_tag to 'General'
+    Run once during deployment
+    """
+    try:
+        # Update all chats with NULL or empty subject_tag
+        updated = db.query(ChatConversation).filter(
+            (ChatConversation.subject_tag == None) | (ChatConversation.subject_tag == "")
+        ).update({ChatConversation.subject_tag: "General"}, synchronize_session=False)
+        
+        db.commit()
+        print(f"Migrated {updated} legacy chats to 'General' subject tag")
+        return updated
+    except Exception as e:
+        print(f"Error migrating legacy chats: {str(e)}")
+        db.rollback()
+        return 0

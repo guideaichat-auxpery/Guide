@@ -76,6 +76,21 @@ else:
         else:
             # Defer cleanup until after login
             st.session_state.last_cleanup_check = datetime.now()
+    
+    # Run one-time migration for legacy chats (add subject_tag='General')
+    if 'subject_tag_migration_complete' not in st.session_state:
+        from database import migrate_legacy_chats_to_general
+        db = get_db()
+        if db:
+            try:
+                migrated_count = migrate_legacy_chats_to_general(db)
+                if migrated_count > 0:
+                    logger.info(f"Migrated {migrated_count} legacy chats to 'General' subject tag")
+                st.session_state.subject_tag_migration_complete = True
+            except Exception as e:
+                logger.error(f"Error during subject tag migration: {str(e)}")
+            finally:
+                db.close()
 
 # Initialize session state
 if 'messages' not in st.session_state:

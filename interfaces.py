@@ -1160,7 +1160,7 @@ def show_student_dashboard_interface():
                 st.metric("Status", "Active" if selected_student.is_active else "Inactive")
             
             # Tabs for different views
-            tab1, tab2 = st.tabs(["📚 Learning Activity", "🔐 Access Management"])
+            tab1, tab2, tab3 = st.tabs(["📚 Learning Activity", "💬 Chat History", "🔐 Access Management"])
             
             with tab1:
                 # Get student activities
@@ -1203,6 +1203,100 @@ def show_student_dashboard_interface():
                     st.info("No activities recorded yet for this student.")
             
             with tab2:
+                # Chat History Tab - View student chats filtered by subject
+                st.markdown("### 💬 Student Chat History")
+                
+                from database import get_available_subjects, get_filtered_student_chats
+                
+                # Subject filter
+                subjects = get_available_subjects()
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    selected_subject = st.selectbox(
+                        "Filter by Subject:",
+                        ["All Subjects"] + subjects,
+                        key=f"subject_filter_{selected_student.id}"
+                    )
+                with col2:
+                    st.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True)
+                    st.caption(f"Total conversations shown below")
+                
+                # Get filtered chats
+                subject_filter = None if selected_subject == "All Subjects" else selected_subject
+                chats = get_filtered_student_chats(
+                    db, 
+                    educator_id=educator_id,
+                    student_id=selected_student.id, 
+                    subject_tag=subject_filter
+                )
+                
+                if chats:
+                    st.markdown(f"**Showing {len(chats)} conversation(s)**")
+                    st.markdown("---")
+                    
+                    # Display chats grouped by subject if showing all
+                    if selected_subject == "All Subjects":
+                        # Group by subject
+                        from collections import defaultdict
+                        grouped_chats = defaultdict(list)
+                        for chat in chats:
+                            subject = chat.subject_tag or "General"
+                            grouped_chats[subject].append(chat)
+                        
+                        # Display each subject group
+                        for subject, subject_chats in grouped_chats.items():
+                            st.markdown(f"#### {subject}")
+                            for chat in subject_chats:
+                                with st.expander(f"{chat.title} - {chat.updated_at.strftime('%d/%m/%Y %H:%M')}"):
+                                    st.caption(f"**Subject:** {chat.subject_tag or 'General'}")
+                                    st.caption(f"**Started:** {chat.created_at.strftime('%d/%m/%Y %H:%M')}")
+                                    st.caption(f"**Last Updated:** {chat.updated_at.strftime('%d/%m/%Y %H:%M')}")
+                                    
+                                    if chat.summary:
+                                        st.markdown(f"**Summary:** {chat.summary}")
+                                    
+                                    # Load and display conversation messages
+                                    from database import load_conversation_to_session
+                                    messages = load_conversation_to_session(db, chat.session_id, 'student')
+                                    
+                                    if messages:
+                                        st.markdown("**Conversation:**")
+                                        for msg in messages[-10:]:  # Show last 10 messages
+                                            if msg['role'] == 'user':
+                                                st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                            else:
+                                                st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                    else:
+                                        st.info("No messages in this conversation yet.")
+                            st.markdown("---")
+                    else:
+                        # Display filtered chats for selected subject
+                        for chat in chats:
+                            with st.expander(f"{chat.title} - {chat.updated_at.strftime('%d/%m/%Y %H:%M')}"):
+                                st.caption(f"**Subject:** {chat.subject_tag or 'General'}")
+                                st.caption(f"**Started:** {chat.created_at.strftime('%d/%m/%Y %H:%M')}")
+                                st.caption(f"**Last Updated:** {chat.updated_at.strftime('%d/%m/%Y %H:%M')}")
+                                
+                                if chat.summary:
+                                    st.markdown(f"**Summary:** {chat.summary}")
+                                
+                                # Load and display conversation messages
+                                from database import load_conversation_to_session
+                                messages = load_conversation_to_session(db, chat.session_id, 'student')
+                                
+                                if messages:
+                                    st.markdown("**Conversation:**")
+                                    for msg in messages[-10:]:  # Show last 10 messages
+                                        if msg['role'] == 'user':
+                                            st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                        else:
+                                            st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                else:
+                                    st.info("No messages in this conversation yet.")
+                else:
+                    st.info(f"No chat conversations found{' for ' + selected_subject if selected_subject != 'All Subjects' else ''}.")
+            
+            with tab3:
                 st.markdown("### 🔐 Access Management")
                 
                 if is_primary_educator:
