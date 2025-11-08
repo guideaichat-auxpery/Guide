@@ -287,52 +287,52 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                             f"{'🟢 ' if is_current else ''}{conv.title[:30]}{'...' if len(conv.title) > 30 else ''}",
                             expanded=False
                         ):
-                        # Show conversation details
-                        st.caption(f"Created: {conv.created_at.strftime('%d/%m/%Y %H:%M')}")
-                        
-                        # Rename input
-                        new_title = st.text_input(
-                            "Rename", 
-                            value=conv.title,
-                            key=f"rename_{conv.id}",
-                            label_visibility="collapsed"
-                        )
-                        
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            # Rename button
-                            if st.button("✏️", key=f"rename_btn_{conv.id}", help="Rename"):
-                                if new_title and new_title != conv.title:
-                                    rename_chat_conversation(db, conv.id, new_title, user_id, student_id)
-                                    st.success("Renamed!")
+                            # Show conversation details
+                            st.caption(f"Created: {conv.created_at.strftime('%d/%m/%Y %H:%M')}")
+                            
+                            # Rename input
+                            new_title = st.text_input(
+                                "Rename", 
+                                value=conv.title,
+                                key=f"rename_{conv.id}",
+                                label_visibility="collapsed"
+                            )
+                            
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                # Rename button
+                                if st.button("✏️", key=f"rename_btn_{conv.id}", help="Rename"):
+                                    if new_title and new_title != conv.title:
+                                        rename_chat_conversation(db, conv.id, new_title, user_id, student_id)
+                                        st.success("Renamed!")
+                                        st.rerun()
+                            
+                            with col2:
+                                # Open button
+                                if st.button("📂", key=f"open_btn_{conv.id}", help="Open"):
+                                    # Load this conversation
+                                    reopen_chat_conversation(db, conv.id, user_id, student_id)
+                                    st.session_state[f'{interface_type}_current_conversation_id'] = conv.id
+                                    st.session_state[f'{interface_type}_session_id'] = conv.session_id
+                                    
+                                    # Load messages for this conversation
+                                    from database import load_conversation_to_session
+                                    loaded_messages = load_conversation_to_session(db, conv.session_id, interface_type)
+                                    st.session_state[f'{interface_type}_messages'] = loaded_messages
                                     st.rerun()
-                        
-                        with col2:
-                            # Open button
-                            if st.button("📂", key=f"open_btn_{conv.id}", help="Open"):
-                                # Load this conversation
-                                reopen_chat_conversation(db, conv.id, user_id, student_id)
-                                st.session_state[f'{interface_type}_current_conversation_id'] = conv.id
-                                st.session_state[f'{interface_type}_session_id'] = conv.session_id
-                                
-                                # Load messages for this conversation
-                                from database import load_conversation_to_session
-                                loaded_messages = load_conversation_to_session(db, conv.session_id, interface_type)
-                                st.session_state[f'{interface_type}_messages'] = loaded_messages
-                                st.rerun()
-                        
-                        with col3:
-                            # Delete button
-                            if st.button("🗑️", key=f"delete_btn_{conv.id}", help="Delete"):
-                                delete_chat_conversation(db, conv.id, user_id, student_id)
-                                # If deleting current conversation, clear session
-                                if is_current:
-                                    st.session_state[f'{interface_type}_current_conversation_id'] = None
-                                    st.session_state[f'{interface_type}_session_id'] = str(uuid.uuid4())
-                                    st.session_state[f'{interface_type}_messages'] = []
-                                st.success("Deleted!")
-                                st.rerun()
+                            
+                            with col3:
+                                # Delete button
+                                if st.button("🗑️", key=f"delete_btn_{conv.id}", help="Delete"):
+                                    delete_chat_conversation(db, conv.id, user_id, student_id)
+                                    # If deleting current conversation, clear session
+                                    if is_current:
+                                        st.session_state[f'{interface_type}_current_conversation_id'] = None
+                                        st.session_state[f'{interface_type}_session_id'] = str(uuid.uuid4())
+                                        st.session_state[f'{interface_type}_messages'] = []
+                                    st.success("Deleted!")
+                                    st.rerun()
                 
             else:
                 st.info("No chats yet. Click 'New Chat' to start!")
