@@ -768,16 +768,43 @@ def delete_planning_note(db, note_id: int):
     return False
 
 # Conversation History functions
+def trim_message_content(content: str, max_length: int = 10000) -> str:
+    """
+    Backend optimization: Trim excessively long messages to prevent database bloat.
+    Keeps first and last portions for context while indicating truncation.
+    """
+    if len(content) <= max_length:
+        return content
+    
+    # Keep first 80% and last 10% of allowed length
+    keep_start = int(max_length * 0.8)
+    keep_end = int(max_length * 0.1)
+    
+    truncated = (
+        content[:keep_start] + 
+        f"\n\n... [Content trimmed for storage efficiency. Original length: {len(content)} chars] ...\n\n" +
+        content[-keep_end:]
+    )
+    
+    logger.info(f"Trimmed message from {len(content)} to {len(truncated)} characters")
+    return truncated
+
 def save_conversation_message(db, session_id: str, interface_type: str, role: str, content: str, 
                               user_id: int = None, student_id: int = None):
-    """Save a conversation message to history"""
+    """
+    Save a conversation message to history.
+    Backend optimization: Trims excessively long content to prevent database bloat.
+    """
+    # Trim content if too long (optimization)
+    trimmed_content = trim_message_content(content)
+    
     message = ConversationHistory(
         user_id=user_id,
         student_id=student_id,
         session_id=session_id,
         interface_type=interface_type,
         role=role,
-        content=content
+        content=trimmed_content
     )
     db.add(message)
     db.commit()
