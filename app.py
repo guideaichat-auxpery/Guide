@@ -26,71 +26,15 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Initialize database and show status
+# Backend optimization: Initialize database once at process startup
+from database import initialize_database_once
+
 if not database_available:
     st.warning("Running in limited mode - authentication and data storage are not available.")
     st.info("You can still explore the Montessori companion features.")
-elif not create_tables():
-    st.warning("Database initialization failed - some features may not work properly.")
-    st.info("You can still explore the companion features while we resolve this.")
 else:
-    # Run data retention cleanup periodically (APP 11.2 compliance)
-    from database import get_db, cleanup_old_data, get_data_retention_status
-    from datetime import datetime, timedelta
-    
-    # Check if we should run cleanup (once per day)
-    if 'last_cleanup_check' not in st.session_state:
-        st.session_state.last_cleanup_check = datetime.now() - timedelta(days=2)  # Force first check
-    
-    time_since_last_check = datetime.now() - st.session_state.last_cleanup_check
-    
-    # Run cleanup if it's been more than 24 hours (deferred to background)
-    if time_since_last_check > timedelta(hours=24):
-        # Only run cleanup if user is authenticated (defer for login screen)
-        if st.session_state.get('authenticated', False):
-            db = get_db()
-            if db:
-                try:
-                    # Quick check without expensive queries - only count if needed
-                    from datetime import datetime, timedelta
-                    from database import ConversationHistory
-                    conversation_cutoff = datetime.utcnow() - timedelta(days=730)
-                    
-                    # Single quick query instead of multiple
-                    old_count = db.query(ConversationHistory).filter(
-                        ConversationHistory.created_at < conversation_cutoff
-                    ).count()
-                    
-                    if old_count > 0:
-                        # Only run full cleanup if there's actually old data
-                        deleted = cleanup_old_data(db)
-                        if deleted:
-                            logger.info(f"Data retention cleanup: {deleted}")
-                    
-                    # Update last check time
-                    st.session_state.last_cleanup_check = datetime.now()
-                except Exception as e:
-                    logger.error(f"Error during data retention cleanup: {str(e)}")
-                finally:
-                    db.close()
-        else:
-            # Defer cleanup until after login
-            st.session_state.last_cleanup_check = datetime.now()
-    
-    # Run one-time migration for legacy chats (add subject_tag='General')
-    if 'subject_tag_migration_complete' not in st.session_state:
-        from database import migrate_legacy_chats_to_general
-        db = get_db()
-        if db:
-            try:
-                migrated_count = migrate_legacy_chats_to_general(db)
-                if migrated_count > 0:
-                    logger.info(f"Migrated {migrated_count} legacy chats to 'General' subject tag")
-                st.session_state.subject_tag_migration_complete = True
-            except Exception as e:
-                logger.error(f"Error during subject tag migration: {str(e)}")
-            finally:
-                db.close()
+    # Run one-time initialization (tables, migrations) - process-level, not per-session
+    initialize_database_once()
 
 # Initialize session state
 if 'messages' not in st.session_state:

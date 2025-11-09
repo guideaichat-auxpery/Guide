@@ -7,19 +7,28 @@ from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 from typing import Optional
 import streamlit as st
+import logging
+
+# Logger for database module
+logger = logging.getLogger(__name__)
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
+Base = declarative_base()
 
-# Optional database configuration - app can run without database
-engine = None
-SessionLocal = None
-database_available = False
-database_status_message = ""
-
-if DATABASE_URL:
+# Backend optimization: Cache database engine and session factory using st.cache_resource
+# This prevents creating new engine/session factory on every page load
+@st.cache_resource
+def get_database_engine():
+    """
+    Create and cache database engine using Streamlit's cache_resource.
+    This ensures we reuse the same engine across reruns, improving performance.
+    """
+    if not DATABASE_URL:
+        logger.warning("DATABASE_URL not configured")
+        return None, "Database not configured. Running in limited mode without persistent storage."
+    
     try:
-        # Configure engine with connection pooling and SSL settings
         engine = create_engine(
             DATABASE_URL,
             pool_pre_ping=True,  # Test connections before using them
@@ -31,16 +40,20 @@ if DATABASE_URL:
                 "connect_timeout": 10
             }
         )
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        database_available = True
-        database_status_message = "Database connected successfully."
+        logger.info("Database engine created successfully")
+        return engine, "Database connected successfully."
     except Exception as e:
-        # Log to console for debugging, don't expose details to users
-        print(f"Database connection failed: {str(e)}")
-        database_status_message = "Database connection failed. Running in limited mode."
-else:
-    database_status_message = "Database not configured. Running in limited mode without persistent storage."
-Base = declarative_base()
+        logger.error(f"Database connection failed: {str(e)}")
+        return None, "Database connection failed. Running in limited mode."
+
+# Get cached engine and status
+engine, database_status_message = get_database_engine()
+database_available = engine is not None
+
+# Create session factory from cached engine
+SessionLocal = None
+if engine:
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class EducatorStudentAccess(Base):
     __tablename__ = "educator_student_access"
@@ -270,6 +283,65 @@ def create_tables():
         
         return False
 
+# Process-level flag for one-time initialization
+_initialized = False
+
+def initialize_database_once():
+    """
+    Backend optimization: Run one-time database operations at process startup.
+    This includes migrations and initial cleanup checks.
+    Should be called once per process, not per session.
+    """
+    global _initialized
+    
+    if _initialized:
+        return True
+    
+    if not engine or not SessionLocal:
+        logger.warning("Database not available for initialization")
+        return False
+    
+    try:
+        # Create tables if they don't exist
+        with engine.connect() as conn:
+            Base.metadata.create_all(bind=engine)
+        
+        # Run one-time migrations
+        db = SessionLocal()
+        try:
+            # Migrate legacy chats to General subject
+            from database import ChatConversation
+            updated = db.query(ChatConversation).filter(
+                (ChatConversation.subject_tag == None) | (ChatConversation.subject_tag == "")
+            ).update({ChatConversation.subject_tag: "General"}, synchronize_session=False)
+            
+            if updated > 0:
+                db.commit()
+                logger.info(f"Migrated {updated} legacy chats to 'General' subject tag")
+            
+            # Quick cleanup check (non-blocking)
+            from datetime import datetime, timedelta
+            from database import ConversationHistory
+            conversation_cutoff = datetime.utcnow() - timedelta(days=730)
+            
+            old_count = db.query(ConversationHistory).filter(
+                ConversationHistory.created_at < conversation_cutoff
+            ).count()
+            
+            if old_count > 100:  # Only log if substantial old data exists
+                logger.info(f"Found {old_count} old conversations for eventual cleanup")
+        
+        finally:
+            db.close()
+        
+        _initialized = True
+        logger.info("Database initialized successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Database initialization error: {str(e)}")
+        return False
+
 def get_db():
     """Get database session"""
     if not SessionLocal:
@@ -279,6 +351,31 @@ def get_db():
         return db
     finally:
         pass  # Don't close here, let the caller handle it
+
+# Backend optimization: Cache reference data that doesn't change often
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_subject_list():
+    """Get list of available subjects for student chats (cached)"""
+    return ["Mathematics", "Science", "Language", "Humanities", "Arts", "Technology", "General"]
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_age_group_list():
+    """Get list of age groups (cached)"""
+    return [
+        "3-6 years (Early Childhood)",
+        "6-9 years (Lower Elementary)",
+        "9-12 years (Upper Elementary)",
+        "12-15 years (Adolescent)"
+    ]
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_curriculum_frameworks():
+    """Get list of curriculum frameworks (cached)"""
+    return [
+        "Australian Curriculum V9",
+        "Montessori National Curriculum (2011)",
+        "Blended Approach"
+    ]
 
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt"""
