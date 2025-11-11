@@ -443,7 +443,63 @@ def show_companion_interface():
         st.session_state.companion_messages, max_history=20
     )
     
-    # Check if last message needs a response (from Quick Guide click)
+    # Quick conversation starters - Comprehensive Montessori Guide Topics
+    # MOVED TO TOP: Cards stay fixed here, chat flows below
+    st.markdown("#### 📚 Montessori Quick Guides")
+    st.markdown("*Click any topic to explore authentic Montessori wisdom from Dr. Montessori's foundational texts*")
+    
+    quick_prompts = [
+        "🌌 What is cosmic education and how do I implement it?",
+        "🎯 Explain the sensitive periods in child development",
+        "🏛️ What is the prepared environment?",
+        "👁️ How do I observe children effectively?",
+        "🌱 What is the absorbent mind?",
+        "✋ How do I introduce a new material?",
+        "🔄 What are the three-period lessons?",
+        "🌍 How does Montessori connect to the universe story?",
+        "🔬 How do I implement cosmic education in science?",
+        "📖 What are the great stories and how do I tell them?",
+        "🤝 How do I handle social conflicts using Montessori principles?",
+        "🌟 What is normalization and how do I recognize it?",
+        "🧘 How do I create a culture of peace in the classroom?",
+        "🎨 How does art connect to cosmic education?",
+        "📊 How do I assess learning in a Montessori way?"
+    ]
+    
+    cols = st.columns(3)
+    for idx, prompt_text in enumerate(quick_prompts):
+        with cols[idx % 3]:
+            if st.button(prompt_text, key=f"quick_{idx}", use_container_width=True):
+                # Add prompt to conversation
+                st.session_state.companion_messages.append({
+                    "role": "user",
+                    "content": prompt_text
+                })
+                
+                # Save to database if available
+                if database_available and user_id:
+                    db = get_db()
+                    if db:
+                        try:
+                            save_conversation_message(
+                                db,
+                                session_id=st.session_state.companion_session_id,
+                                interface_type='companion',
+                                role='user',
+                                content=prompt_text,
+                                user_id=user_id,
+                                student_id=None
+                            )
+                        except Exception as e:
+                            print(f"Error saving conversation: {str(e)}")
+                        finally:
+                            db.close()
+                
+                st.rerun()
+    
+    st.markdown("---")
+    
+    # Check if last message needs a response (from Quick Guide click or chat input)
     need_response = (
         len(st.session_state.companion_messages) > 0 and 
         st.session_state.companion_messages[-1]["role"] == "user" and
@@ -502,61 +558,6 @@ def show_companion_interface():
                 # Show save confirmation if successful
                 if assistant_save_success:
                     st.toast("✓ Response saved", icon="💾")
-    
-    # Quick conversation starters - Comprehensive Montessori Guide Topics
-    st.markdown("#### 📚 Montessori Quick Guides")
-    st.markdown("*Click any topic to explore authentic Montessori wisdom from Dr. Montessori's foundational texts*")
-    
-    quick_prompts = [
-        "🌌 What is cosmic education and how do I implement it?",
-        "🎯 Explain the sensitive periods in child development",
-        "🏛️ What is the prepared environment?",
-        "👁️ How do I observe children effectively?",
-        "🌱 What is the absorbent mind?",
-        "✋ How do I introduce a new material?",
-        "🔄 What are the three-period lessons?",
-        "🌍 How does Montessori connect to the universe story?",
-        "🔬 How do I implement cosmic education in science?",
-        "📖 What are the great stories and how do I tell them?",
-        "🤝 How do I handle social conflicts using Montessori principles?",
-        "🌟 What is normalization and how do I recognize it?",
-        "🧘 How do I create a culture of peace in the classroom?",
-        "🎨 How does art connect to cosmic education?",
-        "📊 How do I assess learning in a Montessori way?"
-    ]
-    
-    cols = st.columns(3)
-    for idx, prompt_text in enumerate(quick_prompts):
-        with cols[idx % 3]:
-            if st.button(prompt_text, key=f"quick_{idx}", use_container_width=True):
-                # Add prompt to conversation
-                st.session_state.companion_messages.append({
-                    "role": "user",
-                    "content": prompt_text
-                })
-                
-                # Save to database if available
-                if database_available and user_id:
-                    db = get_db()
-                    if db:
-                        try:
-                            save_conversation_message(
-                                db,
-                                session_id=st.session_state.companion_session_id,
-                                interface_type='companion',
-                                role='user',
-                                content=prompt_text,
-                                user_id=user_id,
-                                student_id=None
-                            )
-                        except Exception as e:
-                            print(f"Error saving conversation: {str(e)}")
-                        finally:
-                            db.close()
-                
-                st.rerun()
-    
-    st.markdown("---")
     
     # Chat input
     if prompt := st.chat_input("Ask your Montessori question..."):
