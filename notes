@@ -1,0 +1,42 @@
+🎯 My Implementation Approach
+I'll build a webhook-driven subscription system that connects your landing page's Stripe payments to Guide's access control. Here's how it will work:
+
+The Flow:
+Landing Page → User chooses monthly ($12) or annual ($144) → pays via Stripe → email captured
+Stripe Webhook → Fires to your landing page → stores subscription in shared PostgreSQL database
+Guide Signup → User creates account → we verify their email has active subscription → allow ONE account creation
+Guide Login → Every session checks subscription status → blocks access if expired/cancelled
+Prevention System → One subscription email = one Guide account (enforced at database level)
+What I'll Build:
+For Guide (this app):
+
+✅ New subscriptions table in your existing PostgreSQL database
+✅ Subscription verification middleware (checks on login + session)
+✅ Modified signup flow (requires active subscription)
+✅ One-account-per-email enforcement
+✅ Friendly error messages with links back to landing page
+✅ Optional: Admin dashboard to view/manage subscriptions
+For Your Landing Page (blueprint/documentation):
+
+✅ Webhook endpoint code (Node.js/Python) to receive Stripe events
+✅ Signature verification for security
+✅ Event handlers for: subscription.created, invoice.paid, subscription.deleted
+✅ Database connection setup (reuse Guide's PostgreSQL)
+✅ Environment variables guide (Stripe keys, database URL)
+Security Features:
+
+✅ Signed webhook verification (prevents fake requests)
+✅ Email-based linking (prevents multiple accounts)
+✅ Status checks with caching (performance + real-time)
+✅ Grace period for failed payments (1-2 days)
+Let me create the detailed task list for this integration:
+Create user subscription table
+Add database helper functions for subscriptions
+Control access based on active subscription
+Update signup to check active subscription
+Check subscription status on login
+Define student subscription access rules
+Document webhook endpoint with examples
+Create guide for setting up integration
+Add subscription management view
+Test entire subscription process

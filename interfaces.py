@@ -1365,6 +1365,12 @@ def show_student_dashboard_interface():
     except Exception as e:
         st.error(f"Error loading student data: {str(e)}")
         print(f"Dashboard error: {str(e)}")
+        # CRITICAL: Rollback transaction on error to prevent "transaction aborted" errors
+        if db:
+            try:
+                db.rollback()
+            except Exception as rollback_error:
+                print(f"Rollback error: {str(rollback_error)}")
     
     finally:
         if db:

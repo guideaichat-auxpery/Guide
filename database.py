@@ -1,7 +1,7 @@
 import os
 import bcrypt
 import json
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Table
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Table, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -50,10 +50,43 @@ def get_database_engine():
 engine, database_status_message = get_database_engine()
 database_available = engine is not None
 
-# Create session factory from cached engine
+# Create thread-safe scoped session factory from cached engine
+from sqlalchemy.orm import scoped_session
+from contextlib import contextmanager
+
 SessionLocal = None
 if engine:
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    SessionLocal = scoped_session(session_factory)
+
+@contextmanager
+def session_scope():
+    """
+    Provide a transactional scope with automatic rollback on exception.
+    
+    This context manager ensures:
+    - Automatic rollback if any exception occurs
+    - Proper session cleanup in all cases
+    - Thread-safe session management
+    
+    Usage:
+        with session_scope() as db:
+            result = db.query(User).filter_by(email=email).first()
+    """
+    if not SessionLocal:
+        raise RuntimeError("Database not available")
+    
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Database transaction failed, rolled back: {str(e)}")
+        raise
+    finally:
+        session.close()
+        SessionLocal.remove()  # Remove thread-local session
 
 class EducatorStudentAccess(Base):
     __tablename__ = "educator_student_access"
@@ -343,14 +376,38 @@ def initialize_database_once():
         return False
 
 def get_db():
-    """Get database session"""
+    """
+    Get database session (LEGACY - prefer session_scope() context manager).
+    
+    IMPORTANT: Callers must handle rollback and close properly:
+        db = get_db()
+        try:
+            # operations
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+    
+    Better pattern:
+        with session_scope() as db:
+            # operations (auto-rollback on exception)
+    """
     if not SessionLocal:
         return None
     db = SessionLocal()
+    
+    # Add safety mechanism: if session is in failed state, rollback immediately
     try:
-        return db
-    finally:
-        pass  # Don't close here, let the caller handle it
+        if db.is_active and db.in_transaction():
+            # Check if transaction is in usable state (SQLAlchemy 2.x compatible)
+            db.execute(text("SELECT 1"))
+    except Exception:
+        # Transaction is broken, rollback to clear it
+        db.rollback()
+        logger.warning("Rolled back broken transaction in get_db()")
+    
+    return db
 
 # Backend optimization: Cache reference data that doesn't change often
 @st.cache_data(ttl=3600)  # Cache for 1 hour
