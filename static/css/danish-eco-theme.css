@@ -403,3 +403,43 @@ body:has(.danish-dashboard-wrapper) .main-byline,
 body:has(.danish-dashboard-wrapper) .subtitle {
   display: none !important;
 }
+
+/* Sticky Card Grid Container - Pins cards at top during chat interactions */
+.sticky-card-container {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background-color: var(--eco-bg) !important;
+  padding-bottom: 1rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* Chat Content Zone - Flows below sticky cards */
+.chat-content-zone {
+  position: relative !important;
+  z-index: 1 !important;
+  padding-top: 0.5rem !important;
+}
+
+/* Ensure smooth scrolling behavior */
+.danish-dashboard-wrapper {
+  scroll-behavior: smooth;
+}
+
+/* Add subtle shadow when cards are pinned and content scrolls */
+.sticky-card-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(46, 46, 43, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Show shadow on scroll (handled by Streamlit rerun, always visible for consistency) */
+.sticky-card-container {
+  box-shadow: 0 2px 8px rgba(46, 46, 43, 0.02);
+}

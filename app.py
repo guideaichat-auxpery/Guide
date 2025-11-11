@@ -51,10 +51,11 @@ def load_css(file_path):
     with open(file_path) as f:
         return f'<style>{f.read()}</style>'
 
-# Load Montessori theme (Danish eco theme removed - not used)
+# Load Montessori theme for general interface
 st.markdown(load_css('static/css/montessori-theme.css'), unsafe_allow_html=True)
 
-# (Danish dashboard function removed - dashboard now renders inline)
+# Load Danish eco theme for educator dashboard cards
+st.markdown(load_css('static/css/danish-eco-theme.css'), unsafe_allow_html=True)
 
 # Additional custom CSS for specific components
 st.markdown("""
@@ -154,42 +155,6 @@ else:
     # Explicitly check user type to ensure proper role-based UI
     is_student = st.session_state.get('is_student', None)
     
-    # Institution setting for educators (compact display)
-    if is_student is False:
-        from database import get_db, update_educator_institution, is_institution_enforcement_on, User
-        db = get_db()
-        if db:
-            try:
-                educator_id = st.session_state.get('user_id')
-                educator = db.query(User).filter(User.id == educator_id).first()
-                
-                # Check if institution needs to be set
-                if not educator.institution_name or educator.institution_name.strip() == '':
-                    st.warning("⚠️ **Action Required:** Please set your institution name to enable student sharing.")
-                    
-                    with st.form("institution_form"):
-                        institution_name = st.text_input(
-                            "Institution Name:",
-                            placeholder="Montessori School",
-                            help="This enables secure student sharing with educators from your institution"
-                        )
-                        submitted = st.form_submit_button("Set Institution")
-                        
-                        if submitted and institution_name:
-                            success, auto_enabled = update_educator_institution(db, educator_id, institution_name)
-                            if success:
-                                if auto_enabled:
-                                    st.success("✅ Institution set! 🚀 All educators now have institutions - enforcement automatically enabled!")
-                                else:
-                                    st.success(f"✅ Institution set to: {institution_name}")
-                                st.rerun()
-                            else:
-                                st.error("Failed to update institution")
-            except Exception as e:
-                print(f"Institution check error: {str(e)}")
-            finally:
-                db.close()
-    
     if is_student is False:
         # Educator interface
         
@@ -202,6 +167,44 @@ else:
         
         # Only show dashboard navigation cards on home view
         if current_mode == 'dashboard_home':
+            # Open sticky card container - pins cards at top during interactions
+            st.markdown('<div class="sticky-card-container">', unsafe_allow_html=True)
+            
+            # Institution setting check (inside sticky container)
+            from database import get_db, update_educator_institution, is_institution_enforcement_on, User
+            db = get_db()
+            if db:
+                try:
+                    educator_id = st.session_state.get('user_id')
+                    educator = db.query(User).filter(User.id == educator_id).first()
+                    
+                    # Check if institution needs to be set
+                    if not educator.institution_name or educator.institution_name.strip() == '':
+                        st.warning("⚠️ **Action Required:** Please set your institution name to enable student sharing.")
+                        
+                        with st.form("institution_form"):
+                            institution_name = st.text_input(
+                                "Institution Name:",
+                                placeholder="Montessori School",
+                                help="This enables secure student sharing with educators from your institution"
+                            )
+                            submitted = st.form_submit_button("Set Institution")
+                            
+                            if submitted and institution_name:
+                                success, auto_enabled = update_educator_institution(db, educator_id, institution_name)
+                                if success:
+                                    if auto_enabled:
+                                        st.success("✅ Institution set! 🚀 All educators now have institutions - enforcement automatically enabled!")
+                                    else:
+                                        st.success(f"✅ Institution set to: {institution_name}")
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to update institution")
+                except Exception as e:
+                    print(f"Institution check error: {str(e)}")
+                finally:
+                    db.close()
+            
             # Educator Dashboard - Welcome and Cards
             educator_name = st.session_state.get('user_email', 'Educator').split('@')[0].title()
             st.markdown(f'<h2 style="margin-bottom: 1rem;">Welcome back, {educator_name}</h2>', unsafe_allow_html=True)
@@ -266,6 +269,14 @@ else:
                 if st.button("🔬 PD Expert Mode", use_container_width=True, type="primary"):
                     st.session_state.auth_mode = "pd_expert"
                     st.rerun()
+            
+            # Close sticky card container
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Chat content zone for any future content on dashboard home
+            st.markdown('<div class="chat-content-zone">', unsafe_allow_html=True)
+            # Any additional dashboard content would go here
+            st.markdown('</div>', unsafe_allow_html=True)
     elif is_student is True:
         # Student interface - explicitly for students only
         st.session_state.auth_mode = 'student_companion'
