@@ -499,7 +499,10 @@ def show_companion_interface():
     
     st.markdown("---")
     
-    # Document upload section - MOVED TO TOP to prevent mid-conversation insertion
+    # CRITICAL UI PLACEMENT: Document upload section MUST remain HERE (before chat history loop)
+    # to prevent mid-conversation insertion during Streamlit reruns.
+    # DO NOT move below chat history - it will appear between messages during multi-turn conversations.
+    # Correct flow: Quick Guides → Upload Section → Chat History → Chat Input
     st.markdown("#### 📁 Upload Teaching Materials for Feedback (Optional)")
     st.markdown("*Share lesson plans, observations, student work samples, or teaching materials for Montessori-focused feedback*")
     
