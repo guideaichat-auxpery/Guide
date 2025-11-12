@@ -579,7 +579,11 @@ def show_companion_interface():
             with st.spinner("Reading your document..."):
                 if uploaded_document.type == "application/pdf":
                     pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_document.read()))
-                    document_content = "\n".join([page.extract_text() for page in pdf_reader.pages])
+                    # Handle None values from scanned/textless pages
+                    extracted_pages = [page.extract_text() or "" for page in pdf_reader.pages]
+                    document_content = "\n".join(extracted_pages)
+                    if not document_content.strip():
+                        document_content = f"[PDF uploaded: {uploaded_document.name} - appears to be scanned/image-based. Text extraction not possible. Please describe the content or upload a text-based version.]"
                 elif uploaded_document.type in ["image/jpeg", "image/png"]:
                     try:
                         image = Image.open(uploaded_document)
@@ -905,7 +909,11 @@ def show_student_interface():
             with st.spinner("Reading your work..."):
                 if uploaded_work.type == "application/pdf":
                     pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_work.read()))
-                    work_content = "\n".join([page.extract_text() for page in pdf_reader.pages])
+                    # Handle None values from scanned/textless pages
+                    extracted_pages = [page.extract_text() or "" for page in pdf_reader.pages]
+                    work_content = "\n".join(extracted_pages)
+                    if not work_content.strip():
+                        work_content = f"[PDF uploaded: {uploaded_work.name} - appears to be scanned/image-based. Text extraction not possible.]"
                 elif uploaded_work.type in ["image/jpeg", "image/png"]:
                     try:
                         image = Image.open(uploaded_work)
@@ -924,7 +932,11 @@ def show_student_interface():
                 with st.spinner("Reading rubric..."):
                     if uploaded_rubric.type == "application/pdf":
                         pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_rubric.read()))
-                        rubric_content = "\n".join([page.extract_text() for page in pdf_reader.pages])
+                        # Handle None values from scanned/textless pages
+                        extracted_pages = [page.extract_text() or "" for page in pdf_reader.pages]
+                        rubric_content = "\n".join(extracted_pages)
+                        if not rubric_content.strip():
+                            rubric_content = f"[Rubric PDF uploaded: {uploaded_rubric.name} - appears to be scanned/image-based. Text extraction not possible.]"
                     elif uploaded_rubric.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                         doc = Document(io.BytesIO(uploaded_rubric.read()))
                         rubric_content = "\n".join([para.text for para in doc.paragraphs])
