@@ -559,6 +559,74 @@ def show_companion_interface():
                 if assistant_save_success:
                     st.toast("✓ Response saved", icon="💾")
     
+    # Document upload section
+    st.markdown("---")
+    st.markdown("#### 📁 Upload Teaching Materials for Feedback (Optional)")
+    st.markdown("*Share lesson plans, observations, student work samples, or teaching materials for Montessori-focused feedback*")
+    
+    uploaded_document = st.file_uploader(
+        "Upload document for analysis",
+        type=['txt', 'pdf', 'jpg', 'png', 'docx'],
+        help="Upload teaching materials, lesson plans, observations, or student work for feedback",
+        key="companion_document_upload"
+    )
+    
+    # Process uploaded document and add to conversation
+    if uploaded_document:
+        if st.button("🌟 Get Montessori Feedback", use_container_width=True, type="primary"):
+            # Process document file
+            document_content = ""
+            with st.spinner("Reading your document..."):
+                if uploaded_document.type == "application/pdf":
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_document.read()))
+                    document_content = "\n".join([page.extract_text() for page in pdf_reader.pages])
+                elif uploaded_document.type in ["image/jpeg", "image/png"]:
+                    try:
+                        image = Image.open(uploaded_document)
+                        document_content = pytesseract.image_to_string(image)
+                        if not document_content.strip():
+                            document_content = f"[Image uploaded: {uploaded_document.name} - visual content not extractable as text]"
+                    except:
+                        document_content = f"[Image uploaded: {uploaded_document.name} - could not process]"
+                elif uploaded_document.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    doc = Document(io.BytesIO(uploaded_document.read()))
+                    document_content = "\n".join([para.text for para in doc.paragraphs])
+                else:
+                    document_content = uploaded_document.read().decode("utf-8")
+            
+            # Create message with document content
+            user_message = f"I've uploaded a document for your feedback: {uploaded_document.name}\n\n**Document Content:**\n{document_content}\n\nPlease provide Montessori-focused feedback on this material."
+            
+            st.session_state.companion_messages.append({
+                "role": "user",
+                "content": user_message
+            })
+            
+            # Save to database
+            if database_available and user_id:
+                db = get_db()
+                if db:
+                    try:
+                        save_conversation_message(
+                            db,
+                            session_id=st.session_state.companion_session_id,
+                            interface_type='companion',
+                            role='user',
+                            content=user_message,
+                            user_id=user_id,
+                            student_id=None
+                        )
+                        st.toast("✓ Document uploaded and saved", icon="📄")
+                    except Exception as e:
+                        print(f"Error saving document message: {str(e)}")
+                        st.warning("⚠️ Unable to save document. Please check your connection.")
+                    finally:
+                        db.close()
+            
+            st.rerun()
+    
+    st.markdown("---")
+    
     # Chat input
     if prompt := st.chat_input("Ask your Montessori question..."):
         st.session_state.companion_messages.append({
