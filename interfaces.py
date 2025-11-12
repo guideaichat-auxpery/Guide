@@ -499,68 +499,7 @@ def show_companion_interface():
     
     st.markdown("---")
     
-    # Check if last message needs a response (from Quick Guide click or chat input)
-    need_response = (
-        len(st.session_state.companion_messages) > 0 and 
-        st.session_state.companion_messages[-1]["role"] == "user" and
-        (len(st.session_state.companion_messages) == 1 or 
-         st.session_state.companion_messages[-2]["role"] == "assistant")
-    )
-    
-    # Display chat history
-    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
-    for message in st.session_state.companion_messages:
-        avatar = ai_avatar if message["role"] == "assistant" else None
-        with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(message["content"])
-    
-    # If last message was from user (Quick Guide), generate response
-    if need_response:
-        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
-        with st.chat_message("assistant", avatar=ai_avatar):
-            with st.spinner("Consulting Montessori wisdom..."):
-                response = call_openai_api(
-                    st.session_state.companion_messages,
-                    age_group=companion_age_group if companion_age_group != "all" else None,
-                    interface_type="companion"
-                )
-                st.markdown(response)
-                st.session_state.companion_messages.append({
-                    "role": "assistant",
-                    "content": response
-                })
-                
-                # Scroll to beginning of new response
-                scroll_to_latest_response()
-                
-                # Save assistant response to database
-                assistant_save_success = False
-                if database_available and user_id:
-                    db = get_db()
-                    if db:
-                        try:
-                            save_conversation_message(
-                                db,
-                                session_id=st.session_state.companion_session_id,
-                                interface_type='companion',
-                                role='assistant',
-                                content=response,
-                                user_id=user_id,
-                                student_id=None
-                            )
-                            assistant_save_success = True
-                        except Exception as e:
-                            print(f"Error saving conversation: {str(e)}")
-                            st.warning("⚠️ Unable to save response. Please check your connection.")
-                        finally:
-                            db.close()
-                
-                # Show save confirmation if successful
-                if assistant_save_success:
-                    st.toast("✓ Response saved", icon="💾")
-    
-    # Document upload section
-    st.markdown("---")
+    # Document upload section - MOVED TO TOP to prevent mid-conversation insertion
     st.markdown("#### 📁 Upload Teaching Materials for Feedback (Optional)")
     st.markdown("*Share lesson plans, observations, student work samples, or teaching materials for Montessori-focused feedback*")
     
@@ -630,6 +569,66 @@ def show_companion_interface():
             st.rerun()
     
     st.markdown("---")
+    
+    # Check if last message needs a response (from Quick Guide click or chat input)
+    need_response = (
+        len(st.session_state.companion_messages) > 0 and 
+        st.session_state.companion_messages[-1]["role"] == "user" and
+        (len(st.session_state.companion_messages) == 1 or 
+         st.session_state.companion_messages[-2]["role"] == "assistant")
+    )
+    
+    # Display chat history
+    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
+    for message in st.session_state.companion_messages:
+        avatar = ai_avatar if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar):
+            st.markdown(message["content"])
+    
+    # If last message was from user (Quick Guide), generate response
+    if need_response:
+        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
+        with st.chat_message("assistant", avatar=ai_avatar):
+            with st.spinner("Consulting Montessori wisdom..."):
+                response = call_openai_api(
+                    st.session_state.companion_messages,
+                    age_group=companion_age_group if companion_age_group != "all" else None,
+                    interface_type="companion"
+                )
+                st.markdown(response)
+                st.session_state.companion_messages.append({
+                    "role": "assistant",
+                    "content": response
+                })
+                
+                # Scroll to beginning of new response
+                scroll_to_latest_response()
+                
+                # Save assistant response to database
+                assistant_save_success = False
+                if database_available and user_id:
+                    db = get_db()
+                    if db:
+                        try:
+                            save_conversation_message(
+                                db,
+                                session_id=st.session_state.companion_session_id,
+                                interface_type='companion',
+                                role='assistant',
+                                content=response,
+                                user_id=user_id,
+                                student_id=None
+                            )
+                            assistant_save_success = True
+                        except Exception as e:
+                            print(f"Error saving conversation: {str(e)}")
+                            st.warning("⚠️ Unable to save response. Please check your connection.")
+                        finally:
+                            db.close()
+                
+                # Show save confirmation if successful
+                if assistant_save_success:
+                    st.toast("✓ Response saved", icon="💾")
     
     # Chat input
     if prompt := st.chat_input("Ask your Montessori question..."):
