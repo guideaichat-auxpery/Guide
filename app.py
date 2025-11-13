@@ -239,7 +239,7 @@ else:
                 {"title": "Student Dashboard", "body": "Stay connected to your students' learning", "icon": "👥", "mode": "student_dashboard", "key": "sd"},
                 {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon": "📝", "mode": "planning_notes", "key": "pn"},
                 {"title": "Great Stories", "body": "Create narratives to introduce new learning", "icon": "📖", "mode": "great_stories", "key": "gs"},
-                {"title": "Imaginarium", "body": "Explore ideas freely with creative AI chat", "icon": "✨", "mode": "imaginarium", "key": "img"}
+                {"title": "Imaginarium", "body": "Explore ideas freely in creative space", "icon": "✨", "mode": "imaginarium", "key": "img"}
             ]
             
             columns = [col1, col2, col3]

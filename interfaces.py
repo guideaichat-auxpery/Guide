@@ -2605,11 +2605,11 @@ def show_pd_expert_interface():
 
 
 def show_imaginarium_interface():
-    """Creative AI chat space for educators - free exploration with minimal guardrails"""
+    """Creative space for educators - free exploration with minimal guardrails"""
     scroll_to_top()
     
     st.markdown("### ✨ Imaginarium")
-    st.markdown("*Explore ideas freely with creative AI chat – a space for imaginative thinking and open conversation*")
+    st.markdown("*Explore ideas freely – a space for imaginative thinking and open conversation*")
     
     # Get user info
     user_id = st.session_state.get('user_id')
@@ -2703,27 +2703,31 @@ def show_imaginarium_interface():
                 # Scroll to beginning of new response
                 scroll_to_latest_response()
                 
-                # Save assistant response to database
+                # Save assistant response to database with validation
                 assistant_save_success = False
                 if database_available and user_id:
-                    db = get_db()
-                    if db:
-                        try:
-                            save_conversation_message(
-                                db,
-                                session_id=st.session_state.imaginarium_session_id,
-                                interface_type='imaginarium',
-                                role='assistant',
-                                content=response,
-                                user_id=user_id,
-                                student_id=None
-                            )
-                            assistant_save_success = True
-                        except Exception as e:
-                            print(f"Error saving conversation: {str(e)}")
-                            st.warning("⚠️ Unable to save response. Please check your connection.")
-                        finally:
-                            db.close()
+                    session_id = st.session_state.get('imaginarium_session_id')
+                    if not session_id:
+                        print("ERROR: imaginarium_session_id is not set! Cannot save assistant response.")
+                    else:
+                        db = get_db()
+                        if db:
+                            try:
+                                save_conversation_message(
+                                    db,
+                                    session_id=session_id,
+                                    interface_type='imaginarium',
+                                    role='assistant',
+                                    content=response,
+                                    user_id=user_id,
+                                    student_id=None
+                                )
+                                assistant_save_success = True
+                            except Exception as e:
+                                print(f"Error saving conversation: {str(e)}")
+                                st.warning("⚠️ Unable to save response. Please check your connection.")
+                            finally:
+                                db.close()
                 
                 # Show save confirmation if successful
                 if assistant_save_success:
@@ -2731,32 +2735,56 @@ def show_imaginarium_interface():
     
     # Chat input
     if prompt := st.chat_input("Share your ideas, questions, or creative thoughts..."):
+        # Ensure session_id exists before saving (critical fix for save failures)
+        if 'imaginarium_session_id' not in st.session_state or not st.session_state.imaginarium_session_id:
+            st.session_state.imaginarium_session_id = str(uuid.uuid4())
+            # Also create conversation record if needed
+            if database_available and user_id:
+                db = get_db()
+                if db:
+                    try:
+                        title = f"Imaginarium {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=st.session_state.imaginarium_session_id,
+                            interface_type='imaginarium', user_id=user_id, student_id=None
+                        )
+                        st.session_state['imaginarium_current_conversation_id'] = new_conv.id
+                    except Exception as e:
+                        print(f"Error creating conversation: {str(e)}")
+                    finally:
+                        db.close()
+        
         # Add user message to chat
         st.session_state.imaginarium_messages.append({
             "role": "user",
             "content": prompt
         })
         
-        # Save to database
+        # Save to database with validation
         if database_available and user_id:
-            db = get_db()
-            if db:
-                try:
-                    save_conversation_message(
-                        db,
-                        session_id=st.session_state.imaginarium_session_id,
-                        interface_type='imaginarium',
-                        role='user',
-                        content=prompt,
-                        user_id=user_id,
-                        student_id=None
-                    )
-                    st.toast("✓ Message saved", icon="💾")
-                except Exception as e:
-                    print(f"Error saving conversation: {str(e)}")
-                    st.warning("⚠️ Unable to save message. Please check your connection.")
-                finally:
-                    db.close()
+            session_id = st.session_state.get('imaginarium_session_id')
+            if not session_id:
+                print("ERROR: imaginarium_session_id is not set! Cannot save message.")
+                st.warning("⚠️ Session error - message not saved. Please refresh the page.")
+            else:
+                db = get_db()
+                if db:
+                    try:
+                        save_conversation_message(
+                            db,
+                            session_id=session_id,
+                            interface_type='imaginarium',
+                            role='user',
+                            content=prompt,
+                            user_id=user_id,
+                            student_id=None
+                        )
+                        st.toast("✓ Message saved", icon="💾")
+                    except Exception as e:
+                        print(f"Error saving conversation: {str(e)}")
+                        st.warning("⚠️ Unable to save message. Please check your connection.")
+                    finally:
+                        db.close()
         
         st.rerun()
     
