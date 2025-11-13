@@ -3,7 +3,7 @@ import logging
 import sys
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
-from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface
+from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface
 
 # ---- STRUCTURED LOGGING CONFIGURATION ----
 # Centralized logging setup for the entire application
@@ -330,6 +330,12 @@ else:
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
         show_pd_expert_interface()
+    elif st.session_state.auth_mode == "imaginarium":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_img"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
+        show_imaginarium_interface()
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
     elif st.session_state.auth_mode == "privacy_policy":
