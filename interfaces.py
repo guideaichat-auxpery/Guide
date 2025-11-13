@@ -2608,6 +2608,10 @@ def show_imaginarium_interface():
     """Creative space for educators - free exploration with minimal guardrails"""
     scroll_to_top()
     
+    # Import database functions
+    from database import (get_user_chat_conversations, create_chat_conversation, 
+                         load_conversation_to_session, save_conversation_message)
+    
     st.markdown("### ✨ Imaginarium")
     st.markdown("*Explore ideas freely – a space for imaginative thinking and open conversation*")
     
@@ -2621,8 +2625,8 @@ def show_imaginarium_interface():
             if db:
                 try:
                     # Auto-load most recent conversation for this interface
-                    existing_conversations = get_user_conversations(
-                        db, user_id=user_id, interface_type='imaginarium', limit=1
+                    existing_conversations = get_user_chat_conversations(
+                        db, user_id=user_id, interface_type='imaginarium'
                     )
                     
                     if existing_conversations and len(existing_conversations) > 0:
