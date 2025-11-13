@@ -2602,3 +2602,177 @@ def show_pd_expert_interface():
     
     # Add scroll to top button
     add_scroll_to_top_button()
+
+
+def show_imaginarium_interface():
+    """Creative AI chat space for educators - free exploration with minimal guardrails"""
+    scroll_to_top()
+    
+    st.markdown("### ✨ Imaginarium")
+    st.markdown("*Explore ideas freely with creative AI chat – a space for imaginative thinking and open conversation*")
+    
+    # Get user info
+    user_id = st.session_state.get('user_id')
+    
+    # Initialize session ID for Imaginarium if not exists
+    if 'imaginarium_session_id' not in st.session_state:
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    # Auto-load most recent conversation for this interface
+                    existing_conversations = get_user_conversations(
+                        db, user_id=user_id, interface_type='imaginarium', limit=1
+                    )
+                    
+                    if existing_conversations and len(existing_conversations) > 0:
+                        # Auto-load most recent conversation
+                        most_recent = existing_conversations[0]
+                        st.session_state.imaginarium_session_id = most_recent.session_id
+                        st.session_state['imaginarium_current_conversation_id'] = most_recent.id
+                        
+                        # Load messages from database
+                        loaded_messages = load_conversation_to_session(
+                            db, most_recent.session_id, 'imaginarium'
+                        )
+                        if loaded_messages:
+                            st.session_state.imaginarium_messages = loaded_messages
+                            # Show restore notification
+                            restore_time = most_recent.last_activity.strftime('%d/%m/%Y %H:%M') if hasattr(most_recent, 'last_activity') and most_recent.last_activity else 'earlier'
+                            st.toast(f"✓ Restored your conversation from {restore_time}", icon="🔄")
+                    else:
+                        # Create first conversation for new users
+                        st.session_state.imaginarium_session_id = str(uuid.uuid4())
+                        title = f"Imaginarium {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=st.session_state.imaginarium_session_id,
+                            interface_type='imaginarium', user_id=user_id, student_id=None
+                        )
+                        st.session_state['imaginarium_current_conversation_id'] = new_conv.id
+                except Exception as e:
+                    print(f"Error loading/creating imaginarium conversation: {str(e)}")
+                    st.session_state.imaginarium_session_id = str(uuid.uuid4())
+                finally:
+                    db.close()
+        else:
+            st.session_state.imaginarium_session_id = str(uuid.uuid4())
+    
+    # Render conversation sidebar (handles conversation management)
+    if database_available and user_id:
+        render_conversation_sidebar('imaginarium', user_id=user_id)
+    
+    # Ensure messages are initialized
+    if 'imaginarium_messages' not in st.session_state:
+        st.session_state.imaginarium_messages = []
+    
+    st.markdown("#### 💭 About This Space")
+    st.info("""
+    **Imaginarium** is your creative thinking space. Here you can:
+    - 🎨 Brainstorm ideas without strict educational frameworks
+    - 🌈 Explore creative approaches to teaching and learning
+    - 💡 Develop innovative lesson concepts
+    - 🔮 Think outside the box with AI as your creative partner
+    - 📝 Generate longer, more detailed responses
+    
+    The AI will maintain factual accuracy while giving you the freedom to explore imaginative possibilities.
+    """)
+    
+    st.markdown("---")
+    
+    # Manage conversation history (keep last 20 exchanges for longer conversations)
+    st.session_state.imaginarium_messages = manage_conversation_history(
+        st.session_state.imaginarium_messages, max_history=40
+    )
+    
+    # Check if last message needs a response
+    need_response = (
+        len(st.session_state.imaginarium_messages) > 0 and 
+        st.session_state.imaginarium_messages[-1]["role"] == "user" and
+        (len(st.session_state.imaginarium_messages) == 1 or 
+         st.session_state.imaginarium_messages[-2]["role"] == "assistant")
+    )
+    
+    # Display chat history
+    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "✨"
+    for message in st.session_state.imaginarium_messages:
+        avatar = ai_avatar if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar):
+            st.markdown(message["content"])
+    
+    # If last message was from user, generate response
+    if need_response:
+        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "✨"
+        with st.chat_message("assistant", avatar=ai_avatar):
+            with st.spinner("Exploring creative possibilities..."):
+                response = call_openai_api(
+                    st.session_state.imaginarium_messages,
+                    interface_type="imaginarium"
+                )
+                st.markdown(response)
+                st.session_state.imaginarium_messages.append({
+                    "role": "assistant",
+                    "content": response
+                })
+                
+                # Scroll to beginning of new response
+                scroll_to_latest_response()
+                
+                # Save assistant response to database
+                assistant_save_success = False
+                if database_available and user_id:
+                    db = get_db()
+                    if db:
+                        try:
+                            save_conversation_message(
+                                db,
+                                session_id=st.session_state.imaginarium_session_id,
+                                interface_type='imaginarium',
+                                role='assistant',
+                                content=response,
+                                user_id=user_id,
+                                student_id=None
+                            )
+                            assistant_save_success = True
+                        except Exception as e:
+                            print(f"Error saving conversation: {str(e)}")
+                            st.warning("⚠️ Unable to save response. Please check your connection.")
+                        finally:
+                            db.close()
+                
+                # Show save confirmation if successful
+                if assistant_save_success:
+                    st.toast("✓ Response saved", icon="💾")
+    
+    # Chat input
+    if prompt := st.chat_input("Share your ideas, questions, or creative thoughts..."):
+        # Add user message to chat
+        st.session_state.imaginarium_messages.append({
+            "role": "user",
+            "content": prompt
+        })
+        
+        # Save to database
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    save_conversation_message(
+                        db,
+                        session_id=st.session_state.imaginarium_session_id,
+                        interface_type='imaginarium',
+                        role='user',
+                        content=prompt,
+                        user_id=user_id,
+                        student_id=None
+                    )
+                    st.toast("✓ Message saved", icon="💾")
+                except Exception as e:
+                    print(f"Error saving conversation: {str(e)}")
+                    st.warning("⚠️ Unable to save message. Please check your connection.")
+                finally:
+                    db.close()
+        
+        st.rerun()
+    
+    # Add scroll to top button
+    add_scroll_to_top_button()
