@@ -159,7 +159,7 @@ else:
         # Educator interface
         
         # Default to dashboard home for educators
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert']:
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium']:
             st.session_state.auth_mode = 'dashboard_home'
         
         # Show dashboard home or specific interface
