@@ -2664,20 +2664,6 @@ def show_imaginarium_interface():
     if 'imaginarium_messages' not in st.session_state:
         st.session_state.imaginarium_messages = []
     
-    st.markdown("#### 💭 About This Space")
-    st.info("""
-    **Imaginarium** is your creative thinking space. Here you can:
-    - 🎨 Brainstorm ideas without strict educational frameworks
-    - 🌈 Explore creative approaches to teaching and learning
-    - 💡 Develop innovative lesson concepts
-    - 🔮 Think outside the box with AI as your creative partner
-    - 📝 Generate longer, more detailed responses
-    
-    The AI will maintain factual accuracy while giving you the freedom to explore imaginative possibilities.
-    """)
-    
-    st.markdown("---")
-    
     # Manage conversation history (keep last 20 exchanges for longer conversations)
     st.session_state.imaginarium_messages = manage_conversation_history(
         st.session_state.imaginarium_messages, max_history=40
