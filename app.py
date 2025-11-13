@@ -238,7 +238,6 @@ else:
                 {"title": "Montessori Companion", "body": "Tap into Montessori wisdom and training", "icon": "🌱", "mode": "companion", "key": "comp"},
                 {"title": "Student Dashboard", "body": "Stay connected to your students' learning", "icon": "👥", "mode": "student_dashboard", "key": "sd"},
                 {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon": "📝", "mode": "planning_notes", "key": "pn"},
-                {"title": "Create Student", "body": "Add new students", "icon": "➕", "mode": "create_student", "key": "cs"},
                 {"title": "Great Stories", "body": "Create narratives to introduce new learning", "icon": "📖", "mode": "great_stories", "key": "gs"}
             ]
             
