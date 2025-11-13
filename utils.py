@@ -1268,7 +1268,7 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
         temperature = 0.6  # Default balanced
         
         if interface_type == "imaginarium":
-            temperature = 1.6  # Very High - Maximum creativity for free exploration (user requested 8.0-9.0, but OpenAI max is 2.0)
+            temperature = 0.9  # High creativity while maintaining coherence (1.6 caused garbled output)
         elif interface_type == "great_stories":
             temperature = 0.7  # High - Cosmic narratives need imaginative storytelling
         elif interface_type == "companion":
