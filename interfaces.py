@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar
+from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history
 import PyPDF2
 from docx import Document
 from PIL import Image
@@ -2657,9 +2657,8 @@ def show_imaginarium_interface():
         else:
             st.session_state.imaginarium_session_id = str(uuid.uuid4())
     
-    # Render conversation sidebar (handles conversation management)
-    if database_available and user_id:
-        render_conversation_sidebar('imaginarium', user_id=user_id)
+    # Imaginarium has no sidebar - clean minimal interface for creative exploration
+    # Conversation persistence handled in background without UI clutter
     
     # Ensure messages are initialized
     if 'imaginarium_messages' not in st.session_state:
