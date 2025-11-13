@@ -1200,6 +1200,13 @@ def show_student_dashboard_interface():
     st.markdown("### 📊 Student Dashboard")
     st.markdown("*View student learning activities, engagement patterns, and manage access*")
     
+    # Create Student button at top
+    if st.button("➕ Create New Student", type="primary", use_container_width=True):
+        st.session_state.auth_mode = "create_student"
+        st.rerun()
+    
+    st.markdown("---")
+    
     if not database_available:
         st.warning("Student dashboard requires database connection. Please contact support.")
         return
