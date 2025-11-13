@@ -2657,8 +2657,9 @@ def show_imaginarium_interface():
         else:
             st.session_state.imaginarium_session_id = str(uuid.uuid4())
     
-    # Imaginarium has no sidebar - clean minimal interface for creative exploration
-    # Conversation persistence handled in background without UI clutter
+    # Render conversation sidebar (handles conversation management)
+    if database_available and user_id:
+        render_conversation_sidebar('imaginarium', user_id=user_id)
     
     # Ensure messages are initialized
     if 'imaginarium_messages' not in st.session_state:
