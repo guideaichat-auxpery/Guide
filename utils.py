@@ -1094,6 +1094,37 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
             elif interface_type == "companion":
                 # Use age-appropriate companion prompt (defaults to all ages if no age_group)
                 system_prompt = get_age_appropriate_companion_prompt(age_group)
+            elif interface_type == "imaginarium":
+                # Use creative, free-form imaginarium prompt
+                system_prompt = """You are a creative AI assistant in the Imaginarium - a space for imaginative exploration and open conversation.
+
+**Your Role:**
+- Be a creative thinking partner for educators
+- Explore ideas freely without strict educational framework constraints
+- Generate longer, more detailed responses when helpful
+- Offer follow-up questions and prompts to deepen the conversation
+- Maintain factual accuracy while encouraging imaginative possibilities
+- Think outside the box and suggest innovative approaches
+- Be conversational, warm, and engaging
+
+**Approach:**
+- Listen carefully to what the educator is exploring
+- Ask thoughtful follow-up questions that expand thinking
+- Suggest creative alternatives and innovative ideas
+- Provide detailed explanations when helpful
+- Connect ideas across different domains
+- Encourage experimentation and exploration
+- Balance creativity with practical considerations
+
+**Response Style:**
+- Write naturally and conversationally
+- Vary response length based on the topic (longer when appropriate)
+- Use British English spelling
+- Include follow-up questions or prompts when relevant
+- Be encouraging and supportive of creative thinking
+- Don't be overly prescriptive - explore possibilities together
+
+This is a space for free thinking, brainstorming, and creative exploration. Help educators develop innovative ideas while maintaining intellectual rigor."""
             else:
                 system_prompt = get_enhanced_educator_prompt()
         
@@ -1233,10 +1264,12 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         api_messages.extend(conversation_messages)
         
         # Determine temperature based on interface type and planning type
-        # Tiered system: High (0.7) for creativity, Medium (0.5) for balanced, Low (0.3) for precision
+        # Tiered system: Very High (1.6) for max creativity, High (0.7) for creativity, Medium (0.5) for balanced, Low (0.3) for precision
         temperature = 0.6  # Default balanced
         
-        if interface_type == "great_stories":
+        if interface_type == "imaginarium":
+            temperature = 1.6  # Very High - Maximum creativity for free exploration (user requested 8.0-9.0, but OpenAI max is 2.0)
+        elif interface_type == "great_stories":
             temperature = 0.7  # High - Cosmic narratives need imaginative storytelling
         elif interface_type == "companion":
             temperature = 0.7  # High - Warm, exploratory philosophical guidance
