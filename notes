@@ -489,6 +489,3 @@ Do NOT clear session_state unless the user clicks logout.
 
 Expected result:
 The user logs in once and stays logged in indefinitely, with no auto-logouts, even across reruns or when the tab is left open all day.
-
-This gives Replit one job with a clear expected result.
-It also explains the exact mechanism they need to modify.
