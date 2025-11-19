@@ -1276,17 +1276,51 @@ def show_student_dashboard_interface():
                     # Activity timeline
                     st.markdown("### 📅 Recent Activity")
                     for activity in activities[:10]:  # Show last 10
-                        with st.expander(f"{activity.activity_type} - {activity.created_at.strftime('%d/%m/%Y')}"):
+                        # Build descriptive title with preview and subject
+                        activity_preview = ""
+                        subject_tag = ""
+                        
+                        # Get subject from extra_data if available
+                        if activity.extra_data:
+                            try:
+                                extra = json.loads(activity.extra_data)
+                                if 'detected_keywords' in extra and extra['detected_keywords']:
+                                    # Get first detected subject
+                                    subject_tag = f"[{extra['detected_keywords'][0]['subject']}]"
+                            except:
+                                pass
+                        
+                        # Create preview from prompt text
+                        if activity.prompt_text:
+                            # Clean and truncate preview
+                            preview_text = activity.prompt_text.replace('\n', ' ').strip()
+                            if len(preview_text) > 70:
+                                activity_preview = preview_text[:70] + "..."
+                            else:
+                                activity_preview = preview_text
+                        else:
+                            activity_preview = "AI Response"
+                        
+                        # Format timestamp with date and time
+                        timestamp = activity.created_at.strftime('%d/%m/%Y %I:%M %p')
+                        
+                        # Build expander title
+                        icon = "💭" if activity.activity_type == 'learning_question' else "🤖"
+                        expander_title = f"{icon} {subject_tag} {activity_preview} • {timestamp}"
+                        
+                        with st.expander(expander_title):
                             if activity.prompt_text:
-                                st.markdown(f"**Prompt:** {activity.prompt_text}")
+                                st.markdown(f"**Full Question:**")
+                                st.markdown(activity.prompt_text)
                             if activity.response_text:
-                                st.markdown(f"**Response:** {activity.response_text[:500]}...")
+                                st.markdown(f"**AI Response:**")
+                                st.markdown(activity.response_text[:500] + ("..." if len(activity.response_text) > 500 else ""))
                             if activity.extra_data:
                                 try:
                                     extra = json.loads(activity.extra_data)
                                     if 'detected_keywords' in extra:
                                         keywords = [f"{kw['subject']}: {kw['keyword']}" for kw in extra['detected_keywords']]
-                                        st.markdown(f"**Keywords:** {', '.join(keywords)}")
+                                        st.markdown(f"**Detected Topics:** {', '.join(keywords)}")
                                 except:
                                     pass
                 else:
