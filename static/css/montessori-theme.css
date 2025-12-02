@@ -171,11 +171,22 @@ body {
 [data-testid="stChatMessageContainer"] {
   flex: 1 !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
   padding: 24px 16px !important;
-  scroll-behavior: smooth !important;
+  scroll-behavior: auto !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
+  min-height: 0 !important;
+}
+
+/* Chat container wrapper */
+#chat-container {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 /* Headers - Intentional spacing with breathing room */

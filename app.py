@@ -46,6 +46,8 @@ if 'current_conversation_id' not in st.session_state:
     st.session_state.current_conversation_id = None
 if 'show_chat_history' not in st.session_state:
     st.session_state.show_chat_history = True
+if 'scroll_mode' not in st.session_state:
+    st.session_state.scroll_mode = 'navigation'  # 'navigation' or 'chat'
 
 # Load Design Systems - cached for performance
 @st.cache_data
@@ -223,26 +225,31 @@ else:
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Predictable page landing & scroll position control
-    st.markdown("""
+    # Dual scroll behavior: Navigation (top) vs Chat (bottom)
+    st.markdown(f"""
+    <div id="chat-container" style="display: flex; flex-direction: column; height: 100%; overflow-y: auto;">
+    </div>
     <button id="back-to-top-btn">Back to Top</button>
     <script>
+    // Get scroll mode from Streamlit session
+    const scrollMode = window.scrollMode || "navigation";
+    
     // Disable Streamlit's scroll retention on load
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', () => {{
       sessionStorage.removeItem('scroll-position');
-    });
-    if (history.scrollRestoration) {
+    }});
+    if (history.scrollRestoration) {{
       history.scrollRestoration = 'manual';
-    }
+    }}
     
     // Force scroll to top on page load
-    window.addEventListener('load', () => {
-      setTimeout(() => {
+    window.addEventListener('load', () => {{
+      setTimeout(() => {{
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-      }, 50);
-    });
+      }}, 50);
+    }});
     
     // Immediately scroll to top on page start
     window.scrollTo(0, 0);
@@ -251,87 +258,90 @@ else:
     
     // Back to Top button visibility and click
     const backToTopBtn = document.getElementById('back-to-top-btn');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 300) {
+    window.addEventListener('scroll', () => {{
+      if (window.scrollY > 300) {{
         backToTopBtn.classList.add('show');
-      } else {
+      }} else {{
         backToTopBtn.classList.remove('show');
-      }
-    });
+      }}
+    }});
     
-    backToTopBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    backToTopBtn.addEventListener('click', () => {{
+      window.scrollTo({{ top: 0, behavior: 'smooth' }});
+    }});
+    
+    // Scroll to bottom of chat container
+    const scrollChatToBottom = () => {{
+      const chatBox = document.getElementById('chat-container');
+      if (chatBox) {{
+        setTimeout(() => {{
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }}, 50);
+      }}
+    }};
+    
+    // Scroll to top of page (navigation)
+    const scrollPageToTop = () => {{
+      setTimeout(() => {{
+        window.scrollTo({{ top: 0, behavior: 'auto' }});
+      }}, 100);
+    }};
+    
+    // Monitor chat messages and scroll to bottom
+    const chatObserver = new MutationObserver((mutations) => {{
+      const chatContainer = document.querySelector('[data-testid="stChatMessageContainer"]');
+      if (chatContainer) {{
+        scrollChatToBottom();
+      }}
+    }});
+    
+    const chatMessageContainer = document.querySelector('[data-testid="stChatMessageContainer"]');
+    if (chatMessageContainer) {{
+      chatObserver.observe(chatMessageContainer, {{ childList: true, subtree: true }});
+      scrollChatToBottom();
+    }}
     
     // Monitor for navigation/state changes and scroll to top
-    const pageStateObserver = new MutationObserver((mutations) => {
+    const pageStateObserver = new MutationObserver((mutations) => {{
       // Check if major page structure changed (indicating navigation)
       let navigationDetected = false;
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            // Detect new major sections = navigation
+      mutations.forEach((mutation) => {{
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {{
+          mutation.addedNodes.forEach((node) => {{
+            // Detect new major sections = navigation (but NOT chat messages)
             if (node.nodeType === 1 && (
-              node.classList.contains('element-container') ||
-              node.classList.contains('stChatMessage') ||
-              node.querySelector('[data-testid="stMarkdownContainer"]')
-            )) {
+              (node.classList.contains('element-container') && !node.classList.contains('stChatMessage')) ||
+              (node.querySelector('[data-testid="stMarkdownContainer"]') && !node.closest('[data-testid="stChatMessageContainer"]'))
+            )) {{
               navigationDetected = true;
-            }
-          });
-        }
-      });
+            }}
+          }});
+        }}
+      }});
       
-      if (navigationDetected) {
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'auto' });
-        }, 100);
-      }
-    });
+      if (navigationDetected) {{
+        scrollPageToTop();
+      }}
+    }});
     
     const mainContent = document.querySelector('.main');
-    if (mainContent) {
-      pageStateObserver.observe(mainContent, { childList: true, subtree: false });
-    }
+    if (mainContent) {{
+      pageStateObserver.observe(mainContent, {{ childList: true, subtree: false }});
+    }}
     
-    // Scroll to top on ANY button click in main content (navigation action)
-    document.addEventListener('click', (e) => {
+    // Scroll to top on button/card clicks (navigation action)
+    document.addEventListener('click', (e) => {{
       const button = e.target.closest('button');
       const card = e.target.closest('[data-testid="column"], .stCard');
+      const chatInput = e.target.closest('.stChatInput');
       
-      if (button && button.closest('.main')) {
-        // Button click in main content = navigation
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'auto' });
-        }, 150);
-      } else if (card) {
-        // Card click = navigation
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'auto' });
-        }, 150);
-      }
-    });
-    
-    // Auto-scroll chat messages to bottom (non-navigation scroll)
-    const scrollChatToBottom = () => {
-      const container = document.querySelector('[data-testid="stChatMessageContainer"]');
-      if (container) {
-        setTimeout(() => {
-          container.scrollTop = container.scrollHeight;
-        }, 50);
-      }
-    };
-    
-    // Observer for new chat messages
-    const chatObserver = new MutationObserver(() => {
-      scrollChatToBottom();
-    });
-    
-    const chatContainer = document.querySelector('[data-testid="stChatMessageContainer"]');
-    if (chatContainer) {
-      chatObserver.observe(chatContainer, { childList: true, subtree: true });
-      scrollChatToBottom();
-    }
+      // Don't trigger on chat input
+      if (chatInput) return;
+      
+      if ((button || card) && !button?.id?.includes('back-to-top')) {{
+        scrollPageToTop();
+      }}
+    }});
     </script>
     """, unsafe_allow_html=True)
     
