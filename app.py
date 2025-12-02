@@ -223,11 +223,33 @@ else:
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # ChatGPT-like chat layout with auto-scroll & back to top
+    # Predictable page landing & scroll position control
     st.markdown("""
     <button id="back-to-top-btn">Back to Top</button>
     <script>
-    // Back to Top button visibility
+    // Disable Streamlit's scroll retention on load
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.removeItem('scroll-position');
+    });
+    if (history.scrollRestoration) {
+      history.scrollRestoration = 'manual';
+    }
+    
+    // Force scroll to top on page load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }, 50);
+    });
+    
+    // Immediately scroll to top on page start
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Back to Top button visibility and click
     const backToTopBtn = document.getElementById('back-to-top-btn');
     window.addEventListener('scroll', () => {
       if (window.scrollY > 300) {
@@ -241,7 +263,56 @@ else:
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
     
-    // Auto-scroll chat messages to bottom (fluid continuous flow)
+    // Monitor for navigation/state changes and scroll to top
+    const pageStateObserver = new MutationObserver((mutations) => {
+      // Check if major page structure changed (indicating navigation)
+      let navigationDetected = false;
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach((node) => {
+            // Detect new major sections = navigation
+            if (node.nodeType === 1 && (
+              node.classList.contains('element-container') ||
+              node.classList.contains('stChatMessage') ||
+              node.querySelector('[data-testid="stMarkdownContainer"]')
+            )) {
+              navigationDetected = true;
+            }
+          });
+        }
+      });
+      
+      if (navigationDetected) {
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }, 100);
+      }
+    });
+    
+    const mainContent = document.querySelector('.main');
+    if (mainContent) {
+      pageStateObserver.observe(mainContent, { childList: true, subtree: false });
+    }
+    
+    // Scroll to top on ANY button click in main content (navigation action)
+    document.addEventListener('click', (e) => {
+      const button = e.target.closest('button');
+      const card = e.target.closest('[data-testid="column"], .stCard');
+      
+      if (button && button.closest('.main')) {
+        // Button click in main content = navigation
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }, 150);
+      } else if (card) {
+        // Card click = navigation
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }, 150);
+      }
+    });
+    
+    // Auto-scroll chat messages to bottom (non-navigation scroll)
     const scrollChatToBottom = () => {
       const container = document.querySelector('[data-testid="stChatMessageContainer"]');
       if (container) {
@@ -251,24 +322,16 @@ else:
       }
     };
     
-    // Observer for new messages
-    const observer = new MutationObserver(() => {
+    // Observer for new chat messages
+    const chatObserver = new MutationObserver(() => {
       scrollChatToBottom();
     });
     
     const chatContainer = document.querySelector('[data-testid="stChatMessageContainer"]');
     if (chatContainer) {
-      observer.observe(chatContainer, { childList: true, subtree: true });
+      chatObserver.observe(chatContainer, { childList: true, subtree: true });
       scrollChatToBottom();
     }
-    
-    // Scroll to top on card click (navigation)
-    document.addEventListener('click', (e) => {
-      const card = e.target.closest('[data-testid="column"], .stCard');
-      if (card) {
-        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
-      }
-    });
     </script>
     """, unsafe_allow_html=True)
     

@@ -121,6 +121,17 @@ i, .fa, [data-icon] {
   border-color: var(--color-text-primary) !important;
 }
 
+/* Disable Streamlit's scroll retention behavior */
+html {
+  scroll-behavior: auto !important;
+}
+
+/* Prevent scroll restoration on page load */
+body {
+  overflow-y: scroll !important;
+  scroll-behavior: auto !important;
+}
+
 /* Global Streamlit Overrides */
 .stApp {
   background-color: var(--color-bg-primary) !important;
@@ -131,6 +142,7 @@ i, .fa, [data-icon] {
   display: flex !important;
   flex-direction: column !important;
   height: 100vh !important;
+  scroll-behavior: auto !important;
 }
 
 /* Streamlit header */
