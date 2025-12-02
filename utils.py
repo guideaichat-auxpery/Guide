@@ -1175,11 +1175,11 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
                             framework_filter = "Montessori"
                         # "Blended" retrieves from both frameworks (no filter)
                         
-                        # Retrieve top 3 relevant chunks
+                        # Retrieve top 6 relevant chunks (improved from 3 for better context)
                         chunks = retrieve_relevant_chunks(
                             db_session=db,
                             query=last_user_message,
-                            top_k=3,
+                            top_k=6,
                             framework_filter=framework_filter
                         )
                         

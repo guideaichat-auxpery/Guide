@@ -249,19 +249,72 @@ def ingest_documents(db_session) -> Dict[str, int]:
     return results
 
 
+def expand_query(query: str) -> List[str]:
+    """
+    Expand user queries with curriculum-specific variations
+    Handles teacher language and maps to curriculum frameworks
+    
+    Args:
+        query: User's original query
+    
+    Returns:
+        List of expanded query variations for broader search
+    """
+    expanded_queries = [query]
+    query_lower = query.lower()
+    
+    # Teacher language expansions
+    expansions = {
+        'fractions|dividing': ['number and algebra', 'proportional reasoning', 'rational numbers'],
+        'cosmic education|big picture': ['interconnection', 'cultural knowledge', 'universe study'],
+        'practical life': ['independence', 'motor skills', 'daily activities'],
+        'sensorial materials|sensory': ['exploration', 'discrimination', 'perception'],
+        'mixed age|loop groups': ['multiage learning', 'peer tutoring', 'vertical grouping'],
+        'lesson cycle|three period lesson': ['introduction', 'practice', 'reinforcement'],
+        'grace and courtesy': ['social skills', 'community responsibility', 'respectful interaction'],
+        'montessori lesson|presentation': ['pedagogical technique', 'teacher guidance', 'child-centered'],
+        'critical thinking|problem solving': ['higher order thinking', 'reasoning', 'analysis'],
+        'indigenous knowledge|cultural': ['aboriginal perspectives', 'first nations', 'cultural awareness'],
+    }
+    
+    for pattern, alternative_terms in expansions.items():
+        if re.search(pattern, query_lower):
+            expanded_queries.extend(alternative_terms)
+    
+    return list(set(expanded_queries))[:5]  # Return up to 5 unique queries
+
+
+def extract_curriculum_codes(text: str) -> List[str]:
+    """
+    Extract Australian Curriculum and Montessori codes from text
+    
+    AC codes: ACELA1234, ACMNA456, etc.
+    Montessori: PLN3, SEN4, etc.
+    
+    Args:
+        text: Text to search for codes
+    
+    Returns:
+        List of found curriculum codes
+    """
+    ac_codes = re.findall(r'\b[A-Z]{2}[A-Z]{3}\d{4}\b', text)
+    montessori_codes = re.findall(r'\b[A-Z]{2,4}\d{1,2}\b', text)
+    return ac_codes + montessori_codes
+
+
 def retrieve_relevant_chunks(
     db_session, 
     query: str, 
-    top_k: int = 3,
+    top_k: int = 6,
     framework_filter: Optional[str] = None
 ) -> List[Dict]:
     """
-    Retrieve most relevant document chunks for a query using semantic search
+    Retrieve most relevant document chunks using semantic + keyword hybrid search
     
     Args:
         db_session: SQLAlchemy database session
         query: User's query text
-        top_k: Number of top chunks to retrieve
+        top_k: Number of top chunks to retrieve (increased from 3 to 6)
         framework_filter: Optional filter for "AC_V9" or "Montessori"
     
     Returns:
@@ -278,6 +331,9 @@ def retrieve_relevant_chunks(
     # Convert embedding to PostgreSQL array format
     embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
     
+    # Extract curriculum codes for hybrid search
+    curriculum_codes = extract_curriculum_codes(query)
+    
     try:
         # Use raw connection for vector operations
         connection = db_session.connection().connection
@@ -285,31 +341,53 @@ def retrieve_relevant_chunks(
         
         try:
             # Build SQL query with optional framework filter
+            # Increased top_k to allow keyword-ranked results
             if framework_filter:
                 sql_query = """
                     SELECT 
                         chunk_text,
                         source_file,
                         metadata,
-                        1 - (embedding <=> %s::vector) as similarity
+                        1 - (embedding <=> %s::vector) as similarity,
+                        CASE 
+                            WHEN chunk_text ILIKE ANY(%s) THEN 1.5
+                            ELSE 1.0
+                        END as keyword_boost
                     FROM document_chunks
                     WHERE metadata->>'framework' = %s
-                    ORDER BY embedding <=> %s::vector
+                    ORDER BY (1 - (embedding <=> %s::vector)) * 
+                             CASE 
+                                 WHEN chunk_text ILIKE ANY(%s) THEN 1.5
+                                 ELSE 1.0
+                             END DESC,
+                             embedding <=> %s::vector
                     LIMIT %s
                 """
-                cursor.execute(sql_query, (embedding_str, framework_filter, embedding_str, top_k))
+                # Convert curriculum codes to ILIKE patterns
+                code_patterns = [f'%{code}%' for code in curriculum_codes] if curriculum_codes else ['%___%']  # fallback pattern
+                cursor.execute(sql_query, (embedding_str, code_patterns, framework_filter, embedding_str, code_patterns, embedding_str, top_k))
             else:
                 sql_query = """
                     SELECT 
                         chunk_text,
                         source_file,
                         metadata,
-                        1 - (embedding <=> %s::vector) as similarity
+                        1 - (embedding <=> %s::vector) as similarity,
+                        CASE 
+                            WHEN chunk_text ILIKE ANY(%s) THEN 1.5
+                            ELSE 1.0
+                        END as keyword_boost
                     FROM document_chunks
-                    ORDER BY embedding <=> %s::vector
+                    ORDER BY (1 - (embedding <=> %s::vector)) * 
+                             CASE 
+                                 WHEN chunk_text ILIKE ANY(%s) THEN 1.5
+                                 ELSE 1.0
+                             END DESC,
+                             embedding <=> %s::vector
                     LIMIT %s
                 """
-                cursor.execute(sql_query, (embedding_str, embedding_str, top_k))
+                code_patterns = [f'%{code}%' for code in curriculum_codes] if curriculum_codes else ['%___%']
+                cursor.execute(sql_query, (embedding_str, code_patterns, embedding_str, code_patterns, embedding_str, top_k))
             
             rows = cursor.fetchall()
             
@@ -328,12 +406,59 @@ def retrieve_relevant_chunks(
     
     except Exception as e:
         logger.error(f"Error retrieving chunks: {type(e).__name__} - {str(e)}")
-        return []
+        # Fallback to basic semantic search if keyword boost fails
+        try:
+            connection = db_session.connection().connection
+            cursor = connection.cursor()
+            
+            try:
+                if framework_filter:
+                    sql_query = """
+                        SELECT 
+                            chunk_text,
+                            source_file,
+                            metadata,
+                            1 - (embedding <=> %s::vector) as similarity
+                        FROM document_chunks
+                        WHERE metadata->>'framework' = %s
+                        ORDER BY embedding <=> %s::vector
+                        LIMIT %s
+                    """
+                    cursor.execute(sql_query, (embedding_str, framework_filter, embedding_str, top_k))
+                else:
+                    sql_query = """
+                        SELECT 
+                            chunk_text,
+                            source_file,
+                            metadata,
+                            1 - (embedding <=> %s::vector) as similarity
+                        FROM document_chunks
+                        ORDER BY embedding <=> %s::vector
+                        LIMIT %s
+                    """
+                    cursor.execute(sql_query, (embedding_str, embedding_str, top_k))
+                
+                rows = cursor.fetchall()
+                chunks = []
+                for row in rows:
+                    chunks.append({
+                        "text": row[0],
+                        "source": row[1],
+                        "metadata": row[2],
+                        "similarity": row[3]
+                    })
+                return chunks
+            finally:
+                cursor.close()
+        except Exception as fallback_error:
+            logger.error(f"Fallback search also failed: {type(fallback_error).__name__} - {str(fallback_error)}")
+            return []
 
 
 def format_retrieved_context(chunks: List[Dict]) -> str:
     """
     Format retrieved chunks into a context string for the AI with inline citation instructions
+    Enhanced with source type indicators and improved organization
     
     Args:
         chunks: List of retrieved chunk dictionaries
@@ -349,18 +474,61 @@ def format_retrieved_context(chunks: List[Dict]) -> str:
     context += "Format: 'According to [Source Name]...' or 'As outlined in [1]...'\n\n"
     
     citation_list = []
+    
+    # Group chunks by source type for better organization
+    ac_chunks = []
+    montessori_chunks = []
+    other_chunks = []
+    
     for idx, chunk in enumerate(chunks, 1):
         source = chunk['metadata'].get('source', chunk['source'])
         framework = chunk['metadata'].get('framework', 'Unknown')
+        doc_type = chunk['metadata'].get('type', 'unknown')
         
         # Clean up source name for better readability
         source_display = source.replace('.txt', '').replace('_', ' ').title()
         
-        context += f"[{idx}] **{source_display}** ({framework})\n"
-        context += f"{chunk['text']}\n"
-        context += f"(Similarity: {chunk['similarity']:.1%})\n\n"
+        chunk_entry = {
+            'idx': idx,
+            'source': source_display,
+            'framework': framework,
+            'type': doc_type,
+            'text': chunk['text'],
+            'similarity': chunk['similarity']
+        }
+        
+        if framework == 'AC_V9':
+            ac_chunks.append(chunk_entry)
+        elif framework == 'Montessori':
+            montessori_chunks.append(chunk_entry)
+        else:
+            other_chunks.append(chunk_entry)
         
         citation_list.append(f"[{idx}] {source_display}")
+    
+    # Format AC_V9 chunks first
+    if ac_chunks:
+        context += "**Australian Curriculum V9:**\n"
+        for chunk in ac_chunks:
+            context += f"[{chunk['idx']}] **{chunk['source']}** ({chunk['type']})\n"
+            context += f"{chunk['text']}\n"
+            context += f"(Relevance: {chunk['similarity']:.0%})\n\n"
+    
+    # Format Montessori chunks
+    if montessori_chunks:
+        context += "**Montessori Curriculum & Philosophy:**\n"
+        for chunk in montessori_chunks:
+            context += f"[{chunk['idx']}] **{chunk['source']}** ({chunk['type']})\n"
+            context += f"{chunk['text']}\n"
+            context += f"(Relevance: {chunk['similarity']:.0%})\n\n"
+    
+    # Format other chunks
+    if other_chunks:
+        context += "**Additional Resources:**\n"
+        for chunk in other_chunks:
+            context += f"[{chunk['idx']}] **{chunk['source']}** ({chunk['framework']})\n"
+            context += f"{chunk['text']}\n"
+            context += f"(Relevance: {chunk['similarity']:.0%})\n\n"
     
     context += "─" * 70 + "\n"
     context += "**CITATION REQUIREMENT**: When using information from these sources, cite them inline.\n"
