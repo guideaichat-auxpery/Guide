@@ -928,6 +928,16 @@ section {
   font-family: var(--font-sans) !important;
   font-weight: 600 !important;
   color: var(--color-text-primary) !important;
+  text-align: center !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+/* All headings - ensure centered alignment */
+h1, h2, h3, h4, h5, h6 {
+  text-align: center !important;
+  display: block !important;
+  width: 100% !important;
 }
 
 @media (max-width: 768px) {
