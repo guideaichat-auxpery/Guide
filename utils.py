@@ -14,6 +14,47 @@ import logging
 # Create logger for utils module (logging configured in app.py)
 logger = logging.getLogger(__name__)
 
+# ---- KEYWORD EXTRACTION FOR RAG FILTERING ----
+def extract_year_level_from_query(query: str) -> str:
+    """
+    Extract year level mentioned in user query.
+    Returns the detected year level or None if not found.
+    """
+    year_patterns = {
+        'Foundation': r'\b(Foundation|Kindergarten|F|Prep)\b',
+        'Years 1-2': r'\b(Year [12]|Years 1-2|Year one|Year two)\b',
+        'Years 3-4': r'\b(Year [34]|Years 3-4|Year three|Year four)\b',
+        'Years 5-6': r'\b(Year [56]|Years 5-6|Year five|Year six)\b',
+        'Years 7-8': r'\b(Year [78]|Years 7-8|Year seven|Year eight)\b',
+        'Years 9-10': r'\b(Year [90]|Years 9-10|Year nine|Year ten)\b',
+        'Years 11-12': r'\b(Year 1[12]|Years 11-12|Year eleven|Year twelve)\b',
+    }
+    
+    for level, pattern in year_patterns.items():
+        if re.search(pattern, query, re.IGNORECASE):
+            return level
+    return None
+
+def extract_subject_from_query(query: str) -> str:
+    """
+    Extract subject mentioned in user query.
+    Returns the detected subject or None if not found.
+    """
+    subject_patterns = {
+        'English': r'\b(English|Language Arts|Literacy|Writing|Reading)\b',
+        'Mathematics': r'\b(Mathematics|Maths|Math|Numeracy)\b',
+        'Science': r'\b(Science|Physics|Chemistry|Biology)\b',
+        'HASS': r'\b(HASS|Humanities|Social Studies|History|Geography)\b',
+        'Arts': r'\b(Arts|Music|Visual|Drama|Dance)\b',
+        'Technology': r'\b(Technology|Computing|ICT|Digital)\b',
+        'Physical Education': r'\b(Physical Education|PE|Sport)\b',
+    }
+    
+    for subject, pattern in subject_patterns.items():
+        if re.search(pattern, query, re.IGNORECASE):
+            return subject
+    return None
+
 # ---- SCROLL UTILITIES ----
 def scroll_to_top():
     """Scroll page to top when interface loads"""
@@ -1175,12 +1216,18 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
                             framework_filter = "Montessori"
                         # "Blended" retrieves from both frameworks (no filter)
                         
+                        # Extract year level and subject from query for filtering
+                        detected_year_level = extract_year_level_from_query(last_user_message)
+                        detected_subject = extract_subject_from_query(last_user_message)
+                        
                         # Retrieve top 6 relevant chunks (improved from 3 for better context)
                         chunks = retrieve_relevant_chunks(
                             db_session=db,
                             query=last_user_message,
                             top_k=6,
-                            framework_filter=framework_filter
+                            framework_filter=framework_filter,
+                            year_level=detected_year_level,
+                            subject=detected_subject
                         )
                         
                         if chunks:
