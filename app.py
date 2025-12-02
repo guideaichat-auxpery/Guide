@@ -121,52 +121,53 @@ elif st.session_state.authenticated:
     if (is_student is False and auth_mode == 'dashboard_home') or (is_student is True and auth_mode == 'student_dashboard'):
         show_header = True
 
-if show_header:
-    st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
-
 # Authentication and main application logic
 if not st.session_state.authenticated:
     # Check if we're showing a form (login/signup/privacy) or the landing page
     current_mode = st.session_state.get('auth_mode', 'landing')
     
     if current_mode == 'landing':
-        # Clean landing page - single column, stacked layout
-        st.markdown("""
-        <div style="max-width: 480px; margin: 0 auto; padding: 48px 24px; text-align: center;">
-            <p style="font-size: 17px; color: #555555; line-height: 1.7; margin: 0 0 48px 0;">
-                From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Minimal landing page - 480px centered container
+        st.markdown('<h2 style="text-align: center; margin: 0 0 4px 0; color: #333333; font-size: 24px; font-weight: 500;">Guide</h2>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align: center; margin: 0 0 24px 0; color: #666666; font-size: 14px;">Your prepared digital environment</p>', unsafe_allow_html=True)
+        
+        # Tagline
+        st.markdown('<p style="text-align: center; color: #666666; font-size: 14px; line-height: 1.6; margin: 24px 0 24px 0; max-width: 480px; margin-left: auto; margin-right: auto;">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning.</p>', unsafe_allow_html=True)
         
         # Centered button container
         _, center_col, _ = st.columns([1, 2, 1])
         with center_col:
             if st.button("Login", use_container_width=True, type="primary", key="landing_login"):
                 st.session_state.auth_mode = "login"
-                st.session_state.login_user_type = "Educator"  # Reset to default
+                st.session_state.login_user_type = "Educator"
                 st.rerun()
             
-            st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
+            st.markdown('<div style="height: 12px;"></div>', unsafe_allow_html=True)
             
             if st.button("Create an account", use_container_width=True, key="landing_signup"):
                 st.session_state.auth_mode = "signup"
                 st.rerun()
         
-        # Terms section - small text with subtle button
-        st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
-        st.markdown("""
-        <p style="text-align: center; font-size: 13px; color: #999999; margin: 0 0 8px 0;">
-            By continuing, you agree to our
-        </p>
-        """, unsafe_allow_html=True)
+        # Terms section
+        st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align: center; font-size: 12px; color: #888888; margin: 0;">By continuing, you agree to our</p>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 8px;"></div>', unsafe_allow_html=True)
         
         _, terms_col, _ = st.columns([1.5, 1, 1.5])
         with terms_col:
             if st.button("Terms & Conditions", key="landing_terms", type="secondary"):
                 st.session_state.auth_mode = "privacy_policy"
                 st.rerun()
+        
+        # Footer
+        st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="text-align: center; font-size: 12px; color: #888888; line-height: 1.8; max-width: 480px; margin: 0 auto;">
+            <p style="font-style: italic; margin: 0 0 12px 0; color: #888888;">"The child is both a hope and a promise for mankind." — Maria Montessori</p>
+            <p style="margin: 0 0 4px 0;">Guide – Your prepared digital environment</p>
+            <p style="color: #999999; font-size: 11px; margin: 0;">Brought to you by Auxpery – Gentle Technology for Thoughtful Education</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     elif current_mode == "login":
         login_page()

@@ -23,19 +23,15 @@ def login_page():
     # Back link - also reset login type when going back
     if st.button("Back", key="login_back"):
         st.session_state.auth_mode = "landing"
-        st.session_state.login_user_type = "Educator"  # Reset for next visit
+        st.session_state.login_user_type = "Educator"
         st.rerun()
     
-    # Centered container
-    st.markdown("""
-    <div style="max-width: 400px; margin: 0 auto; padding: 24px;">
-        <h2 style="text-align: center; color: #333333; font-size: 28px; font-weight: 500; margin: 0 0 32px 0;">
-            Login
-        </h2>
-    </div>
-    """, unsafe_allow_html=True)
+    # Minimal title
+    st.markdown('<h2 style="text-align: center; margin: 0 0 4px 0; color: #333333; font-size: 24px; font-weight: 500;">Login</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; margin: 0 0 24px 0; color: #666666; font-size: 14px;">Access your account</p>', unsafe_allow_html=True)
     
-    # Toggle pills for Educator/Student - state-driven approach
+    # Toggle pills for Educator/Student
+    st.markdown('<div style="height: 12px;"></div>', unsafe_allow_html=True)
     _, pill_col, _ = st.columns([1, 2, 1])
     with pill_col:
         col_edu, col_stu = st.columns(2)
@@ -140,15 +136,23 @@ def login_page():
                                 db.close()
         
         # Secondary links below form
-        st.markdown("""
-        <div style="text-align: center; margin-top: 24px; font-size: 14px;">
-            <span style="color: #888888;">Don't have an account?</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align: center; font-size: 12px; color: #888888; margin: 0;">Don\'t have an account?</p>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 12px;"></div>', unsafe_allow_html=True)
         
         if st.button("Create an account", key="login_to_signup", use_container_width=True):
             st.session_state.auth_mode = "signup"
             st.rerun()
+        
+        # Footer
+        st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="text-align: center; font-size: 12px; color: #888888; line-height: 1.8; max-width: 480px; margin: 0 auto;">
+            <p style="font-style: italic; margin: 0 0 12px 0; color: #888888;">"The child is both a hope and a promise for mankind." — Maria Montessori</p>
+            <p style="margin: 0 0 4px 0;">Guide – Your prepared digital environment</p>
+            <p style="color: #999999; font-size: 11px; margin: 0;">Brought to you by Auxpery – Gentle Technology for Thoughtful Education</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def signup_page():
     """Display signup page for new educators"""
@@ -157,17 +161,9 @@ def signup_page():
         st.session_state.auth_mode = "landing"
         st.rerun()
     
-    # Centered container
-    st.markdown("""
-    <div style="max-width: 400px; margin: 0 auto; padding: 24px;">
-        <h2 style="text-align: center; color: #333333; font-size: 28px; font-weight: 500; margin: 0 0 8px 0;">
-            Create Account
-        </h2>
-        <p style="text-align: center; color: #888888; font-size: 15px; margin: 0 0 32px 0;">
-            Join our Montessori educational community
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Minimal title
+    st.markdown('<h2 style="text-align: center; margin: 0 0 4px 0; color: #333333; font-size: 24px; font-weight: 500;">Create Account</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; margin: 0 0 24px 0; color: #666666; font-size: 14px;">Join our Montessori educational community</p>', unsafe_allow_html=True)
     
     # Form container
     _, form_col, _ = st.columns([1, 2, 1])
@@ -258,6 +254,16 @@ def signup_page():
                     finally:
                         if db:
                             db.close()
+        
+        # Footer
+        st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="text-align: center; font-size: 12px; color: #888888; line-height: 1.8; max-width: 480px; margin: 0 auto;">
+            <p style="font-style: italic; margin: 0 0 12px 0; color: #888888;">"The child is both a hope and a promise for mankind." — Maria Montessori</p>
+            <p style="margin: 0 0 4px 0;">Guide – Your prepared digital environment</p>
+            <p style="color: #999999; font-size: 11px; margin: 0;">Brought to you by Auxpery – Gentle Technology for Thoughtful Education</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def create_student_page():
     """Allow educators to create student accounts"""
