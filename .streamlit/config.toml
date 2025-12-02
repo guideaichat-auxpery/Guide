@@ -19,6 +19,7 @@ fastReruns = true
 [client]
 showErrorDetails = true
 toolbarMode = "minimal"
+font = "Inter"
 
 [theme]
 primaryColor = "#333333"

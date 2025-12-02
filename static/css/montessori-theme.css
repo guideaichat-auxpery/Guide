@@ -14,8 +14,11 @@
   --color-chat-user: #FFFFFF;
 
   /* Typography */
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Inter", "Roboto", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-size-body: 16px;
+  --font-size-heading: 22px;
+  --line-height: 1.4;
 
   /* Spacing & Layout */
   --text-base: 16px;
@@ -51,6 +54,8 @@
 .stApp {
   background-color: var(--color-bg-primary) !important;
   font-family: var(--font-sans) !important;
+  font-size: var(--font-size-body) !important;
+  line-height: var(--line-height) !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -59,12 +64,18 @@
   max-width: var(--max-width) !important;
   padding: 2rem 1rem !important;
   background-color: var(--color-bg-primary) !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-body) !important;
+  line-height: var(--line-height) !important;
 }
 
 /* Headers */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-serif) !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-heading) !important;
+  line-height: var(--line-height) !important;
   color: var(--color-text-primary) !important;
+  font-weight: 600 !important;
 }
 
 /* Cards and containers */
@@ -147,6 +158,8 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
   font-family: var(--font-sans) !important;
+  font-size: var(--font-size-body) !important;
+  line-height: var(--line-height) !important;
 }
 
 .stTextInput > div > div > input:focus,
@@ -257,15 +270,35 @@ input[type="password"]:focus-visible {
 /* Markdown content */
 .stMarkdown {
   font-family: var(--font-sans) !important;
+  font-size: var(--font-size-body) !important;
+  line-height: var(--line-height) !important;
   color: var(--color-text-primary) !important;
 }
 
 .stMarkdown p {
+  font-size: var(--font-size-body) !important;
+  line-height: var(--line-height) !important;
   color: var(--color-text-primary) !important;
+}
+
+.stMarkdown h1 {
+  font-size: var(--font-size-heading) !important;
+  line-height: var(--line-height) !important;
+}
+
+.stMarkdown h2 {
+  font-size: var(--font-size-heading) !important;
+  line-height: var(--line-height) !important;
+}
+
+.stMarkdown h3 {
+  font-size: var(--font-size-heading) !important;
+  line-height: var(--line-height) !important;
 }
 
 .stMarkdown strong {
   color: var(--color-text-primary) !important;
+  font-weight: 600 !important;
 }
 
 /* Links */
@@ -350,6 +383,21 @@ footer {
   background-color: transparent !important;
   color: var(--color-text-primary) !important;
   font-family: var(--font-sans) !important;
+  font-size: var(--font-size-body) !important;
+  line-height: var(--line-height) !important;
+}
+
+/* Button text */
+.stButton > button {
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-body) !important;
+  line-height: var(--line-height) !important;
+}
+
+/* All text elements */
+body, p, span, label, div {
+  font-family: var(--font-sans) !important;
+  line-height: var(--line-height) !important;
 }
 
 /* Code blocks */
