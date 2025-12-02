@@ -22,7 +22,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Session Management**: Enhanced Streamlit configuration with extended session timeout (2 hours), automatic conversation restoration on login, visual save confirmations, and user-friendly error messages.
 - **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and an accessibility wizard. Session-based state management with PostgreSQL-backed persistence.
 - **Backend**: Single-file Python application (`app.py`) for core logic, integrating OpenAI API.
-- **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts.
+- **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts and comprehensive error handling.
+  - **Error Handling System**: Centralized error classification (APIError class) with user-friendly messages for rate limits, timeouts, server errors, network issues, and content filters. Includes exponential backoff retry logic, network connectivity detection, and expandable help suggestions for common issues.
+  - **Retry Mechanism**: Automatic retry with exponential backoff (1s → 2s → 4s) for transient errors (rate limits, timeouts, 5xx errors). Maximum 3 retries before showing user-friendly error message.
   - **Student Research Assistant**: Year-level adaptive AI tutor with dual-mode responses (Structure/Scaffold Mode for essay breakdowns, Research Mode for 3-part answers). Enhanced source filtering provides alternative search phrasings and stable homepage URLs, prioritizing Australian and international educational sources.
   - **Age-Appropriate Lesson Planning**: AI assistant provides developmental stage-specific prompts with strict curriculum framework rules and highly detailed step-by-step instructions. All lesson plans include actionable "Suggestions for Further Refinement & Development." Framework priority varies by age group (Australian Curriculum V9 for 12-15, Montessori for Foundation-Year 6).
   - **Professional Development Expert**: Restricted-access, advanced PD coaching system with self-learning memory.
