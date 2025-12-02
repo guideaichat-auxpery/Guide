@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 st.set_page_config(
     page_title="Guide - Your prepared digital environment",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Backend optimization: Initialize database once at process startup
@@ -42,6 +42,10 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
+if 'current_conversation_id' not in st.session_state:
+    st.session_state.current_conversation_id = None
+if 'show_chat_history' not in st.session_state:
+    st.session_state.show_chat_history = True
 
 # Load Design Systems - cached for performance
 @st.cache_data
@@ -148,6 +152,76 @@ if not st.session_state.authenticated:
 else:
     # Authenticated user interface
     show_user_info()
+    
+    # ChatGPT-style sidebar for chat history
+    with st.sidebar:
+        # Sidebar header with New Chat button
+        st.markdown('<div class="sidebar-header">', unsafe_allow_html=True)
+        if st.button("New Chat", use_container_width=True, key="new_chat_btn"):
+            st.session_state.messages = []
+            st.session_state.current_conversation_id = None
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Chat history section
+        st.markdown('<div class="chat-history-container">', unsafe_allow_html=True)
+        
+        try:
+            from database import get_db, get_user_chat_conversations
+            from datetime import datetime as dt
+            
+            db = get_db()
+            if db:
+                user_id = st.session_state.get('user_id')
+                is_student = st.session_state.get('is_student', False)
+                student_id = st.session_state.get('student_id') if is_student else None
+                
+                # Get conversations for this user
+                if is_student:
+                    conversations = get_user_chat_conversations(db, student_id=student_id)
+                else:
+                    conversations = get_user_chat_conversations(db, user_id=user_id)
+                
+                if conversations:
+                    for conv in conversations[:20]:  # Show last 20 conversations
+                        # Format timestamp
+                        time_str = conv.created_at.strftime("%d/%m/%y") if conv.created_at else "Unknown"
+                        
+                        # Check if this is active conversation
+                        is_active = conv.id == st.session_state.get('current_conversation_id')
+                        active_class = "active" if is_active else ""
+                        
+                        # Conversation button
+                        if st.button(
+                            f"{conv.title}\n{time_str}",
+                            key=f"chat_{conv.id}",
+                            use_container_width=True,
+                            help=f"Load conversation from {time_str}"
+                        ):
+                            st.session_state.current_conversation_id = conv.id
+                            st.session_state.session_id = conv.session_id
+                            # Load conversation messages
+                            from database import get_conversation_history
+                            history = get_conversation_history(db, conv.session_id, conv.interface_type)
+                            st.session_state.messages = [
+                                {"role": h.role, "content": h.content} for h in history
+                            ]
+                            st.rerun()
+                else:
+                    st.markdown('<p style="color: #555555; font-size: 14px; padding: 12px;">No conversations yet. Start a new chat!</p>', unsafe_allow_html=True)
+                
+                db.close()
+        except Exception as e:
+            st.markdown(f'<p style="color: #555555; font-size: 12px;">Error loading chat history</p>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Sidebar footer with Settings
+        st.markdown('<div class="sidebar-footer">', unsafe_allow_html=True)
+        if st.button("Settings", use_container_width=True, key="sidebar_settings_btn"):
+            st.session_state.auth_mode = "account_deletion"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # ChatGPT-like chat layout with auto-scroll & back to top
     st.markdown("""
