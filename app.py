@@ -105,9 +105,21 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Main Header
-st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
-st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
+# Main Header - Only on login landing page and dashboards
+show_header = False
+if not st.session_state.authenticated:
+    # Always show on login page
+    show_header = True
+elif st.session_state.authenticated:
+    # Show on educator and student dashboards only
+    is_student = st.session_state.get('is_student', None)
+    auth_mode = st.session_state.get('auth_mode', '')
+    if (is_student is False and auth_mode == 'dashboard_home') or (is_student is True and auth_mode == 'student_dashboard'):
+        show_header = True
+
+if show_header:
+    st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
 
 # Only show subtitle for unauthenticated users
 if not st.session_state.authenticated:
@@ -549,16 +561,27 @@ else:
     
 # Main app logic continues here
 
-# Footer
-st.markdown("---")
-st.markdown(
-    """
-    <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
-        <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
-        Guide - Your prepared digital environment<br>
-        Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em><br><br>
-        Contact us at guide@auxpery.com.au
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# Footer - Only on login landing page and dashboards
+show_footer = False
+if not st.session_state.authenticated:
+    # Always show on login page
+    show_footer = True
+elif st.session_state.authenticated:
+    # Show on educator and student dashboards only
+    is_student = st.session_state.get('is_student', None)
+    auth_mode = st.session_state.get('auth_mode', '')
+    if (is_student is False and auth_mode == 'dashboard_home') or (is_student is True and auth_mode == 'student_dashboard'):
+        show_footer = True
+
+if show_footer:
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
+            <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
+            Guide - Your prepared digital environment<br>
+            Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )

@@ -2013,14 +2013,6 @@ def show_privacy_policy():
     
     ---
     
-    ## 14. Contact Us
-    
-    If you have any questions about these Terms or your use of Guide, please contact:
-    
-    **Auxpery**
-    
-    📧 Email: guide@auxpery.com.au
-    
     ---
     
     **© 2025 Auxpery — Gentle Technology for Thoughtful Education**
@@ -2254,12 +2246,6 @@ def show_privacy_policy():
     📧 enquiries@oaic.gov.au
     
     ---
-    
-    ### 12. Questions
-    
-    If you have any questions about this Privacy Policy or how we handle your data:
-    
-    📧 guide@auxpery.com.au
     
     ---
     
