@@ -416,27 +416,10 @@ def show_companion_interface():
     
     st.markdown("### 🗨️ Montessori Companion")
     st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
+    st.markdown("*Specify an age group in the chat to receive age-tailored guidance*")
     
-    # Age group selector for companion (optional - defaults to all ages)
-    st.markdown("#### 🌱 Select Age Group (Optional)")
-    st.markdown("*Choose a specific age range for targeted guidance, or select 'All Ages' for comprehensive support*")
-    
-    companion_age_options = {
-        "All Ages (3-18)": "all",
-        "Ages 12-15 (Adolescent)": "12-15",
-        "Ages 9-12 (Upper Primary)": "9-12",
-        "Ages 6-9 (Lower Primary)": "6-9",
-        "Ages 3-6 (Early Years)": "3-6"
-    }
-    
-    selected_age_display = st.selectbox(
-        "Age Focus",
-        options=list(companion_age_options.keys()),
-        key="companion_age_selector",
-        label_visibility="collapsed"
-    )
-    
-    companion_age_group = companion_age_options[selected_age_display]
+    # Default to all ages - educators can specify age in chat
+    companion_age_group = "all"
     
     # Manage conversation history (keep last 10 exchanges)
     st.session_state.companion_messages = manage_conversation_history(
