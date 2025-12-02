@@ -1,7 +1,6 @@
 Connecting Apps and payment:
 
-🎯 My Implementation Approach
-I'll build a webhook-driven subscription system that connects your landing page's Stripe payments to Guide's access control. Here's how it will work:
+build a webhook-driven subscription system that connects your landing page's Stripe payments to Guide's access control. Here's how it will work:
 
 The Flow:
 Landing Page → User chooses monthly ($12) or annual ($144) → pays via Stripe → email captured
