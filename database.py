@@ -542,20 +542,34 @@ def update_subscription_by_customer_id(db, stripe_customer_id: str,
     return user
 
 def check_subscription_active(db, user_id: int) -> bool:
-    """Check if user has an active subscription"""
+    """
+    Check if user has access based on subscription status.
+    Handles Stripe state machine: active, trialing, past_due (grace period), cancelled (until end date)
+    """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return False
     
-    # Check subscription status
-    if user.subscription_status != 'active':
-        return False
+    status = user.subscription_status
+    end_date = user.subscription_end_date
     
-    # Check if subscription has expired
-    if user.subscription_end_date and user.subscription_end_date < datetime.utcnow():
-        return False
+    # Active or trialing subscriptions have access
+    if status in ('active', 'trialing'):
+        return True
     
-    return True
+    # Past due gets grace period (still has access until Stripe cancels)
+    if status == 'past_due':
+        return True
+    
+    # Cancelled subscriptions have access until their paid period ends
+    if status == 'cancelled' and end_date and end_date > datetime.utcnow():
+        return True
+    
+    # Check if end_date hasn't passed (for any status)
+    if end_date and end_date > datetime.utcnow():
+        return True
+    
+    return False
 
 def get_all_educators(db):
     """Get all educators"""

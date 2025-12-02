@@ -149,14 +149,13 @@ def stripe_webhook():
     webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
     
     try:
-        if webhook_secret:
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, webhook_secret
-            )
-        else:
-            # If no webhook secret, parse the payload directly (less secure)
-            event = json.loads(payload)
-            logger.warning("Processing webhook without signature verification")
+        if not webhook_secret:
+            logger.error("STRIPE_WEBHOOK_SECRET not configured - rejecting webhook")
+            return jsonify({'error': 'Webhook secret not configured'}), 500
+        
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
     except ValueError as e:
         logger.error(f"Invalid payload: {e}")
         return jsonify({'error': 'Invalid payload'}), 400
@@ -198,7 +197,6 @@ def handle_checkout_completed(session):
     subscription_id = session.get('subscription')
     
     if not customer_email:
-        # Try to get email from customer object
         try:
             customer = stripe.Customer.retrieve(customer_id)
             customer_email = customer.get('email')
@@ -206,22 +204,33 @@ def handle_checkout_completed(session):
             logger.error(f"Could not retrieve customer email: {e}")
             return
     
-    # Determine plan type from metadata or amount
-    plan = 'monthly'  # Default
-    metadata = session.get('metadata', {})
-    if metadata.get('plan'):
-        plan = metadata.get('plan')
-    elif session.get('amount_total'):
-        # $144 = yearly, $12 = monthly (amounts in cents)
-        amount = session.get('amount_total', 0)
-        if amount >= 14400:  # $144+
-            plan = 'yearly'
+    # Get subscription details from Stripe for accurate end date and plan
+    plan = 'monthly'
+    end_date = None
     
-    # Calculate subscription end date
-    if plan == 'yearly':
-        end_date = datetime.utcnow() + timedelta(days=365)
-    else:
-        end_date = datetime.utcnow() + timedelta(days=30)
+    if subscription_id:
+        try:
+            subscription = stripe.Subscription.retrieve(subscription_id)
+            
+            # Get accurate end date from Stripe
+            current_period_end = subscription.get('current_period_end')
+            if current_period_end:
+                end_date = datetime.fromtimestamp(current_period_end)
+            
+            # Get plan from subscription items
+            items = subscription.get('items', {}).get('data', [])
+            if items:
+                interval = items[0].get('price', {}).get('recurring', {}).get('interval')
+                if interval == 'year':
+                    plan = 'yearly'
+        except Exception as e:
+            logger.error(f"Could not retrieve subscription details: {e}")
+            # Fallback to metadata-based plan detection
+            metadata = session.get('metadata', {})
+            if metadata.get('plan'):
+                plan = metadata.get('plan')
+            if not end_date:
+                end_date = datetime.utcnow() + timedelta(days=365 if plan == 'yearly' else 30)
     
     logger.info(f"Checkout completed for {customer_email}, plan: {plan}")
     
@@ -275,15 +284,19 @@ def handle_subscription_updated(subscription):
     )
 
 def handle_subscription_deleted(subscription):
-    """Handle subscription cancellation"""
+    """Handle subscription cancellation - honor already-paid access"""
     customer_id = subscription.get('customer')
     
-    logger.info(f"Subscription deleted for customer {customer_id}")
+    # Use current_period_end to honor already-paid access
+    current_period_end = subscription.get('current_period_end')
+    end_date = datetime.fromtimestamp(current_period_end) if current_period_end else datetime.utcnow()
+    
+    logger.info(f"Subscription deleted for customer {customer_id}, access until {end_date}")
     
     update_subscription_by_customer(
         customer_id=customer_id,
         status='cancelled',
-        end_date=datetime.utcnow()
+        end_date=end_date
     )
 
 def handle_invoice_paid(invoice):

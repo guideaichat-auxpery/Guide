@@ -291,7 +291,8 @@ def logout():
 def check_subscription_required():
     """
     Check if user has active subscription and show appropriate message.
-    Returns True if subscription is active, False otherwise.
+    Returns True if user has access, False otherwise.
+    Handles grace periods for past_due and cancelled-but-not-expired states.
     """
     if st.session_state.get('is_student'):
         return True  # Students don't need subscriptions
@@ -300,17 +301,23 @@ def check_subscription_required():
         return False
     
     has_subscription = st.session_state.get('has_active_subscription', False)
+    subscription_status = st.session_state.get('subscription_status', 'inactive')
+    end_date = st.session_state.get('subscription_end_date')
+    
+    # Show warning for past_due but still allow access
+    if subscription_status == 'past_due':
+        st.warning("⚠️ Your subscription payment is past due. Please update your payment method at auxpery.com.au to avoid interruption.")
+        return True  # Still allow access during grace period
+    
+    # Check if cancelled but still within paid period
+    if subscription_status == 'cancelled' and end_date:
+        if end_date > datetime.now():
+            remaining_days = (end_date - datetime.now()).days
+            st.info(f"📋 Your subscription has been cancelled. You have access until {end_date.strftime('%d/%m/%Y')} ({remaining_days} days remaining).")
+            return True  # Allow access until end date
     
     if not has_subscription:
-        subscription_status = st.session_state.get('subscription_status', 'inactive')
-        
-        if subscription_status == 'past_due':
-            st.warning("⚠️ Your subscription payment is past due. Please update your payment method to continue using Guide.")
-        elif subscription_status == 'cancelled':
-            st.info("📋 Your subscription has been cancelled. Subscribe to regain full access.")
-        else:
-            st.info("📋 Subscribe to Guide to unlock all features. Visit auxpery.com.au to get started.")
-        
+        st.info("📋 Subscribe to Guide to unlock all features. Visit auxpery.com.au to get started.")
         return False
     
     return True
