@@ -400,6 +400,15 @@ body, p, span, label, div {
   line-height: var(--line-height) !important;
 }
 
+/* Main header - Guide title */
+.main-header {
+  font-size: 44px !important;
+  line-height: var(--line-height) !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  color: var(--color-text-primary) !important;
+}
+
 /* Code blocks */
 code {
   background-color: var(--color-bg-secondary) !important;
