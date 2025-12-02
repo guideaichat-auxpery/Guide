@@ -36,6 +36,10 @@ else:
     initialize_database_once()
 
 # Initialize session state
+# IMPORTANT: Session state persists across reruns indefinitely (like ChatGPT)
+# Users stay logged in unless they manually click logout
+# Session state is ONLY reset when user clicks the logout button
+# There are NO automatic timeouts or force logouts
 if 'messages' not in st.session_state:
     st.session_state.messages = []
 if 'authenticated' not in st.session_state:

@@ -272,7 +272,13 @@ def create_student_page():
                             db.close()
 
 def logout():
-    """Log out current user"""
+    """
+    Log out current user - MANUAL LOGOUT ONLY
+    
+    This function is ONLY called when the user explicitly clicks the logout button.
+    There are no automatic logout triggers, timeouts, or force logouts in this application.
+    Session state persists indefinitely like ChatGPT until this function is called.
+    """
     # Clear all authentication-related session state
     for key in ['user_id', 'user_type', 'user_name', 'user_email', 'username', 
                 'educator_id', 'age_group', 'authenticated', 'is_student',

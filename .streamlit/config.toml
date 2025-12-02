@@ -27,3 +27,9 @@ backgroundColor = "#FFFEFA"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#333333"
 font = "sans serif"
+
+# Session Configuration
+# Users stay logged in indefinitely like ChatGPT
+# Session state persists across reruns and browser refreshes
+# No automatic timeouts or force logouts
+# Users must manually click "Logout" to clear session
