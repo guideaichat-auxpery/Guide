@@ -5,6 +5,7 @@ Handles document ingestion, embedding generation, and semantic retrieval
 
 import os
 import re
+import json
 from typing import List, Dict, Optional, Tuple
 from functools import lru_cache
 from openai import OpenAI
@@ -61,10 +62,48 @@ DOCUMENT_SOURCES = {
     }
 }
 
+# Year level patterns for curriculum documents
+YEAR_LEVEL_PATTERNS = {
+    'Foundation': r'\b(Foundation|Kindergarten|F|Prep)\b',
+    'Years 1-2': r'\b(Year [12]|Years 1-2|Grade [12])\b',
+    'Years 3-4': r'\b(Year [34]|Years 3-4|Grade [34])\b',
+    'Years 5-6': r'\b(Year [56]|Years 5-6|Grade [56])\b',
+    'Years 7-8': r'\b(Year [78]|Years 7-8|Grade [78])\b',
+    'Years 9-10': r'\b(Year [90]|Years 9-10|Grade [90])\b',
+    'Years 11-12': r'\b(Year 1[12]|Years 11-12|Grade 1[12])\b',
+}
 
-def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
+# Subject patterns for curriculum documents
+SUBJECT_PATTERNS = {
+    'English': r'\b(English|Language Arts|Literacy|Writing|Reading|Literature)\b',
+    'Mathematics': r'\b(Mathematics|Maths|Math|Numeracy|Arithmetic)\b',
+    'Science': r'\b(Science|Physics|Chemistry|Biology|Earth Science)\b',
+    'HASS': r'\b(HASS|Humanities|Social Studies|History|Geography|Civics)\b',
+    'Arts': r'\b(Arts|Music|Visual Arts|Drama|Dance)\b',
+    'Technology': r'\b(Technology|Computing|ICT|Digital|Design Technology)\b',
+    'Physical Education': r'\b(Physical Education|PE|Sport|Health)\b',
+}
+
+def extract_year_levels(text: str) -> List[str]:
+    """Extract year levels mentioned in text chunk"""
+    found_levels = []
+    for level, pattern in YEAR_LEVEL_PATTERNS.items():
+        if re.search(pattern, text):
+            found_levels.append(level)
+    return found_levels
+
+def extract_subjects(text: str) -> List[str]:
+    """Extract subjects mentioned in text chunk"""
+    found_subjects = []
+    for subject, pattern in SUBJECT_PATTERNS.items():
+        if re.search(pattern, text):
+            found_subjects.append(subject)
+    return found_subjects
+
+def chunk_text_with_metadata(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[Dict]:
     """
-    Split text into overlapping chunks for better context preservation
+    Split text into overlapping chunks with extracted metadata (year levels, subjects)
+    Enhanced for curriculum-aware chunking
     
     Args:
         text: Full text to chunk
@@ -72,7 +111,7 @@ def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[st
         overlap: Number of characters to overlap between chunks
     
     Returns:
-        List of text chunks
+        List of chunk dictionaries with metadata
     """
     chunks = []
     start = 0
@@ -81,26 +120,25 @@ def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[st
     while start < text_length:
         end = start + chunk_size
         
-        # Try to break at sentence boundary
         if end < text_length:
-            # Look for sentence endings near the chunk boundary
             search_start = max(start, end - 100)
             search_text = text[search_start:end + 100]
-            
-            # Find last sentence ending
             sentence_endings = [m.end() for m in re.finditer(r'[.!?]\s+', search_text)]
             if sentence_endings:
                 last_ending = sentence_endings[-1]
                 end = search_start + last_ending
         
-        chunk = text[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
+        chunk_text = text[start:end].strip()
+        if chunk_text:
+            year_levels = extract_year_levels(chunk_text)
+            subjects = extract_subjects(chunk_text)
+            chunks.append({
+                'text': chunk_text,
+                'year_levels': year_levels,
+                'subjects': subjects
+            })
         
-        # Move start position with overlap
         start = end - overlap
-        
-        # Prevent infinite loop
         if start >= text_length:
             break
     
@@ -202,26 +240,28 @@ def ingest_documents(db_session) -> Dict[str, int]:
             results[filename] = 0
             continue
         
-        # Chunk the content
-        chunks = chunk_text(content, chunk_size=1000, overlap=200)
+        # Chunk the content with enhanced metadata
+        chunks = chunk_text_with_metadata(content, chunk_size=1000, overlap=200)
         logger.info(f"Created {len(chunks)} chunks from {filename}")
         
         # Process each chunk
         chunk_count = 0
-        for idx, chunk in enumerate(chunks):
-            # Generate embedding (returns tuple from cache)
-            embedding = generate_embedding(chunk)
+        for idx, chunk_data in enumerate(chunks):
+            chunk_text = chunk_data['text']
+            embedding = generate_embedding(chunk_text)
             
             if embedding is None:
                 logger.warning(f"Skipping chunk {idx} from {filename} due to embedding error")
                 continue
             
-            # Store in database
+            # Store in database with enhanced metadata
             try:
                 import json
-                # Convert embedding tuple/list to PostgreSQL array format
                 embedding_str = '[' + ','.join(map(str, embedding)) + ']'
-                metadata_str = json.dumps(metadata)
+                enhanced_metadata = metadata.copy()
+                enhanced_metadata['year_levels'] = chunk_data.get('year_levels', [])
+                enhanced_metadata['subjects'] = chunk_data.get('subjects', [])
+                metadata_str = json.dumps(enhanced_metadata)
                 
                 # Use raw connection to avoid SQLAlchemy parameter conversion issues
                 connection = db_session.connection().connection
@@ -233,7 +273,7 @@ def ingest_documents(db_session) -> Dict[str, int]:
                         INSERT INTO document_chunks (source_file, chunk_text, chunk_index, embedding, metadata)
                         VALUES (%s, %s, %s, %s::vector, %s::jsonb)
                         """,
-                        (filename, chunk, idx, embedding_str, metadata_str)
+                        (filename, chunk_text, idx, embedding_str, metadata_str)
                     )
                     chunk_count += 1
                 finally:
@@ -306,7 +346,9 @@ def retrieve_relevant_chunks(
     db_session, 
     query: str, 
     top_k: int = 6,
-    framework_filter: Optional[str] = None
+    framework_filter: Optional[str] = None,
+    year_level: Optional[str] = None,
+    subject: Optional[str] = None
 ) -> List[Dict]:
     """
     Retrieve most relevant document chunks using semantic + keyword hybrid search
@@ -316,6 +358,8 @@ def retrieve_relevant_chunks(
         query: User's query text
         top_k: Number of top chunks to retrieve (increased from 3 to 6)
         framework_filter: Optional filter for "AC_V9" or "Montessori"
+        year_level: Optional filter by year level (e.g., "Years 3-4")
+        subject: Optional filter by subject (e.g., "Mathematics")
     
     Returns:
         List of dictionaries containing chunk text, source, and metadata
@@ -340,54 +384,43 @@ def retrieve_relevant_chunks(
         cursor = connection.cursor()
         
         try:
-            # Build SQL query with optional framework filter
-            # Increased top_k to allow keyword-ranked results
+            code_patterns = [f'%{code}%' for code in curriculum_codes] if curriculum_codes else ['%___%']
+            
+            # Build WHERE clause with optional filters
+            where_clauses = []
+            params = [embedding_str, code_patterns]
+            
             if framework_filter:
-                sql_query = """
-                    SELECT 
-                        chunk_text,
-                        source_file,
-                        metadata,
-                        1 - (embedding <=> %s::vector) as similarity,
-                        CASE 
-                            WHEN chunk_text ILIKE ANY(%s) THEN 1.5
-                            ELSE 1.0
-                        END as keyword_boost
-                    FROM document_chunks
-                    WHERE metadata->>'framework' = %s
-                    ORDER BY (1 - (embedding <=> %s::vector)) * 
-                             CASE 
-                                 WHEN chunk_text ILIKE ANY(%s) THEN 1.5
-                                 ELSE 1.0
-                             END DESC,
-                             embedding <=> %s::vector
-                    LIMIT %s
-                """
-                # Convert curriculum codes to ILIKE patterns
-                code_patterns = [f'%{code}%' for code in curriculum_codes] if curriculum_codes else ['%___%']  # fallback pattern
-                cursor.execute(sql_query, (embedding_str, code_patterns, framework_filter, embedding_str, code_patterns, embedding_str, top_k))
-            else:
-                sql_query = """
-                    SELECT 
-                        chunk_text,
-                        source_file,
-                        metadata,
-                        1 - (embedding <=> %s::vector) as similarity,
-                        CASE 
-                            WHEN chunk_text ILIKE ANY(%s) THEN 1.5
-                            ELSE 1.0
-                        END as keyword_boost
-                    FROM document_chunks
-                    ORDER BY (1 - (embedding <=> %s::vector)) * 
-                             CASE 
-                                 WHEN chunk_text ILIKE ANY(%s) THEN 1.5
-                                 ELSE 1.0
-                             END DESC,
-                             embedding <=> %s::vector
-                    LIMIT %s
-                """
-                code_patterns = [f'%{code}%' for code in curriculum_codes] if curriculum_codes else ['%___%']
-                cursor.execute(sql_query, (embedding_str, code_patterns, embedding_str, code_patterns, embedding_str, top_k))
+                where_clauses.append("metadata->>'framework' = %s")
+                params.append(framework_filter)
+            if year_level:
+                where_clauses.append("metadata->'year_levels' @> %s::jsonb")
+                params.append(json.dumps([year_level]))
+            if subject:
+                where_clauses.append("metadata->'subjects' @> %s::jsonb")
+                params.append(json.dumps([subject]))
+            
+            where_clause = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+            
+            sql_query = f"""
+                SELECT 
+                    chunk_text,
+                    source_file,
+                    metadata,
+                    1 - (embedding <=> %s::vector) as similarity
+                FROM document_chunks
+                {where_clause}
+                ORDER BY (1 - (embedding <=> %s::vector)) * 
+                         CASE 
+                             WHEN chunk_text ILIKE ANY(%s) THEN 1.5
+                             ELSE 1.0
+                         END DESC,
+                         embedding <=> %s::vector
+                LIMIT %s
+            """
+            
+            params.extend([embedding_str, code_patterns, embedding_str, top_k])
+            cursor.execute(sql_query, params)
             
             rows = cursor.fetchall()
             
@@ -544,6 +577,23 @@ def clear_document_chunks(db_session):
     db_session.execute(text("DELETE FROM document_chunks"))
     db_session.commit()
     logger.info("✓ Cleared all document chunks")
+
+def reingest_documents_with_new_metadata(db_session) -> Dict[str, int]:
+    """
+    Re-ingest all documents with enhanced metadata (year_levels, subjects)
+    Use this after adding new metadata extraction to chunk_text_with_metadata
+    
+    Args:
+        db_session: SQLAlchemy database session
+    
+    Returns:
+        Dictionary with file names and number of chunks processed
+    """
+    logger.info("=== Re-ingesting documents with enhanced metadata ===")
+    clear_document_chunks(db_session)
+    results = ingest_documents(db_session)
+    logger.info("✓ Re-ingestion complete with enhanced metadata")
+    return results
 
 
 if __name__ == "__main__":
