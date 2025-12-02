@@ -79,7 +79,6 @@ st.markdown("""
 .subtitle {
     text-align: center;
     color: var(--color-ink);
-    font-style: italic;
     margin-bottom: 2rem;
     opacity: 0.8;
 }
