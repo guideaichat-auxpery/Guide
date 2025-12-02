@@ -32,13 +32,13 @@ args = "Stripe Webhook Server"
 name = "Guide AI Assistant"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run app.py --server.port 5000"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[workflows.workflow]]
 name = "Adaptive Learning Server"
