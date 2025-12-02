@@ -234,6 +234,23 @@ def handle_checkout_completed(session):
     
     logger.info(f"Checkout completed for {customer_email}, plan: {plan}")
     
+    # Send subscription confirmation email
+    try:
+        from email_service import get_email_service
+        email_service = get_email_service()
+        amount = session.get('amount_total', 0) / 100  # Convert from cents
+        
+        # Get user name from database
+        from database import get_db, get_user_by_email
+        db = get_db()
+        if db:
+            user = get_user_by_email(db, customer_email)
+            if user:
+                email_service.send_subscription_confirmation(customer_email, user.full_name, plan, amount)
+            db.close()
+    except Exception as e:
+        logger.error(f"Error sending subscription confirmation email: {str(e)}")
+    
     update_user_subscription_from_event(
         customer_email=customer_email,
         customer_id=customer_id,
@@ -300,19 +317,61 @@ def handle_subscription_deleted(subscription):
     )
 
 def handle_invoice_paid(invoice):
-    """Handle successful invoice payment (renewal)"""
+    """Handle successful invoice payment (renewal) - send renewal reminder"""
     customer_id = invoice.get('customer')
-    subscription_id = invoice.get('subscription')
     
-    if not subscription_id:
-        return  # Not a subscription invoice
-    
-    # Get subscription details
+    # Send renewal reminder email
     try:
-        subscription = stripe.Subscription.retrieve(subscription_id)
-        handle_subscription_updated(subscription)
+        from email_service import get_email_service
+        email_service = get_email_service()
+        from database import get_db, get_user_by_email
+        
+        db = get_db()
+        if db:
+            # Get customer email from Stripe
+            try:
+                customer = stripe.Customer.retrieve(customer_id)
+                customer_email = customer.get('email')
+                
+                if customer_email:
+                    user = get_user_by_email(db, customer_email)
+                    if user:
+                        # Get subscription end date
+                        subscription_id = invoice.get('subscription')
+                        renewal_date = None
+                        plan = 'monthly'
+                        
+                        if subscription_id:
+                            try:
+                                subscription = stripe.Subscription.retrieve(subscription_id)
+                                current_period_end = subscription.get('current_period_end')
+                                if current_period_end:
+                                    renewal_date = datetime.fromtimestamp(current_period_end)
+                                
+                                items = subscription.get('items', {}).get('data', [])
+                                if items:
+                                    interval = items[0].get('price', {}).get('recurring', {}).get('interval')
+                                    if interval == 'year':
+                                        plan = 'yearly'
+                            except:
+                                pass
+                        
+                        email_service.send_subscription_renewal_reminder(customer_email, user.full_name, renewal_date, plan)
+            except:
+                pass
+            
+            db.close()
     except Exception as e:
-        logger.error(f"Error retrieving subscription: {e}")
+        logger.error(f"Error sending renewal reminder email: {str(e)}")
+    
+    # Update subscription status
+    subscription_id = invoice.get('subscription')
+    if subscription_id:
+        try:
+            subscription = stripe.Subscription.retrieve(subscription_id)
+            handle_subscription_updated(subscription)
+        except Exception as e:
+            logger.error(f"Error retrieving subscription: {e}")
 
 def handle_payment_failed(invoice):
     """Handle failed payment"""

@@ -183,6 +183,14 @@ def signup_page():
                             record_consent(db, user_id=user.id, consent_type='overseas_transfer', policy_version="1.0")
                             record_consent(db, user_id=user.id, consent_type='privacy_policy', policy_version="1.0")
                             
+                            # Send welcome email
+                            try:
+                                from email_service import get_email_service
+                                email_service = get_email_service()
+                                email_service.send_welcome_email(email, full_name)
+                            except Exception as e:
+                                print(f"Welcome email error: {str(e)}")
+                            
                             st.success(f"Account created successfully! Welcome, {full_name}!")
                             st.session_state.user_id = user.id
                             st.session_state.user_type = user.user_type

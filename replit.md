@@ -34,6 +34,15 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Data Management**: PostgreSQL for persistence of conversation history, analytics, planning notes, curriculum contexts, adaptive learning data, and RAG document chunks. Lesson plan export to PDF and DOCX.
 - **Adaptive Learning System (Development Only)**: Express.js server for managing self-updating AI prompts, semantic logging, feedback, trending keywords, and subject calibration via a REST API.
 - **Stripe Subscription Integration**: Webhook-based subscription management for user access control, handling `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed` events. Subscription status stored in session state and displayed in the sidebar.
+- **Email Notification Service** (`email_service.py`): Transactional email system supporting SendGrid and SMTP backends with graceful fallback. Sends:
+  - **Welcome Emails**: Automatically sent after educator signup with onboarding guidance
+  - **Subscription Confirmation**: Sent immediately after successful Stripe checkout with plan details and amount
+  - **Renewal Reminders**: Sent on subscription renewal (invoice.paid webhook) with next renewal date and plan information
+  - Emails gracefully disabled if no email service configured (non-blocking)
+- **Help & Support System**: Two-interface system for user feedback and support:
+  - **Feedback Interface** (`show_feedback_interface()`): Bug reports with severity levels (Low/Medium/High) and feature requests, stored in `feedback_tickets` table
+  - **Support Contact Form** (`show_support_contact_interface()`): Subscription, billing, account, and general support inquiries stored in `subscription_contacts` table
+  - Dashboard buttons ("Send Feedback" and "Support") for easy access
 - **Core Features**:
   - **Dual Interface**: Teacher and student modes.
   - **Chat Conversation Management**: Sidebar-based system for creating, renaming, deleting, and reopening conversations, with auto-loading of the most recent conversation and real-time message persistence. Student chats include mandatory subject selection.
@@ -41,6 +50,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **AI-Powered Tools**: Includes Great Story Creator, Planning Notes Workspace, Educator Observation Dashboard, Lesson Planning Assistant, Big Picture Curriculum Mapping, Student Work Analysis, Imaginarium, and Rubric Generator.
   - **Document Upload & Analysis**: Educators can upload teaching materials (TXT, PDF, DOCX, JPG, PNG) for Montessori-focused AI feedback. Students can upload assignments for constructive feedback. Handles scanned/textless PDFs gracefully.
   - **Accessibility**: Universal Design for Learning interface.
+
+# Market Readiness Features (Completed)
+
+1. **User Onboarding** ✓ - 5-step welcome tour, sample lesson plans, first-time feature prompts
+2. **Error Handling** ✓ - User-friendly messages, exponential backoff retry (1s→2s→4s), network detection, help suggestions
+3. **Mobile Responsiveness** ✓ - Full responsive design with breakpoints at 768px/480px, stacked layouts, touch-friendly targets
+4. **Help & Support System** ✓ - Feedback/bug reports and support contact forms with database persistence
+5. **Email Notifications** ✓ - Welcome emails, subscription confirmations, and renewal reminders via SendGrid/SMTP
 
 # External Dependencies
 
