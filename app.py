@@ -150,9 +150,10 @@ else:
     # Authenticated user interface
     show_user_info()
     
-    # Auto-scroll chat to bottom on new messages
+    # Auto-scroll chat to bottom on new messages & scroll to top on card click
     st.markdown("""
     <script>
+    // Auto-scroll chat to bottom
     const observer = new MutationObserver(() => {
       setTimeout(() => {
         const container = document.querySelector('[data-testid="stChatMessageContainer"]') || document.querySelector('.stChatMessage');
@@ -161,6 +162,14 @@ else:
     });
     const target = document.querySelector('[data-testid="stChatMessageContainer"]') || document.body;
     if (target) observer.observe(target, { childList: true, subtree: true });
+    
+    // Scroll to top on card click
+    document.addEventListener('click', (e) => {
+      const card = e.target.closest('[data-testid="column"], .stCard');
+      if (card) {
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      }
+    });
     </script>
     """, unsafe_allow_html=True)
     

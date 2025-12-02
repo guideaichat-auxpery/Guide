@@ -389,6 +389,48 @@ input[type="password"]:focus-visible {
   margin: 0 !important;
 }
 
+/* Cards - Navigation or Choices */
+.stCard, [data-testid="column"] > div > div > div {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6E6E6 !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.stCard:hover, [data-testid="column"] > div > div > div:hover {
+  background-color: #F7F7F7 !important;
+}
+
+.stCard:focus, [data-testid="column"] > div > div > div:focus {
+  outline: 2px solid #4C8BF5 !important;
+  outline-offset: 2px !important;
+}
+
+/* Card content - Text only, no icons */
+.stCard h3, .stCard h4, .stCard p,
+[data-testid="column"] > div > div > div h3,
+[data-testid="column"] > div > div > div h4,
+[data-testid="column"] > div > div > div p {
+  color: #333333 !important;
+  font-size: 16px !important;
+  margin: 0 !important;
+}
+
+.stCard h3, [data-testid="column"] > div > div > div h3 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
+
+/* Remove oversized whitespace inside cards */
+.stCard > div, [data-testid="column"] > div > div > div > div {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 /* Dataframes and tables */
 .stDataFrame {
   border-radius: var(--radius-medium) !important;
