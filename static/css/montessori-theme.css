@@ -33,6 +33,28 @@
   /* Accessibility */
   --focus-ring: 2px solid #4C8BF5;
   --max-width: 1080px;
+
+  /* Viewport sizing */
+  --viewport-padding: 16px;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  :root {
+    --font-size-body: 14px;
+    --font-size-heading: 18px;
+    --spacing-global: 12px;
+    --viewport-padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --font-size-body: 13px;
+    --font-size-heading: 16px;
+    --spacing-global: 8px;
+    --viewport-padding: 8px;
+  }
 }
 
 /* GLOBAL INTERACTION RULES - Non-Negotiable */
@@ -155,16 +177,25 @@ body {
 /* Main content area - Full height flex layout */
 .main .block-container {
   max-width: var(--max-width) !important;
-  padding: 0 !important;
+  width: 100% !important;
+  padding: var(--viewport-padding) !important;
   background-color: var(--color-bg-primary) !important;
   font-family: var(--font-sans) !important;
   font-size: var(--font-size-body) !important;
   line-height: var(--line-height) !important;
-  margin: 0 !important;
+  margin: 0 auto !important;
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
   flex: 1 !important;
+  box-sizing: border-box !important;
+}
+
+/* Mobile: reduce padding */
+@media (max-width: 768px) {
+  .main .block-container {
+    padding: var(--viewport-padding) !important;
+  }
 }
 
 /* Chat messages scroll container */
@@ -172,12 +203,18 @@ body {
   flex: 1 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding: 24px 16px !important;
+  padding: 16px var(--viewport-padding) !important;
   scroll-behavior: auto !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
   min-height: 0 !important;
+}
+
+@media (max-width: 768px) {
+  [data-testid="stChatMessageContainer"] {
+    padding: 12px var(--viewport-padding) !important;
+  }
 }
 
 /* Chat container wrapper */
@@ -812,6 +849,29 @@ a:hover {
   gap: 8px !important;
   margin: 0 !important;
   padding: 0 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+/* Mobile: stack columns vertically */
+@media (max-width: 768px) {
+  .row-widget.stHorizontal {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* Make column children full width on mobile */
+  .row-widget.stHorizontal > div {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+}
+
+/* Tablet: responsive column layout */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .row-widget.stHorizontal > div {
+    flex: 1 1 calc(50% - 4px) !important;
+  }
 }
 
 /* Fade in animation for new elements */
@@ -880,6 +940,18 @@ section {
   color: var(--color-text-primary) !important;
 }
 
+@media (max-width: 768px) {
+  .main-header {
+    font-size: 28px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-header {
+    font-size: 22px !important;
+  }
+}
+
 /* Code blocks */
 code {
   background-color: var(--color-bg-secondary) !important;
@@ -895,5 +967,102 @@ pre {
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
+  overflow-x: auto !important;
+}
+
+/* Mobile button styling */
+@media (max-width: 768px) {
+  .stButton > button,
+  .stDownloadButton > button,
+  button[kind="secondary"],
+  button[kind="primary"] {
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 16px !important;
+  }
+
+  /* Ensure touch targets are large enough */
+  input, textarea, select {
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* Tablet form layout */
+@media (max-width: 1024px) {
+  .stTextInput, .stTextArea, .stSelectbox, .stMultiSelect {
+    width: 100% !important;
+  }
+}
+
+/* Chat input responsiveness */
+@media (max-width: 768px) {
+  [data-testid="stChatInput"] {
+    width: 100% !important;
+    padding: 8px var(--viewport-padding) !important;
+  }
+
+  [data-testid="stChatInput"] input {
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+}
+
+/* Sidebar responsiveness */
+@media (max-width: 768px) {
+  /* Allow sidebar to collapse on mobile */
+  [data-testid="stSidebar"] {
+    width: 100% !important;
+    position: relative !important;
+  }
+}
+
+/* Dashboard card grid responsiveness */
+@media (max-width: 768px) {
+  .sticky-card-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+
+  /* Stack cards in single column on mobile */
+  .sticky-card-container > div {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .sticky-card-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+}
+
+/* File uploader responsiveness */
+@media (max-width: 768px) {
+  [data-testid="stFileUploader"] {
+    width: 100% !important;
+  }
+}
+
+/* Tab responsiveness */
+@media (max-width: 768px) {
+  [data-testid="stTabs"] {
+    width: 100% !important;
+  }
+
+  .stTabs [role="tablist"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  .stTabs [role="tab"] {
+    flex: 1 !important;
+    min-width: 120px !important;
+    font-size: 13px !important;
+  }
 }
 

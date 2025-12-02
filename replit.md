@@ -15,6 +15,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Design System**:
   - **Montessori Theme**: Warm earth tones, specific fonts (Cormorant Garamond, Inter), organic rounded corners, soft shadows, and smooth transitions.
   - **Danish Eco-Design Theme**: Clean modernist educator dashboard with off-white background, muted forest green accent, soft grey text, Inter typography, rounded corners, generous whitespace, and card-based navigation. Features a fixed header, welcoming greeting, 3x2 grid of interactive feature cards, and an account section. Fully responsive with WCAG 2.1 AA accessibility compliance. Uses emoji icons as a pragmatic compromise.
+  - **Mobile Responsiveness**: Fully responsive design with mobile-first approach. Breakpoints: tablets (≤768px), phones (≤480px). Features include: stacked columns on mobile, full-width buttons and forms, font size reduction on smaller screens (16px→14px→13px), dynamic padding/spacing, and touch-friendly targets (44-48px). Dashboard cards: 3x2 grid on desktop, 2-column on tablet, single column on mobile. Chat and sidebar adapt to narrow viewports.
 - **Streamlit Rerun Architecture**: Critical UI Placement Pattern ensures static UI elements (quick prompts, file uploaders, interactive cards) render BEFORE chat history loops to prevent mid-conversation insertion during Streamlit reruns.
 
 ## Technical Implementations
