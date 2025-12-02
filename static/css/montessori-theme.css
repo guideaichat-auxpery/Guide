@@ -940,11 +940,21 @@ section {
   width: 100% !important;
 }
 
-/* All headings - ensure centered alignment */
+/* All headings - ensure centered alignment and hide link icons */
 h1, h2, h3, h4, h5, h6 {
   text-align: center !important;
   display: block !important;
   width: 100% !important;
+}
+
+/* Hide Streamlit's header link icon */
+h1 > a, h2 > a, h3 > a, h4 > a, h5 > a, h6 > a {
+  display: none !important;
+}
+
+/* Hide any SVG that appears after headings */
+h1 + svg, h2 + svg, h3 + svg, h4 + svg, h5 + svg, h6 + svg {
+  display: none !important;
 }
 
 @media (max-width: 768px) {

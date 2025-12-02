@@ -134,7 +134,7 @@ if not st.session_state.authenticated:
     # Welcome section
     st.markdown("""
     <div class="welcome-box">
-        <h3>✨ Welcome to Guide</h3>
+        <h3>Welcome to Guide</h3>
         <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
         
     </div>
@@ -144,17 +144,17 @@ if not st.session_state.authenticated:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("🔑 Login", use_container_width=True):
+        if st.button("Login", use_container_width=True):
             st.session_state.auth_mode = "login"
             st.rerun()
     
     with col2:
-        if st.button("📝 Sign Up", use_container_width=True):
+        if st.button("Sign Up", use_container_width=True):
             st.session_state.auth_mode = "signup"
             st.rerun()
     
     with col3:
-        if st.button("📋 Terms & Conditions", use_container_width=True):
+        if st.button("Terms & Conditions", use_container_width=True):
             st.session_state.auth_mode = "privacy_policy"
             st.rerun()
     
@@ -408,9 +408,9 @@ else:
                                     success, auto_enabled = update_educator_institution(db, educator_id, institution_name)
                                     if success:
                                         if auto_enabled:
-                                            st.success("✅ Institution set! 🚀 All educators now have institutions - enforcement automatically enabled!")
+                                            st.success("Institution set! All educators now have institutions - enforcement automatically enabled!")
                                         else:
-                                            st.success(f"✅ Institution set to: {institution_name}")
+                                            st.success(f"Institution set to: {institution_name}")
                                         st.rerun()
                                     else:
                                         st.error("Failed to update institution")
@@ -451,9 +451,9 @@ else:
                     {"title": "Lesson Planning", "body": "Design age-appropriate learning experiences", "icon": "📚", "mode": "lesson_planning", "key": "lp"},
                     {"title": "Montessori Companion", "body": "Tap into Montessori wisdom and training", "icon": "🌱", "mode": "companion", "key": "comp"},
                     {"title": "Student Dashboard", "body": "Stay connected to your students' learning", "icon": "👥", "mode": "student_dashboard", "key": "sd"},
-                    {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon": "📝", "mode": "planning_notes", "key": "pn"},
+                    {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon": "", "mode": "planning_notes", "key": "pn"},
                     {"title": "Great Stories", "body": "Create narratives to introduce new learning", "icon": "📖", "mode": "great_stories", "key": "gs"},
-                    {"title": "Imaginarium", "body": "Explore ideas freely in creative space", "icon": "✨", "mode": "imaginarium", "key": "img"}
+                    {"title": "Imaginarium", "body": "Explore ideas freely in creative space", "icon": "", "mode": "imaginarium", "key": "img"}
                 ]
                 
                 columns = [col1, col2, col3]

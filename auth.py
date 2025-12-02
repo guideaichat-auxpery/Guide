@@ -16,7 +16,7 @@ def validate_password(password):
 
 def login_page():
     """Display login page for educators and students"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: #2E8B57;">Login to Your Account</h2>', unsafe_allow_html=True)
     
     # Choose login type
     login_type = st.selectbox("I am a:", ["Educator", "Student"])
@@ -104,14 +104,14 @@ def login_page():
 
 def signup_page():
     """Display signup page for new educators"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">📝 Create Your Educator Account</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: #2E8B57;">Create Your Educator Account</h2>', unsafe_allow_html=True)
     st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
     
     # Privacy notice before signup
-    st.info("📋 **Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Terms and Conditions for details on how we handle your information.")
+    st.info("**Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Terms and Conditions for details on how we handle your information.")
     
     # Link to terms and conditions
-    if st.button("📋 View Terms & Conditions", key="signup_privacy_link"):
+    if st.button("View Terms & Conditions", key="signup_privacy_link"):
         st.session_state.auth_mode = "privacy_policy"
         st.rerun()
     
@@ -327,11 +327,11 @@ def check_subscription_required():
     if subscription_status == 'cancelled' and end_date:
         if end_date > datetime.now():
             remaining_days = (end_date - datetime.now()).days
-            st.info(f"📋 Your subscription has been cancelled. You have access until {end_date.strftime('%d/%m/%Y')} ({remaining_days} days remaining).")
+            st.info(f"Your subscription has been cancelled. You have access until {end_date.strftime('%d/%m/%Y')} ({remaining_days} days remaining).")
             return True  # Allow access until end date
     
     if not has_subscription:
-        st.info("📋 Subscribe to Guide to unlock all features. Visit auxpery.com.au to get started.")
+        st.info("Subscribe to Guide to unlock all features. Visit auxpery.com.au to get started.")
         return False
     
     return True
@@ -349,10 +349,10 @@ def get_subscription_display():
     end_date = st.session_state.get('subscription_end_date')
     
     status_icons = {
-        'active': '✅',
-        'past_due': '⚠️',
-        'cancelled': '❌',
-        'inactive': '📋'
+        'active': 'Active',
+        'past_due': 'Past Due',
+        'cancelled': 'Cancelled',
+        'inactive': 'Inactive'
     }
     
     status_labels = {
@@ -368,7 +368,7 @@ def get_subscription_display():
     }
     
     info = {
-        'icon': status_icons.get(status, '📋'),
+        'icon': '',
         'status': status_labels.get(status, 'Unknown'),
         'plan': plan_labels.get(plan, 'N/A') if plan else 'N/A',
         'end_date': end_date.strftime('%d/%m/%Y') if end_date else 'N/A',
