@@ -1,17 +1,17 @@
 /* Google Fonts Import - Must be first */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
 
-/* Montessori Design System for Streamlit */
+/* Design System Color Palette */
 
 :root {
-  /* Montessori Color Palette */
-  --color-sand: #f5f1e6;
-  --color-clay: #d9c2a3;
-  --color-sky: #cce3de;
-  --color-leaf: #9bbf9b;
-  --color-ink: #2f3e46;
-  --color-soft-rose: #f0dada;
-  --color-paper: #fffdf8;
+  /* Color Theme */
+  --color-bg-primary: #FFFEFA;
+  --color-bg-secondary: #FFFFFF;
+  --color-border: #E6E6E6;
+  --color-text-primary: #333333;
+  --color-text-secondary: #555555;
+  --color-chat-assistant: #FFFEFA;
+  --color-chat-user: #FFFFFF;
 
   /* Typography */
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -22,17 +22,16 @@
   --radius-large: 20px;
   --radius-medium: 12px;
   --radius-small: 8px;
-  --shadow-soft: 0 6px 18px rgba(20, 20, 20, 0.06);
+  --shadow-soft: 0 2px 8px rgba(51, 51, 51, 0.08);
   --transition-smooth: all 0.28s ease-in-out;
 
   /* Accessibility */
-  --focus-ring: 3px solid rgba(155, 191, 155, 0.28);
-  --focus-shadow: rgba(155, 191, 155, 0.5) 0px 0px 0px 0.2rem;
+  --focus-ring: 3px solid rgba(51, 51, 51, 0.2);
+  --focus-shadow: rgba(51, 51, 51, 0.2) 0px 0px 0px 0.2rem;
   --max-width: 1080px;
 }
 
-/* Global focus state override - Montessori leaf color instead of Streamlit red */
-/* High specificity to override Streamlit emotion classes */
+/* Global focus state override */
 :is(*):focus-visible,
 :is(button):focus-visible,
 :is(input):focus-visible,
@@ -45,26 +44,27 @@
 [class*="st-"]:focus-visible {
   box-shadow: var(--focus-shadow) !important;
   outline: none !important;
-  border-color: var(--color-leaf) !important;
+  border-color: var(--color-text-primary) !important;
 }
 
 /* Global Streamlit Overrides */
 .stApp {
-  background-color: var(--color-paper) !important;
+  background-color: var(--color-bg-primary) !important;
   font-family: var(--font-sans) !important;
-  color: var(--color-ink) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Main content area */
 .main .block-container {
   max-width: var(--max-width) !important;
   padding: 2rem 1rem !important;
+  background-color: var(--color-bg-primary) !important;
 }
 
 /* Headers */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif) !important;
-  color: var(--color-ink) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Cards and containers */
@@ -74,15 +74,18 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Streamlit expanders */
 .streamlit-expanderHeader {
-  background-color: var(--color-sand) !important;
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 0.75rem 1rem !important;
   font-weight: 500 !important;
+  color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
 }
 
 .streamlit-expanderHeader:hover {
-  background-color: var(--color-clay) !important;
+  background-color: var(--color-bg-secondary) !important;
+  border-color: var(--color-text-secondary) !important;
 }
 
 /* Tabs */
@@ -92,23 +95,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stTabs [data-baseweb="tab"] {
-  background-color: var(--color-sand) !important;
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 0.5rem 1rem !important;
+  color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
-  border: none !important;
 }
 
 .stTabs [aria-selected="true"] {
-  background: linear-gradient(135deg, var(--color-sky), var(--color-leaf)) !important;
-  color: white !important;
+  background-color: var(--color-bg-secondary) !important;
+  border: 2px solid var(--color-text-primary) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Buttons */
 .stButton > button {
-  background: linear-gradient(135deg, var(--color-leaf), var(--color-sky)) !important;
-  color: white !important;
-  border: none !important;
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 0.5rem 1.5rem !important;
   font-weight: 500 !important;
@@ -117,8 +122,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .stButton > button:hover {
+  background-color: var(--color-bg-primary) !important;
+  border: 1px solid var(--color-text-secondary) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(20, 20, 20, 0.12) !important;
 }
 
 .stButton > button:active {
@@ -127,17 +133,18 @@ h1, h2, h3, h4, h5, h6 {
 
 .stButton > button:focus,
 .stButton > button:focus-visible {
-  box-shadow: rgba(155, 191, 155, 0.5) 0px 0px 0px 0.2rem !important;
+  box-shadow: var(--focus-shadow) !important;
   outline: none !important;
 }
 
 /* Text inputs */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea {
-  background-color: white !important;
-  border: 1px solid var(--color-clay) !important;
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-small) !important;
   padding: 0.75rem !important;
+  color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
   font-family: var(--font-sans) !important;
 }
@@ -149,7 +156,7 @@ h1, h2, h3, h4, h5, h6 {
 input[type="text"]:focus-visible,
 input[type="email"]:focus-visible,
 input[type="password"]:focus-visible {
-  border-color: var(--color-leaf) !important;
+  border-color: var(--color-text-primary) !important;
   box-shadow: var(--focus-shadow) !important;
   outline: none !important;
 }
@@ -157,63 +164,88 @@ input[type="password"]:focus-visible {
 /* Select boxes and multiselect */
 .stSelectbox > div > div,
 .stMultiSelect > div > div {
-  background-color: white !important;
-  border: 1px solid var(--color-clay) !important;
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-small) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Chat messages styling */
 .stChatMessage {
-  background-color: var(--color-sand) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
   margin-bottom: 0.75rem !important;
   box-shadow: var(--shadow-soft) !important;
 }
 
+/* Assistant chat bubble */
+.stChatMessage[data-testid="chatMessage"] .stMarkdown {
+  color: var(--color-text-primary) !important;
+}
+
 /* Success/Info/Warning/Error boxes */
 .stSuccess {
-  background-color: var(--color-leaf) !important;
-  color: var(--color-ink) !important;
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
 }
 
 .stInfo {
-  background-color: var(--color-sky) !important;
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
 }
 
 .stWarning {
-  background-color: var(--color-clay) !important;
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
 }
 
 .stError {
-  background-color: var(--color-soft-rose) !important;
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
 }
 
 /* Sidebar */
 .css-1d391kg, [data-testid="stSidebar"] {
-  background: linear-gradient(180deg, var(--color-sand), var(--color-paper)) !important;
+  background-color: var(--color-bg-primary) !important;
 }
 
 /* File uploader */
 .stFileUploader {
-  background-color: var(--color-sand) !important;
+  background-color: var(--color-bg-secondary) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
-  border: 2px dashed var(--color-clay) !important;
+  border: 2px dashed var(--color-border) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Dataframes and tables */
 .stDataFrame {
   border-radius: var(--radius-medium) !important;
   overflow: hidden !important;
+}
+
+.stDataFrame table {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.stDataFrame thead {
+  background-color: var(--color-bg-primary) !important;
+  color: var(--color-text-primary) !important;
+  border-bottom: 1px solid var(--color-border) !important;
 }
 
 /* Plotly charts */
@@ -225,29 +257,41 @@ input[type="password"]:focus-visible {
 /* Markdown content */
 .stMarkdown {
   font-family: var(--font-sans) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.stMarkdown p {
+  color: var(--color-text-primary) !important;
+}
+
+.stMarkdown strong {
+  color: var(--color-text-primary) !important;
 }
 
 /* Links */
 a {
-  color: var(--color-leaf) !important;
+  color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
+  text-decoration: underline !important;
 }
 
 a:hover {
-  color: var(--color-ink) !important;
+  color: var(--color-text-secondary) !important;
 }
 
 /* Metrics */
 .stMetric {
-  background-color: var(--color-sand) !important;
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 1rem !important;
   box-shadow: var(--shadow-soft) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Progress bars */
 .stProgress > div > div > div {
-  background-color: var(--color-leaf) !important;
+  background-color: var(--color-text-primary) !important;
   border-radius: var(--radius-small) !important;
 }
 
@@ -256,24 +300,28 @@ a:hover {
   transition: var(--transition-smooth) !important;
 }
 
+.stCheckbox label, .stRadio label {
+  color: var(--color-text-primary) !important;
+}
+
 /* Download button */
 .stDownloadButton > button {
-  background-color: var(--color-clay) !important;
-  color: var(--color-ink) !important;
-  border: none !important;
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
   padding: 0.5rem 1.5rem !important;
   transition: var(--transition-smooth) !important;
 }
 
 .stDownloadButton > button:hover {
-  background-color: var(--color-leaf) !important;
-  color: white !important;
+  background-color: var(--color-bg-primary) !important;
+  border: 1px solid var(--color-text-secondary) !important;
 }
 
 /* Spinner */
 .stSpinner > div {
-  border-top-color: var(--color-leaf) !important;
+  border-top-color: var(--color-text-primary) !important;
 }
 
 /* Columns spacing */
@@ -300,6 +348,28 @@ a:hover {
 /* Footer styling */
 footer {
   background-color: transparent !important;
-  color: var(--color-ink) !important;
+  color: var(--color-text-primary) !important;
   font-family: var(--font-sans) !important;
+}
+
+/* Code blocks */
+code {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: var(--radius-small) !important;
+}
+
+pre {
+  background-color: var(--color-bg-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
+}
+
+/* Horizontal line */
+hr {
+  border-color: var(--color-border) !important;
 }
