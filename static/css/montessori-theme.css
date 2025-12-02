@@ -798,6 +798,13 @@ a:hover {
   transition: var(--transition-smooth) !important;
 }
 
+/* All labels - keep on single line */
+label {
+  white-space: nowrap !important;
+  display: inline-block !important;
+  color: var(--color-text-primary) !important;
+}
+
 .stCheckbox label, .stRadio label {
   color: var(--color-text-primary) !important;
 }
