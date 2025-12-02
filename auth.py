@@ -1,5 +1,6 @@
 import streamlit as st
-from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student
+from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student, check_subscription_active
+from datetime import datetime
 import re
 
 def validate_email(email):
@@ -46,6 +47,13 @@ def login_page():
                             st.session_state.user_email = user.email
                             st.session_state.authenticated = True
                             st.session_state.is_student = False
+                            
+                            # Store subscription information
+                            st.session_state.subscription_status = user.subscription_status or 'inactive'
+                            st.session_state.subscription_plan = user.subscription_plan
+                            st.session_state.subscription_end_date = user.subscription_end_date
+                            st.session_state.has_active_subscription = check_subscription_active(db, user.id)
+                            
                             # Clear any existing auth_mode to ensure clean state
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
@@ -267,7 +275,9 @@ def logout():
     """Log out current user"""
     # Clear all authentication-related session state
     for key in ['user_id', 'user_type', 'user_name', 'user_email', 'username', 
-                'educator_id', 'age_group', 'authenticated', 'is_student']:
+                'educator_id', 'age_group', 'authenticated', 'is_student',
+                'subscription_status', 'subscription_plan', 'subscription_end_date', 
+                'has_active_subscription']:
         if key in st.session_state:
             del st.session_state[key]
     
@@ -277,6 +287,74 @@ def logout():
     
     st.success("You have been logged out successfully!")
     st.rerun()
+
+def check_subscription_required():
+    """
+    Check if user has active subscription and show appropriate message.
+    Returns True if subscription is active, False otherwise.
+    """
+    if st.session_state.get('is_student'):
+        return True  # Students don't need subscriptions
+    
+    if not st.session_state.get('authenticated'):
+        return False
+    
+    has_subscription = st.session_state.get('has_active_subscription', False)
+    
+    if not has_subscription:
+        subscription_status = st.session_state.get('subscription_status', 'inactive')
+        
+        if subscription_status == 'past_due':
+            st.warning("⚠️ Your subscription payment is past due. Please update your payment method to continue using Guide.")
+        elif subscription_status == 'cancelled':
+            st.info("📋 Your subscription has been cancelled. Subscribe to regain full access.")
+        else:
+            st.info("📋 Subscribe to Guide to unlock all features. Visit auxpery.com.au to get started.")
+        
+        return False
+    
+    return True
+
+def get_subscription_display():
+    """
+    Get subscription status display info for the dashboard.
+    Returns a dictionary with status info.
+    """
+    if st.session_state.get('is_student'):
+        return None
+    
+    status = st.session_state.get('subscription_status', 'inactive')
+    plan = st.session_state.get('subscription_plan')
+    end_date = st.session_state.get('subscription_end_date')
+    
+    status_icons = {
+        'active': '✅',
+        'past_due': '⚠️',
+        'cancelled': '❌',
+        'inactive': '📋'
+    }
+    
+    status_labels = {
+        'active': 'Active',
+        'past_due': 'Payment Past Due',
+        'cancelled': 'Cancelled',
+        'inactive': 'No Subscription'
+    }
+    
+    plan_labels = {
+        'monthly': 'Monthly ($12/month)',
+        'yearly': 'Yearly ($144/year)'
+    }
+    
+    info = {
+        'icon': status_icons.get(status, '📋'),
+        'status': status_labels.get(status, 'Unknown'),
+        'plan': plan_labels.get(plan, 'N/A') if plan else 'N/A',
+        'end_date': end_date.strftime('%d/%m/%Y') if end_date else 'N/A',
+        'is_active': status == 'active'
+    }
+    
+    return info
 
 def show_user_info():
     """Display current user information"""
@@ -289,6 +367,15 @@ def show_user_info():
         else:
             st.sidebar.markdown(f"**{st.session_state.user_type.title()}:** {st.session_state.user_name}")
             st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
+            
+            # Show subscription status for educators
+            sub_info = get_subscription_display()
+            if sub_info:
+                st.sidebar.markdown("---")
+                st.sidebar.markdown(f"**Subscription:** {sub_info['icon']} {sub_info['status']}")
+                if sub_info['is_active']:
+                    st.sidebar.markdown(f"**Plan:** {sub_info['plan']}")
+                    st.sidebar.markdown(f"**Renews:** {sub_info['end_date']}")
         
         if st.sidebar.button("🚪 Logout"):
             logout()

@@ -24,6 +24,10 @@ args = "Guide AI Assistant"
 task = "workflow.run"
 args = "Adaptive Learning Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Stripe Webhook Server"
+
 [[workflows.workflow]]
 name = "Guide AI Assistant"
 author = "agent"
@@ -47,6 +51,17 @@ waitForPort = 3000
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "Stripe Webhook Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python stripe_webhook.py"
 
 [[ports]]
 localPort = 3000
@@ -113,4 +128,4 @@ localPort = 45011
 externalPort = 8099
 
 [agent]
-integrations = ["web_scraper==1.0.0", "python_openai==1.0.0==1.0.0", "python_openai==1.0.0"]
+integrations = ["web_scraper:1.0.0", "python_openai==1.0.0==1.0.0:1.0.0", "python_openai:1.0.0", "stripe:1.0.0"]

@@ -113,6 +113,12 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     institution_name = Column(Text, nullable=True)  # For institution-based sharing
     
+    # Stripe subscription fields
+    stripe_customer_id = Column(String, nullable=True, index=True)
+    subscription_status = Column(String, nullable=True, default='inactive')  # 'active', 'inactive', 'cancelled', 'past_due'
+    subscription_end_date = Column(DateTime, nullable=True)
+    subscription_plan = Column(String, nullable=True)  # 'monthly', 'yearly'
+    
     # Relationship to students they manage (primary educator)
     students = relationship("Student", back_populates="educator")
 
@@ -489,6 +495,67 @@ def authenticate_student(db, username: str, password: str) -> Optional[Student]:
 def get_user_by_email(db, email: str) -> Optional[User]:
     """Get user by email"""
     return db.query(User).filter(User.email == email).first()
+
+def get_user_by_stripe_customer_id(db, stripe_customer_id: str) -> Optional[User]:
+    """Get user by Stripe customer ID"""
+    return db.query(User).filter(User.stripe_customer_id == stripe_customer_id).first()
+
+def update_user_subscription(db, email: str, stripe_customer_id: str = None, 
+                             subscription_status: str = None, subscription_end_date: datetime = None,
+                             subscription_plan: str = None) -> Optional[User]:
+    """Update user's subscription information"""
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        return None
+    
+    if stripe_customer_id is not None:
+        user.stripe_customer_id = stripe_customer_id
+    if subscription_status is not None:
+        user.subscription_status = subscription_status
+    if subscription_end_date is not None:
+        user.subscription_end_date = subscription_end_date
+    if subscription_plan is not None:
+        user.subscription_plan = subscription_plan
+    
+    db.commit()
+    db.refresh(user)
+    return user
+
+def update_subscription_by_customer_id(db, stripe_customer_id: str,
+                                       subscription_status: str = None, 
+                                       subscription_end_date: datetime = None,
+                                       subscription_plan: str = None) -> Optional[User]:
+    """Update subscription by Stripe customer ID"""
+    user = db.query(User).filter(User.stripe_customer_id == stripe_customer_id).first()
+    if not user:
+        return None
+    
+    if subscription_status is not None:
+        user.subscription_status = subscription_status
+    if subscription_end_date is not None:
+        user.subscription_end_date = subscription_end_date
+    if subscription_plan is not None:
+        user.subscription_plan = subscription_plan
+    
+    db.commit()
+    db.refresh(user)
+    return user
+
+def check_subscription_active(db, user_id: int) -> bool:
+    """Check if user has an active subscription"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return False
+    
+    # Check subscription status
+    if user.subscription_status != 'active':
+        return False
+    
+    # Check if subscription has expired
+    if user.subscription_end_date and user.subscription_end_date < datetime.utcnow():
+        return False
+    
+    return True
 
 def get_all_educators(db):
     """Get all educators"""
