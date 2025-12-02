@@ -150,9 +150,24 @@ else:
     # Authenticated user interface
     show_user_info()
     
-    # Auto-scroll chat to bottom on new messages & scroll to top on card click
+    # Back to Top Button & Auto-scroll
     st.markdown("""
+    <button id="back-to-top-btn">Back to Top</button>
     <script>
+    // Back to Top button visibility
+    const backToTopBtn = document.getElementById('back-to-top-btn');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        backToTopBtn.classList.add('show');
+      } else {
+        backToTopBtn.classList.remove('show');
+      }
+    });
+    
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    
     // Auto-scroll chat to bottom
     const observer = new MutationObserver(() => {
       setTimeout(() => {
