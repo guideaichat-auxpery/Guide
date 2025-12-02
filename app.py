@@ -131,20 +131,22 @@ if not st.session_state.authenticated:
 
 # Authentication and main application logic
 if not st.session_state.authenticated:
-    # Welcome section
+    # Welcome section with quote
     st.markdown("""
-    <div class="welcome-box">
-        <h3>Welcome to Guide</h3>
-        <p><em>"Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials." - Maria Montessori</em></p>
-        
+    <div style="text-align: center; margin: 40px 0 60px 0; padding: 0 20px;">
+        <p style="font-size: 18px; font-style: italic; color: #555555; line-height: 1.8; margin: 0;">
+            "Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials."
+        </p>
+        <p style="font-size: 14px; color: #888888; margin: 12px 0 0 0; letter-spacing: 0.5px;">Maria Montessori</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Authentication mode selector
-    col1, col2, col3 = st.columns(3)
+    # Action buttons with proper spacing
+    st.markdown('<div style="margin: 50px 0; display: flex; flex-direction: column; gap: 16px;">', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3, gap="large")
     
     with col1:
-        if st.button("Login", use_container_width=True):
+        if st.button("Login", use_container_width=True, type="primary"):
             st.session_state.auth_mode = "login"
             st.rerun()
     
@@ -157,6 +159,8 @@ if not st.session_state.authenticated:
         if st.button("Terms & Conditions", use_container_width=True):
             st.session_state.auth_mode = "privacy_policy"
             st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Display appropriate authentication form
     if st.session_state.auth_mode == "login":

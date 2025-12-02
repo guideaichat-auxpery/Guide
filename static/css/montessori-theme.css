@@ -798,11 +798,26 @@ a:hover {
   transition: var(--transition-smooth) !important;
 }
 
-/* All labels - keep on single line */
+/* All labels - keep on single line with proper styling */
 label {
   white-space: nowrap !important;
   display: inline-block !important;
   color: var(--color-text-primary) !important;
+  font-weight: 500 !important;
+  font-size: 15px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Form input styling */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea,
+.stSelectbox > div > div,
+.stNumberInput > div > div > input {
+  border: 1.5px solid #DDDDDD !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  font-size: 15px !important;
+  background-color: #FFFFFF !important;
 }
 
 .stCheckbox label, .stRadio label {
@@ -930,14 +945,37 @@ section {
 
 /* Main header - Guide title */
 .main-header {
-  font-size: 44px !important;
-  line-height: var(--line-height) !important;
-  font-family: var(--font-sans) !important;
-  font-weight: 600 !important;
+  font-size: 56px !important;
+  line-height: 1.2 !important;
+  font-family: var(--font-serif) !important;
+  font-weight: 400 !important;
   color: var(--color-text-primary) !important;
   text-align: center !important;
   display: block !important;
   width: 100% !important;
+  margin: 40px 0 8px 0 !important;
+  letter-spacing: -0.5px !important;
+}
+
+.main-byline {
+  text-align: center !important;
+  color: #888888 !important;
+  font-family: var(--font-sans) !important;
+  font-size: 15px !important;
+  font-weight: 400 !important;
+  margin: 0 0 20px 0 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.subtitle {
+  text-align: center !important;
+  color: #666666 !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  margin: 24px 0 !important;
+  max-width: 700px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* All headings - ensure centered alignment and hide link icons */
@@ -955,6 +993,44 @@ h1 > a, h2 > a, h3 > a, h4 > a, h5 > a, h6 > a {
 /* Hide any SVG that appears after headings */
 h1 + svg, h2 + svg, h3 + svg, h4 + svg, h5 + svg, h6 + svg {
   display: none !important;
+}
+
+/* Button styling - professional look */
+.stButton > button[type="button"] {
+  background-color: #FFFFFF !important;
+  color: var(--color-text-primary) !important;
+  border: 1.5px solid #CCCCCC !important;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  min-height: 48px !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.3px !important;
+}
+
+.stButton > button[type="button"]:hover {
+  background-color: #F7F7F7 !important;
+  border-color: #BBBBBB !important;
+}
+
+.stButton > button[type="button"]:focus-visible,
+.stButton > button[type="button"]:focus {
+  outline: 2px solid #4C8BF5 !important;
+  outline-offset: 2px !important;
+}
+
+/* Primary button styling */
+.stButton > button[kind="primary"] {
+  background-color: var(--color-text-primary) !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid var(--color-text-primary) !important;
+}
+
+.stButton > button[kind="primary"]:hover {
+  background-color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
 }
 
 @media (max-width: 768px) {

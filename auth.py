@@ -16,7 +16,7 @@ def validate_password(password):
 
 def login_page():
     """Display login page for educators and students"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">Login to Your Account</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: var(--color-text-primary); font-size: 32px; font-weight: 500; margin: 30px 0; font-family: var(--font-sans);">Login to Your Account</h2>', unsafe_allow_html=True)
     
     # Choose login type
     login_type = st.selectbox("I am a:", ["Educator", "Student"])
@@ -104,8 +104,8 @@ def login_page():
 
 def signup_page():
     """Display signup page for new educators"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">Create Your Educator Account</h2>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: var(--color-text-primary); font-size: 32px; font-weight: 500; margin: 30px 0; font-family: var(--font-sans);">Create Your Educator Account</h2>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; color: #888888; font-size: 15px; margin-bottom: 30px;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
     
     # Privacy notice before signup
     st.info("**Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Terms and Conditions for details on how we handle your information.")
