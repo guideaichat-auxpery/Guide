@@ -69,12 +69,8 @@
   background-image: none !important;
 }
 
-/* Rule 3: No icons (hide ::before/::after pseudo-elements that might contain icons) */
-*::before,
-*::after {
-  content: none !important;
-  display: none !important;
-}
+/* Rule 3: Scope icon removal to specific UI elements only (not global) */
+/* REMOVED: Global *::before/*::after rule was breaking Streamlit rendering */
 
 /* Rule 4: All text must be dark grey on light background */
 body, .stApp, .main {
@@ -113,15 +109,9 @@ hr {
   margin: 8px 0 !important;
 }
 
-/* Rule 8: Hide emoji/icon content globally */
-*:has(svg), svg {
-  display: none !important;
-}
-
-/* Ensure no emojis render */
-[class*="emoji"],
-[class*="icon"],
-i, .fa, [data-icon] {
+/* Rule 8: Hide decorative icons only - scoped to avoid breaking Streamlit */
+/* REMOVED: Global svg hiding was breaking Streamlit UI */
+.fa, [data-icon], .material-icons {
   display: none !important;
   visibility: hidden !important;
 }
