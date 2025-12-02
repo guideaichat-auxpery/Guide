@@ -3034,3 +3034,99 @@ def show_first_time_prompts(feature_name: str):
         if st.button("Got it", key=f"dismiss_{feature_name}_prompt"):
             st.session_state[prompt_key] = True
             st.rerun()
+
+
+def show_feedback_interface():
+    """Feedback and bug report interface"""
+    scroll_to_top()
+    
+    st.markdown("### Send Feedback or Report a Bug")
+    st.markdown("Help us improve Guide by sharing your experience")
+    
+    with st.form("feedback_form"):
+        ticket_type = st.radio("Type", ["Bug Report", "Feature Request"], horizontal=True, key="fb_type")
+        subject = st.text_input("Subject", placeholder="Brief description of your feedback")
+        description = st.text_area("Details", placeholder="Tell us more about what you experienced", height=150)
+        
+        if ticket_type == "Bug Report":
+            severity = st.select_slider("Severity", ["Low", "Medium", "High"], key="fb_severity")
+        else:
+            severity = None
+        
+        submitted = st.form_submit_button("Submit Feedback", use_container_width=True, type="primary")
+        
+        if submitted and subject and description:
+            user_id = st.session_state.get('user_id')
+            ticket_type_key = 'bug_report' if ticket_type == "Bug Report" else 'feature_request'
+            
+            try:
+                from database import get_db, FeedbackTicket
+                db = get_db()
+                if db:
+                    ticket = FeedbackTicket(
+                        user_id=user_id,
+                        ticket_type=ticket_type_key,
+                        subject=subject,
+                        description=description,
+                        severity=severity.lower() if severity else None
+                    )
+                    db.add(ticket)
+                    db.commit()
+                    st.success("Thank you! Your feedback has been submitted.")
+                    st.balloons()
+                    st.rerun()
+            except Exception as e:
+                st.error(f"Error submitting feedback: {str(e)}")
+            finally:
+                db.close() if 'db' in locals() else None
+
+
+def show_support_contact_interface():
+    """Support contact form for subscription issues"""
+    scroll_to_top()
+    
+    st.markdown("### Support & Subscription Issues")
+    st.markdown("Contact us about billing, subscription, or account concerns")
+    
+    with st.form("support_form"):
+        issue_type = st.selectbox(
+            "Issue Type",
+            ["Billing Question", "Upgrade/Downgrade", "Cancellation Request", "Account Issue", "Other"],
+            key="sup_issue"
+        )
+        
+        email = st.text_input("Email", value=st.session_state.get('user_email', ''), key="sup_email")
+        subject = st.text_input("Subject", placeholder="Brief description of your issue")
+        message = st.text_area("Message", placeholder="Please describe your issue in detail", height=150)
+        
+        submitted = st.form_submit_button("Send Support Request", use_container_width=True, type="primary")
+        
+        if submitted and email and subject and message:
+            issue_type_key = {
+                "Billing Question": "billing",
+                "Upgrade/Downgrade": "upgrade",
+                "Cancellation Request": "cancel_request",
+                "Account Issue": "account",
+                "Other": "other"
+            }.get(issue_type, "other")
+            
+            try:
+                from database import get_db, SubscriptionContact
+                db = get_db()
+                if db:
+                    contact = SubscriptionContact(
+                        user_id=st.session_state.get('user_id'),
+                        email=email,
+                        issue_type=issue_type_key,
+                        subject=subject,
+                        message=message
+                    )
+                    db.add(contact)
+                    db.commit()
+                    st.success("Your support request has been submitted. We'll respond within 24 hours.")
+                    st.balloons()
+                    st.rerun()
+            except Exception as e:
+                st.error(f"Error submitting support request: {str(e)}")
+            finally:
+                db.close() if 'db' in locals() else None

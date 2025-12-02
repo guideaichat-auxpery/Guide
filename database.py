@@ -286,6 +286,33 @@ class SystemConfig(Base):
     config_value = Column(Text, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class FeedbackTicket(Base):
+    __tablename__ = "feedback_tickets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)
+    ticket_type = Column(String, nullable=False)  # 'bug_report' or 'feature_request'
+    subject = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    severity = Column(String, nullable=True)  # 'low', 'medium', 'high' for bugs
+    status = Column(String, default='new')  # 'new', 'reviewed', 'resolved'
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class SubscriptionContact(Base):
+    __tablename__ = "subscription_contacts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    email = Column(String, nullable=False)
+    issue_type = Column(String, nullable=False)  # 'billing', 'cancel_request', 'upgrade', 'other'
+    subject = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    status = Column(String, default='new')  # 'new', 'responded'
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 def create_tables():
     """Create all database tables with error handling"""
     if not engine:

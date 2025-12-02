@@ -3,7 +3,7 @@ import logging
 import sys
 from auth import login_page, signup_page, create_student_page, show_user_info
 from database import create_tables, database_status_message, database_available
-from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, check_and_show_onboarding, show_first_time_prompts
+from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, check_and_show_onboarding, show_first_time_prompts, show_feedback_interface, show_support_contact_interface
 
 # ---- STRUCTURED LOGGING CONFIGURATION ----
 # Centralized logging setup for the entire application
@@ -369,7 +369,7 @@ else:
         # Educator interface
         
         # Default to dashboard home for educators
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium']:
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium', 'feedback', 'support']:
             st.session_state.auth_mode = 'dashboard_home'
         
         # Show dashboard home or specific interface
@@ -465,17 +465,27 @@ else:
                             st.session_state.auth_mode = card['mode']
                             st.rerun()
                 
-                # Account buttons
+                # Account and support buttons
                 st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
-                acc_col1, acc_col2 = st.columns(2)
+                acc_col1, acc_col2, acc_col3 = st.columns(3)
                 with acc_col1:
                     if st.button("My Data", key="data_btn", use_container_width=True):
                         st.session_state.auth_mode = "data_access"
                         st.rerun()
                 with acc_col2:
-                    if st.button("Account Settings", key="account_btn", use_container_width=True):
+                    if st.button("Settings", key="account_btn", use_container_width=True):
                         st.session_state.auth_mode = "account_deletion"
                         st.rerun()
+                with acc_col3:
+                    if st.button("Support", key="support_btn", use_container_width=True):
+                        st.session_state.auth_mode = "support"
+                        st.rerun()
+                
+                # Feedback button
+                st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+                if st.button("Send Feedback", key="feedback_btn", use_container_width=True):
+                    st.session_state.auth_mode = "feedback"
+                    st.rerun()
                 
                 # PD Expert Mode
                 if st.session_state.get('user_email') == "guideaichat@gmail.com":
@@ -566,6 +576,18 @@ else:
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
         show_account_deletion_interface()
+    elif st.session_state.auth_mode == "feedback":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_feedback"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
+        show_feedback_interface()
+    elif st.session_state.auth_mode == "support":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_support"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
+        show_support_contact_interface()
     
 # Main app logic continues here
 
