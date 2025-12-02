@@ -71,10 +71,12 @@ button, a, [role="button"], input[type="button"], input[type="submit"], .stButto
   padding: 12px 16px !important;
 }
 
-/* Rule 6: Remove unpredictable whitespace globally */
-h1, h2, h3, h4, h5, h6, p {
+/* Rule 6: Intentional, predictable whitespace */
+p {
   margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 12px !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1.6 !important;
 }
 
 .element-container {
@@ -128,10 +130,10 @@ i, .fa, [data-icon] {
   color: var(--color-text-primary) !important;
 }
 
-/* Main content area - Tight padding to prevent dead zones */
+/* Main content area - Intentional breathing room */
 .main .block-container {
   max-width: var(--max-width) !important;
-  padding: 12px !important;
+  padding: 24px 16px !important;
   background-color: var(--color-bg-primary) !important;
   font-family: var(--font-sans) !important;
   font-size: var(--font-size-body) !important;
@@ -139,7 +141,7 @@ i, .fa, [data-icon] {
   margin: 0 !important;
 }
 
-/* Headers - Tight spacing */
+/* Headers - Intentional spacing with breathing room */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans) !important;
   font-size: var(--font-size-heading) !important;
@@ -147,14 +149,20 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-text-primary) !important;
   font-weight: 600 !important;
   margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 12px !important;
+  letter-spacing: 0.3px !important;
 }
 
-/* Cards and containers - Eliminate excessive gaps */
+h1 {
+  margin-bottom: 16px !important;
+  font-size: 28px !important;
+}
+
+/* Cards and containers - Intentional spacing */
 .element-container {
   transition: var(--transition-smooth);
   margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 16px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
@@ -165,34 +173,38 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 !important;
 }
 
-/* Streamlit expanders - Compact */
+/* Streamlit expanders - Gentle styling */
 .streamlit-expanderHeader {
   background-color: var(--color-bg-secondary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 12px !important;
+  padding: 14px 16px !important;
   font-weight: 500 !important;
   color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
   margin-bottom: 0 !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .streamlit-expanderHeader:hover {
-  background-color: var(--color-bg-secondary) !important;
+  background-color: #F7F7F7 !important;
   border-color: var(--color-text-secondary) !important;
 }
 
-/* Expander content - no extra spacing */
+/* Expander content - intentional spacing */
 .streamlit-expanderContent {
-  padding: 12px !important;
+  padding: 16px !important;
   margin-top: 0 !important;
+  background-color: var(--color-bg-secondary) !important;
 }
 
-/* Tabs - Compact spacing */
+/* Tabs - Gentle spacing */
 .stTabs [data-baseweb="tab-list"] {
-  gap: 8px !important;
+  gap: 12px !important;
   background-color: transparent !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 16px !important;
 }
 
 .stTabs [data-baseweb="tab"] {
@@ -243,19 +255,20 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: none !important;
 }
 
-/* Text inputs - Compact */
+/* Text inputs - Gentle, readable inputs */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea {
   background-color: var(--color-bg-secondary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-small) !important;
-  padding: 12px !important;
+  padding: 14px 12px !important;
   color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
   font-family: var(--font-sans) !important;
   font-size: var(--font-size-body) !important;
   line-height: var(--line-height) !important;
   margin: 0 !important;
+  letter-spacing: 0.2px !important;
 }
 
 .stTextInput > div > div > input:focus,
@@ -279,17 +292,18 @@ input[type="password"]:focus-visible {
   color: var(--color-text-primary) !important;
 }
 
-/* Chat container - Full width, single column */
+/* Chat container - Gentle spacing with breathing room */
 .stChatMessage {
   width: 100% !important;
   border-radius: 8px !important;
-  padding: 12px !important;
-  margin-bottom: 8px !important;
+  padding: 16px !important;
+  margin-bottom: 12px !important;
   margin-top: 0 !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
   box-shadow: none !important;
   border: 1px solid #E6E6E6 !important;
+  transition: background-color 0.3s ease !important;
 }
 
 /* User message styling */
@@ -377,14 +391,14 @@ input[type="password"]:focus-visible {
   margin-bottom: 8px !important;
 }
 
-/* Sidebar - Text Only Navigation */
+/* Sidebar - Text Only Navigation with breathing room */
 .css-1d391kg, [data-testid="stSidebar"] {
   background-color: #FFFFFF !important;
   border-right: 1px solid #E6E6E6 !important;
-  padding: 16px !important;
+  padding: 20px 16px !important;
 }
 
-/* Sidebar nav items - Text only */
+/* Sidebar nav items - Text only with breathing room */
 .stSidebar [data-testid="stMarkdownContainer"],
 .stSidebar button {
   min-height: 44px !important;
@@ -396,10 +410,11 @@ input[type="password"]:focus-visible {
   background-color: #FFFFFF !important;
   border: 1px solid #E6E6E6 !important;
   border-radius: 6px !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 12px !important;
   width: 100% !important;
   text-align: left !important;
-  transition: background-color 0.2s ease !important;
+  transition: background-color 0.3s ease !important;
+  letter-spacing: 0.3px !important;
 }
 
 .stSidebar button {
@@ -490,19 +505,24 @@ input[type="password"]:focus-visible {
   margin: 0 !important;
 }
 
-/* Cards - Navigation or Choices */
+/* Cards - Navigation or Choices with breathing room */
 .stCard, [data-testid="column"] > div > div > div {
   background-color: #FFFFFF !important;
   border: 1px solid #E6E6E6 !important;
   border-radius: 12px !important;
-  padding: 16px !important;
+  padding: 20px !important;
   box-shadow: none !important;
   cursor: pointer !important;
-  transition: background-color 0.2s ease !important;
+  transition: all 0.3s ease !important;
+  min-height: 120px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
 }
 
 .stCard:hover, [data-testid="column"] > div > div > div:hover {
   background-color: #F7F7F7 !important;
+  border-color: #D0D0D0 !important;
 }
 
 .stCard:focus, [data-testid="column"] > div > div > div:focus {
@@ -518,15 +538,22 @@ input[type="password"]:focus-visible {
   color: #333333 !important;
   font-size: 16px !important;
   margin: 0 !important;
+  letter-spacing: 0.3px !important;
 }
 
 .stCard h3, [data-testid="column"] > div > div > div h3 {
   font-size: 18px !important;
   font-weight: 600 !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 12px !important;
+  line-height: 1.4 !important;
 }
 
-/* Remove oversized whitespace inside cards */
+.stCard p, [data-testid="column"] > div > div > div p {
+  margin-bottom: 8px !important;
+  line-height: 1.5 !important;
+}
+
+/* Intentional whitespace inside cards */
 .stCard > div, [data-testid="column"] > div > div > div > div {
   margin: 0 !important;
   padding: 0 !important;
