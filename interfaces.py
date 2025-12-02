@@ -1384,12 +1384,12 @@ def show_student_dashboard_interface():
                                     messages = load_conversation_to_session(db, chat.session_id, 'student')
                                     
                                     if messages:
-                                        st.markdown("**Conversation:**")
-                                        for msg in messages[-10:]:  # Show last 10 messages
+                                        st.markdown("**Full Conversation:**")
+                                        for msg in messages:  # Show ALL messages
                                             if msg['role'] == 'user':
-                                                st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                                st.markdown(f"👤 **Student:**\n{msg['content']}")
                                             else:
-                                                st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                                st.markdown(f"🤖 **AI:**\n{msg['content']}")
                                     else:
                                         st.info("No messages in this conversation yet.")
                             st.markdown("---")
@@ -1409,12 +1409,12 @@ def show_student_dashboard_interface():
                                 messages = load_conversation_to_session(db, chat.session_id, 'student')
                                 
                                 if messages:
-                                    st.markdown("**Conversation:**")
-                                    for msg in messages[-10:]:  # Show last 10 messages
+                                    st.markdown("**Full Conversation:**")
+                                    for msg in messages:  # Show ALL messages
                                         if msg['role'] == 'user':
-                                            st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                            st.markdown(f"👤 **Student:**\n{msg['content']}")
                                         else:
-                                            st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                            st.markdown(f"🤖 **AI:**\n{msg['content']}")
                                 else:
                                     st.info("No messages in this conversation yet.")
                 else:
