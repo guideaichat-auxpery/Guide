@@ -128,17 +128,42 @@ i, .fa, [data-icon] {
   font-size: var(--font-size-body) !important;
   line-height: var(--line-height) !important;
   color: var(--color-text-primary) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
 }
 
-/* Main content area - Intentional breathing room */
+/* Streamlit header */
+.streamlit-container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+/* Main content area - Full height flex layout */
 .main .block-container {
   max-width: var(--max-width) !important;
-  padding: 24px 16px !important;
+  padding: 0 !important;
   background-color: var(--color-bg-primary) !important;
   font-family: var(--font-sans) !important;
   font-size: var(--font-size-body) !important;
   line-height: var(--line-height) !important;
   margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  flex: 1 !important;
+}
+
+/* Chat messages scroll container */
+[data-testid="stChatMessageContainer"] {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 24px 16px !important;
+  scroll-behavior: smooth !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
 }
 
 /* Headers - Intentional spacing with breathing room */
@@ -292,62 +317,63 @@ input[type="password"]:focus-visible {
   color: var(--color-text-primary) !important;
 }
 
-/* Chat container - Gentle spacing with breathing room */
+/* Chat container - Single column, fluid stacking */
 .stChatMessage {
   width: 100% !important;
   border-radius: 8px !important;
   padding: 16px !important;
-  margin-bottom: 12px !important;
-  margin-top: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+  margin: 0 !important;
   box-shadow: none !important;
   border: 1px solid #E6E6E6 !important;
   transition: background-color 0.3s ease !important;
+  flex-shrink: 0 !important;
 }
 
-/* User message styling */
-[data-testid="chatMessage"]:has([data-testid="stChatMessageContent"]) {
-  background-color: #FFFFFF !important;
-  align-self: flex-end !important;
-  max-width: 100% !important;
-}
-
-/* Assistant message styling */
+/* Assistant message styling - Default */
 .stChatMessage {
   background-color: #FFFEFA !important;
+  align-self: flex-start !important;
 }
 
-/* Chat message content - Left aligned */
+/* User message styling - Right aligned */
+.stChatMessage[data-testid="stChatMessageContent"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Chat message content - Full width */
 [data-testid="stChatMessageContent"] {
   width: 100% !important;
   padding: 0 !important;
+  margin: 0 !important;
 }
 
-/* Chat message text */
+/* Chat message text - Preserved formatting */
 .stChatMessage .stMarkdown {
   color: var(--color-text-primary) !important;
+  margin: 0 !important;
 }
 
-/* Chat input container - Fixed at bottom */
+/* Chat input - Fixed at bottom */
 .stChatInput {
-  position: sticky !important;
-  bottom: 0 !important;
-  background-color: var(--color-bg-primary) !important;
-  padding: 16px 0 !important;
-  z-index: 100 !important;
-  width: 100% !important;
-}
-
-/* Chat input wrapper */
-.stChatInputContainer {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 100 !important;
+  flex-shrink: 0 !important;
   background-color: var(--color-bg-primary) !important;
   padding: 16px !important;
+  border-top: 1px solid #E6E6E6 !important;
+  z-index: 100 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+/* Chat input wrapper - Always visible at bottom */
+.stChatInputContainer {
+  flex-shrink: 0 !important;
+  background-color: var(--color-bg-primary) !important;
+  padding: 16px !important;
+  border-top: 1px solid #E6E6E6 !important;
+  z-index: 100 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* Success/Info/Warning/Error boxes - Compact */

@@ -149,7 +149,7 @@ else:
     # Authenticated user interface
     show_user_info()
     
-    # Back to Top Button & Auto-scroll
+    # ChatGPT-like chat layout with auto-scroll & back to top
     st.markdown("""
     <button id="back-to-top-btn">Back to Top</button>
     <script>
@@ -167,17 +167,28 @@ else:
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
     
-    // Auto-scroll chat to bottom
-    const observer = new MutationObserver(() => {
-      setTimeout(() => {
-        const container = document.querySelector('[data-testid="stChatMessageContainer"]') || document.querySelector('.stChatMessage');
-        if (container) container.scrollTop = container.scrollHeight;
-      }, 50);
-    });
-    const target = document.querySelector('[data-testid="stChatMessageContainer"]') || document.body;
-    if (target) observer.observe(target, { childList: true, subtree: true });
+    // Auto-scroll chat messages to bottom (fluid continuous flow)
+    const scrollChatToBottom = () => {
+      const container = document.querySelector('[data-testid="stChatMessageContainer"]');
+      if (container) {
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 50);
+      }
+    };
     
-    // Scroll to top on card click
+    // Observer for new messages
+    const observer = new MutationObserver(() => {
+      scrollChatToBottom();
+    });
+    
+    const chatContainer = document.querySelector('[data-testid="stChatMessageContainer"]');
+    if (chatContainer) {
+      observer.observe(chatContainer, { childList: true, subtree: true });
+      scrollChatToBottom();
+    }
+    
+    // Scroll to top on card click (navigation)
     document.addEventListener('click', (e) => {
       const card = e.target.closest('[data-testid="column"], .stCard');
       if (card) {
