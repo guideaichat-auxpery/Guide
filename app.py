@@ -125,49 +125,54 @@ if show_header:
     st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
     st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
 
-# Only show subtitle for unauthenticated users
-if not st.session_state.authenticated:
-    st.markdown('<p class="subtitle">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning</p>', unsafe_allow_html=True)
-
 # Authentication and main application logic
 if not st.session_state.authenticated:
-    # Welcome section with quote
-    st.markdown("""
-    <div style="text-align: center; margin: 40px 0 60px 0; padding: 0 20px;">
-        <p style="font-size: 18px; font-style: italic; color: #555555; line-height: 1.8; margin: 0;">
-            "Education should no longer be mostly imparting of knowledge, but must take a new path, seeking the release of human potentials."
+    # Check if we're showing a form (login/signup/privacy) or the landing page
+    current_mode = st.session_state.get('auth_mode', 'landing')
+    
+    if current_mode == 'landing':
+        # Clean landing page - single column, stacked layout
+        st.markdown("""
+        <div style="max-width: 480px; margin: 0 auto; padding: 48px 24px; text-align: center;">
+            <p style="font-size: 17px; color: #555555; line-height: 1.7; margin: 0 0 48px 0;">
+                From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Centered button container
+        _, center_col, _ = st.columns([1, 2, 1])
+        with center_col:
+            if st.button("Login", use_container_width=True, type="primary", key="landing_login"):
+                st.session_state.auth_mode = "login"
+                st.session_state.login_user_type = "Educator"  # Reset to default
+                st.rerun()
+            
+            st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
+            
+            if st.button("Create an account", use_container_width=True, key="landing_signup"):
+                st.session_state.auth_mode = "signup"
+                st.rerun()
+        
+        # Terms section - small text with subtle button
+        st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <p style="text-align: center; font-size: 13px; color: #999999; margin: 0 0 8px 0;">
+            By continuing, you agree to our
         </p>
-        <p style="font-size: 14px; color: #888888; margin: 12px 0 0 0; letter-spacing: 0.5px;">Maria Montessori</p>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+        
+        _, terms_col, _ = st.columns([1.5, 1, 1.5])
+        with terms_col:
+            if st.button("Terms & Conditions", key="landing_terms", type="secondary"):
+                st.session_state.auth_mode = "privacy_policy"
+                st.rerun()
     
-    # Action buttons with proper spacing
-    st.markdown('<div style="margin: 50px 0; display: flex; flex-direction: column; gap: 16px;">', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3, gap="large")
-    
-    with col1:
-        if st.button("Login", use_container_width=True, type="primary"):
-            st.session_state.auth_mode = "login"
-            st.rerun()
-    
-    with col2:
-        if st.button("Sign Up", use_container_width=True):
-            st.session_state.auth_mode = "signup"
-            st.rerun()
-    
-    with col3:
-        if st.button("Terms & Conditions", use_container_width=True):
-            st.session_state.auth_mode = "privacy_policy"
-            st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Display appropriate authentication form
-    if st.session_state.auth_mode == "login":
+    elif current_mode == "login":
         login_page()
-    elif st.session_state.auth_mode == "signup":
+    elif current_mode == "signup":
         signup_page()
-    elif st.session_state.auth_mode == "privacy_policy":
+    elif current_mode == "privacy_policy":
         show_privacy_policy()
     
 

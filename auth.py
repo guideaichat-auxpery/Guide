@@ -16,134 +16,190 @@ def validate_password(password):
 
 def login_page():
     """Display login page for educators and students"""
-    st.markdown('<h2 style="text-align: center; color: var(--color-text-primary); font-size: 32px; font-weight: 500; margin: 30px 0; font-family: var(--font-sans);">Login to Your Account</h2>', unsafe_allow_html=True)
+    # Ensure login defaults to Educator on fresh entry
+    if 'login_user_type' not in st.session_state:
+        st.session_state.login_user_type = "Educator"
     
-    # Choose login type
-    login_type = st.selectbox("I am a:", ["Educator", "Student"])
+    # Back link - also reset login type when going back
+    if st.button("Back", key="login_back"):
+        st.session_state.auth_mode = "landing"
+        st.session_state.login_user_type = "Educator"  # Reset for next visit
+        st.rerun()
     
-    if login_type == "Educator":
-        with st.form("educator_login"):
-            st.markdown("### Educator Login")
-            email = st.text_input("Email", placeholder="your.email@example.com")
-            password = st.text_input("Password", type="password")
-            submit = st.form_submit_button("Login", use_container_width=True)
-            
-            if submit:
-                if not email or not password:
-                    st.error("Please enter both email and password")
-                elif not validate_email(email):
-                    st.error("Please enter a valid email address")
-                else:
-                    db = get_db()
-                    if not db:
-                        st.error("Authentication is not available. Database connection required.")
-                        return
-                    try:
-                        user = authenticate_user(db, email, password)
-                        if user:
-                            st.session_state.user_id = user.id
-                            st.session_state.user_type = user.user_type
-                            st.session_state.user_name = user.full_name
-                            st.session_state.user_email = user.email
-                            st.session_state.authenticated = True
-                            st.session_state.is_student = False
-                            
-                            # Store subscription information
-                            st.session_state.subscription_status = user.subscription_status or 'inactive'
-                            st.session_state.subscription_plan = user.subscription_plan
-                            st.session_state.subscription_end_date = user.subscription_end_date
-                            st.session_state.has_active_subscription = check_subscription_active(db, user.id)
-                            
-                            # Clear any existing auth_mode to ensure clean state
-                            if 'auth_mode' in st.session_state:
-                                del st.session_state['auth_mode']
-                            st.success(f"Welcome back, {user.full_name}!")
-                            st.rerun()
-                        else:
-                            st.error("Invalid email or password")
-                    finally:
-                        if db:
-                            db.close()
+    # Centered container
+    st.markdown("""
+    <div style="max-width: 400px; margin: 0 auto; padding: 24px;">
+        <h2 style="text-align: center; color: #333333; font-size: 28px; font-weight: 500; margin: 0 0 32px 0;">
+            Login
+        </h2>
+    </div>
+    """, unsafe_allow_html=True)
     
-    else:  # Student login
-        with st.form("student_login"):
-            st.markdown("### Student Login")
-            username = st.text_input("Username", placeholder="your_username")
-            password = st.text_input("Password", type="password")
-            submit = st.form_submit_button("Login", use_container_width=True)
-            
-            if submit:
-                if not username or not password:
-                    st.error("Please enter both username and password")
-                else:
-                    db = get_db()
-                    if not db:
-                        st.error("Authentication is not available. Database connection required.")
-                        return
-                    try:
-                        student = authenticate_student(db, username, password)
-                        if student:
-                            st.session_state.user_id = student.id
-                            st.session_state.user_type = "student"
-                            st.session_state.user_name = student.full_name
-                            st.session_state.username = student.username
-                            st.session_state.educator_id = student.educator_id
-                            st.session_state.age_group = student.age_group
-                            st.session_state.authenticated = True
-                            st.session_state.is_student = True
-                            # Clear any existing auth_mode to prevent educator features from showing
-                            if 'auth_mode' in st.session_state:
-                                del st.session_state['auth_mode']
-                            st.success(f"Welcome back, {student.full_name}!")
-                            st.rerun()
-                        else:
-                            st.error("Invalid username or password")
-                    finally:
-                        if db:
-                            db.close()
+    # Toggle pills for Educator/Student - state-driven approach
+    _, pill_col, _ = st.columns([1, 2, 1])
+    with pill_col:
+        col_edu, col_stu = st.columns(2)
+        with col_edu:
+            if st.button("Educator", 
+                        key="toggle_educator",
+                        use_container_width=True,
+                        type="primary" if st.session_state.login_user_type == "Educator" else "secondary"):
+                st.session_state.login_user_type = "Educator"
+                st.rerun()
+        with col_stu:
+            if st.button("Student",
+                        key="toggle_student", 
+                        use_container_width=True,
+                        type="primary" if st.session_state.login_user_type == "Student" else "secondary"):
+                st.session_state.login_user_type = "Student"
+                st.rerun()
+    
+    st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
+    
+    # Form container - render based on session state
+    _, form_col, _ = st.columns([1, 2, 1])
+    with form_col:
+        if st.session_state.login_user_type == "Educator":
+            with st.form("educator_login"):
+                email = st.text_input("Email", placeholder="your.email@example.com")
+                password = st.text_input("Password", type="password")
+                
+                st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
+                submit = st.form_submit_button("Login", use_container_width=True, type="primary")
+                
+                if submit:
+                    if not email or not password:
+                        st.error("Please enter both email and password")
+                    elif not validate_email(email):
+                        st.error("Please enter a valid email address")
+                    else:
+                        db = get_db()
+                        if not db:
+                            st.error("Authentication is not available. Database connection required.")
+                            return
+                        try:
+                            user = authenticate_user(db, email, password)
+                            if user:
+                                st.session_state.user_id = user.id
+                                st.session_state.user_type = user.user_type
+                                st.session_state.user_name = user.full_name
+                                st.session_state.user_email = user.email
+                                st.session_state.authenticated = True
+                                st.session_state.is_student = False
+                                
+                                st.session_state.subscription_status = user.subscription_status or 'inactive'
+                                st.session_state.subscription_plan = user.subscription_plan
+                                st.session_state.subscription_end_date = user.subscription_end_date
+                                st.session_state.has_active_subscription = check_subscription_active(db, user.id)
+                                
+                                if 'auth_mode' in st.session_state:
+                                    del st.session_state['auth_mode']
+                                st.success(f"Welcome back, {user.full_name}!")
+                                st.rerun()
+                            else:
+                                st.error("Invalid email or password")
+                        finally:
+                            if db:
+                                db.close()
+        
+        else:  # Student login
+            with st.form("student_login"):
+                username = st.text_input("Username", placeholder="your_username")
+                password = st.text_input("Password", type="password")
+                
+                st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
+                submit = st.form_submit_button("Login", use_container_width=True, type="primary")
+                
+                if submit:
+                    if not username or not password:
+                        st.error("Please enter both username and password")
+                    else:
+                        db = get_db()
+                        if not db:
+                            st.error("Authentication is not available. Database connection required.")
+                            return
+                        try:
+                            student = authenticate_student(db, username, password)
+                            if student:
+                                st.session_state.user_id = student.id
+                                st.session_state.user_type = "student"
+                                st.session_state.user_name = student.full_name
+                                st.session_state.username = student.username
+                                st.session_state.educator_id = student.educator_id
+                                st.session_state.age_group = student.age_group
+                                st.session_state.authenticated = True
+                                st.session_state.is_student = True
+                                if 'auth_mode' in st.session_state:
+                                    del st.session_state['auth_mode']
+                                st.success(f"Welcome back, {student.full_name}!")
+                                st.rerun()
+                            else:
+                                st.error("Invalid username or password")
+                        finally:
+                            if db:
+                                db.close()
+        
+        # Secondary links below form
+        st.markdown("""
+        <div style="text-align: center; margin-top: 24px; font-size: 14px;">
+            <span style="color: #888888;">Don't have an account?</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("Create an account", key="login_to_signup", use_container_width=True):
+            st.session_state.auth_mode = "signup"
+            st.rerun()
 
 def signup_page():
     """Display signup page for new educators"""
-    st.markdown('<h2 style="text-align: center; color: var(--color-text-primary); font-size: 32px; font-weight: 500; margin: 30px 0; font-family: var(--font-sans);">Create Your Educator Account</h2>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; color: #888888; font-size: 15px; margin-bottom: 30px;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
-    
-    # Privacy notice before signup
-    st.info("**Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Terms and Conditions for details on how we handle your information.")
-    
-    # Link to terms and conditions
-    if st.button("View Terms & Conditions", key="signup_privacy_link"):
-        st.session_state.auth_mode = "privacy_policy"
+    # Back link
+    if st.button("Back", key="signup_back"):
+        st.session_state.auth_mode = "landing"
         st.rerun()
     
-    with st.form("educator_signup"):
-        st.markdown("### Create New Account")
-        full_name = st.text_input("Full Name", placeholder="Your full name")
-        email = st.text_input("Email", placeholder="your.email@example.com")
-        user_type = st.selectbox("I am a:", ["Educator"])
-        user_type = "educator"  # Normalize to single type
-        password = st.text_input("Password", type="password", help="Minimum 6 characters")
-        confirm_password = st.text_input("Confirm Password", type="password")
-        
-        # Consent checkboxes
-        st.markdown("---")
-        st.markdown("### Privacy & Consent")
-        
-        consent_data_collection = st.checkbox(
-            "I understand that Guide collects and stores my personal information (name, email, usage data) to provide educational services.",
-            value=False
-        )
-        
-        consent_overseas_transfer = st.checkbox(
-            "I consent to my data being sent to OpenAI (United States) for AI processing. I understand Australian privacy laws may not apply to this overseas data transfer.",
-            value=False
-        )
-        
-        consent_privacy_policy = st.checkbox(
-            "I have read and agree to the Terms of Use and Privacy Policy.",
-            value=False
-        )
-        
-        submit = st.form_submit_button("Create Account", use_container_width=True)
+    # Centered container
+    st.markdown("""
+    <div style="max-width: 400px; margin: 0 auto; padding: 24px;">
+        <h2 style="text-align: center; color: #333333; font-size: 28px; font-weight: 500; margin: 0 0 8px 0;">
+            Create Account
+        </h2>
+        <p style="text-align: center; color: #888888; font-size: 15px; margin: 0 0 32px 0;">
+            Join our Montessori educational community
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Form container
+    _, form_col, _ = st.columns([1, 2, 1])
+    with form_col:
+        with st.form("educator_signup"):
+            full_name = st.text_input("Full Name", placeholder="Your full name")
+            email = st.text_input("Email", placeholder="your.email@example.com")
+            user_type = "educator"  # Normalize to single type
+            password = st.text_input("Password", type="password", help="Minimum 6 characters")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            
+            # Consent checkboxes
+            st.markdown('<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #E0E0E0;"></div>', unsafe_allow_html=True)
+            st.markdown('<p style="font-size: 14px; font-weight: 500; color: #333333; margin-bottom: 16px;">Privacy & Consent</p>', unsafe_allow_html=True)
+            
+            consent_data_collection = st.checkbox(
+                "I understand that Guide collects and stores my personal information to provide educational services.",
+                value=False
+            )
+            
+            consent_overseas_transfer = st.checkbox(
+                "I consent to my data being processed by OpenAI (United States) for AI features.",
+                value=False
+            )
+            
+            consent_privacy_policy = st.checkbox(
+                "I have read and agree to the Terms of Use and Privacy Policy.",
+                value=False
+            )
+            
+            st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
+            submit = st.form_submit_button("Create Account", use_container_width=True, type="primary")
         
         if submit:
             # Validation
@@ -209,7 +265,7 @@ def create_student_page():
         st.error("Access denied. Only educators can create student accounts.")
         return
     
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">👨‍🎓 Create Student Account</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: #333333; font-size: 28px; font-weight: 500; margin: 30px 0;">Create Student Account</h2>', unsafe_allow_html=True)
     
     with st.form("create_student"):
         st.markdown("### Add New Student")
