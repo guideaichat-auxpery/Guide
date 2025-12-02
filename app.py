@@ -64,7 +64,7 @@ st.markdown("""
     text-align: center;
     font-family: var(--font-serif);
     color: var(--color-ink);
-    margin-bottom: 0.5rem;
+    margin-bottom: 16px;
     font-size: 4rem;
     font-weight: 500;
 }
@@ -74,27 +74,27 @@ st.markdown("""
     font-family: var(--font-serif);
     font-size: 1.3rem;
     font-weight: 300;
-    margin-bottom: 1rem;
+    margin-bottom: 16px;
 }
 .subtitle {
     text-align: center;
     color: var(--color-ink);
-    margin-bottom: 2rem;
+    margin-bottom: 16px;
     opacity: 0.8;
 }
 .welcome-box {
     background: linear-gradient(135deg, var(--color-sand), var(--color-sky));
-    padding: 2rem;
+    padding: 16px;
     border-radius: var(--radius-large);
-    margin: 2rem 0;
+    margin: 16px 0;
     border-left: 5px solid var(--color-leaf);
     box-shadow: var(--shadow-soft);
 }
 .user-type {
     background: var(--color-sand);
-    padding: 1rem;
+    padding: 16px;
     border-radius: var(--radius-medium);
-    margin: 1rem 0;
+    margin: 16px 0;
     border-left: 3px solid var(--color-leaf);
 }
 </style>

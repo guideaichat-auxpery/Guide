@@ -22,6 +22,9 @@
 
   /* Spacing & Layout */
   --text-base: 16px;
+  --spacing-global: 16px;
+  --spacing-component: 16px;
+  --spacing-chat: 12px;
   --radius-large: 20px;
   --radius-medium: 12px;
   --radius-small: 8px;
@@ -62,7 +65,7 @@
 /* Main content area */
 .main .block-container {
   max-width: var(--max-width) !important;
-  padding: 2rem 1rem !important;
+  padding: var(--spacing-global) !important;
   background-color: var(--color-bg-primary) !important;
   font-family: var(--font-sans) !important;
   font-size: var(--font-size-body) !important;
@@ -88,7 +91,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--color-bg-secondary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 0.75rem 1rem !important;
+  padding: var(--spacing-component) !important;
   font-weight: 500 !important;
   color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
@@ -101,7 +104,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Tabs */
 .stTabs [data-baseweb="tab-list"] {
-  gap: 8px;
+  gap: var(--spacing-component) !important;
   background-color: transparent !important;
 }
 
@@ -109,7 +112,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--color-bg-secondary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 0.5rem 1rem !important;
+  padding: var(--spacing-component) !important;
   color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
 }
@@ -126,7 +129,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 0.5rem 1.5rem !important;
+  padding: var(--spacing-component) !important;
   font-weight: 500 !important;
   box-shadow: var(--shadow-soft) !important;
   transition: var(--transition-smooth) !important;
@@ -154,7 +157,7 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--color-bg-secondary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-small) !important;
-  padding: 0.75rem !important;
+  padding: var(--spacing-component) !important;
   color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
   font-family: var(--font-sans) !important;
@@ -186,8 +189,8 @@ input[type="password"]:focus-visible {
 /* Chat messages styling */
 .stChatMessage {
   border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
-  margin-bottom: 0.75rem !important;
+  padding: var(--spacing-component) !important;
+  margin-bottom: var(--spacing-chat) !important;
   box-shadow: var(--shadow-soft) !important;
 }
 
@@ -202,7 +205,7 @@ input[type="password"]:focus-visible {
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
+  padding: var(--spacing-component) !important;
 }
 
 .stInfo {
@@ -210,7 +213,7 @@ input[type="password"]:focus-visible {
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
+  padding: var(--spacing-component) !important;
 }
 
 .stWarning {
@@ -218,7 +221,7 @@ input[type="password"]:focus-visible {
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
+  padding: var(--spacing-component) !important;
 }
 
 .stError {
@@ -226,7 +229,7 @@ input[type="password"]:focus-visible {
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
+  padding: var(--spacing-component) !important;
 }
 
 /* Sidebar */
@@ -238,7 +241,7 @@ input[type="password"]:focus-visible {
 .stFileUploader {
   background-color: var(--color-bg-secondary) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
+  padding: var(--spacing-component) !important;
   border: 2px dashed var(--color-border) !important;
   color: var(--color-text-primary) !important;
 }
@@ -317,7 +320,7 @@ a:hover {
   background-color: var(--color-bg-secondary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
+  padding: var(--spacing-component) !important;
   box-shadow: var(--shadow-soft) !important;
   color: var(--color-text-primary) !important;
 }
@@ -343,7 +346,7 @@ a:hover {
   color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 0.5rem 1.5rem !important;
+  padding: var(--spacing-component) !important;
   transition: var(--transition-smooth) !important;
 }
 
