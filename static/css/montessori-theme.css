@@ -28,13 +28,78 @@
   --radius-large: 20px;
   --radius-medium: 12px;
   --radius-small: 8px;
-  --shadow-soft: 0 2px 8px rgba(51, 51, 51, 0.08);
   --transition-smooth: all 0.28s ease-in-out;
 
   /* Accessibility */
-  --focus-ring: 3px solid rgba(51, 51, 51, 0.2);
-  --focus-shadow: rgba(51, 51, 51, 0.2) 0px 0px 0px 0.2rem;
+  --focus-ring: 2px solid #4C8BF5;
   --max-width: 1080px;
+}
+
+/* GLOBAL INTERACTION RULES - Non-Negotiable */
+/* Rule 1: No shadows anywhere */
+* {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Rule 2: No decorative gradients */
+* {
+  background-image: none !important;
+}
+
+/* Rule 3: No icons (hide ::before/::after pseudo-elements that might contain icons) */
+*::before,
+*::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Rule 4: All text must be dark grey on light background */
+body, .stApp, .main {
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-bg-primary) !important;
+}
+
+/* Rule 5: All click targets ≥ 44px tall */
+button, a, [role="button"], input[type="button"], input[type="submit"], .stButton,
+.stDownloadButton, .stSelectbox, .stMultiSelect, .stCheckbox, .stRadio,
+.stTextInput, .stTextArea, .stNumberInput, .stSlider, .stDateInput, .stTimeInput,
+.stFileUploader, [data-testid="stMarkdownContainer"] > a {
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+}
+
+/* Rule 6: Remove unpredictable whitespace globally */
+h1, h2, h3, h4, h5, h6, p {
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+}
+
+.element-container {
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+}
+
+/* Rule 7: No visual clutter - remove all decorative elements */
+hr {
+  border: none !important;
+  border-top: 1px solid var(--color-border) !important;
+  margin: 8px 0 !important;
+}
+
+/* Rule 8: Hide emoji/icon content globally */
+*:has(svg), svg {
+  display: none !important;
+}
+
+/* Ensure no emojis render */
+[class*="emoji"],
+[class*="icon"],
+i, .fa, [data-icon] {
+  display: none !important;
+  visibility: hidden !important;
 }
 
 /* Global focus state override */
@@ -48,8 +113,9 @@
 :is([data-testid]):focus-visible,
 [class*="st-emotion-cache"]:focus-visible,
 [class*="st-"]:focus-visible {
-  box-shadow: var(--focus-shadow) !important;
-  outline: none !important;
+  outline: var(--focus-ring) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
   border-color: var(--color-text-primary) !important;
 }
 

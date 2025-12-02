@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 # Configure page
 st.set_page_config(
     page_title="Guide - Your prepared digital environment",
-    page_icon="🌟",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
