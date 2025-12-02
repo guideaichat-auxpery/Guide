@@ -15,6 +15,9 @@ def show_lesson_planning_interface():
     """Educational planning interface for educators with Australian Curriculum alignment"""
     scroll_to_top()
     
+    # Show first-time prompt for new users
+    show_first_time_prompts("lesson_planning")
+    
     from utils import render_conversation_sidebar
     
     # Get educator info
@@ -354,6 +357,9 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
 def show_companion_interface():
     """Enhanced Montessori companion interface with conversation history management and persistence"""
     scroll_to_top()
+    
+    # Show first-time prompt for new users
+    show_first_time_prompts("companion")
     
     from utils import manage_conversation_history, estimate_tokens, render_conversation_sidebar
     from database import save_conversation_message, log_educator_prompt, load_conversation_to_session
@@ -1490,6 +1496,9 @@ def show_student_dashboard_interface():
 def show_great_story_interface():
     """Montessori Great Story creator interface for educators"""
     scroll_to_top()
+    
+    # Show first-time prompt for new users
+    show_first_time_prompts("great_stories")
     
     st.markdown("### 📖 Montessori Great Story Creator")
     st.markdown("*Develop inspiring cosmic education stories that spark imagination and curiosity*")
@@ -2797,3 +2806,231 @@ def show_imaginarium_interface():
     
     # Add scroll to top button
     add_scroll_to_top_button()
+
+
+def show_onboarding_tour():
+    """
+    Display welcome tour for new educators.
+    Shows a step-by-step introduction to key features.
+    Returns True if onboarding is in progress, False if completed or skipped.
+    """
+    # Initialize onboarding state
+    if 'onboarding_step' not in st.session_state:
+        st.session_state.onboarding_step = 1
+    
+    # Tour steps content - following minimal design system
+    tour_steps = [
+        {
+            "title": "Welcome to Guide",
+            "content": """You've just joined a community of educators committed to nurturing the whole child.
+
+Guide helps you create meaningful, interconnected learning experiences rooted in Montessori's Cosmic Education and aligned with the Australian Curriculum V9.
+
+Let's take a quick tour of what you can do here."""
+        },
+        {
+            "title": "Lesson Planning",
+            "content": """Create age-appropriate lessons that honour developmental stages.
+
+Simply describe what you want to teach - the year level, topic, and time available. Guide will help you design learning experiences that connect concepts to the bigger picture, fostering curiosity and understanding.
+
+Your plans integrate both Montessori principles and Australian Curriculum outcomes automatically."""
+        },
+        {
+            "title": "Montessori Companion",
+            "content": """Tap into decades of Montessori wisdom whenever you need it.
+
+Ask questions about methodology, classroom management, developmental stages, or how to approach specific challenges. The Companion draws from the Montessori National Curriculum and established practice.
+
+Think of it as having an experienced Montessori mentor available anytime."""
+        },
+        {
+            "title": "Student Management",
+            "content": """Create accounts for your students so they can access age-appropriate research support.
+
+Students get their own Research Assistant that helps them explore topics, structure their thinking, and find reliable sources - all tailored to their developmental stage.
+
+You can monitor their learning journey through the Student Dashboard."""
+        },
+        {
+            "title": "You're Ready",
+            "content": """We've also added three sample lesson plans to your account - one for each age group - so you can see how Guide's planning looks in practice.
+
+Start by exploring the dashboard and trying out Lesson Planning or the Montessori Companion.
+
+Remember: Guide is here to support your professional judgment, not replace it. You know your students best."""
+        }
+    ]
+    
+    current_step = st.session_state.onboarding_step
+    total_steps = len(tour_steps)
+    
+    # Create modal-style container
+    st.markdown("""
+    <style>
+    .onboarding-modal {
+        background: #FFFEFA;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        padding: 2rem 2.5rem;
+        max-width: 560px;
+        margin: 2rem auto;
+        position: relative;
+    }
+    .onboarding-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333333;
+        margin-bottom: 1.5rem;
+        line-height: 1.3;
+    }
+    .onboarding-content {
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        color: #333333;
+        line-height: 1.7;
+        margin-bottom: 2rem;
+    }
+    .onboarding-progress {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+        color: #666666;
+        margin-bottom: 1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Display current step
+    step = tour_steps[current_step - 1]
+    
+    st.markdown(f"""
+    <div class="onboarding-modal">
+        <div class="onboarding-progress">Step {current_step} of {total_steps}</div>
+        <div class="onboarding-title">{step['title']}</div>
+        <div class="onboarding-content">{step['content'].replace(chr(10), '<br><br>')}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Navigation buttons
+    col1, col2, col3 = st.columns([1, 1, 1])
+    
+    with col1:
+        if current_step > 1:
+            if st.button("Back", key="onboarding_back", use_container_width=True):
+                st.session_state.onboarding_step -= 1
+                st.rerun()
+    
+    with col2:
+        if st.button("Skip Tour", key="onboarding_skip", use_container_width=True):
+            # Mark onboarding complete and clean up
+            _complete_onboarding()
+            return False
+    
+    with col3:
+        if current_step < total_steps:
+            if st.button("Next", key="onboarding_next", use_container_width=True, type="primary"):
+                st.session_state.onboarding_step += 1
+                st.rerun()
+        else:
+            if st.button("Get Started", key="onboarding_complete", use_container_width=True, type="primary"):
+                _complete_onboarding()
+                return False
+    
+    return True  # Onboarding still in progress
+
+
+def _complete_onboarding():
+    """Mark onboarding as complete and create sample lesson plans"""
+    from database import get_db, mark_onboarding_completed, create_sample_lesson_plans_for_user
+    
+    user_id = st.session_state.get('user_id')
+    if user_id:
+        db = get_db()
+        if db:
+            try:
+                # Mark onboarding complete
+                mark_onboarding_completed(db, user_id)
+                
+                # Create sample lesson plans
+                create_sample_lesson_plans_for_user(db, user_id)
+                
+                st.toast("Welcome to Guide!", icon="✨")
+            except Exception as e:
+                print(f"Error completing onboarding: {str(e)}")
+            finally:
+                db.close()
+    
+    # Clean up session state
+    if 'onboarding_step' in st.session_state:
+        del st.session_state['onboarding_step']
+    
+    st.rerun()
+
+
+def check_and_show_onboarding() -> bool:
+    """
+    Check if user needs onboarding and show tour if needed.
+    Returns True if onboarding is showing (blocks dashboard), False otherwise.
+    """
+    from database import get_db, get_onboarding_status
+    
+    user_id = st.session_state.get('user_id')
+    is_student = st.session_state.get('is_student', True)
+    
+    # Only show for educators
+    if is_student or not user_id:
+        return False
+    
+    # Check onboarding status
+    db = get_db()
+    if db:
+        try:
+            onboarding_completed = get_onboarding_status(db, user_id)
+            if not onboarding_completed:
+                return show_onboarding_tour()
+        except Exception as e:
+            print(f"Error checking onboarding status: {str(e)}")
+        finally:
+            db.close()
+    
+    return False
+
+
+def show_first_time_prompts(feature_name: str):
+    """
+    Show contextual first-time prompt for a specific feature.
+    Only shows once per feature per user.
+    """
+    prompt_key = f"seen_prompt_{feature_name}"
+    
+    # Check if already seen
+    if st.session_state.get(prompt_key, False):
+        return
+    
+    prompts = {
+        "lesson_planning": {
+            "title": "Getting Started with Lesson Planning",
+            "content": "Describe your lesson needs naturally - include the year level, topic, and time available. Guide will create a complete plan integrating Montessori principles and curriculum outcomes."
+        },
+        "companion": {
+            "title": "Getting Started with Montessori Companion",
+            "content": "Ask anything about Montessori methodology, classroom practice, or philosophy. You can also specify an age group in your message for tailored guidance."
+        },
+        "great_stories": {
+            "title": "Getting Started with Great Stories",
+            "content": "Great Stories ignite wonder and connect learning to the cosmic narrative. Describe the concept you want to introduce and the age group you're teaching."
+        }
+    }
+    
+    if feature_name not in prompts:
+        return
+    
+    prompt = prompts[feature_name]
+    
+    # Display dismissable tip
+    with st.container():
+        st.info(f"**{prompt['title']}**\n\n{prompt['content']}")
+        if st.button("Got it", key=f"dismiss_{feature_name}_prompt"):
+            st.session_state[prompt_key] = True
+            st.rerun()
