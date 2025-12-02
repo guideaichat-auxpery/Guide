@@ -58,6 +58,8 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 3. **Mobile Responsiveness** ✓ - Full responsive design with breakpoints at 768px/480px, stacked layouts, touch-friendly targets
 4. **Help & Support System** ✓ - Feedback/bug reports and support contact forms with database persistence
 5. **Email Notifications** ✓ - Welcome emails, subscription confirmations, and renewal reminders via SendGrid/SMTP
+6. **Rate Limiting** ✓ - API usage protection with configurable daily/hourly limits per tier (free: 50/day, 10/hr; paid: 500/day, 100/hr). Usage dashboard displays current consumption.
+7. **Data Export** ✓ - GDPR-compliant bulk data download with lesson plans, notes, conversations, and analytics as structured ZIP file
 
 # External Dependencies
 

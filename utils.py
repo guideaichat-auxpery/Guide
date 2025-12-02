@@ -1390,6 +1390,26 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         planning_type: Type of planning (e.g., "Lesson Planning", "Assessment Rubric")
     """
     try:
+        # Check rate limits before making API call
+        from rate_limiter import get_rate_limiter
+        from database import get_db
+        
+        user_id = st.session_state.get('user_id')
+        is_paid = st.session_state.get('has_active_subscription', False)
+        
+        if user_id:
+            db = get_db()
+            if db:
+                try:
+                    rate_limiter = get_rate_limiter()
+                    allowed, message, _ = rate_limiter.check_rate_limit(db, user_id, is_paid)
+                    
+                    if not allowed:
+                        st.error(message)
+                        return None
+                finally:
+                    db.close()
+        
         # Determine max_tokens if not specified
         if max_tokens is None:
             max_tokens = get_max_tokens_for_user_type("student" if is_student else "educator")

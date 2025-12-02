@@ -3036,6 +3036,43 @@ def show_first_time_prompts(feature_name: str):
             st.rerun()
 
 
+def show_usage_stats_interface():
+    """Display current usage and rate limit statistics"""
+    try:
+        from rate_limiter import get_rate_limiter
+        from database import get_db
+        
+        db = get_db()
+        if db:
+            user_id = st.session_state.get('user_id')
+            is_paid = st.session_state.get('has_active_subscription', False)
+            
+            rate_limiter = get_rate_limiter()
+            stats = rate_limiter.get_usage_stats(db, user_id, is_paid)
+            
+            if stats:
+                tier_badge = "PAID" if is_paid else "FREE"
+                st.markdown(f"**Your Plan:** {tier_badge}")
+                
+                # Daily usage
+                daily_pct = (stats['daily_used'] / stats['daily_limit'] * 100) if stats['daily_limit'] > 0 else 0
+                st.metric("Daily Usage", f"{stats['daily_used']} / {stats['daily_limit']}", 
+                         f"{stats['daily_remaining']} remaining")
+                st.progress(min(daily_pct / 100, 1.0))
+                
+                # Hourly usage
+                hourly_pct = (stats['hourly_used'] / stats['hourly_limit'] * 100) if stats['hourly_limit'] > 0 else 0
+                st.metric("Hourly Usage", f"{stats['hourly_used']} / {stats['hourly_limit']}", 
+                         f"{stats['hourly_remaining']} remaining")
+                st.progress(min(hourly_pct / 100, 1.0))
+                
+                st.caption(f"Daily limit resets: {stats['reset_tomorrow']}")
+            
+            db.close()
+    except Exception as e:
+        logger.error(f"Error displaying usage stats: {str(e)}")
+
+
 def show_feedback_interface():
     """Feedback and bug report interface"""
     scroll_to_top()
@@ -3079,6 +3116,43 @@ def show_feedback_interface():
                 st.error(f"Error submitting feedback: {str(e)}")
             finally:
                 db.close() if 'db' in locals() else None
+
+
+def show_data_export_interface():
+    """Export all user data for GDPR compliance"""
+    scroll_to_top()
+    
+    st.markdown("### Download Your Data")
+    st.markdown("Export all your lesson plans, notes, and conversations in a single ZIP file for backup or transfer to another platform.")
+    
+    st.info("This export includes: lesson plans, planning notes, great stories, chat conversations, and usage analytics.")
+    
+    if st.button("Download My Data", use_container_width=True, type="primary"):
+        try:
+            from data_export import get_data_exporter
+            from database import get_db
+            
+            db = get_db()
+            if db:
+                user_id = st.session_state.get('user_id')
+                exporter = get_data_exporter()
+                zip_data = exporter.export_user_data_zip(db, user_id)
+                
+                if zip_data:
+                    st.download_button(
+                        label="Download ZIP File",
+                        data=zip_data,
+                        file_name=f"guide_export_{user_id}_{datetime.now().strftime('%Y%m%d')}.zip",
+                        mime="application/zip",
+                        use_container_width=True
+                    )
+                    st.success("Your data is ready to download!")
+                else:
+                    st.error("Error preparing data export. Please try again.")
+                
+                db.close()
+        except Exception as e:
+            st.error(f"Export error: {str(e)}")
 
 
 def show_support_contact_interface():
