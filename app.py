@@ -150,6 +150,20 @@ else:
     # Authenticated user interface
     show_user_info()
     
+    # Auto-scroll chat to bottom on new messages
+    st.markdown("""
+    <script>
+    const observer = new MutationObserver(() => {
+      setTimeout(() => {
+        const container = document.querySelector('[data-testid="stChatMessageContainer"]') || document.querySelector('.stChatMessage');
+        if (container) container.scrollTop = container.scrollHeight;
+      }, 50);
+    });
+    const target = document.querySelector('[data-testid="stChatMessageContainer"]') || document.body;
+    if (target) observer.observe(target, { childList: true, subtree: true });
+    </script>
+    """, unsafe_allow_html=True)
+    
     # Navigation menu for authenticated users
     # Explicitly check user type to ensure proper role-based UI
     is_student = st.session_state.get('is_student', None)
