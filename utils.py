@@ -884,6 +884,275 @@ def retry_with_exponential_backoff(
         return wrapper
     return decorator
 
+
+# ---- COMPREHENSIVE ERROR HANDLING SYSTEM ----
+
+class APIError:
+    """Error classification for user-friendly messaging"""
+    RATE_LIMIT = "rate_limit"
+    TIMEOUT = "timeout"
+    SERVER_ERROR = "server_error"
+    AUTH_ERROR = "auth_error"
+    NETWORK_ERROR = "network_error"
+    CONTENT_FILTER = "content_filter"
+    QUOTA_EXCEEDED = "quota_exceeded"
+    UNKNOWN = "unknown"
+
+
+def classify_api_error(error: Exception) -> tuple:
+    """
+    Classify an API error and return (error_type, user_message, is_retryable)
+    """
+    error_str = str(error).lower()
+    error_type_name = type(error).__name__.lower()
+    
+    # Rate limit errors
+    if 'rate_limit' in error_str or '429' in error_str or 'too many requests' in error_str:
+        return (
+            APIError.RATE_LIMIT,
+            "The AI service is currently busy. Your request will be processed shortly.",
+            True
+        )
+    
+    # Timeout errors
+    if 'timeout' in error_str or 'timed out' in error_str or 'read timed out' in error_str:
+        return (
+            APIError.TIMEOUT,
+            "The request took longer than expected. Please try again.",
+            True
+        )
+    
+    # Server errors (5xx)
+    if any(code in error_str for code in ['500', '502', '503', '504', 'internal server', 'bad gateway', 'service unavailable']):
+        return (
+            APIError.SERVER_ERROR,
+            "The AI service is temporarily unavailable. Please try again in a moment.",
+            True
+        )
+    
+    # Authentication errors
+    if 'authentication' in error_str or 'api key' in error_str or '401' in error_str or 'unauthorized' in error_str:
+        return (
+            APIError.AUTH_ERROR,
+            "There's a configuration issue. Please contact support.",
+            False
+        )
+    
+    # Content filter / moderation
+    if 'content_policy' in error_str or 'content filter' in error_str or 'flagged' in error_str:
+        return (
+            APIError.CONTENT_FILTER,
+            "Your request couldn't be processed. Please try rephrasing your question.",
+            False
+        )
+    
+    # Quota exceeded
+    if 'quota' in error_str or 'billing' in error_str or 'insufficient_quota' in error_str:
+        return (
+            APIError.QUOTA_EXCEEDED,
+            "The service is temporarily unavailable. Please try again later.",
+            False
+        )
+    
+    # Network/connection errors
+    if any(term in error_str for term in ['connection', 'network', 'dns', 'resolve', 'refused', 'reset']):
+        return (
+            APIError.NETWORK_ERROR,
+            "Unable to connect to the AI service. Please check your internet connection.",
+            True
+        )
+    if 'connectionerror' in error_type_name or 'networkerror' in error_type_name:
+        return (
+            APIError.NETWORK_ERROR,
+            "Unable to connect to the AI service. Please check your internet connection.",
+            True
+        )
+    
+    # Unknown error - provide generic helpful message
+    return (
+        APIError.UNKNOWN,
+        "Something went wrong. Please try again.",
+        False
+    )
+
+
+def show_api_error(error: Exception, context: str = "request"):
+    """
+    Display a user-friendly error message for API errors.
+    
+    Args:
+        error: The exception that occurred
+        context: Description of what was being attempted (e.g., "generating your lesson plan")
+    """
+    error_type, user_message, is_retryable = classify_api_error(error)
+    
+    # Log the technical error for debugging
+    logger.error(f"API Error ({error_type}): {type(error).__name__} - {str(error)}")
+    
+    # Show user-friendly message
+    if is_retryable:
+        st.warning(f"{user_message}")
+    else:
+        st.error(f"{user_message}")
+    
+    return error_type, is_retryable
+
+
+def check_network_status() -> bool:
+    """
+    Check if network/internet is available.
+    Returns True if connected, False otherwise.
+    """
+    import socket
+    try:
+        # Try to connect to a reliable endpoint
+        socket.create_connection(("api.openai.com", 443), timeout=5)
+        return True
+    except (socket.timeout, socket.error, OSError):
+        return False
+
+
+def show_offline_message():
+    """Display a friendly offline message"""
+    st.warning(
+        "You appear to be offline. Some features require an internet connection. "
+        "Please check your connection and try again."
+    )
+
+
+def call_api_with_feedback(api_func, *args, context="processing your request", show_spinner=True, **kwargs):
+    """
+    Call an API function with user feedback for errors and retries.
+    
+    Args:
+        api_func: The function to call
+        *args: Arguments to pass to the function
+        context: Description for error messages (e.g., "generating your lesson plan")
+        show_spinner: Whether to show a loading spinner
+        **kwargs: Keyword arguments to pass to the function
+    
+    Returns:
+        The result of the API call, or None if it failed
+    """
+    try:
+        if show_spinner:
+            with st.spinner(f"Working on {context}..."):
+                result = api_func(*args, **kwargs)
+        else:
+            result = api_func(*args, **kwargs)
+        return result
+    except Exception as e:
+        error_type, is_retryable = show_api_error(e, context)
+        
+        # For retryable errors, offer a retry button
+        if is_retryable:
+            retry_key = f"retry_{hash(str(e))}"
+            if st.button("Try Again", key=retry_key):
+                st.rerun()
+        
+        return None
+
+
+def safe_api_call(max_retries=3, initial_delay=1.0, show_progress=False):
+    """
+    Decorator for making safe API calls with user-friendly error handling.
+    
+    Args:
+        max_retries: Maximum retry attempts for transient errors
+        initial_delay: Initial delay between retries
+        show_progress: Whether to show retry progress to user
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            retries = 0
+            delay = initial_delay
+            last_error = None
+            
+            while retries <= max_retries:
+                try:
+                    return func(*args, **kwargs)
+                
+                except Exception as e:
+                    last_error = e
+                    error_type, user_msg, is_retryable = classify_api_error(e)
+                    
+                    if not is_retryable or retries >= max_retries:
+                        # Non-retryable or max retries - show error and exit
+                        show_api_error(e)
+                        return None
+                    
+                    # Show retry progress if enabled
+                    if show_progress:
+                        st.info(f"Retrying... (attempt {retries + 1} of {max_retries})")
+                    
+                    # Log and wait
+                    logger.warning(f"Retryable error (attempt {retries + 1}): {error_type}")
+                    time.sleep(delay)
+                    
+                    delay *= 2  # Exponential backoff
+                    retries += 1
+            
+            # Shouldn't reach here, but handle it
+            if last_error:
+                show_api_error(last_error)
+            return None
+        
+        return wrapper
+    return decorator
+
+
+# ---- GRACEFUL ERROR UI COMPONENTS ----
+
+def show_connection_status():
+    """
+    Display connection status indicator.
+    Call this at the start of pages that require network.
+    """
+    if not check_network_status():
+        show_offline_message()
+        return False
+    return True
+
+
+def show_error_with_suggestions(error_type: str, suggestions: list = None):
+    """
+    Show an error with helpful suggestions for resolution.
+    
+    Args:
+        error_type: The type of error from APIError class
+        suggestions: Optional list of suggestion strings
+    """
+    default_suggestions = {
+        APIError.RATE_LIMIT: [
+            "Wait a moment and try again",
+            "Break your request into smaller parts"
+        ],
+        APIError.TIMEOUT: [
+            "Try a simpler or shorter request",
+            "Check your internet connection"
+        ],
+        APIError.NETWORK_ERROR: [
+            "Check your internet connection",
+            "Refresh the page and try again"
+        ],
+        APIError.SERVER_ERROR: [
+            "Wait a few minutes and try again",
+            "The service may be experiencing high demand"
+        ],
+        APIError.CONTENT_FILTER: [
+            "Rephrase your question differently",
+            "Avoid potentially sensitive topics"
+        ]
+    }
+    
+    sugg_list = suggestions or default_suggestions.get(error_type, ["Please try again"])
+    
+    with st.expander("What can I try?", expanded=False):
+        for suggestion in sugg_list:
+            st.markdown(f"- {suggestion}")
+
+
 # Load Montessori texts
 @st.cache_data
 def load_montessori_own_handbook():
@@ -1345,7 +1614,13 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
         response = make_api_call()
         return response.choices[0].message.content
     except Exception as e:
-        st.error(f"Error calling OpenAI API: {str(e)}")
+        # Use user-friendly error handling
+        error_type, is_retryable = show_api_error(e, context="generating response")
+        
+        # Show suggestions for common errors
+        if error_type in [APIError.TIMEOUT, APIError.RATE_LIMIT, APIError.SERVER_ERROR]:
+            show_error_with_suggestions(error_type)
+        
         return None
 
 def get_max_tokens_for_user_type(user_type):
