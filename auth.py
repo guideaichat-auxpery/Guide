@@ -20,15 +20,11 @@ def login_page():
     if 'login_user_type' not in st.session_state:
         st.session_state.login_user_type = "Educator"
     
-    # Back link - also reset login type when going back
-    if st.button("Back", key="login_back"):
-        st.session_state.auth_mode = "landing"
-        st.session_state.login_user_type = "Educator"
-        st.rerun()
+    # Guide title
+    st.markdown('<h1 class="main-header">✨ Guide</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="main-byline">Your Montessori Companion</p>', unsafe_allow_html=True)
     
-    # Minimal title
-    st.markdown('<h2 style="text-align: center; margin: 0 0 4px 0; color: #333333; font-size: 24px; font-weight: 500;">Login</h2>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; margin: 0 0 24px 0; color: #666666; font-size: 14px;">Access your account</p>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
     
     # Toggle pills for Educator/Student
     st.markdown('<div style="height: 12px;"></div>', unsafe_allow_html=True)
