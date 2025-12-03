@@ -109,10 +109,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Main Header - Only on login landing page and dashboards
+# Main Header - Show on all unauthenticated pages and dashboards
 show_header = False
 if not st.session_state.authenticated:
-    # Always show on login page
+    # Always show on all unauth pages including landing
     show_header = True
 elif st.session_state.authenticated:
     # Show on educator and student dashboards only
@@ -121,53 +121,74 @@ elif st.session_state.authenticated:
     if (is_student is False and auth_mode == 'dashboard_home') or (is_student is True and auth_mode == 'student_dashboard'):
         show_header = True
 
+if show_header and st.session_state.get('auth_mode', 'landing') != 'login' and st.session_state.get('auth_mode', 'landing') != 'signup':
+    # Show header with star icon for unauthenticated and dashboard pages (not login/signup forms)
+    st.markdown('<p style="text-align: center; font-size: 48px; margin: 0;">✨</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="main-byline">Your Montessori Companion</p>', unsafe_allow_html=True)
+
 # Authentication and main application logic
 if not st.session_state.authenticated:
     # Check if we're showing a form (login/signup/privacy) or the landing page
     current_mode = st.session_state.get('auth_mode', 'landing')
     
     if current_mode == 'landing':
-        # Minimal landing page - 480px centered container
-        st.markdown('<h2 style="text-align: center; margin: 0 0 4px 0; color: #333333; font-size: 24px; font-weight: 500;">Guide</h2>', unsafe_allow_html=True)
-        st.markdown('<p style="text-align: center; margin: 0 0 24px 0; color: #666666; font-size: 14px;">Your prepared digital environment</p>', unsafe_allow_html=True)
+        # Landing page with tagline and feature buttons
+        st.markdown("""
+        <p style="text-align: center; font-style: italic; color: #888888; font-size: 16px; margin: 24px 0 48px 0;">
+            From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning
+        </p>
+        """, unsafe_allow_html=True)
         
-        # Tagline
-        st.markdown('<p style="text-align: center; color: #666666; font-size: 14px; line-height: 1.6; margin: 24px 0 24px 0; max-width: 480px; margin-left: auto; margin-right: auto;">From lesson planning to Montessori philosophy and methodology, get clear guidance that supports your teaching and learning.</p>', unsafe_allow_html=True)
+        # Feature buttons grid (3x2)
+        col1, col2, col3 = st.columns(3)
         
-        # Centered button container
-        _, center_col, _ = st.columns([1, 2, 1])
-        with center_col:
-            if st.button("Login", use_container_width=True, type="primary", key="landing_login"):
+        with col1:
+            if st.button("📚 Lesson Planning", use_container_width=True, key="feature_lesson"):
                 st.session_state.auth_mode = "login"
                 st.session_state.login_user_type = "Educator"
                 st.rerun()
-            
-            st.markdown('<div style="height: 12px;"></div>', unsafe_allow_html=True)
-            
-            if st.button("Create an account", use_container_width=True, key="landing_signup"):
-                st.session_state.auth_mode = "signup"
+        
+        with col2:
+            if st.button("📖 Great Stories", use_container_width=True, key="feature_stories"):
+                st.session_state.auth_mode = "login"
+                st.session_state.login_user_type = "Educator"
                 st.rerun()
         
-        # Terms section
-        st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
-        st.markdown('<p style="text-align: center; font-size: 12px; color: #888888; margin: 0;">By continuing, you agree to our</p>', unsafe_allow_html=True)
-        st.markdown('<div style="height: 8px;"></div>', unsafe_allow_html=True)
-        
-        _, terms_col, _ = st.columns([1.5, 1, 1.5])
-        with terms_col:
-            if st.button("Terms & Conditions", key="landing_terms", type="secondary"):
-                st.session_state.auth_mode = "privacy_policy"
+        with col3:
+            if st.button("👨‍🎓 Create Student", use_container_width=True, key="feature_create_student"):
+                st.session_state.auth_mode = "login"
+                st.session_state.login_user_type = "Educator"
                 st.rerun()
         
-        # Footer
+        st.markdown('<div style="height: 12px;"></div>', unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("🌸 Montessori Companion", use_container_width=True, key="feature_companion"):
+                st.session_state.auth_mode = "login"
+                st.session_state.login_user_type = "Educator"
+                st.rerun()
+        
+        with col2:
+            if st.button("📝 Planning Notes", use_container_width=True, key="feature_notes"):
+                st.session_state.auth_mode = "login"
+                st.session_state.login_user_type = "Educator"
+                st.rerun()
+        
+        with col3:
+            if st.button("📊 Student Dashboard", use_container_width=True, key="feature_student_dash"):
+                st.session_state.auth_mode = "login"
+                st.session_state.login_user_type = "Educator"
+                st.rerun()
+        
         st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div style="text-align: center; font-size: 12px; color: #888888; line-height: 1.8; max-width: 480px; margin: 0 auto;">
-            <p style="font-style: italic; margin: 0 0 12px 0; color: #888888;">"The child is both a hope and a promise for mankind." — Maria Montessori</p>
-            <p style="margin: 0 0 4px 0;">Guide – Your prepared digital environment</p>
-            <p style="color: #999999; font-size: 11px; margin: 0;">Brought to you by Auxpery – Gentle Technology for Thoughtful Education</p>
-        </div>
-        """, unsafe_allow_html=True)
+        
+        # Chat input at bottom
+        if prompt := st.chat_input("Tell me your year level/age, topic, time, and instructions"):
+            st.markdown(f"*You asked: {prompt}*")
+            st.info("Please log in to continue learning with Guide")
     
     elif current_mode == "login":
         login_page()

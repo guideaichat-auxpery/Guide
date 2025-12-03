@@ -5,12 +5,12 @@
 
 :root {
   /* Color Theme */
-  --color-bg-primary: #FFFCF5;
+  --color-bg-primary: #FFFEFA;
   --color-bg-secondary: #FFFFFF;
-  --color-border: #EAE7DF;
+  --color-border: #E6E6E6;
   --color-text-primary: #333333;
-  --color-text-secondary: #666666;
-  --color-chat-assistant: #FFFCF5;
+  --color-text-secondary: #555555;
+  --color-chat-assistant: #FFFEFA;
   --color-chat-user: #FFFFFF;
 
   /* Typography */
@@ -76,11 +76,6 @@
 body, .stApp, .main {
   color: var(--color-text-primary) !important;
   background-color: var(--color-bg-primary) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  min-height: 100vh !important;
 }
 
 /* Rule 5: All click targets ≥ 44px tall */
@@ -169,7 +164,7 @@ body {
   height: 100% !important;
 }
 
-/* Main content area - Full height flex layout with vertical centering for auth pages */
+/* Main content area - Full height flex layout */
 .main .block-container {
   max-width: var(--max-width) !important;
   width: 100% !important;
@@ -181,37 +176,9 @@ body {
   margin: 0 auto !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
   height: 100% !important;
   flex: 1 !important;
   box-sizing: border-box !important;
-  min-height: 100vh !important;
-}
-
-/* Input field styling */
-.stTextInput input,
-.stTextArea textarea,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-textarea {
-  border-radius: 6px !important;
-  border: 1px solid #EAE7DF !important;
-  padding: 8px 12px !important;
-  font-size: 14px !important;
-  background-color: #FFFFFF !important;
-  color: #333333 !important;
-}
-
-.stTextInput input:focus,
-.stTextArea textarea:focus,
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-textarea:focus {
-  border-color: #333333 !important;
-  outline: none !important;
 }
 
 /* Mobile: reduce padding */
