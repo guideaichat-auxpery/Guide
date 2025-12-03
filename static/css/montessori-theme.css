@@ -297,24 +297,25 @@ h1 {
   color: var(--color-text-primary) !important;
 }
 
-/* Buttons - Base Styling (only for buttons without specific type) */
+/* Buttons - Base Styling (only for buttons without specific type) - SAGE GREEN for feature buttons */
 .stButton > button:not([data-testid="baseButton-primary"]):not([data-testid="baseButton-secondary"]) {
-  background-color: #FFFFFF !important;
-  color: #333333 !important;
-  border: 1px solid #CCCCCC !important;
-  border-radius: 8px !important;
-  padding: 12px 24px !important;
+  background-color: #A4B8AD !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 16px !important;
+  padding: 16px 28px !important;
   font-size: 16px !important;
-  font-weight: 400 !important;
-  min-height: 48px !important;
+  font-weight: 500 !important;
+  min-height: 52px !important;
   box-shadow: none !important;
   transition: all 0.2s ease !important;
-  margin: 0 !important;
+  margin: 8px auto !important;
+  display: inline-block !important;
 }
 
 .stButton > button:not([data-testid="baseButton-primary"]):not([data-testid="baseButton-secondary"]):hover {
-  background-color: #F5F5F5 !important;
-  border-color: #AAAAAA !important;
+  background-color: #92A799 !important;
+  transform: translateY(-2px) !important;
 }
 
 /* PRIMARY BUTTONS - Dark background (Login, active toggle, form submit) */
