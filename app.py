@@ -122,9 +122,8 @@ elif st.session_state.authenticated:
         show_header = True
 
 if show_header and st.session_state.get('auth_mode', 'landing') != 'login' and st.session_state.get('auth_mode', 'landing') != 'signup':
-    # Show header with star icon for unauthenticated and dashboard pages (not login/signup forms)
-    st.markdown('<p style="text-align: center; font-size: 48px; margin: 0;">✨</p>', unsafe_allow_html=True)
-    st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
+    # Show header with star icon and title together
+    st.markdown('<h1 class="main-header">✨ Guide</h1>', unsafe_allow_html=True)
     st.markdown('<p class="main-byline">Your Montessori Companion</p>', unsafe_allow_html=True)
 
 # Authentication and main application logic
