@@ -975,16 +975,16 @@ section {
 
 /* Main header - Guide title */
 .main-header {
-  font-size: 56px !important;
-  line-height: 1.2 !important;
+  font-size: 96px !important;
+  line-height: 1.1 !important;
   font-family: var(--font-serif) !important;
   font-weight: 400 !important;
   color: var(--color-text-primary) !important;
   text-align: center !important;
   display: block !important;
   width: 100% !important;
-  margin: 40px 0 8px 0 !important;
-  letter-spacing: -0.5px !important;
+  margin: 60px 0 16px 0 !important;
+  letter-spacing: -1px !important;
 }
 
 .main-byline {
