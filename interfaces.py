@@ -934,31 +934,69 @@ def show_student_interface():
                     else:
                         rubric_content = uploaded_rubric.read().decode("utf-8")
             
-            # Build comprehensive feedback prompt
-            feedback_prompt = f"""Please provide detailed, constructive feedback on the following student work.
+            # Build comprehensive feedback prompt with rubric-based analysis
+            if rubric_content:
+                feedback_prompt = f"""You are providing detailed, criterion-based feedback on student work against a specific rubric. Your feedback MUST reference the rubric directly.
+
+ASSESSMENT RUBRIC:
+{rubric_content}
 
 STUDENT WORK:
 {work_content[:2000]}
 
-"""
-            if rubric_content:
-                feedback_prompt += f"""ASSESSMENT RUBRIC:
-{rubric_content[:1500]}
+CRITICAL FEEDBACK REQUIREMENTS - YOU MUST FOLLOW ALL OF THESE:
 
-Please assess the work against the rubric criteria, providing specific feedback for each criterion.
-"""
-            
-            feedback_prompt += f"""
+1. **Parse the Rubric**: Identify each criterion in the rubric (e.g., "Ideas & Content", "Organization", "Voice", etc.). List each criterion clearly.
+
+2. **Per-Criterion Evaluation**: For EACH criterion in the rubric, provide:
+   a) The criterion name and performance level(s) the student's work demonstrates
+   b) DIRECT QUOTE from the rubric descriptor that applies to this level
+   c) SPECIFIC EVIDENCE from the student work (direct quotes or specific details) that shows this level
+   d) Why the work meets or doesn't meet this criterion based on the rubric language
+   e) Targeted improvement suggestion tied to this specific criterion
+
+3. **Structure Your Response**:
+   - Start with a brief overall summary (2-3 sentences)
+   - Then provide a section for EACH rubric criterion with the heading "### [Criterion Name]"
+   - Under each criterion, clearly separate:
+     - "Performance Level: [level]"
+     - "Rubric Language: [direct quote]"
+     - "Evidence from Work: [direct quote or specific detail]"
+     - "Feedback: [why it demonstrates this level]"
+     - "Next Steps: [specific improvement]"
+   - End with an overall synthesis and concrete next steps
+
+4. **Evidence-Based**: Every claim about the student's work MUST be backed by specific evidence from the work itself.
+
+5. **Rubric-Grounded**: Use the exact language and criteria from the rubric. Do not substitute different standards.
+
+6. **Age-Appropriate & Encouraging**: Use asset-based language that honors the student's development stage (appropriate for {age_group} year olds).
+
+7. **Montessori Connection**: Where appropriate, connect feedback to Montessori principles of exploration and self-correction.
+
+Year Level: {st.session_state.get('student_year_selector', '6')}"""
+            else:
+                feedback_prompt = f"""You are providing detailed, constructive feedback on student work.
+
+STUDENT WORK:
+{work_content[:2000]}
+
 FEEDBACK REQUIREMENTS:
-1. Assess the work based on the rubric (if provided) and learning standards
+1. Assess the work based on learning standards and best practices
 2. Provide specific, actionable suggestions for improvement
 3. Highlight strengths and areas of growth
-4. Connect feedback to broader learning and real-world applications (Montessori approach)
-5. Use encouraging, asset-based language that honors student development
-6. Reference Australian Curriculum V9 standards for Year {st.session_state.get('student_year_selector', '6')}
-7. Suggest next steps to deepen understanding
+4. Use encouraging, asset-based language that honors student development
+5. Connect feedback to Montessori principles of exploration and self-correction
+6. Reference Australian Curriculum V9 standards
+7. Suggest concrete next steps to deepen understanding
 
-Keep feedback age-appropriate for {age_group} year olds."""
+Keep feedback age-appropriate for {age_group} year olds (Year {st.session_state.get('student_year_selector', '6')}).
+
+Structure your response with:
+- Brief overall summary
+- Strengths identified in the work
+- Areas for development
+- Specific next steps"""
 
             # Add to conversation
             st.session_state.student_messages.append({
