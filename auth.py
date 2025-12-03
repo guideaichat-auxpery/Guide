@@ -140,15 +140,7 @@ def login_page():
             st.session_state.auth_mode = "signup"
             st.rerun()
         
-        # Footer
-        st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div style="text-align: center; font-size: 12px; color: #888888; line-height: 1.8; max-width: 480px; margin: 0 auto;">
-            <p style="font-style: italic; margin: 0 0 12px 0; color: #888888;">"The child is both a hope and a promise for mankind." — Maria Montessori</p>
-            <p style="margin: 0 0 4px 0;">Guide – Your prepared digital environment</p>
-            <p style="color: #999999; font-size: 11px; margin: 0;">Brought to you by Auxpery – Gentle Technology for Thoughtful Education</p>
-        </div>
-        """, unsafe_allow_html=True)
+
 
 def signup_page():
     """Display signup page for new educators"""
@@ -251,15 +243,7 @@ def signup_page():
                         if db:
                             db.close()
         
-        # Footer
-        st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div style="text-align: center; font-size: 12px; color: #888888; line-height: 1.8; max-width: 480px; margin: 0 auto;">
-            <p style="font-style: italic; margin: 0 0 12px 0; color: #888888;">"The child is both a hope and a promise for mankind." — Maria Montessori</p>
-            <p style="margin: 0 0 4px 0;">Guide – Your prepared digital environment</p>
-            <p style="color: #999999; font-size: 11px; margin: 0;">Brought to you by Auxpery – Gentle Technology for Thoughtful Education</p>
-        </div>
-        """, unsafe_allow_html=True)
+
 
 def create_student_page():
     """Allow educators to create student accounts"""

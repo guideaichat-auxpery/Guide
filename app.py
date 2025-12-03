@@ -650,15 +650,3 @@ elif st.session_state.authenticated:
     if (is_student is False and auth_mode == 'dashboard_home') or (is_student is True and auth_mode == 'student_dashboard'):
         show_footer = True
 
-if show_footer:
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
-            <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
-            Guide - Your prepared digital environment<br>
-            Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
