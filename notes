@@ -1,3 +1,9 @@
+Implement these: Metadata filtering by year level (Foundation, Years 1-2, etc.)
+Subject-level filtering (English, Maths, Science)
+Full document re-chunking by curriculum sections (bigger improvement, but requires re-ingesting all documents)
+
+
+
 Next Steps for You:
 
 To connect your auxpery.com.au Stripe account to Guide:
