@@ -1,122 +1,38 @@
 /* Google Fonts Import - Must be first */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
 
-/* Design System Color Palette */
+/* Montessori Design System for Streamlit */
 
 :root {
-  /* Color Theme */
-  --color-bg-primary: #FFFEFA;
-  --color-bg-secondary: #FFFFFF;
-  --color-border: #E6E6E6;
-  --color-text-primary: #333333;
-  --color-text-secondary: #555555;
-  --color-chat-assistant: #FFFEFA;
-  --color-chat-user: #FFFFFF;
+  /* Montessori Color Palette */
+  --color-sand: #f5f1e6;
+  --color-clay: #d9c2a3;
+  --color-sky: #cce3de;
+  --color-leaf: #9bbf9b;
+  --color-ink: #2f3e46;
+  --color-soft-rose: #f0dada;
+  --color-paper: #fffdf8;
 
   /* Typography */
-  --font-sans: "Inter", "Roboto", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
-  --font-size-body: 16px;
-  --font-size-heading: 22px;
-  --line-height: 1.4;
 
   /* Spacing & Layout */
   --text-base: 16px;
-  --spacing-global: 16px;
-  --spacing-component: 16px;
-  --spacing-chat: 12px;
   --radius-large: 20px;
   --radius-medium: 12px;
   --radius-small: 8px;
+  --shadow-soft: 0 6px 18px rgba(20, 20, 20, 0.06);
   --transition-smooth: all 0.28s ease-in-out;
 
   /* Accessibility */
-  --focus-ring: 2px solid #4C8BF5;
+  --focus-ring: 3px solid rgba(155, 191, 155, 0.28);
+  --focus-shadow: rgba(155, 191, 155, 0.5) 0px 0px 0px 0.2rem;
   --max-width: 1080px;
-
-  /* Viewport sizing */
-  --viewport-padding: 16px;
 }
 
-/* Mobile-first responsive design */
-@media (max-width: 768px) {
-  :root {
-    --font-size-body: 14px;
-    --font-size-heading: 18px;
-    --spacing-global: 12px;
-    --viewport-padding: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  :root {
-    --font-size-body: 13px;
-    --font-size-heading: 16px;
-    --spacing-global: 8px;
-    --viewport-padding: 8px;
-  }
-}
-
-/* GLOBAL INTERACTION RULES - Non-Negotiable */
-/* Rule 1: No shadows anywhere */
-* {
-  box-shadow: none !important;
-  text-shadow: none !important;
-}
-
-/* Rule 2: No decorative gradients */
-* {
-  background-image: none !important;
-}
-
-/* Rule 3: Scope icon removal to specific UI elements only (not global) */
-/* REMOVED: Global *::before/*::after rule was breaking Streamlit rendering */
-
-/* Rule 4: All text must be dark grey on light background */
-body, .stApp, .main {
-  color: var(--color-text-primary) !important;
-  background-color: var(--color-bg-primary) !important;
-}
-
-/* Rule 5: All click targets ≥ 44px tall */
-button, a, [role="button"], input[type="button"], input[type="submit"], .stButton,
-.stDownloadButton, .stSelectbox, .stMultiSelect, .stCheckbox, .stRadio,
-.stTextInput, .stTextArea, .stNumberInput, .stSlider, .stDateInput, .stTimeInput,
-.stFileUploader, [data-testid="stMarkdownContainer"] > a {
-  min-height: 44px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 12px 16px !important;
-}
-
-/* Rule 6: Intentional, predictable whitespace */
-p {
-  margin-top: 0 !important;
-  margin-bottom: 12px !important;
-  letter-spacing: 0.3px !important;
-  line-height: 1.6 !important;
-}
-
-.element-container {
-  margin-top: 0 !important;
-  margin-bottom: 8px !important;
-}
-
-/* Rule 7: No visual clutter - remove all decorative elements */
-hr {
-  border: none !important;
-  border-top: 1px solid var(--color-border) !important;
-  margin: 8px 0 !important;
-}
-
-/* Rule 8: Hide decorative icons only - scoped to avoid breaking Streamlit */
-/* REMOVED: Global svg hiding was breaking Streamlit UI */
-.fa, [data-icon], .material-icons {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-/* Global focus state override */
+/* Global focus state override - Montessori leaf color instead of Streamlit red */
+/* High specificity to override Streamlit emotion classes */
 :is(*):focus-visible,
 :is(button):focus-visible,
 :is(input):focus-visible,
@@ -127,253 +43,103 @@ hr {
 :is([data-testid]):focus-visible,
 [class*="st-emotion-cache"]:focus-visible,
 [class*="st-"]:focus-visible {
-  outline: var(--focus-ring) !important;
-  outline-offset: 2px !important;
-  box-shadow: none !important;
-  border-color: var(--color-text-primary) !important;
-}
-
-/* Disable Streamlit's scroll retention behavior */
-html {
-  scroll-behavior: auto !important;
-}
-
-/* Prevent scroll restoration on page load */
-body {
-  overflow-y: scroll !important;
-  scroll-behavior: auto !important;
+  box-shadow: var(--focus-shadow) !important;
+  outline: none !important;
+  border-color: var(--color-leaf) !important;
 }
 
 /* Global Streamlit Overrides */
 .stApp {
-  background-color: var(--color-bg-primary) !important;
+  background-color: var(--color-paper) !important;
   font-family: var(--font-sans) !important;
-  font-size: var(--font-size-body) !important;
-  line-height: var(--line-height) !important;
-  color: var(--color-text-primary) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100vh !important;
-  scroll-behavior: auto !important;
+  color: var(--color-ink) !important;
 }
 
-/* Streamlit header */
-.streamlit-container {
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100% !important;
-}
-
-/* Main content area - Full height flex layout */
+/* Main content area */
 .main .block-container {
   max-width: var(--max-width) !important;
-  width: 100% !important;
-  padding: var(--viewport-padding) !important;
-  background-color: var(--color-bg-primary) !important;
-  font-family: var(--font-sans) !important;
-  font-size: var(--font-size-body) !important;
-  line-height: var(--line-height) !important;
-  margin: 0 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100% !important;
-  flex: 1 !important;
-  box-sizing: border-box !important;
+  padding: 2rem 1rem !important;
 }
 
-/* Mobile: reduce padding */
-@media (max-width: 768px) {
-  .main .block-container {
-    padding: var(--viewport-padding) !important;
-  }
-}
-
-/* Chat messages scroll container */
-[data-testid="stChatMessageContainer"] {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding: 16px var(--viewport-padding) !important;
-  scroll-behavior: auto !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-  min-height: 0 !important;
-}
-
-@media (max-width: 768px) {
-  [data-testid="stChatMessageContainer"] {
-    padding: 12px var(--viewport-padding) !important;
-  }
-}
-
-/* Chat container wrapper */
-#chat-container {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-/* Headers - Intentional spacing with breathing room */
+/* Headers */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans) !important;
-  font-size: var(--font-size-heading) !important;
-  line-height: var(--line-height) !important;
-  color: var(--color-text-primary) !important;
-  font-weight: 600 !important;
-  margin-top: 0 !important;
-  margin-bottom: 12px !important;
-  letter-spacing: 0.3px !important;
+  font-family: var(--font-serif) !important;
+  color: var(--color-ink) !important;
 }
 
-h1 {
-  margin-bottom: 16px !important;
-  font-size: 28px !important;
-}
-
-/* Cards and containers - Intentional spacing */
+/* Cards and containers */
 .element-container {
   transition: var(--transition-smooth);
-  margin-top: 0 !important;
-  margin-bottom: 16px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
 }
 
-/* Collapse spacing in nested containers */
-.element-container > div {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Streamlit expanders - Gentle styling */
+/* Streamlit expanders */
 .streamlit-expanderHeader {
-  background-color: var(--color-bg-secondary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-sand) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 14px 16px !important;
+  padding: 0.75rem 1rem !important;
   font-weight: 500 !important;
-  color: var(--color-text-primary) !important;
   transition: var(--transition-smooth) !important;
-  margin-bottom: 0 !important;
-  min-height: 44px !important;
-  display: flex !important;
-  align-items: center !important;
 }
 
 .streamlit-expanderHeader:hover {
-  background-color: #F7F7F7 !important;
-  border-color: var(--color-text-secondary) !important;
+  background-color: var(--color-clay) !important;
 }
 
-/* Expander content - intentional spacing */
-.streamlit-expanderContent {
-  padding: 16px !important;
-  margin-top: 0 !important;
-  background-color: var(--color-bg-secondary) !important;
-}
-
-/* Tabs - Gentle spacing */
+/* Tabs */
 .stTabs [data-baseweb="tab-list"] {
-  gap: 12px !important;
+  gap: 8px;
   background-color: transparent !important;
-  margin-bottom: 16px !important;
 }
 
 .stTabs [data-baseweb="tab"] {
-  background-color: var(--color-bg-secondary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-sand) !important;
   border-radius: var(--radius-medium) !important;
-  padding: var(--spacing-component) !important;
-  color: var(--color-text-primary) !important;
+  padding: 0.5rem 1rem !important;
   transition: var(--transition-smooth) !important;
+  border: none !important;
 }
 
 .stTabs [aria-selected="true"] {
-  background-color: var(--color-bg-secondary) !important;
-  border: 2px solid var(--color-text-primary) !important;
-  color: var(--color-text-primary) !important;
+  background: linear-gradient(135deg, var(--color-sky), var(--color-leaf)) !important;
+  color: white !important;
 }
 
-/* Buttons - Base Styling (only for buttons without specific type) - SAGE GREEN for feature buttons */
-.stButton > button:not([data-testid="baseButton-primary"]):not([data-testid="baseButton-secondary"]) {
-  background-color: #A4B8AD !important;
-  color: #FFFFFF !important;
+/* Buttons */
+.stButton > button {
+  background: linear-gradient(135deg, var(--color-leaf), var(--color-sky)) !important;
+  color: white !important;
   border: none !important;
-  border-radius: 16px !important;
-  padding: 16px 28px !important;
-  font-size: 16px !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 0.5rem 1.5rem !important;
   font-weight: 500 !important;
-  min-height: 52px !important;
-  box-shadow: none !important;
-  transition: all 0.2s ease !important;
-  margin: 8px auto !important;
-  display: inline-block !important;
+  box-shadow: var(--shadow-soft) !important;
+  transition: var(--transition-smooth) !important;
 }
 
-.stButton > button:not([data-testid="baseButton-primary"]):not([data-testid="baseButton-secondary"]):hover {
-  background-color: #92A799 !important;
+.stButton > button:hover {
   transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(20, 20, 20, 0.12) !important;
 }
 
-/* PRIMARY BUTTONS - Dark background (Login, active toggle, form submit) */
-.stButton > button[data-testid="baseButton-primary"] {
-  background-color: #333333 !important;
-  color: #FFFFFF !important;
-  border: 1.5px solid #333333 !important;
-  border-radius: 8px !important;
-  padding: 12px 24px !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-  min-height: 48px !important;
+.stButton > button:active {
+  transform: translateY(0) !important;
 }
 
-.stButton > button[data-testid="baseButton-primary"]:hover {
-  background-color: #1a1a1a !important;
-  border-color: #1a1a1a !important;
-}
-
-/* SECONDARY BUTTONS - Light grey background (inactive toggle, Terms) */
-.stButton > button[data-testid="baseButton-secondary"] {
-  background-color: #F5F5F5 !important;
-  color: #666666 !important;
-  border: 1px solid #DDDDDD !important;
-  border-radius: 8px !important;
-  padding: 12px 24px !important;
-  font-size: 16px !important;
-  font-weight: 400 !important;
-  min-height: 48px !important;
-}
-
-.stButton > button[data-testid="baseButton-secondary"]:hover {
-  background-color: #EEEEEE !important;
-  border-color: #BBBBBB !important;
-}
-
-/* Focus states for all buttons */
 .stButton > button:focus,
 .stButton > button:focus-visible {
-  outline: 2px solid #4C8BF5 !important;
-  outline-offset: 2px !important;
-  box-shadow: none !important;
+  box-shadow: rgba(155, 191, 155, 0.5) 0px 0px 0px 0.2rem !important;
+  outline: none !important;
 }
 
-/* Text inputs - Gentle, readable inputs */
+/* Text inputs */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea {
-  background-color: var(--color-bg-secondary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: white !important;
+  border: 1px solid var(--color-clay) !important;
   border-radius: var(--radius-small) !important;
-  padding: 14px 12px !important;
-  color: var(--color-text-primary) !important;
+  padding: 0.75rem !important;
   transition: var(--transition-smooth) !important;
   font-family: var(--font-sans) !important;
-  font-size: var(--font-size-body) !important;
-  line-height: var(--line-height) !important;
-  margin: 0 !important;
-  letter-spacing: 0.2px !important;
 }
 
 .stTextInput > div > div > input:focus,
@@ -383,7 +149,7 @@ h1 {
 input[type="text"]:focus-visible,
 input[type="email"]:focus-visible,
 input[type="password"]:focus-visible {
-  border-color: var(--color-text-primary) !important;
+  border-color: var(--color-leaf) !important;
   box-shadow: var(--focus-shadow) !important;
   outline: none !important;
 }
@@ -391,368 +157,63 @@ input[type="password"]:focus-visible {
 /* Select boxes and multiselect */
 .stSelectbox > div > div,
 .stMultiSelect > div > div {
-  background-color: var(--color-bg-secondary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: white !important;
+  border: 1px solid var(--color-clay) !important;
   border-radius: var(--radius-small) !important;
-  color: var(--color-text-primary) !important;
 }
 
-/* Chat container - Single column, fluid stacking */
+/* Chat messages styling */
 .stChatMessage {
-  width: 100% !important;
-  border-radius: 8px !important;
-  padding: 16px !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-  border: 1px solid #E6E6E6 !important;
-  transition: background-color 0.3s ease !important;
-  flex-shrink: 0 !important;
-}
-
-/* Assistant message styling - Default */
-.stChatMessage {
-  background-color: #FFFEFA !important;
-  align-self: flex-start !important;
-}
-
-/* User message styling - Right aligned */
-.stChatMessage[data-testid="stChatMessageContent"] {
-  background-color: #FFFFFF !important;
-}
-
-/* Chat message content - Full width */
-[data-testid="stChatMessageContent"] {
-  width: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Chat message text - Preserved formatting */
-.stChatMessage .stMarkdown {
-  color: var(--color-text-primary) !important;
-  margin: 0 !important;
-}
-
-/* Chat input - Fixed at bottom */
-.stChatInput {
-  flex-shrink: 0 !important;
-  background-color: var(--color-bg-primary) !important;
-  padding: 16px !important;
-  border-top: 1px solid #E6E6E6 !important;
-  z-index: 100 !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-}
-
-/* Chat input wrapper - Always visible at bottom */
-.stChatInputContainer {
-  flex-shrink: 0 !important;
-  background-color: var(--color-bg-primary) !important;
-  padding: 16px !important;
-  border-top: 1px solid #E6E6E6 !important;
-  z-index: 100 !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-/* Success/Info/Warning/Error boxes - Compact */
-.stSuccess {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-sand) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 12px !important;
-  margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  padding: 1rem !important;
+  margin-bottom: 0.75rem !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+/* Success/Info/Warning/Error boxes */
+.stSuccess {
+  background-color: var(--color-leaf) !important;
+  color: var(--color-ink) !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 1rem !important;
 }
 
 .stInfo {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-sky) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 12px !important;
-  margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  padding: 1rem !important;
 }
 
 .stWarning {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-clay) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 12px !important;
-  margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  padding: 1rem !important;
 }
 
 .stError {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-soft-rose) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 12px !important;
-  margin-top: 0 !important;
-  margin-bottom: 8px !important;
+  padding: 1rem !important;
 }
 
-/* Sidebar - ChatGPT-style chat history */
+/* Sidebar */
 .css-1d391kg, [data-testid="stSidebar"] {
-  background-color: #FFFFFF !important;
-  border-right: 1px solid #E6E6E6 !important;
-  padding: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100vh !important;
+  background: linear-gradient(180deg, var(--color-sand), var(--color-paper)) !important;
 }
 
-/* Sidebar header with New Chat */
-.sidebar-header {
-  padding: 16px !important;
-  border-bottom: 1px solid #E6E6E6 !important;
-  flex-shrink: 0 !important;
-}
-
-/* Chat history scroll area */
-.chat-history-container {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding: 8px !important;
-  min-height: 0 !important;
-}
-
-/* Chat history items */
-.chat-history-item {
-  padding: 12px 16px !important;
-  margin-bottom: 8px !important;
-  background-color: #FFFFFF !important;
-  border: 1px solid #E6E6E6 !important;
-  border-radius: 6px !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 44px !important;
-  justify-content: center !important;
-}
-
-.chat-history-item:hover {
-  background-color: #F7F7F7 !important;
-  border-color: #D0D0D0 !important;
-}
-
-.chat-history-item.active {
-  background-color: #FFFEFA !important;
-  border: 2px solid #333333 !important;
-}
-
-/* Chat title and timestamp */
-.chat-history-title {
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  color: #333333 !important;
-  margin: 0 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  line-height: 1.3 !important;
-}
-
-.chat-history-time {
-  font-size: 12px !important;
-  color: #555555 !important;
-  margin-top: 4px !important;
-  white-space: nowrap !important;
-}
-
-/* Sidebar footer with Settings */
-.sidebar-footer {
-  padding: 16px !important;
-  border-top: 1px solid #E6E6E6 !important;
-  flex-shrink: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 8px !important;
-}
-
-/* Sidebar nav items - Text only with breathing room */
-.stSidebar [data-testid="stMarkdownContainer"],
-.stSidebar button {
-  min-height: 44px !important;
-  display: flex !important;
-  align-items: center !important;
-  padding: 12px 16px !important;
-  font-size: 16px !important;
-  color: #333333 !important;
-  background-color: #FFFFFF !important;
-  border: 1px solid #E6E6E6 !important;
-  border-radius: 6px !important;
-  margin-bottom: 12px !important;
-  width: 100% !important;
-  text-align: left !important;
-  transition: background-color 0.3s ease !important;
-  letter-spacing: 0.3px !important;
-}
-
-.stSidebar button {
-  cursor: pointer !important;
-  font-weight: 400 !important;
-}
-
-.stSidebar button:hover {
-  background-color: #F7F7F7 !important;
-}
-
-.stSidebar button:focus {
-  outline: 2px solid #4C8BF5 !important;
-  outline-offset: 2px !important;
-  box-shadow: none !important;
-}
-
-/* Hide sidebar icons/emojis */
-.stSidebar [data-testid="stMarkdownContainer"] *::before,
-.stSidebar button *::before {
-  display: none !important;
-}
-
-/* Sidebar heading */
-.stSidebar h1, .stSidebar h2, .stSidebar h3 {
-  margin-bottom: 16px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-}
-
-/* Sidebar text styling */
-.stSidebar p, .stSidebar span {
-  color: #333333 !important;
-  font-size: 16px !important;
-}
-
-/* Remove default Streamlit sidebar styling */
-.stSidebar [class*="css-"] {
-  background-color: transparent !important;
-}
-
-.stSidebar [data-testid] button {
-  text-transform: capitalize !important;
-}
-
-/* Back to Top Button - Text Only */
-#back-to-top-btn {
-  position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
-  background-color: #FFFFFF !important;
-  border: 1px solid #E6E6E6 !important;
-  border-radius: 6px !important;
-  padding: 6px 12px !important;
-  font-size: 14px !important;
-  color: #333333 !important;
-  cursor: pointer !important;
-  z-index: 99 !important;
-  display: none !important;
-  transition: background-color 0.2s ease, color 0.2s ease !important;
-  font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, sans-serif !important;
-  font-weight: 400 !important;
-  text-decoration: none !important;
-  white-space: nowrap !important;
-  line-height: 1.4 !important;
-}
-
-#back-to-top-btn:hover {
-  background-color: #F7F7F7 !important;
-}
-
-#back-to-top-btn:focus {
-  outline: 2px solid #4C8BF5 !important;
-  outline-offset: 2px !important;
-}
-
-#back-to-top-btn.show {
-  display: inline-block !important;
-}
-
-/* File uploader - Compact */
+/* File uploader */
 .stFileUploader {
-  background-color: var(--color-bg-secondary) !important;
+  background-color: var(--color-sand) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 12px !important;
-  border: 2px dashed var(--color-border) !important;
-  color: var(--color-text-primary) !important;
-  margin: 0 !important;
-}
-
-/* Cards - Navigation or Choices with breathing room */
-.stCard, [data-testid="column"] > div > div > div {
-  background-color: #FFFFFF !important;
-  border: 1px solid #E6E6E6 !important;
-  border-radius: 12px !important;
-  padding: 20px !important;
-  box-shadow: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  min-height: 120px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-}
-
-.stCard:hover, [data-testid="column"] > div > div > div:hover {
-  background-color: #F7F7F7 !important;
-  border-color: #D0D0D0 !important;
-}
-
-.stCard:focus, [data-testid="column"] > div > div > div:focus {
-  outline: 2px solid #4C8BF5 !important;
-  outline-offset: 2px !important;
-}
-
-/* Card content - Text only, no icons */
-.stCard h3, .stCard h4, .stCard p,
-[data-testid="column"] > div > div > div h3,
-[data-testid="column"] > div > div > div h4,
-[data-testid="column"] > div > div > div p {
-  color: #333333 !important;
-  font-size: 16px !important;
-  margin: 0 !important;
-  letter-spacing: 0.3px !important;
-}
-
-.stCard h3, [data-testid="column"] > div > div > div h3 {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  margin-bottom: 12px !important;
-  line-height: 1.4 !important;
-}
-
-.stCard p, [data-testid="column"] > div > div > div p {
-  margin-bottom: 8px !important;
-  line-height: 1.5 !important;
-}
-
-/* Intentional whitespace inside cards */
-.stCard > div, [data-testid="column"] > div > div > div > div {
-  margin: 0 !important;
-  padding: 0 !important;
+  padding: 1rem !important;
+  border: 2px dashed var(--color-clay) !important;
 }
 
 /* Dataframes and tables */
 .stDataFrame {
   border-radius: var(--radius-medium) !important;
   overflow: hidden !important;
-}
-
-.stDataFrame table {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
-}
-
-.stDataFrame thead {
-  background-color: var(--color-bg-primary) !important;
-  color: var(--color-text-primary) !important;
-  border-bottom: 1px solid var(--color-border) !important;
 }
 
 /* Plotly charts */
@@ -764,62 +225,29 @@ input[type="password"]:focus-visible {
 /* Markdown content */
 .stMarkdown {
   font-family: var(--font-sans) !important;
-  font-size: var(--font-size-body) !important;
-  line-height: var(--line-height) !important;
-  color: var(--color-text-primary) !important;
-}
-
-.stMarkdown p {
-  font-size: var(--font-size-body) !important;
-  line-height: var(--line-height) !important;
-  color: var(--color-text-primary) !important;
-}
-
-.stMarkdown h1 {
-  font-size: var(--font-size-heading) !important;
-  line-height: var(--line-height) !important;
-}
-
-.stMarkdown h2 {
-  font-size: var(--font-size-heading) !important;
-  line-height: var(--line-height) !important;
-}
-
-.stMarkdown h3 {
-  font-size: var(--font-size-heading) !important;
-  line-height: var(--line-height) !important;
-}
-
-.stMarkdown strong {
-  color: var(--color-text-primary) !important;
-  font-weight: 600 !important;
 }
 
 /* Links */
 a {
-  color: var(--color-text-primary) !important;
+  color: var(--color-leaf) !important;
   transition: var(--transition-smooth) !important;
-  text-decoration: underline !important;
 }
 
 a:hover {
-  color: var(--color-text-secondary) !important;
+  color: var(--color-ink) !important;
 }
 
-/* Metrics - Compact */
+/* Metrics */
 .stMetric {
-  background-color: var(--color-bg-secondary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-sand) !important;
   border-radius: var(--radius-medium) !important;
-  padding: 12px !important;
+  padding: 1rem !important;
   box-shadow: var(--shadow-soft) !important;
-  color: var(--color-text-primary) !important;
-  margin: 0 !important;
 }
 
 /* Progress bars */
 .stProgress > div > div > div {
-  background-color: var(--color-text-primary) !important;
+  background-color: var(--color-leaf) !important;
   border-radius: var(--radius-small) !important;
 }
 
@@ -828,92 +256,29 @@ a:hover {
   transition: var(--transition-smooth) !important;
 }
 
-/* All labels - keep on single line with proper styling */
-label {
-  white-space: nowrap !important;
-  display: inline-block !important;
-  color: var(--color-text-primary) !important;
-  font-weight: 500 !important;
-  font-size: 15px !important;
-  margin-bottom: 8px !important;
-}
-
-/* Form input styling */
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea,
-.stSelectbox > div > div,
-.stNumberInput > div > div > input {
-  border: 1.5px solid #DDDDDD !important;
-  border-radius: 6px !important;
-  padding: 10px 12px !important;
-  font-size: 15px !important;
-  background-color: #FFFFFF !important;
-}
-
-.stCheckbox label, .stRadio label {
-  color: var(--color-text-primary) !important;
-}
-
-/* Download button - Strict Minimal Style */
+/* Download button */
 .stDownloadButton > button {
-  background-color: #FFFFFF !important;
-  color: #333333 !important;
-  border: 1px solid #E6E6E6 !important;
-  border-radius: 6px !important;
-  padding: 8px 14px !important;
-  font-size: 16px !important;
-  font-weight: 400 !important;
-  height: 44px !important;
-  box-shadow: none !important;
-  transition: background-color 0.2s ease !important;
-  margin: 0 !important;
+  background-color: var(--color-clay) !important;
+  color: var(--color-ink) !important;
+  border: none !important;
+  border-radius: var(--radius-medium) !important;
+  padding: 0.5rem 1.5rem !important;
+  transition: var(--transition-smooth) !important;
 }
 
 .stDownloadButton > button:hover {
-  background-color: #F7F7F7 !important;
-  border: 1px solid #E6E6E6 !important;
-}
-
-.stDownloadButton > button:focus,
-.stDownloadButton > button:focus-visible {
-  outline: 2px solid #4C8BF5 !important;
-  outline-offset: 2px !important;
-  box-shadow: none !important;
+  background-color: var(--color-leaf) !important;
+  color: white !important;
 }
 
 /* Spinner */
 .stSpinner > div {
-  border-top-color: var(--color-text-primary) !important;
+  border-top-color: var(--color-leaf) !important;
 }
 
-/* Columns spacing - Compact */
+/* Columns spacing */
 .row-widget.stHorizontal {
-  gap: 8px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-}
-
-/* Mobile: stack columns vertically */
-@media (max-width: 768px) {
-  .row-widget.stHorizontal {
-    flex-direction: column !important;
-    gap: 12px !important;
-  }
-
-  /* Make column children full width on mobile */
-  .row-widget.stHorizontal > div {
-    width: 100% !important;
-    min-width: 100% !important;
-  }
-}
-
-/* Tablet: responsive column layout */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .row-widget.stHorizontal > div {
-    flex: 1 1 calc(50% - 4px) !important;
-  }
+  gap: 1rem !important;
 }
 
 /* Fade in animation for new elements */
@@ -935,250 +300,6 @@ label {
 /* Footer styling */
 footer {
   background-color: transparent !important;
-  color: var(--color-text-primary) !important;
+  color: var(--color-ink) !important;
   font-family: var(--font-sans) !important;
-  font-size: var(--font-size-body) !important;
-  line-height: var(--line-height) !important;
 }
-
-/* Button text */
-.stButton > button {
-  font-family: var(--font-sans) !important;
-  font-size: var(--font-size-body) !important;
-  line-height: var(--line-height) !important;
-}
-
-/* All text elements */
-body, p, span, label, div {
-  font-family: var(--font-sans) !important;
-  line-height: var(--line-height) !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-}
-
-/* Paragraph spacing - compact */
-p {
-  margin: 0 !important;
-}
-
-/* Remove vertical whitespace from common elements */
-hr {
-  margin-top: 8px !important;
-  margin-bottom: 8px !important;
-}
-
-/* Section spacing - max 24px */
-section {
-  margin-bottom: 8px !important;
-  margin-top: 0 !important;
-}
-
-/* Main header - Guide title */
-.main-header {
-  font-size: 96px !important;
-  line-height: 1.1 !important;
-  font-family: var(--font-serif) !important;
-  font-weight: 400 !important;
-  color: var(--color-text-primary) !important;
-  text-align: center !important;
-  display: block !important;
-  width: 100% !important;
-  margin: 60px 0 16px 0 !important;
-  letter-spacing: -1px !important;
-}
-
-.main-byline {
-  text-align: center !important;
-  color: #888888 !important;
-  font-family: var(--font-sans) !important;
-  font-size: 15px !important;
-  font-weight: 400 !important;
-  margin: 0 0 20px 0 !important;
-  letter-spacing: 0.2px !important;
-}
-
-.subtitle {
-  text-align: center !important;
-  color: #666666 !important;
-  font-size: 16px !important;
-  line-height: 1.6 !important;
-  margin: 24px 0 !important;
-  max-width: 700px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* All headings - ensure centered alignment and hide link icons */
-h1, h2, h3, h4, h5, h6 {
-  text-align: center !important;
-  display: block !important;
-  width: 100% !important;
-}
-
-/* Hide Streamlit's header link icon */
-h1 > a, h2 > a, h3 > a, h4 > a, h5 > a, h6 > a {
-  display: none !important;
-}
-
-/* Hide any SVG that appears after headings */
-h1 + svg, h2 + svg, h3 + svg, h4 + svg, h5 + svg, h6 + svg {
-  display: none !important;
-}
-
-/* Form submit button - additional sizing */
-button[kind="primaryFormSubmit"] {
-  background-color: #333333 !important;
-  color: #FFFFFF !important;
-  border: 1.5px solid #333333 !important;
-  border-radius: 6px !important;
-  padding: 12px 24px !important;
-  height: 40px !important;
-  font-weight: 500 !important;
-}
-
-/* Auth page footer styling */
-.auth-footer {
-  text-align: center !important;
-  margin-top: 48px !important;
-  font-size: 13px !important;
-  color: #888888 !important;
-  line-height: 1.8 !important;
-}
-
-.auth-footer-quote {
-  font-style: italic !important;
-  color: #888888 !important;
-  margin-bottom: 12px !important;
-}
-
-.auth-footer-credit {
-  color: #999999 !important;
-  font-size: 12px !important;
-}
-
-@media (max-width: 768px) {
-  .main-header {
-    font-size: 28px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .main-header {
-    font-size: 22px !important;
-  }
-}
-
-/* Code blocks */
-code {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: var(--radius-small) !important;
-}
-
-pre {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: var(--radius-medium) !important;
-  padding: 1rem !important;
-  overflow-x: auto !important;
-}
-
-/* Mobile button styling */
-@media (max-width: 768px) {
-  .stButton > button,
-  .stDownloadButton > button,
-  button[kind="secondary"],
-  button[kind="primary"] {
-    width: 100% !important;
-    min-height: 48px !important;
-    font-size: 16px !important;
-  }
-
-  /* Ensure touch targets are large enough */
-  input, textarea, select {
-    min-height: 44px !important;
-    font-size: 16px !important;
-  }
-}
-
-/* Tablet form layout */
-@media (max-width: 1024px) {
-  .stTextInput, .stTextArea, .stSelectbox, .stMultiSelect {
-    width: 100% !important;
-  }
-}
-
-/* Chat input responsiveness */
-@media (max-width: 768px) {
-  [data-testid="stChatInput"] {
-    width: 100% !important;
-    padding: 8px var(--viewport-padding) !important;
-  }
-
-  [data-testid="stChatInput"] input {
-    font-size: 16px !important;
-    min-height: 44px !important;
-  }
-}
-
-/* Sidebar responsiveness */
-@media (max-width: 768px) {
-  /* Allow sidebar to collapse on mobile */
-  [data-testid="stSidebar"] {
-    width: 100% !important;
-    position: relative !important;
-  }
-}
-
-/* Dashboard card grid responsiveness */
-@media (max-width: 768px) {
-  .sticky-card-container {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 12px !important;
-  }
-
-  /* Stack cards in single column on mobile */
-  .sticky-card-container > div {
-    width: 100% !important;
-    flex: 1 1 100% !important;
-  }
-}
-
-@media (max-width: 1024px) {
-  .sticky-card-container {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 16px !important;
-  }
-}
-
-/* File uploader responsiveness */
-@media (max-width: 768px) {
-  [data-testid="stFileUploader"] {
-    width: 100% !important;
-  }
-}
-
-/* Tab responsiveness */
-@media (max-width: 768px) {
-  [data-testid="stTabs"] {
-    width: 100% !important;
-  }
-
-  .stTabs [role="tablist"] {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-  }
-
-  .stTabs [role="tab"] {
-    flex: 1 !important;
-    min-width: 120px !important;
-    font-size: 13px !important;
-  }
-}
-

@@ -1,22 +1,47 @@
-Implement these: Metadata filtering by year level (Foundation, Years 1-2, etc.)
-Subject-level filtering (English, Maths, Science)
-Full document re-chunking by curriculum sections (bigger improvement, but requires re-ingesting all documents)
+Connecting Apps and payment:
 
+build a webhook-driven subscription system that connects your landing page's Stripe payments to Guide's access control. Here's how it will work:
 
+The Flow:
+Landing Page → User chooses monthly ($12) or annual ($144) → pays via Stripe → email captured
+Stripe Webhook → Fires to your landing page → stores subscription in shared PostgreSQL database
+Guide Signup → User creates account → we verify their email has active subscription → allow ONE account creation
+Guide Login → Every session checks subscription status → blocks access if expired/cancelled
+Prevention System → One subscription email = one Guide account (enforced at database level)
+What I'll Build:
+For Guide (this app):
 
-Next Steps for You:
+✅ New subscriptions table in your existing PostgreSQL database
+✅ Subscription verification middleware (checks on login + session)
+✅ Modified signup flow (requires active subscription)
+✅ One-account-per-email enforcement
+✅ Friendly error messages with links back to landing page
+✅ Optional: Admin dashboard to view/manage subscriptions
+For Your Landing Page (blueprint/documentation):
 
-To connect your auxpery.com.au Stripe account to Guide:
+✅ Webhook endpoint code (Node.js/Python) to receive Stripe events
+✅ Signature verification for security
+✅ Event handlers for: subscription.created, invoice.paid, subscription.deleted
+✅ Database connection setup (reuse Guide's PostgreSQL)
+✅ Environment variables guide (Stripe keys, database URL)
+Security Features:
 
-Add the webhook endpoint in your Stripe Dashboard:
+✅ Signed webhook verification (prevents fake requests)
+✅ Email-based linking (prevents multiple accounts)
+✅ Status checks with caching (performance + real-time)
+✅ Grace period for failed payments (1-2 days)
+Let me create the detailed task list for this integration:
+Create user subscription table
+Add database helper functions for subscriptions
+Control access based on active subscription
+Update signup to check active subscription
+Check subscription status on login
+Define student subscription access rules
+Document webhook endpoint with examples
+Create guide for setting up integration
+Add subscription management view
+Test entire subscription process
 
-Go to Developers → Webhooks → Add endpoint
-Webhook URL: You'll need to expose port 8000 externally or set up routing
-Events to send: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed
-Set the webhook signing secret in your Replit Secrets:
-
-Copy the signing secret from Stripe
-Add it as STRIPE_WEBHOOK_SECRET in your environment
 
 
 
@@ -24,39 +49,442 @@ ______________________________________________________________
 
 
 
-1. User Onboarding Experience
 
-Welcome tour for new educators showing key features
-Quick-start guide or first-time prompts
-Sample lesson plans to demonstrate value immediately
-2. Error Handling & Reliability
 
-Graceful error messages when AI requests fail
-Retry mechanisms for API timeouts
-Offline-friendly messaging
-3. Mobile Responsiveness
+UI/UX:
 
-The current wide layout may struggle on tablets/phones
-Many educators access tools on mobile devices
-4. Help & Support System
+Apply the following design system to the entire Streamlit app. All rules are mandatory. No substitutions, no alternatives, no interpretations. Follow these exact values and behaviours only.
 
-In-app FAQ or help center
-Feedback/bug report button
-Contact form for subscription issues
-💡 Nice-to-Have Enhancements
-5. Usage Analytics Dashboard
+🎨 1. Colour Theme (Fixed, No Variations)
 
-Show educators their most-used features
-Track lesson plans created, time saved
-6. Email Notifications
+Background (primary): #FFFEFA
+Cards & Surfaces: #FFFFFF
+Borders: #E6E6E6
+Primary text: #333333
+Secondary text: #555555
+Assistant chat bubble: #FFFEFA
+User chat bubble: #FFFFFF
 
-Subscription renewal reminders
-Welcome email after signup
-7. Rate Limiting
+Rules:
 
-Protect against API abuse
-Fair usage limits for AI queries
-8. Data Export
+No other colors are allowed.
 
-Let users download all their lesson plans at once
-GDPR/privacy compliance feature
+No saturated yellow.
+
+Always dark grey text on light background.
+
+____________________________
+
+🔤 2. Typography (Fixed)
+
+Font family: Inter, Roboto, sans-serif
+Body text: 16px
+Headings: 22px
+Line height: 1.4
+
+----------------------------
+
+📐 3. Layout & Spacing (Strict and Controlled)
+Global padding: 16px
+Spacing between components: 16px
+Spacing between chat messages: 12px
+🚫 3B. Remove Unnecessary Negative Space (Strict Rule)
+
+The layout must not contain large empty gaps or oversized vertical spaces.
+
+The agent must ensure:
+
+No extra empty space above or below components
+
+No double-padding
+
+No accidental 40–60px blank regions
+
+No oversized margins between sections
+
+No vertical stacking that creates “dead zones”
+
+No blank columns or unused horizontal white blocks
+
+Mandatory Adjustment Rule:
+If any section creates more than 24px of empty space vertically without content,
+reduce padding or margins to restore a clean, compact flow.
+
+The goal:
+A calm, breathable interface — not an interface with awkward empty areas.
+
+-------------------------------
+
+🔘 4. Buttons (Strict Minimal Style)
+background: #FFFFFF;
+border: 1px solid #E6E6E6;
+border-radius: 6px;
+color: #333333;
+padding: 8px 14px;
+font-size: 16px;
+height: 44px;
+
+
+Hover: #F7F7F7
+Focus: outline: 2px solid #4C8BF5
+
+Rules:
+
+Text-only
+
+No icons
+
+No emojis
+
+No shadows
+
+-------------------------------
+
+💬 5. Chat Interface (Strict Rules)
+
+Chat container:
+
+Single vertical column of messages
+
+Full-width, left-aligned
+
+No segmented boxes
+
+User message:
+
+background: #FFFFFF;
+border: 1px solid #E6E6E6;
+padding: 12px;
+border-radius: 8px;
+
+
+Assistant message:
+
+background: #FFFEFA;
+border: 1px solid #E6E6E6;
+padding: 12px;
+border-radius: 8px;
+
+
+Scroll behaviour:
+
+On chat update → auto-scroll to bottom
+
+On navigation (card click) → scroll to top
+
+Input box:
+
+Fixed at bottom like ChatGPT
+
+Never hidden or pushed down by extra whitespace
+
+-------------------------------
+
+📚 6. Sidebar Navigation (Text Only)
+
+Items:
+
+“New Chat”
+
+“Chat History”
+
+“Settings”
+
+Style:
+
+background: #FFFFFF;
+border-right: 1px solid #E6E6E6;
+padding: 16px;
+font-size: 16px;
+
+
+Rules:
+
+No icons
+
+No emojis
+
+Minimum height per item: 44px
+
+Hover: #F7F7F7
+
+-------------------------------
+
+7. Cards (For Navigation or Choices)
+
+Style:
+
+background: #FFFFFF;
+border: 1px solid #E6E6E6;
+border-radius: 12px;
+padding: 16px;
+
+
+Rules:
+
+No shadows
+
+No icons
+
+Text-only
+
+No oversized vertical whitespace inside cards
+
+Clicking a card → scroll to top
+
+-------------------------------
+
+⬆️ 8. Back to Top (Text Only)
+position: fixed;
+bottom: 20px;
+right: 20px;
+background: #FFFFFF;
+border: 1px solid #E6E6E6;
+border-radius: 6px;
+padding: 6px 12px;
+font-size: 14px;
+color: #333333;
+
+
+Label: “Back to Top”
+No icons.
+No arrows.
+No emoji.
+
+-------------------------------
+
+🔒 9. Interaction Rules (Non-Negotiable)
+
+No icons anywhere
+
+No emojis anywhere
+
+No shadows anywhere
+
+No decorative gradients
+
+No unpredictable whitespace
+
+No visual clutter
+
+All text must remain dark grey on light background
+
+All click targets ≥ 44px tall
+
+Apply these rules globally to all pages
+
+-------------------------------
+
+🧘🏻 10. Emotional Tone (Fixed)
+
+The UI must feel:
+
+gentle
+
+soft
+
+calm
+
+minimal
+
+Montessori-aligned
+
+NOT cluttered
+
+NOT empty
+
+visually balanced
+
+Whitespace is intentional, not accidental.
+
+__________________________
+__________________________
+
+2. Chat Window Layout Like ChatGPT
+
+Goal:
+A single, continuous, vertically flowing chat window—not multiple boxes, not separated sections.
+
+What to do:
+
+Create ONE scrollable container for chat messages.
+
+Messages should stack fluidly (assistant bubble, user bubble, assistant bubble…).
+
+The container should expand downward naturally.
+
+Use CSS to keep the chat area full-height and smooth to scroll.
+
+Keep the “input box” fixed at the bottom, similar to ChatGPT’s layout.
+
+Expected result:
+A modern chat interface that feels fluid and continuous, with no gaps or awkward scroll jumps.
+
+-------------------------------
+
+3. Chat History Sidebar (Like ChatGPT)
+
+Goal:
+A collapsible sidebar on the left that shows past conversations.
+
+What to do:
+
+Implement a sidebar with a list of past conversations.
+
+Each conversation should show a short title and a timestamp.
+
+Clicking a conversation loads that conversation.
+
+The sidebar should be permanently visible OR collapsible similar to ChatGPT.
+
+Add icons for “new chat” and “settings” at the bottom of the sidebar.
+
+Expected result:
+A familiar ChatGPT-style sidebar that is intuitive for users.
+
+-------------------------------
+
+Replit Agent Instructions: Fix Page Landing & Scroll Position (Detailed Breakdown)
+
+A. General Goal
+
+Streamlit currently loads or re-renders pages at inconsistent scroll positions.
+I want predictable, intentional scroll behaviour, based on the user’s action.
+
+B. Required Behaviour
+
+When a card, button, or navigation element loads a new section the page must always scroll to the very top (scroll position = 0).
+
+Explicit implementation steps
+
+The agent must:
+
+Inject JavaScript that forces scroll to top on navigation:
+
+window.scrollTo(0, 0);
+
+Trigger that JS:
+
+after any card click
+
+after page state changes that represent navigation
+
+Disable Streamlit’s “retain scroll position” behaviour.
+
+Apply JS on page load to override Streamlit’s default.
+
+Expected result
+
+Whenever a user clicks a card or navigates to a new section, the viewport always resets to the top of the page.
+
+-------------------------------
+
+C. Required Behaviour
+
+When the chat updates, the UI must always scroll to the bottom of the chat container, where the latest exchange is.
+
+Explicit implementation steps
+
+The agent must:
+
+Wrap the chat messages in a scrollable container with a unique HTML ID.
+Example:
+
+<div id="chat-container"> ...messages... </div>
+
+
+Inject JavaScript that scrolls this container to its bottom:
+
+var chatBox = document.getElementById("chat-container");
+chatBox.scrollTop = chatBox.scrollHeight;
+
+
+Trigger this JS:
+
+after each message is added
+
+after Streamlit reruns due to user input
+
+Ensure the chat input box remains visible (sticky bottom).
+
+Expected result
+
+When chatting, the user always sees the newest message and input box without needing to scroll manually.
+
+-------------------------------
+
+D. Putting Both Behaviours Together
+
+To avoid confusion for the agent, spell out the logic:
+
+If the user is navigating (card click / switching page):
+
+➡️ Scroll to top of page (scrollY = 0)
+
+If the user is chatting (sending/receiving messages):
+
+➡️ Scroll to bottom of chat container
+
+The agent must treat these as two separate scroll rules triggered by different UI actions.
+
+-------------------------------
+
+E. Use st.session_state to differentiate:
+
+session_state["mode"] = "navigation"
+
+session_state["mode"] = "chat"
+
+Run JS conditionally based on mode.
+
+This improves reliability.
+
+--------------------------------------------------------------
+
+STUDENT DASHBOARD:
+In the student chat history it is seperating the subjects well but it only shows a brief sample of their chat history. I'd like their whole conversation to be saved and viewable to the educator.
+
+-------------------------------
+PLAN:
+It takes a long time for the site to load how do I improve it's load speed?
+
+-------------------------------
+PLAN:
+LESSONING PLANNING
+That the Australian Curriculum V9 codes are identified and referenced OR if no direct link then draw from the achievement standard (What should I do as a developer to ensure this complexity in organisation and comprehension is flawlessy executed?)
+
+--------------------------------------------------------------
+
+MONTESSORI COMPANION
+remove: Select Age Group function. This can be done by simply assigning an age in the chat bar.
+
+--------------------------------------------------------------
+
+REMOVE THE HEADER/FOOTER from each page except the login landing page and the Student and Educator DASHBOARD pages.
+remove: Contact us at guide@auxpery.com.au from Student account
+
+--------------------------------------------------------------
+
+SESSION TIMEOUT
+PROMPT FOR REPLIT AGENT
+
+Remove all automatic logout behaviour from the app.
+I want the authentication system to behave like ChatGPT, where the user stays logged in all day unless they manually choose to log out.
+Do the following:
+
+Disable any “session timeout” or “force logout after inactivity” logic in the backend and frontend.
+
+Ensure the authentication cookie or token uses a long expiry time, such as 7–30 days.
+
+If using Streamlit’s st.session_state, ensure it persists across reruns.
+
+If using JWT or API tokens, extend their expiration.
+
+Check the codebase for any logout triggers (functions, timers, callbacks) and remove them.
+
+Keep the explicit manual logout button, but do not trigger logout automatically for any reason.
+
+Do NOT clear session_state unless the user clicks logout.
+
+Expected result:
+The user logs in once and stays logged in indefinitely, with no auto-logouts, even across reruns or when the tab is left open all day.

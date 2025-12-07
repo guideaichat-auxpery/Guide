@@ -2,14 +2,15 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
-enableCORS = false
-enableXsrfProtection = false
+enableXsrfProtection = true
 maxUploadSize = 200
 maxMessageSize = 200
 runOnSave = true
 
 [browser]
 gatherUsageStats = false
+serverAddress = "0.0.0.0"
+serverPort = 5000
 
 [runner]
 magicEnabled = true
@@ -20,14 +21,8 @@ showErrorDetails = true
 toolbarMode = "minimal"
 
 [theme]
-primaryColor = "#333333"
-backgroundColor = "#FFFEFA"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#333333"
+primaryColor = "#9bbf9b"
+backgroundColor = "#fffdf8"
+secondaryBackgroundColor = "#f5f1e6"
+textColor = "#2f3e46"
 font = "sans serif"
-
-# Session Configuration
-# Users stay logged in indefinitely like ChatGPT
-# Session state persists across reruns and browser refreshes
-# No automatic timeouts or force logouts
-# Users must manually click "Logout" to clear session

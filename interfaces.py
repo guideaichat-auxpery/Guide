@@ -15,9 +15,6 @@ def show_lesson_planning_interface():
     """Educational planning interface for educators with Australian Curriculum alignment"""
     scroll_to_top()
     
-    # Show first-time prompt for new users
-    show_first_time_prompts("lesson_planning")
-    
     from utils import render_conversation_sidebar
     
     # Get educator info
@@ -358,9 +355,6 @@ def show_companion_interface():
     """Enhanced Montessori companion interface with conversation history management and persistence"""
     scroll_to_top()
     
-    # Show first-time prompt for new users
-    show_first_time_prompts("companion")
-    
     from utils import manage_conversation_history, estimate_tokens, render_conversation_sidebar
     from database import save_conversation_message, log_educator_prompt, load_conversation_to_session
     
@@ -422,10 +416,27 @@ def show_companion_interface():
     
     st.markdown("### 🗨️ Montessori Companion")
     st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
-    st.markdown("*Specify an age group in the chat to receive age-tailored guidance*")
     
-    # Default to all ages - educators can specify age in chat
-    companion_age_group = "all"
+    # Age group selector for companion (optional - defaults to all ages)
+    st.markdown("#### 🌱 Select Age Group (Optional)")
+    st.markdown("*Choose a specific age range for targeted guidance, or select 'All Ages' for comprehensive support*")
+    
+    companion_age_options = {
+        "All Ages (3-18)": "all",
+        "Ages 12-15 (Adolescent)": "12-15",
+        "Ages 9-12 (Upper Primary)": "9-12",
+        "Ages 6-9 (Lower Primary)": "6-9",
+        "Ages 3-6 (Early Years)": "3-6"
+    }
+    
+    selected_age_display = st.selectbox(
+        "Age Focus",
+        options=list(companion_age_options.keys()),
+        key="companion_age_selector",
+        label_visibility="collapsed"
+    )
+    
+    companion_age_group = companion_age_options[selected_age_display]
     
     # Manage conversation history (keep last 10 exchanges)
     st.session_state.companion_messages = manage_conversation_history(
@@ -934,69 +945,31 @@ def show_student_interface():
                     else:
                         rubric_content = uploaded_rubric.read().decode("utf-8")
             
-            # Build comprehensive feedback prompt with rubric-based analysis
+            # Build comprehensive feedback prompt
+            feedback_prompt = f"""Please provide detailed, constructive feedback on the following student work.
+
+STUDENT WORK:
+{work_content[:2000]}
+
+"""
             if rubric_content:
-                feedback_prompt = f"""You are providing detailed, criterion-based feedback on student work against a specific rubric. Your feedback MUST reference the rubric directly.
+                feedback_prompt += f"""ASSESSMENT RUBRIC:
+{rubric_content[:1500]}
 
-ASSESSMENT RUBRIC:
-{rubric_content}
-
-STUDENT WORK:
-{work_content[:2000]}
-
-CRITICAL FEEDBACK REQUIREMENTS - YOU MUST FOLLOW ALL OF THESE:
-
-1. **Parse the Rubric**: Identify each criterion in the rubric (e.g., "Ideas & Content", "Organization", "Voice", etc.). List each criterion clearly.
-
-2. **Per-Criterion Evaluation**: For EACH criterion in the rubric, provide:
-   a) The criterion name and performance level(s) the student's work demonstrates
-   b) DIRECT QUOTE from the rubric descriptor that applies to this level
-   c) SPECIFIC EVIDENCE from the student work (direct quotes or specific details) that shows this level
-   d) Why the work meets or doesn't meet this criterion based on the rubric language
-   e) Targeted improvement suggestion tied to this specific criterion
-
-3. **Structure Your Response**:
-   - Start with a brief overall summary (2-3 sentences)
-   - Then provide a section for EACH rubric criterion with the heading "### [Criterion Name]"
-   - Under each criterion, clearly separate:
-     - "Performance Level: [level]"
-     - "Rubric Language: [direct quote]"
-     - "Evidence from Work: [direct quote or specific detail]"
-     - "Feedback: [why it demonstrates this level]"
-     - "Next Steps: [specific improvement]"
-   - End with an overall synthesis and concrete next steps
-
-4. **Evidence-Based**: Every claim about the student's work MUST be backed by specific evidence from the work itself.
-
-5. **Rubric-Grounded**: Use the exact language and criteria from the rubric. Do not substitute different standards.
-
-6. **Age-Appropriate & Encouraging**: Use asset-based language that honors the student's development stage (appropriate for {age_group} year olds).
-
-7. **Montessori Connection**: Where appropriate, connect feedback to Montessori principles of exploration and self-correction.
-
-Year Level: {st.session_state.get('student_year_selector', '6')}"""
-            else:
-                feedback_prompt = f"""You are providing detailed, constructive feedback on student work.
-
-STUDENT WORK:
-{work_content[:2000]}
-
+Please assess the work against the rubric criteria, providing specific feedback for each criterion.
+"""
+            
+            feedback_prompt += f"""
 FEEDBACK REQUIREMENTS:
-1. Assess the work based on learning standards and best practices
+1. Assess the work based on the rubric (if provided) and learning standards
 2. Provide specific, actionable suggestions for improvement
 3. Highlight strengths and areas of growth
-4. Use encouraging, asset-based language that honors student development
-5. Connect feedback to Montessori principles of exploration and self-correction
-6. Reference Australian Curriculum V9 standards
-7. Suggest concrete next steps to deepen understanding
+4. Connect feedback to broader learning and real-world applications (Montessori approach)
+5. Use encouraging, asset-based language that honors student development
+6. Reference Australian Curriculum V9 standards for Year {st.session_state.get('student_year_selector', '6')}
+7. Suggest next steps to deepen understanding
 
-Keep feedback age-appropriate for {age_group} year olds (Year {st.session_state.get('student_year_selector', '6')}).
-
-Structure your response with:
-- Brief overall summary
-- Strengths identified in the work
-- Areas for development
-- Specific next steps"""
+Keep feedback age-appropriate for {age_group} year olds."""
 
             # Add to conversation
             st.session_state.student_messages.append({
@@ -1411,12 +1384,12 @@ def show_student_dashboard_interface():
                                     messages = load_conversation_to_session(db, chat.session_id, 'student')
                                     
                                     if messages:
-                                        st.markdown("**Full Conversation:**")
-                                        for msg in messages:  # Show ALL messages
+                                        st.markdown("**Conversation:**")
+                                        for msg in messages[-10:]:  # Show last 10 messages
                                             if msg['role'] == 'user':
-                                                st.markdown(f"👤 **Student:**\n{msg['content']}")
+                                                st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
                                             else:
-                                                st.markdown(f"🤖 **AI:**\n{msg['content']}")
+                                                st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
                                     else:
                                         st.info("No messages in this conversation yet.")
                             st.markdown("---")
@@ -1436,12 +1409,12 @@ def show_student_dashboard_interface():
                                 messages = load_conversation_to_session(db, chat.session_id, 'student')
                                 
                                 if messages:
-                                    st.markdown("**Full Conversation:**")
-                                    for msg in messages:  # Show ALL messages
+                                    st.markdown("**Conversation:**")
+                                    for msg in messages[-10:]:  # Show last 10 messages
                                         if msg['role'] == 'user':
-                                            st.markdown(f"👤 **Student:**\n{msg['content']}")
+                                            st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
                                         else:
-                                            st.markdown(f"🤖 **AI:**\n{msg['content']}")
+                                            st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
                                 else:
                                     st.info("No messages in this conversation yet.")
                 else:
@@ -1534,9 +1507,6 @@ def show_student_dashboard_interface():
 def show_great_story_interface():
     """Montessori Great Story creator interface for educators"""
     scroll_to_top()
-    
-    # Show first-time prompt for new users
-    show_first_time_prompts("great_stories")
     
     st.markdown("### 📖 Montessori Great Story Creator")
     st.markdown("*Develop inspiring cosmic education stories that spark imagination and curiosity*")
@@ -2060,6 +2030,14 @@ def show_privacy_policy():
     
     ---
     
+    ## 14. Contact Us
+    
+    If you have any questions about these Terms or your use of Guide, please contact:
+    
+    **Auxpery**
+    
+    📧 Email: guide@auxpery.com.au
+    
     ---
     
     **© 2025 Auxpery — Gentle Technology for Thoughtful Education**
@@ -2293,6 +2271,12 @@ def show_privacy_policy():
     📧 enquiries@oaic.gov.au
     
     ---
+    
+    ### 12. Questions
+    
+    If you have any questions about this Privacy Policy or how we handle your data:
+    
+    📧 guide@auxpery.com.au
     
     ---
     
@@ -2844,401 +2828,3 @@ def show_imaginarium_interface():
     
     # Add scroll to top button
     add_scroll_to_top_button()
-
-
-def show_onboarding_tour():
-    """
-    Display welcome tour for new educators.
-    Shows a step-by-step introduction to key features.
-    Returns True if onboarding is in progress, False if completed or skipped.
-    """
-    # Initialize onboarding state
-    if 'onboarding_step' not in st.session_state:
-        st.session_state.onboarding_step = 1
-    
-    # Tour steps content - following minimal design system
-    tour_steps = [
-        {
-            "title": "Welcome to Guide",
-            "content": """You've just joined a community of educators committed to nurturing the whole child.
-
-Guide helps you create meaningful, interconnected learning experiences rooted in Montessori's Cosmic Education and aligned with the Australian Curriculum V9.
-
-Let's take a quick tour of what you can do here."""
-        },
-        {
-            "title": "Lesson Planning",
-            "content": """Create age-appropriate lessons that honour developmental stages.
-
-Simply describe what you want to teach - the year level, topic, and time available. Guide will help you design learning experiences that connect concepts to the bigger picture, fostering curiosity and understanding.
-
-Your plans integrate both Montessori principles and Australian Curriculum outcomes automatically."""
-        },
-        {
-            "title": "Montessori Companion",
-            "content": """Tap into decades of Montessori wisdom whenever you need it.
-
-Ask questions about methodology, classroom management, developmental stages, or how to approach specific challenges. The Companion draws from the Montessori National Curriculum and established practice.
-
-Think of it as having an experienced Montessori mentor available anytime."""
-        },
-        {
-            "title": "Student Management",
-            "content": """Create accounts for your students so they can access age-appropriate research support.
-
-Students get their own Research Assistant that helps them explore topics, structure their thinking, and find reliable sources - all tailored to their developmental stage.
-
-You can monitor their learning journey through the Student Dashboard."""
-        },
-        {
-            "title": "You're Ready",
-            "content": """We've also added three sample lesson plans to your account - one for each age group - so you can see how Guide's planning looks in practice.
-
-Start by exploring the dashboard and trying out Lesson Planning or the Montessori Companion.
-
-Remember: Guide is here to support your professional judgment, not replace it. You know your students best."""
-        }
-    ]
-    
-    current_step = st.session_state.onboarding_step
-    total_steps = len(tour_steps)
-    
-    # Create modal-style container
-    st.markdown("""
-    <style>
-    .onboarding-modal {
-        background: #FFFEFA;
-        border: 1px solid #E6E6E6;
-        border-radius: 8px;
-        padding: 2rem 2.5rem;
-        max-width: 560px;
-        margin: 2rem auto;
-        position: relative;
-    }
-    .onboarding-title {
-        font-family: 'Inter', sans-serif;
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #333333;
-        margin-bottom: 1.5rem;
-        line-height: 1.3;
-    }
-    .onboarding-content {
-        font-family: 'Inter', sans-serif;
-        font-size: 1rem;
-        color: #333333;
-        line-height: 1.7;
-        margin-bottom: 2rem;
-    }
-    .onboarding-progress {
-        font-family: 'Inter', sans-serif;
-        font-size: 0.875rem;
-        color: #666666;
-        margin-bottom: 1rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Display current step
-    step = tour_steps[current_step - 1]
-    
-    st.markdown(f"""
-    <div class="onboarding-modal">
-        <div class="onboarding-progress">Step {current_step} of {total_steps}</div>
-        <div class="onboarding-title">{step['title']}</div>
-        <div class="onboarding-content">{step['content'].replace(chr(10), '<br><br>')}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Navigation buttons
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
-    with col1:
-        if current_step > 1:
-            if st.button("Back", key="onboarding_back", use_container_width=True):
-                st.session_state.onboarding_step -= 1
-                st.rerun()
-    
-    with col2:
-        if st.button("Skip Tour", key="onboarding_skip", use_container_width=True):
-            # Mark onboarding complete and clean up
-            _complete_onboarding()
-            return False
-    
-    with col3:
-        if current_step < total_steps:
-            if st.button("Next", key="onboarding_next", use_container_width=True, type="primary"):
-                st.session_state.onboarding_step += 1
-                st.rerun()
-        else:
-            if st.button("Get Started", key="onboarding_complete", use_container_width=True, type="primary"):
-                _complete_onboarding()
-                return False
-    
-    return True  # Onboarding still in progress
-
-
-def _complete_onboarding():
-    """Mark onboarding as complete and create sample lesson plans"""
-    from database import get_db, mark_onboarding_completed, create_sample_lesson_plans_for_user
-    
-    user_id = st.session_state.get('user_id')
-    if user_id:
-        db = get_db()
-        if db:
-            try:
-                # Mark onboarding complete
-                mark_onboarding_completed(db, user_id)
-                
-                # Create sample lesson plans
-                create_sample_lesson_plans_for_user(db, user_id)
-                
-                st.toast("Welcome to Guide!", icon="✨")
-            except Exception as e:
-                print(f"Error completing onboarding: {str(e)}")
-            finally:
-                db.close()
-    
-    # Clean up session state
-    if 'onboarding_step' in st.session_state:
-        del st.session_state['onboarding_step']
-    
-    st.rerun()
-
-
-def check_and_show_onboarding() -> bool:
-    """
-    Check if user needs onboarding and show tour if needed.
-    Returns True if onboarding is showing (blocks dashboard), False otherwise.
-    """
-    from database import get_db, get_onboarding_status
-    
-    user_id = st.session_state.get('user_id')
-    is_student = st.session_state.get('is_student', True)
-    
-    # Only show for educators
-    if is_student or not user_id:
-        return False
-    
-    # Check onboarding status
-    db = get_db()
-    if db:
-        try:
-            onboarding_completed = get_onboarding_status(db, user_id)
-            if not onboarding_completed:
-                return show_onboarding_tour()
-        except Exception as e:
-            print(f"Error checking onboarding status: {str(e)}")
-        finally:
-            db.close()
-    
-    return False
-
-
-def show_first_time_prompts(feature_name: str):
-    """
-    Show contextual first-time prompt for a specific feature.
-    Only shows once per feature per user.
-    """
-    prompt_key = f"seen_prompt_{feature_name}"
-    
-    # Check if already seen
-    if st.session_state.get(prompt_key, False):
-        return
-    
-    prompts = {
-        "lesson_planning": {
-            "title": "Getting Started with Lesson Planning",
-            "content": "Describe your lesson needs naturally - include the year level, topic, and time available. Guide will create a complete plan integrating Montessori principles and curriculum outcomes."
-        },
-        "companion": {
-            "title": "Getting Started with Montessori Companion",
-            "content": "Ask anything about Montessori methodology, classroom practice, or philosophy. You can also specify an age group in your message for tailored guidance."
-        },
-        "great_stories": {
-            "title": "Getting Started with Great Stories",
-            "content": "Great Stories ignite wonder and connect learning to the cosmic narrative. Describe the concept you want to introduce and the age group you're teaching."
-        }
-    }
-    
-    if feature_name not in prompts:
-        return
-    
-    prompt = prompts[feature_name]
-    
-    # Display dismissable tip
-    with st.container():
-        st.info(f"**{prompt['title']}**\n\n{prompt['content']}")
-        if st.button("Got it", key=f"dismiss_{feature_name}_prompt"):
-            st.session_state[prompt_key] = True
-            st.rerun()
-
-
-def show_usage_stats_interface():
-    """Display current usage and rate limit statistics"""
-    try:
-        from rate_limiter import get_rate_limiter
-        from database import get_db
-        
-        db = get_db()
-        if db:
-            user_id = st.session_state.get('user_id')
-            is_paid = st.session_state.get('has_active_subscription', False)
-            
-            rate_limiter = get_rate_limiter()
-            stats = rate_limiter.get_usage_stats(db, user_id, is_paid)
-            
-            if stats:
-                tier_badge = "PAID" if is_paid else "FREE"
-                st.markdown(f"**Your Plan:** {tier_badge}")
-                
-                # Daily usage
-                daily_pct = (stats['daily_used'] / stats['daily_limit'] * 100) if stats['daily_limit'] > 0 else 0
-                st.metric("Daily Usage", f"{stats['daily_used']} / {stats['daily_limit']}", 
-                         f"{stats['daily_remaining']} remaining")
-                st.progress(min(daily_pct / 100, 1.0))
-                
-                # Hourly usage
-                hourly_pct = (stats['hourly_used'] / stats['hourly_limit'] * 100) if stats['hourly_limit'] > 0 else 0
-                st.metric("Hourly Usage", f"{stats['hourly_used']} / {stats['hourly_limit']}", 
-                         f"{stats['hourly_remaining']} remaining")
-                st.progress(min(hourly_pct / 100, 1.0))
-                
-                st.caption(f"Daily limit resets: {stats['reset_tomorrow']}")
-            
-            db.close()
-    except Exception as e:
-        logger.error(f"Error displaying usage stats: {str(e)}")
-
-
-def show_feedback_interface():
-    """Feedback and bug report interface"""
-    scroll_to_top()
-    
-    st.markdown("### Send Feedback or Report a Bug")
-    st.markdown("Help us improve Guide by sharing your experience")
-    
-    with st.form("feedback_form"):
-        ticket_type = st.radio("Type", ["Bug Report", "Feature Request"], horizontal=True, key="fb_type")
-        subject = st.text_input("Subject", placeholder="Brief description of your feedback")
-        description = st.text_area("Details", placeholder="Tell us more about what you experienced", height=150)
-        
-        if ticket_type == "Bug Report":
-            severity = st.select_slider("Severity", ["Low", "Medium", "High"], key="fb_severity")
-        else:
-            severity = None
-        
-        submitted = st.form_submit_button("Submit Feedback", use_container_width=True, type="primary")
-        
-        if submitted and subject and description:
-            user_id = st.session_state.get('user_id')
-            ticket_type_key = 'bug_report' if ticket_type == "Bug Report" else 'feature_request'
-            
-            try:
-                from database import get_db, FeedbackTicket
-                db = get_db()
-                if db:
-                    ticket = FeedbackTicket(
-                        user_id=user_id,
-                        ticket_type=ticket_type_key,
-                        subject=subject,
-                        description=description,
-                        severity=severity.lower() if severity else None
-                    )
-                    db.add(ticket)
-                    db.commit()
-                    st.success("Thank you! Your feedback has been submitted.")
-                    st.balloons()
-                    st.rerun()
-            except Exception as e:
-                st.error(f"Error submitting feedback: {str(e)}")
-            finally:
-                db.close() if 'db' in locals() else None
-
-
-def show_data_export_interface():
-    """Export all user data for GDPR compliance"""
-    scroll_to_top()
-    
-    st.markdown("### Download Your Data")
-    st.markdown("Export all your lesson plans, notes, and conversations in a single ZIP file for backup or transfer to another platform.")
-    
-    st.info("This export includes: lesson plans, planning notes, great stories, chat conversations, and usage analytics.")
-    
-    if st.button("Download My Data", use_container_width=True, type="primary"):
-        try:
-            from data_export import get_data_exporter
-            from database import get_db
-            
-            db = get_db()
-            if db:
-                user_id = st.session_state.get('user_id')
-                exporter = get_data_exporter()
-                zip_data = exporter.export_user_data_zip(db, user_id)
-                
-                if zip_data:
-                    st.download_button(
-                        label="Download ZIP File",
-                        data=zip_data,
-                        file_name=f"guide_export_{user_id}_{datetime.now().strftime('%Y%m%d')}.zip",
-                        mime="application/zip",
-                        use_container_width=True
-                    )
-                    st.success("Your data is ready to download!")
-                else:
-                    st.error("Error preparing data export. Please try again.")
-                
-                db.close()
-        except Exception as e:
-            st.error(f"Export error: {str(e)}")
-
-
-def show_support_contact_interface():
-    """Support contact form for subscription issues"""
-    scroll_to_top()
-    
-    st.markdown("### Support & Subscription Issues")
-    st.markdown("Contact us about billing, subscription, or account concerns")
-    
-    with st.form("support_form"):
-        issue_type = st.selectbox(
-            "Issue Type",
-            ["Billing Question", "Upgrade/Downgrade", "Cancellation Request", "Account Issue", "Other"],
-            key="sup_issue"
-        )
-        
-        email = st.text_input("Email", value=st.session_state.get('user_email', ''), key="sup_email")
-        subject = st.text_input("Subject", placeholder="Brief description of your issue")
-        message = st.text_area("Message", placeholder="Please describe your issue in detail", height=150)
-        
-        submitted = st.form_submit_button("Send Support Request", use_container_width=True, type="primary")
-        
-        if submitted and email and subject and message:
-            issue_type_key = {
-                "Billing Question": "billing",
-                "Upgrade/Downgrade": "upgrade",
-                "Cancellation Request": "cancel_request",
-                "Account Issue": "account",
-                "Other": "other"
-            }.get(issue_type, "other")
-            
-            try:
-                from database import get_db, SubscriptionContact
-                db = get_db()
-                if db:
-                    contact = SubscriptionContact(
-                        user_id=st.session_state.get('user_id'),
-                        email=email,
-                        issue_type=issue_type_key,
-                        subject=subject,
-                        message=message
-                    )
-                    db.add(contact)
-                    db.commit()
-                    st.success("Your support request has been submitted. We'll respond within 24 hours.")
-                    st.balloons()
-                    st.rerun()
-            except Exception as e:
-                st.error(f"Error submitting support request: {str(e)}")
-            finally:
-                db.close() if 'db' in locals() else None
