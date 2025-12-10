@@ -2871,22 +2871,29 @@ CRITICAL RULES:
 
 # ---- LESSON PLAN EXPORT FUNCTIONS ----
 def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_plan.pdf"):
-    """Export lesson plan content to PDF using reportlab with table support"""
-    from reportlab.lib.pagesizes import letter, A4
+    """Export lesson plan content to professional print-friendly PDF using reportlab with enhanced formatting"""
+    from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
-    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+    from reportlab.lib.units import inch, cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, HRFlowable
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
     from reportlab.lib import colors
+    from datetime import datetime
     import io
+    import re
     
     # Create a BytesIO buffer
     buffer = io.BytesIO()
     
-    # Create PDF document
-    doc = SimpleDocTemplate(buffer, pagesize=letter,
-                           rightMargin=72, leftMargin=72,
-                           topMargin=72, bottomMargin=18)
+    # Professional A4 document with proper margins for printing
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=A4,
+        rightMargin=2*cm, 
+        leftMargin=2*cm,
+        topMargin=2.5*cm, 
+        bottomMargin=2*cm
+    )
     
     # Container for PDF elements
     story = []
@@ -2894,37 +2901,134 @@ def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_pla
     # Get stylesheet
     styles = getSampleStyleSheet()
     
-    # Custom styles
+    # Professional custom styles
+    header_style = ParagraphStyle(
+        'Header',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#666666'),
+        alignment=TA_RIGHT,
+        spaceAfter=6
+    )
+    
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=24,
-        textColor='#2E8B57',
-        spaceAfter=30,
+        fontSize=22,
+        fontName='Helvetica-Bold',
+        textColor=colors.HexColor('#2E4A3E'),
+        spaceAfter=8,
+        spaceBefore=0,
         alignment=TA_CENTER
     )
     
-    heading_style = ParagraphStyle(
-        'CustomHeading',
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#666666'),
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+    
+    section_heading_style = ParagraphStyle(
+        'SectionHeading',
         parent=styles['Heading2'],
-        fontSize=16,
-        textColor='#2E8B57',
-        spaceAfter=12,
+        fontSize=14,
+        fontName='Helvetica-Bold',
+        textColor=colors.HexColor('#2E4A3E'),
+        spaceAfter=10,
+        spaceBefore=16,
+        borderWidth=0,
+        borderPadding=0,
+        leftIndent=0
+    )
+    
+    subsection_heading_style = ParagraphStyle(
+        'SubsectionHeading',
+        parent=styles['Heading3'],
+        fontSize=12,
+        fontName='Helvetica-Bold',
+        textColor=colors.HexColor('#4A7A5E'),
+        spaceAfter=8,
         spaceBefore=12
     )
     
+    body_style = ParagraphStyle(
+        'BodyText',
+        parent=styles['Normal'],
+        fontSize=11,
+        fontName='Helvetica',
+        textColor=colors.HexColor('#333333'),
+        spaceAfter=6,
+        spaceBefore=2,
+        leading=14,
+        alignment=TA_JUSTIFY
+    )
+    
+    bullet_style = ParagraphStyle(
+        'BulletText',
+        parent=body_style,
+        leftIndent=20,
+        bulletIndent=8,
+        spaceAfter=4
+    )
+    
+    bold_label_style = ParagraphStyle(
+        'BoldLabel',
+        parent=body_style,
+        fontName='Helvetica-Bold',
+        spaceAfter=4,
+        spaceBefore=8
+    )
+    
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.HexColor('#888888'),
+        alignment=TA_CENTER
+    )
+    
+    # Add professional header with date
+    current_date = datetime.now().strftime('%d %B %Y')
+    story.append(Paragraph(f"Guide by AUXPERY | {current_date}", header_style))
+    
+    # Add decorative line
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#2E4A3E'), spaceAfter=15))
+    
     # Add title
     story.append(Paragraph(title, title_style))
-    story.append(Spacer(1, 12))
+    story.append(Paragraph("Lesson Plan", subtitle_style))
+    
+    # Add another decorative line
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#CCCCCC'), spaceAfter=20))
     
     # Process content - convert markdown-like formatting to PDF
     lines = content.split('\n')
     i = 0
+    
+    def clean_text(text):
+        """Clean and escape text for PDF, handling markdown formatting"""
+        # Handle inline bold (**text**)
+        text = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', text)
+        # Handle inline italic (*text*)
+        text = re.sub(r'\*([^*]+)\*', r'<i>\1</i>', text)
+        # Handle emojis (keep as-is, most will render)
+        return text
+    
     while i < len(lines):
         line = lines[i].strip()
         
         if not line:
-            story.append(Spacer(1, 12))
+            story.append(Spacer(1, 8))
+            i += 1
+            continue
+        
+        # Check if this is a horizontal rule (---)
+        if line == '---' or line == '***' or line == '___':
+            story.append(Spacer(1, 8))
+            story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#DDDDDD'), spaceAfter=8))
             i += 1
             continue
         
@@ -2943,49 +3047,96 @@ def export_lesson_plan_to_pdf(content, title="Lesson Plan", filename="lesson_pla
                 # Remove empty first/last cells (from leading/trailing |)
                 cells = [cell for cell in cells if cell]
                 if cells:
-                    table_data.append(cells)
+                    # Wrap cells in Paragraph for better text wrapping
+                    wrapped_cells = [Paragraph(clean_text(cell), body_style) for cell in cells]
+                    table_data.append(wrapped_cells)
                 i += 1
             
             # Create PDF table
             if table_data:
-                # Create table with proper formatting
-                pdf_table = Table(table_data)
+                # Calculate column widths based on page width
+                available_width = A4[0] - 4*cm  # Account for margins
+                col_count = len(table_data[0]) if table_data else 1
+                col_width = available_width / col_count
+                
+                pdf_table = Table(table_data, colWidths=[col_width]*col_count)
                 pdf_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E8B57')),  # Header background
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),  # Header text color
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E4A3E')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
                     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, 0), 12),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                    ('TOPPADDING', (0, 0), (-1, 0), 10),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F9F9F9')),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CCCCCC')),
                     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
                     ('FONTSIZE', (0, 1), (-1, -1), 10),
                     ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                    ('LEFTPADDING', (0, 0), (-1, -1), 6),
-                    ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                    ('TOPPADDING', (0, 1), (-1, -1), 6),
+                    ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
                 ]))
+                story.append(Spacer(1, 8))
                 story.append(pdf_table)
                 story.append(Spacer(1, 12))
             continue
-            
-        # Handle headings
+        
+        # Handle section headings (### or emoji prefixed)
         if line.startswith('###'):
             text = line.replace('###', '').strip()
-            story.append(Paragraph(text, heading_style))
+            text = clean_text(text)
+            story.append(Spacer(1, 8))
+            story.append(Paragraph(text, section_heading_style))
         elif line.startswith('##'):
             text = line.replace('##', '').strip()
-            story.append(Paragraph(text, heading_style))
+            text = clean_text(text)
+            story.append(Spacer(1, 6))
+            story.append(Paragraph(text, section_heading_style))
+        elif line.startswith('#'):
+            text = line.replace('#', '').strip()
+            text = clean_text(text)
+            story.append(Paragraph(text, section_heading_style))
+        # Handle bullet points - comprehensive marker stripping for all bullet types
+        # Matches: -, *, •, +, –, —, >, and Unicode bullets (●, ○, ■, □, ◆, ◇, ▪, ▫)
+        bullet_pattern = r'^[\-\*•\+–—>\●\○\■\□\◆\◇\▪\▫]+\s*'
+        if re.match(bullet_pattern, line):
+            # Strip all leading bullet markers and whitespace
+            text = re.sub(bullet_pattern, '', line).strip()
+            # Double-check for any remaining bullets (nested or accidental)
+            text = re.sub(bullet_pattern, '', text).strip()
+            text = clean_text(text)
+            if text:  # Only add if there's content
+                story.append(Paragraph(f"• {text}", bullet_style))
+        # Handle numbered lists (1. or 1) or 1- or a. or i.)
+        elif re.match(r'^(\d+[\.\)\-]|[a-zA-Z][\.\)]|[ivxIVX]+[\.\)])\s*', line):
+            # Strip the number marker to prevent duplication
+            text = re.sub(r'^(\d+[\.\)\-]|[a-zA-Z][\.\)]|[ivxIVX]+[\.\)])\s*', '', line).strip()
+            text = clean_text(text)
+            if text:
+                story.append(Paragraph(f"• {text}", bullet_style))
+        # Handle bold labels (**Label:**)
+        elif line.startswith('**') and ':**' in line:
+            # This is a label with content
+            text = clean_text(line)
+            story.append(Paragraph(text, bold_label_style))
         elif line.startswith('**') and line.endswith('**'):
-            # Remove ** from both ends and wrap in <b> tags
-            text = line[2:-2]  # Strip ** from start and end
-            text = f'<b>{text}</b>'
-            story.append(Paragraph(text, styles['Normal']))
+            # Standalone bold text
+            text = line[2:-2]
+            story.append(Paragraph(f'<b>{text}</b>', body_style))
         else:
             # Regular paragraph
-            story.append(Paragraph(line, styles['Normal']))
+            text = clean_text(line)
+            story.append(Paragraph(text, body_style))
         
         i += 1
+    
+    # Add footer
+    story.append(Spacer(1, 30))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#CCCCCC'), spaceAfter=10))
+    story.append(Paragraph("Generated by Guide | A Montessori-inspired curriculum companion", footer_style))
+    story.append(Paragraph(f"www.auxpery.com.au | {current_date}", footer_style))
     
     # Build PDF
     doc.build(story)
@@ -3583,6 +3734,63 @@ NEVER reference V8.4 codes (AC codes without "9" like ACS6H01, ACE5LA03).
 6. **Extensions/Enrichment**: Multiple detailed activities to deepen or expand learning
 7. **AC V9 Alignment**: Specific Australian Curriculum V9 codes and descriptors
 8. **Assessment**: Detailed criteria showing how educators will know students have achieved objectives
+
+---
+
+### 🎯 **DIFFERENTIATION FOR MIXED-ABILITY CLASSROOMS** (MANDATORY SECTION)
+
+Every lesson plan MUST include a comprehensive differentiation section with specific adaptations for three tiers:
+
+**📘 Support Level (Struggling Learners)**
+Provide 3-4 specific adaptations for students who need additional support:
+- Modified materials (e.g., simplified text, visual supports, manipulatives)
+- Scaffolded steps (breaking activities into smaller, manageable chunks)
+- Extended time allowances and check-in points
+- Alternative demonstration methods (concrete to abstract progression)
+- Peer support structures (buddy systems, cooperative roles)
+- Reduced complexity while maintaining core learning objective
+
+**📗 On-Track Level (Proficient Learners)**
+Describe the standard lesson as designed, with:
+- Expected pacing and progression
+- Standard materials and activities
+- Typical educator support and facilitation
+
+**📙 Extension Level (Advanced Learners)**
+Provide 3-4 specific adaptations for students who need additional challenge:
+- Deeper inquiry questions or open-ended investigations
+- Increased complexity or abstraction
+- Leadership roles (peer teaching, mentoring)
+- Independent research extensions
+- Cross-curricular connections to explore
+- Application to real-world or novel contexts
+
+**🌈 Inclusive Adaptations**
+Include specific strategies for:
+- **Neurodiverse learners**: Sensory considerations, movement breaks, clear routines, visual schedules
+- **English as Additional Language (EAL/D)**: Visual supports, bilingual resources, simplified language, pre-teaching vocabulary
+- **Physical accessibility**: Alternative materials, flexible positioning, assistive technology
+
+---
+
+### 🔗 **CROSS-CURRICULAR CONNECTIONS** (MANDATORY SECTION)
+
+Every lesson plan MUST identify and explain connections to at least 3 other curriculum areas:
+
+**Example Format:**
+- **Mathematics**: [Specific connection with AC9 code, e.g., "Measurement skills in AC9M3M02 can be integrated when students measure plant growth"]
+- **English/Literacy**: [Connection with AC9 code, e.g., "Informative text writing in AC9E4LA08 through creating observation journals"]
+- **Science/HASS**: [Connection with AC9 code]
+- **The Arts**: [Connection with how creative expression can be integrated]
+- **Technologies**: [Connection with digital tools or design thinking]
+- **Health and Physical Education**: [Connection with wellbeing, movement, or safety]
+
+For each connection, explain:
+1. HOW the connection can be made naturally (not forced)
+2. SPECIFIC activities to integrate the curriculum areas
+3. RELEVANT AC V9 codes from the connected subject area
+
+This supports Montessori's Cosmic Education philosophy of interconnected learning and helps students see relationships between all areas of knowledge.
 
 **CRITICAL - ALWAYS END EVERY LESSON PLAN WITH THIS SECTION:**
 
