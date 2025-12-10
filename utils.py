@@ -3193,6 +3193,170 @@ def get_trending_topics_context(db, limit=3):
         print(f"Error getting trending topics: {str(e)}")
         return ""
 
+def create_learning_journey_map(journey_data, connections=None):
+    """
+    Create an interactive Plotly network graph visualization of a student's learning journey.
+    
+    Args:
+        journey_data: Dict from get_student_learning_journey() {subject: [{keyword, count, ...}]}
+        connections: Optional list of (topic1, topic2, weight) - if None, auto-generates from journey_data
+    
+    Returns:
+        Plotly figure object for the network graph
+    """
+    import plotly.graph_objects as go
+    import math
+    
+    if not journey_data:
+        return None
+    
+    # Auto-generate connections from journey_data if not provided
+    # Connect topics within the same subject (they're related by subject matter)
+    if connections is None:
+        connections = []
+        for subject, topics in journey_data.items():
+            # Connect topics within the same subject
+            for i in range(len(topics)):
+                for j in range(i + 1, len(topics)):
+                    key1 = f"{subject}|{topics[i]['keyword']}"
+                    key2 = f"{subject}|{topics[j]['keyword']}"
+                    # Weight based on combined exploration count
+                    weight = min(topics[i]['count'], topics[j]['count'])
+                    connections.append((key1, key2, weight))
+    
+    # Subject colors (Montessori-inspired earth tones)
+    subject_colors = {
+        'Geography': '#A7C796',
+        'History': '#C9A7E3',
+        'Science': '#74B3A1',
+        'English': '#E4C29B',
+        'Mathematics': '#8FB8DE',
+        'Art': '#F2A2A2',
+        'Music': '#FFD699',
+        'Technology': '#B8D4E8',
+        'Civics': '#B8A7C7',
+        'Economics': '#D4B896',
+        'Physical Education': '#9ED99E',
+        'Languages': '#F5C7D3'
+    }
+    
+    # Build nodes and edges
+    nodes = []
+    node_positions = {}
+    node_colors = []
+    node_sizes = []
+    node_texts = []
+    
+    # Position nodes in a circular layout grouped by subject
+    subjects = list(journey_data.keys())
+    num_subjects = len(subjects)
+    
+    node_index = 0
+    for i, subject in enumerate(subjects):
+        # Calculate base angle for this subject's cluster
+        base_angle = (2 * math.pi * i) / max(num_subjects, 1)
+        topics = journey_data[subject]
+        
+        for j, topic in enumerate(topics):
+            # Position topics within subject cluster
+            topic_angle = base_angle + (0.3 * (j - len(topics)/2) / max(len(topics), 1))
+            radius = 1.5 + (0.3 * j)
+            
+            x = radius * math.cos(topic_angle)
+            y = radius * math.sin(topic_angle)
+            
+            key = f"{subject}|{topic['keyword']}"
+            node_positions[key] = (x, y, node_index)
+            
+            nodes.append({
+                'key': key,
+                'keyword': topic['keyword'],
+                'subject': subject,
+                'count': topic['count'],
+                'x': x,
+                'y': y
+            })
+            
+            node_colors.append(subject_colors.get(subject, '#888888'))
+            node_sizes.append(15 + min(topic['count'] * 5, 30))  # Size based on frequency
+            node_texts.append(f"<b>{topic['keyword']}</b><br>Subject: {subject}<br>Explored {topic['count']} time(s)")
+            
+            node_index += 1
+    
+    # Create edge traces for connections
+    edge_x = []
+    edge_y = []
+    for topic1, topic2, weight in connections:
+        if topic1 in node_positions and topic2 in node_positions:
+            x0, y0, _ = node_positions[topic1]
+            x1, y1, _ = node_positions[topic2]
+            edge_x.extend([x0, x1, None])
+            edge_y.extend([y0, y1, None])
+    
+    # Create the figure
+    fig = go.Figure()
+    
+    # Add edges (connections between topics)
+    if edge_x:
+        fig.add_trace(go.Scatter(
+            x=edge_x, y=edge_y,
+            mode='lines',
+            line=dict(width=1.5, color='rgba(150,150,150,0.4)'),
+            hoverinfo='none',
+            name='Connections'
+        ))
+    
+    # Add nodes (topics)
+    fig.add_trace(go.Scatter(
+        x=[n['x'] for n in nodes],
+        y=[n['y'] for n in nodes],
+        mode='markers+text',
+        marker=dict(
+            size=node_sizes,
+            color=node_colors,
+            line=dict(width=2, color='white'),
+            opacity=0.9
+        ),
+        text=[n['keyword'][:12] + '...' if len(n['keyword']) > 12 else n['keyword'] for n in nodes],
+        textposition='bottom center',
+        textfont=dict(size=10, color='#333'),
+        hoverinfo='text',
+        hovertext=node_texts,
+        name='Topics'
+    ))
+    
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text='🗺️ Your Learning Journey',
+            font=dict(size=20, color='#2E4A3E')
+        ),
+        showlegend=False,
+        hovermode='closest',
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        plot_bgcolor='rgba(250,249,246,0.8)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=20, r=20, t=60, b=20),
+        height=500
+    )
+    
+    # Add subject legend as annotations
+    legend_y = 1.1
+    for i, subject in enumerate(subjects[:6]):  # Show top 6 subjects
+        fig.add_annotation(
+            x=0.02 + (i * 0.16),
+            y=legend_y,
+            xref='paper',
+            yref='paper',
+            text=f"●{subject}",
+            showarrow=False,
+            font=dict(size=10, color=subject_colors.get(subject, '#888888')),
+            xanchor='left'
+        )
+    
+    return fig
+
 def get_age_appropriate_lesson_planning_prompt(age_group):
     """
     Generate age-appropriate lesson planning assistant prompt based on developmental stage.

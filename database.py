@@ -1241,6 +1241,111 @@ def get_top_keywords_by_subject(db, subject: str, limit: int = 5):
         print(f"Error getting top keywords: {str(e)}")
         return []
 
+def get_student_learning_journey(db, student_id: int):
+    """
+    Get all topics explored by a student for the Learning Journey Map.
+    Extracts keywords from student conversation history and groups by subject.
+    Returns: {subject: [{keyword, count, first_explored, last_explored}]}
+    """
+    from utils import detect_trending_keywords
+    
+    try:
+        # Get all student conversations
+        conversations = db.query(ConversationHistory).filter(
+            ConversationHistory.student_id == student_id,
+            ConversationHistory.role == 'user'
+        ).order_by(ConversationHistory.created_at.asc()).all()
+        
+        # Track topics with their exploration data
+        topic_data = {}
+        
+        for conv in conversations:
+            # Extract keywords from this message
+            detected = detect_trending_keywords(conv.content or "")
+            
+            for kw in detected:
+                subject = kw['subject']
+                keyword = kw['keyword']
+                key = f"{subject}|{keyword}"
+                
+                if key not in topic_data:
+                    topic_data[key] = {
+                        'subject': subject,
+                        'keyword': keyword,
+                        'count': 0,
+                        'first_explored': conv.created_at,
+                        'last_explored': conv.created_at,
+                        'session_ids': set()
+                    }
+                
+                topic_data[key]['count'] += 1
+                topic_data[key]['last_explored'] = conv.created_at
+                topic_data[key]['session_ids'].add(conv.session_id)
+        
+        # Group by subject
+        journey_data = {}
+        for key, data in topic_data.items():
+            subject = data['subject']
+            if subject not in journey_data:
+                journey_data[subject] = []
+            
+            # Convert session_ids set to list for JSON serialization
+            data['session_count'] = len(data['session_ids'])
+            del data['session_ids']
+            journey_data[subject].append(data)
+        
+        # Sort topics within each subject by count
+        for subject in journey_data:
+            journey_data[subject].sort(key=lambda x: x['count'], reverse=True)
+        
+        return journey_data
+    except Exception as e:
+        print(f"Error getting student learning journey: {str(e)}")
+        return {}
+
+def get_topic_connections(db, student_id: int):
+    """
+    Find connections between topics based on co-occurrence in same session.
+    Returns list of (topic1, topic2, weight) for network graph edges.
+    """
+    from utils import detect_trending_keywords
+    
+    try:
+        # Get all student conversations grouped by session
+        conversations = db.query(ConversationHistory).filter(
+            ConversationHistory.student_id == student_id,
+            ConversationHistory.role == 'user'
+        ).all()
+        
+        # Group by session
+        session_topics = {}
+        for conv in conversations:
+            session_id = conv.session_id
+            if session_id not in session_topics:
+                session_topics[session_id] = set()
+            
+            detected = detect_trending_keywords(conv.content or "")
+            for kw in detected:
+                session_topics[session_id].add(f"{kw['subject']}|{kw['keyword']}")
+        
+        # Find co-occurrences (topics in same session)
+        connections = {}
+        for session_id, topics in session_topics.items():
+            topic_list = list(topics)
+            for i in range(len(topic_list)):
+                for j in range(i + 1, len(topic_list)):
+                    # Create sorted pair key for consistency
+                    pair = tuple(sorted([topic_list[i], topic_list[j]]))
+                    if pair not in connections:
+                        connections[pair] = 0
+                    connections[pair] += 1
+        
+        # Convert to list format
+        return [(pair[0], pair[1], weight) for pair, weight in connections.items()]
+    except Exception as e:
+        print(f"Error getting topic connections: {str(e)}")
+        return []
+
 # ---- DATA RETENTION POLICY FUNCTIONS (APP 11.2) ----
 
 def cleanup_old_data(db, retention_days_conversations=730, retention_days_analytics=730, retention_days_inactive_accounts=1095):
