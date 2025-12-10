@@ -1399,12 +1399,19 @@ def show_student_dashboard_interface():
                                     messages = load_conversation_to_session(db, chat.session_id, 'student')
                                     
                                     if messages:
-                                        st.markdown("**Conversation:**")
-                                        for msg in messages[-10:]:  # Show last 10 messages
+                                        st.markdown(f"**Full Conversation ({len(messages)} messages):**")
+                                        # Build scrollable HTML for full conversation (with escaped content for XSS safety)
+                                        import html
+                                        chat_html = '<div style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">'
+                                        for msg in messages:
+                                            # Escape HTML and convert newlines to <br>
+                                            safe_content = html.escape(msg["content"]).replace('\n', '<br>')
                                             if msg['role'] == 'user':
-                                                st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                                chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #e3f2fd; border-radius: 6px;"><strong>👤 Student:</strong><br>{safe_content}</div>'
                                             else:
-                                                st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                                chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #fff; border-radius: 6px; border: 1px solid #eee;"><strong>🤖 AI:</strong><br>{safe_content}</div>'
+                                        chat_html += '</div>'
+                                        st.markdown(chat_html, unsafe_allow_html=True)
                                     else:
                                         st.info("No messages in this conversation yet.")
                             st.markdown("---")
@@ -1424,12 +1431,19 @@ def show_student_dashboard_interface():
                                 messages = load_conversation_to_session(db, chat.session_id, 'student')
                                 
                                 if messages:
-                                    st.markdown("**Conversation:**")
-                                    for msg in messages[-10:]:  # Show last 10 messages
+                                    st.markdown(f"**Full Conversation ({len(messages)} messages):**")
+                                    # Build scrollable HTML for full conversation (with escaped content for XSS safety)
+                                    import html
+                                    chat_html = '<div style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">'
+                                    for msg in messages:
+                                        # Escape HTML and convert newlines to <br>
+                                        safe_content = html.escape(msg["content"]).replace('\n', '<br>')
                                         if msg['role'] == 'user':
-                                            st.markdown(f"👤 **Student:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                            chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #e3f2fd; border-radius: 6px;"><strong>👤 Student:</strong><br>{safe_content}</div>'
                                         else:
-                                            st.markdown(f"🤖 **AI:** {msg['content'][:200]}{'...' if len(msg['content']) > 200 else ''}")
+                                            chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #fff; border-radius: 6px; border: 1px solid #eee;"><strong>🤖 AI:</strong><br>{safe_content}</div>'
+                                    chat_html += '</div>'
+                                    st.markdown(chat_html, unsafe_allow_html=True)
                                 else:
                                     st.info("No messages in this conversation yet.")
                 else:
