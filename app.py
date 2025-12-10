@@ -26,6 +26,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Force scroll to top on every page load/navigation
+from utils import force_scroll_to_top
+force_scroll_to_top()
+
 # Backend optimization: Initialize database once at process startup
 from database import initialize_database_once
 

@@ -56,15 +56,109 @@ def extract_subject_from_query(query: str) -> str:
     return None
 
 # ---- SCROLL UTILITIES ----
-def scroll_to_top():
-    """Scroll page to top when interface loads"""
-    st.markdown(
+def force_scroll_to_top():
+    """
+    Force page scroll to top on every navigation/page load.
+    This injects JavaScript that:
+    1. Immediately scrolls to top
+    2. Disables browser scroll restoration
+    3. Handles Streamlit's rerun behavior
+    """
+    import streamlit.components.v1 as components
+    
+    components.html(
         """
         <script>
-            window.parent.document.querySelector('section.main').scrollTo({top: 0, behavior: 'instant'});
+        (function() {
+            // Disable browser scroll restoration
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+            
+            // Get the main scrollable container
+            const mainSection = window.parent.document.querySelector('section.stMain') 
+                             || window.parent.document.querySelector('section.main')
+                             || window.parent.document.querySelector('[data-testid="stAppViewContainer"]');
+            
+            // Force immediate scroll to top
+            if (mainSection) {
+                mainSection.scrollTop = 0;
+                mainSection.scrollTo({ top: 0, behavior: 'instant' });
+            }
+            
+            // Also scroll the window itself
+            window.parent.scrollTo(0, 0);
+            
+            // Backup: scroll document elements
+            if (window.parent.document.documentElement) {
+                window.parent.document.documentElement.scrollTop = 0;
+            }
+            if (window.parent.document.body) {
+                window.parent.document.body.scrollTop = 0;
+            }
+        })();
         </script>
         """,
-        unsafe_allow_html=True
+        height=0
+    )
+
+def scroll_to_top():
+    """Legacy function - calls force_scroll_to_top for backwards compatibility"""
+    force_scroll_to_top()
+
+def inject_navigation_scroll_handler():
+    """
+    Inject a persistent scroll handler that resets scroll position
+    whenever Streamlit reruns (which happens on navigation/button clicks).
+    Call this ONCE at the start of your app.
+    """
+    import streamlit.components.v1 as components
+    
+    components.html(
+        """
+        <script>
+        (function() {
+            // Disable browser scroll restoration globally
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+            
+            // Store a flag to detect Streamlit reruns
+            const parentWindow = window.parent;
+            
+            // Create a MutationObserver to detect DOM changes (Streamlit reruns)
+            const observer = new MutationObserver(function(mutations) {
+                // Check if this looks like a navigation/rerun
+                const hasSignificantChange = mutations.some(m => 
+                    m.addedNodes.length > 0 || m.removedNodes.length > 0
+                );
+                
+                if (hasSignificantChange) {
+                    // Get the main scrollable container
+                    const mainSection = parentWindow.document.querySelector('section.stMain') 
+                                     || parentWindow.document.querySelector('section.main')
+                                     || parentWindow.document.querySelector('[data-testid="stAppViewContainer"]');
+                    
+                    if (mainSection && mainSection.scrollTop > 50) {
+                        // Only reset if we're scrolled down significantly
+                        // This prevents constant resets during typing
+                        mainSection.scrollTo({ top: 0, behavior: 'instant' });
+                    }
+                }
+            });
+            
+            // Start observing the main content area
+            const target = parentWindow.document.querySelector('[data-testid="stAppViewContainer"]');
+            if (target) {
+                observer.observe(target, { childList: true, subtree: true });
+            }
+            
+            // Initial scroll to top
+            parentWindow.scrollTo(0, 0);
+        })();
+        </script>
+        """,
+        height=0
     )
 
 def add_scroll_to_top_button():
