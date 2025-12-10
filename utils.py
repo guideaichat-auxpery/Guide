@@ -427,6 +427,140 @@ def scroll_to_latest_response():
         unsafe_allow_html=True
     )
 
+# ---- CHATGPT-STYLE CHAT LAYOUT ----
+def apply_chatgpt_chat_style():
+    """
+    Apply ChatGPT-style CSS to create a modern, continuous chat interface.
+    Call this once at the start of your chat interface function.
+    Creates a full-height scrollable chat with fixed input at bottom.
+    """
+    chatgpt_css = """
+    <style>
+    /* ChatGPT-style continuous chat layout */
+    
+    /* Main page container - full height layout */
+    section.main .block-container {
+        padding-bottom: 80px !important;
+        max-width: 900px !important;
+    }
+    
+    /* Chat message container - continuous flow */
+    .stChatMessage {
+        margin-bottom: 8px !important;
+        padding: 14px 18px !important;
+        border-radius: 16px !important;
+        animation: chatSlideIn 0.25s ease-out;
+        max-width: 85% !important;
+    }
+    
+    @keyframes chatSlideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* User messages - right aligned with blue gradient */
+    .stChatMessage:has(img[alt="user"]),
+    .stChatMessage:has([data-testid="chatAvatarIcon-user"]) {
+        background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%) !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        border-radius: 18px 18px 4px 18px !important;
+    }
+    
+    .stChatMessage:has(img[alt="user"]) p,
+    .stChatMessage:has(img[alt="user"]) span,
+    .stChatMessage:has([data-testid="chatAvatarIcon-user"]) p,
+    .stChatMessage:has([data-testid="chatAvatarIcon-user"]) span {
+        color: white !important;
+    }
+    
+    /* Assistant messages - left aligned with light gray */
+    .stChatMessage:has(img[alt="assistant"]),
+    .stChatMessage:has([data-testid="chatAvatarIcon-assistant"]),
+    .stChatMessage:not(:has(img[alt="user"])):not(:has([data-testid="chatAvatarIcon-user"])) {
+        background: #f7f7f8 !important;
+        margin-left: 0 !important;
+        margin-right: auto !important;
+        border-radius: 18px 18px 18px 4px !important;
+        border: 1px solid #e8e8e8 !important;
+    }
+    
+    /* Hide user avatar for cleaner look */
+    .stChatMessage:has(img[alt="user"]) img[alt="user"],
+    .stChatMessage [data-testid="chatAvatarIcon-user"] {
+        display: none !important;
+    }
+    
+    /* Chat input - sticky at bottom */
+    .stChatInput {
+        position: sticky !important;
+        bottom: 0 !important;
+        background: white !important;
+        padding: 16px 0 !important;
+        border-top: 1px solid #e5e5e5 !important;
+        z-index: 100 !important;
+        margin-top: 20px !important;
+    }
+    
+    .stChatInput textarea {
+        border-radius: 12px !important;
+        border: 1px solid #d1d5db !important;
+        padding: 12px 16px !important;
+        font-size: 15px !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+    
+    .stChatInput textarea:focus {
+        border-color: #007AFF !important;
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12) !important;
+    }
+    
+    /* Smooth scrolling */
+    section.main, .stMain {
+        scroll-behavior: smooth !important;
+    }
+    
+    /* Message content typography */
+    .stChatMessage .stMarkdown {
+        margin: 0 !important;
+    }
+    
+    .stChatMessage .stMarkdown p {
+        margin-bottom: 0.5em !important;
+        line-height: 1.55 !important;
+    }
+    
+    .stChatMessage .stMarkdown p:last-child {
+        margin-bottom: 0 !important;
+    }
+    
+    /* Remove gaps between messages */
+    .stChatMessageContainer {
+        gap: 8px !important;
+    }
+    </style>
+    """
+    st.markdown(chatgpt_css, unsafe_allow_html=True)
+
+def scroll_chat_to_bottom():
+    """Smoothly scroll chat to bottom after new message"""
+    st.markdown(
+        """
+        <script>
+            setTimeout(function() {
+                var mainSection = window.parent.document.querySelector('section.main');
+                if (mainSection) {
+                    mainSection.scrollTo({
+                        top: mainSection.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 150);
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+
 # ---- URL PROCESSING UTILITIES ----
 def extract_urls_from_text(text):
     """Extract all URLs from a text message"""

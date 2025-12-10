@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history
+from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history, apply_chatgpt_chat_style, scroll_chat_to_bottom
 import PyPDF2
 from docx import Document
 from PIL import Image
@@ -14,6 +14,7 @@ from database import get_db, log_student_activity, database_available
 def show_lesson_planning_interface():
     """Educational planning interface for educators with Australian Curriculum alignment"""
     scroll_to_top()
+    apply_chatgpt_chat_style()
     
     from utils import render_conversation_sidebar
     
@@ -354,6 +355,7 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
 def show_companion_interface():
     """Enhanced Montessori companion interface with conversation history management and persistence"""
     scroll_to_top()
+    apply_chatgpt_chat_style()
     
     from utils import manage_conversation_history, estimate_tokens, render_conversation_sidebar
     from database import save_conversation_message, log_educator_prompt, load_conversation_to_session
@@ -726,6 +728,7 @@ def show_companion_interface():
 def show_student_interface():
     """Enhanced student learning interface with curriculum context, conversation history, and persistence"""
     scroll_to_top()
+    apply_chatgpt_chat_style()
     
     from utils import manage_conversation_history, render_conversation_sidebar
     from database import save_conversation_message, load_conversation_to_session
@@ -2532,6 +2535,7 @@ def show_account_deletion_interface():
 def show_pd_expert_interface():
     """Professional Development Expert Mode - Restricted to authorized educators"""
     scroll_to_top()
+    apply_chatgpt_chat_style()
     
     user_email = st.session_state.get('user_email', '')
     
@@ -2641,6 +2645,7 @@ def show_pd_expert_interface():
 def show_imaginarium_interface():
     """Creative space for educators - free exploration with minimal guardrails"""
     scroll_to_top()
+    apply_chatgpt_chat_style()
     
     # Import database functions
     from database import (get_user_chat_conversations, create_chat_conversation, 
