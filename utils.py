@@ -106,6 +106,73 @@ def scroll_to_top():
     """Legacy function - calls force_scroll_to_top for backwards compatibility"""
     force_scroll_to_top()
 
+def scroll_chat_to_bottom():
+    """
+    Scroll the chat container to the bottom to show the latest message.
+    Call this AFTER rendering chat messages in chat interfaces.
+    """
+    import streamlit.components.v1 as components
+    
+    components.html(
+        """
+        <script>
+        (function() {
+            const parentDoc = window.parent.document;
+            
+            // Find Streamlit's chat container (multiple selectors for compatibility)
+            const chatContainers = [
+                parentDoc.querySelector('[data-testid="stChatMessageContainer"]'),
+                parentDoc.querySelector('.stChatMessageContainer'),
+                parentDoc.querySelector('[data-testid="stVerticalBlock"]'),
+                parentDoc.querySelector('section.stMain'),
+                parentDoc.querySelector('section.main')
+            ];
+            
+            // Find the first valid container and scroll it
+            for (const container of chatContainers) {
+                if (container && container.scrollHeight > container.clientHeight) {
+                    container.scrollTop = container.scrollHeight;
+                    break;
+                }
+            }
+            
+            // Also scroll the main section to bottom for chat interfaces
+            const mainSection = parentDoc.querySelector('section.stMain') 
+                             || parentDoc.querySelector('section.main');
+            if (mainSection) {
+                mainSection.scrollTop = mainSection.scrollHeight;
+            }
+        })();
+        </script>
+        """,
+        height=0
+    )
+
+def inject_chat_auto_scroll():
+    """
+    Inject CSS and JS to make chat container scrollable with auto-scroll to bottom.
+    Call this ONCE at the start of a chat interface.
+    """
+    st.markdown("""
+    <style>
+    /* Ensure chat messages are in a scrollable container */
+    [data-testid="stChatMessageContainer"] {
+        max-height: 70vh;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+    }
+    
+    /* Keep chat input sticky at bottom */
+    [data-testid="stChatInput"] {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding-top: 10px;
+        z-index: 100;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 def inject_navigation_scroll_handler():
     """
     Inject a persistent scroll handler that resets scroll position

@@ -26,9 +26,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Force scroll to top on every page load/navigation
+# Scroll behavior: Only scroll to top on navigation, not on chat updates
+# Check if this is a navigation action (page/mode change) vs chat action
 from utils import force_scroll_to_top
-force_scroll_to_top()
+
+# Track previous mode to detect navigation
+current_mode = st.session_state.get('auth_mode', 'login')
+previous_mode = st.session_state.get('_previous_auth_mode', None)
+
+# Only scroll to top if mode changed (navigation) or first load
+if previous_mode != current_mode:
+    force_scroll_to_top()
+    st.session_state['_previous_auth_mode'] = current_mode
 
 # Backend optimization: Initialize database once at process startup
 from database import initialize_database_once

@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history, apply_chatgpt_chat_style, scroll_chat_to_bottom
+from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history, apply_chatgpt_chat_style, scroll_chat_to_bottom, inject_chat_auto_scroll
 import PyPDF2
 from docx import Document
 from PIL import Image
@@ -13,8 +13,8 @@ from database import get_db, log_student_activity, database_available
 
 def show_lesson_planning_interface():
     """Educational planning interface for educators with Australian Curriculum alignment"""
-    scroll_to_top()
     apply_chatgpt_chat_style()
+    inject_chat_auto_scroll()
     
     from utils import render_conversation_sidebar
     
@@ -110,6 +110,10 @@ def show_lesson_planning_interface():
         avatar = ai_avatar if message["role"] == "assistant" else None
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
+    
+    # Scroll to bottom of chat after displaying messages
+    if st.session_state.planning_messages:
+        scroll_chat_to_bottom()
     
     # Chat input for planning questions
     if prompt := st.chat_input("Tell me your year level/age, topic, time, and instructions"):
@@ -354,8 +358,8 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
 
 def show_companion_interface():
     """Enhanced Montessori companion interface with conversation history management and persistence"""
-    scroll_to_top()
     apply_chatgpt_chat_style()
+    inject_chat_auto_scroll()
     
     from utils import manage_conversation_history, estimate_tokens, render_conversation_sidebar
     from database import save_conversation_message, log_educator_prompt, load_conversation_to_session
@@ -590,6 +594,10 @@ def show_companion_interface():
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
     
+    # Scroll to bottom of chat after displaying messages
+    if st.session_state.companion_messages:
+        scroll_chat_to_bottom()
+    
     # If last message was from user (Quick Guide), generate response
     if need_response:
         ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
@@ -727,8 +735,8 @@ def show_companion_interface():
 
 def show_student_interface():
     """Enhanced student learning interface with curriculum context, conversation history, and persistence"""
-    scroll_to_top()
     apply_chatgpt_chat_style()
+    inject_chat_auto_scroll()
     
     from utils import manage_conversation_history, render_conversation_sidebar
     from database import save_conversation_message, load_conversation_to_session
@@ -883,6 +891,10 @@ def show_student_interface():
         avatar = ai_avatar if message["role"] == "assistant" else None
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
+    
+    # Scroll to bottom of chat after displaying messages
+    if st.session_state.student_messages:
+        scroll_chat_to_bottom()
     
     st.markdown("---")
     
@@ -2644,8 +2656,8 @@ def show_pd_expert_interface():
 
 def show_imaginarium_interface():
     """Creative space for educators - free exploration with minimal guardrails"""
-    scroll_to_top()
     apply_chatgpt_chat_style()
+    inject_chat_auto_scroll()
     
     # Import database functions
     from database import (get_user_chat_conversations, create_chat_conversation, 
@@ -2727,6 +2739,10 @@ def show_imaginarium_interface():
         avatar = ai_avatar if message["role"] == "assistant" else None
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
+    
+    # Scroll to bottom of chat after displaying messages
+    if st.session_state.imaginarium_messages:
+        scroll_chat_to_bottom()
     
     # If last message was from user, generate response
     if need_response:
