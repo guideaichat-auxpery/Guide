@@ -149,13 +149,117 @@ def add_scroll_to_top_button():
         height=0
     )
 
-# ---- CHAT CONVERSATION SIDEBAR ----
+# ---- CHAT CONVERSATION SIDEBAR (ChatGPT-style) ----
+def get_relative_time(dt):
+    """Convert datetime to relative time string (Today, Yesterday, 3 days ago, etc.)"""
+    now = datetime.now()
+    diff = now - dt
+    
+    if diff.days == 0:
+        return "Today"
+    elif diff.days == 1:
+        return "Yesterday"
+    elif diff.days < 7:
+        return f"{diff.days} days ago"
+    elif diff.days < 30:
+        weeks = diff.days // 7
+        return f"{weeks} week{'s' if weeks > 1 else ''} ago"
+    else:
+        return dt.strftime('%d/%m/%Y')
+
+def apply_chatgpt_sidebar_style():
+    """Apply ChatGPT-style CSS to the sidebar"""
+    sidebar_css = """
+    <style>
+    /* ChatGPT-style sidebar */
+    [data-testid="stSidebar"] {
+        background: #202123 !important;
+    }
+    
+    [data-testid="stSidebar"] * {
+        color: #ececf1 !important;
+    }
+    
+    [data-testid="stSidebar"] .stMarkdown h3 {
+        color: #ececf1 !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Style all sidebar buttons as list items */
+    [data-testid="stSidebar"] .stButton > button {
+        background: transparent !important;
+        border: none !important;
+        border-radius: 8px !important;
+        color: #ececf1 !important;
+        text-align: left !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+        transition: background 0.15s !important;
+    }
+    
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background: #2a2b32 !important;
+    }
+    
+    /* Primary buttons (current conversation) */
+    [data-testid="stSidebar"] .stButton > button[kind="primary"] {
+        background: #343541 !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    
+    /* Small icon buttons (edit/delete) */
+    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"],
+    [data-testid="stSidebar"] .stButton > button[data-testid*="del"] {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Section headers */
+    .sidebar-section-header {
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        opacity: 0.6 !important;
+        padding: 12px 12px 6px 12px !important;
+        margin-top: 8px !important;
+        color: #8e8ea0 !important;
+    }
+    
+    /* Bottom action bar */
+    .sidebar-bottom-bar {
+        position: sticky !important;
+        bottom: 0 !important;
+        background: #202123 !important;
+        padding: 12px 0 !important;
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
+        margin-top: 20px !important;
+    }
+    
+    /* Info box in sidebar */
+    [data-testid="stSidebar"] [data-testid="stAlert"] {
+        background: #2a2b32 !important;
+        border: none !important;
+    }
+    
+    /* Dividers */
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.1) !important;
+    }
+    
+    /* Caption text */
+    [data-testid="stSidebar"] .stCaption {
+        color: #8e8ea0 !important;
+    }
+    </style>
+    """
+    st.markdown(sidebar_css, unsafe_allow_html=True)
+
 def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
     """
-    Render a conversation management sidebar with create, rename, delete, and switch features.
+    Render a ChatGPT-style conversation sidebar with clean list, timestamps, and actions.
     
     Args:
-        interface_type: 'companion', 'student', or 'planning'
+        interface_type: 'companion', 'student', 'planning', or 'imaginarium'
         user_id: Educator user ID (for educators)
         student_id: Student ID (for students)
     
@@ -164,7 +268,7 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
     """
     from database import (get_db, get_user_chat_conversations, create_chat_conversation,
                          rename_chat_conversation, delete_chat_conversation, 
-                         reopen_chat_conversation, get_chat_analytics_summary)
+                         reopen_chat_conversation, load_conversation_to_session)
     import uuid
     
     db = get_db()
@@ -172,23 +276,16 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
         return None
     
     try:
+        # Apply ChatGPT sidebar styling
+        apply_chatgpt_sidebar_style()
+        
         # Get all conversations for this user/student and interface
         conversations = get_user_chat_conversations(db, user_id=user_id, student_id=student_id, 
                                                    interface_type=interface_type)
         
         # Sidebar for conversation management
         with st.sidebar:
-            st.markdown("### 💬 Chat Conversations")
-            st.markdown("---")
-            
-            # New conversation button
-            # For students, show subject selector first
-            if interface_type == 'student' and not st.session_state.get('show_subject_selector', False):
-                if st.button("➕ New Chat", use_container_width=True, type="primary"):
-                    st.session_state.show_subject_selector = True
-                    st.rerun()
-            
-            # Subject selector for student chats
+            # Subject selector for student chats (shown when creating new chat)
             if interface_type == 'student' and st.session_state.get('show_subject_selector', False):
                 from database import get_available_subjects
                 
@@ -196,7 +293,7 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                 subjects = get_available_subjects()
                 
                 selected_subject = st.selectbox(
-                    "Choose a subject for this conversation:",
+                    "Choose a subject:",
                     subjects,
                     key="new_chat_subject",
                     label_visibility="collapsed"
@@ -205,7 +302,6 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("Create", type="primary", use_container_width=True):
-                        # Create new conversation with subject
                         new_session_id = str(uuid.uuid4())
                         title = f"{selected_subject} - {datetime.now().strftime('%d/%m %H:%M')}"
                         new_conv = create_chat_conversation(
@@ -224,159 +320,126 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                         st.session_state.show_subject_selector = False
                         st.rerun()
             
-            # For non-student chats, create without subject selector
-            elif interface_type != 'student':
-                if st.button("➕ New Chat", use_container_width=True, type="primary"):
-                    # Create new conversation
-                    new_session_id = str(uuid.uuid4())
-                    title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
-                    new_conv = create_chat_conversation(
-                        db, title=title, session_id=new_session_id, 
-                        interface_type=interface_type, user_id=user_id, student_id=student_id
-                    )
-                    st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
-                    st.session_state[f'{interface_type}_session_id'] = new_session_id
-                    st.session_state[f'{interface_type}_messages'] = []
-                    st.rerun()
-            
-            st.markdown("---")
-            
-            # Display conversation list
+            # Display conversation list (ChatGPT-style)
             if conversations:
-                # For students, group conversations by subject
-                if interface_type == 'student':
-                    st.markdown("**Your Conversations:**")
+                # Group by time period
+                today = []
+                yesterday = []
+                this_week = []
+                older = []
+                
+                for conv in conversations:
+                    diff = (datetime.now() - conv.created_at).days
+                    if diff == 0:
+                        today.append(conv)
+                    elif diff == 1:
+                        yesterday.append(conv)
+                    elif diff < 7:
+                        this_week.append(conv)
+                    else:
+                        older.append(conv)
+                
+                # Render each time group
+                def render_conv_list(convs, group_label):
+                    if not convs:
+                        return
                     
-                    # Group conversations by subject
-                    from collections import defaultdict
-                    grouped_convs = defaultdict(list)
-                    for conv in conversations:
-                        subject = conv.subject_tag or "General"
-                        grouped_convs[subject].append(conv)
+                    st.markdown(f"<div class='sidebar-section-header'>{group_label}</div>", unsafe_allow_html=True)
                     
-                    # Display each subject group
-                    for subject in sorted(grouped_convs.keys()):
-                        st.markdown(f"**{subject}**")
-                        for conv in grouped_convs[subject]:
-                            # Highlight current conversation
-                            current_conv_id = st.session_state.get(f'{interface_type}_current_conversation_id')
-                            is_current = (current_conv_id == conv.id)
-                            
-                            # Create expandable conversation item
-                            with st.expander(
-                                f"{'🟢 ' if is_current else ''}{conv.title[:30]}{'...' if len(conv.title) > 30 else ''}",
-                                expanded=False
-                            ):
-                                # Show conversation details
-                                st.caption(f"Created: {conv.created_at.strftime('%d/%m/%Y %H:%M')}")
-                                
-                                # Rename input
-                                new_title = st.text_input(
-                                    "Rename", 
-                                    value=conv.title,
-                                    key=f"rename_{conv.id}",
-                                    label_visibility="collapsed"
-                                )
-                                
-                                col1, col2, col3 = st.columns(3)
-                                
-                                with col1:
-                                    # Rename button
-                                    if st.button("✏️", key=f"rename_btn_{conv.id}", help="Rename"):
-                                        if new_title and new_title != conv.title:
-                                            rename_chat_conversation(db, conv.id, new_title, user_id, student_id)
-                                            st.success("Renamed!")
-                                            st.rerun()
-                                
-                                with col2:
-                                    # Open button
-                                    if st.button("📂", key=f"open_btn_{conv.id}", help="Open"):
-                                        # Load this conversation
-                                        reopen_chat_conversation(db, conv.id, user_id, student_id)
-                                        st.session_state[f'{interface_type}_current_conversation_id'] = conv.id
-                                        st.session_state[f'{interface_type}_session_id'] = conv.session_id
-                                        
-                                        # Load messages for this conversation
-                                        from database import load_conversation_to_session
-                                        loaded_messages = load_conversation_to_session(db, conv.session_id, interface_type)
-                                        st.session_state[f'{interface_type}_messages'] = loaded_messages
-                                        st.rerun()
-                                
-                                with col3:
-                                    # Delete button
-                                    if st.button("🗑️", key=f"delete_btn_{conv.id}", help="Delete"):
-                                        delete_chat_conversation(db, conv.id, user_id, student_id)
-                                        # If deleting current conversation, clear session
-                                        if is_current:
-                                            st.session_state[f'{interface_type}_current_conversation_id'] = None
-                                            st.session_state[f'{interface_type}_session_id'] = str(uuid.uuid4())
-                                            st.session_state[f'{interface_type}_messages'] = []
-                                        st.success("Deleted!")
-                                        st.rerun()
-                        st.markdown("---")
-                else:
-                    # For non-student interfaces, display flat list
-                    st.markdown("**Recent Chats:**")
-                    
-                    for conv in conversations:
-                        # Highlight current conversation
+                    for conv in convs:
                         current_conv_id = st.session_state.get(f'{interface_type}_current_conversation_id')
                         is_current = (current_conv_id == conv.id)
                         
-                        # Create expandable conversation item
-                        with st.expander(
-                            f"{'🟢 ' if is_current else ''}{conv.title[:30]}{'...' if len(conv.title) > 30 else ''}",
-                            expanded=False
-                        ):
-                            # Show conversation details
-                            st.caption(f"Created: {conv.created_at.strftime('%d/%m/%Y %H:%M')}")
+                        # Get timestamp for display
+                        timestamp = get_relative_time(conv.created_at)
+                        title_display = conv.title[:20] + "..." if len(conv.title) > 20 else conv.title
+                        
+                        # Row with clickable title and action buttons
+                        col1, col2, col3 = st.columns([7, 1, 1])
+                        
+                        with col1:
+                            # Main conversation button - clicking opens it
+                            icon = "▸" if is_current else "💬"
+                            btn_label = f"{icon} {title_display} · {timestamp}"
                             
-                            # Rename input
-                            new_title = st.text_input(
-                                "Rename", 
-                                value=conv.title,
-                                key=f"rename_{conv.id}",
-                                label_visibility="collapsed"
-                            )
-                            
-                            col1, col2, col3 = st.columns(3)
-                            
-                            with col1:
-                                # Rename button
-                                if st.button("✏️", key=f"rename_btn_{conv.id}", help="Rename"):
-                                    if new_title and new_title != conv.title:
-                                        rename_chat_conversation(db, conv.id, new_title, user_id, student_id)
-                                        st.success("Renamed!")
-                                        st.rerun()
-                            
-                            with col2:
-                                # Open button
-                                if st.button("📂", key=f"open_btn_{conv.id}", help="Open"):
-                                    # Load this conversation
+                            if st.button(
+                                btn_label,
+                                key=f"open_{conv.id}",
+                                use_container_width=True,
+                                type="primary" if is_current else "secondary"
+                            ):
+                                if not is_current:
                                     reopen_chat_conversation(db, conv.id, user_id, student_id)
                                     st.session_state[f'{interface_type}_current_conversation_id'] = conv.id
                                     st.session_state[f'{interface_type}_session_id'] = conv.session_id
-                                    
-                                    # Load messages for this conversation
-                                    from database import load_conversation_to_session
                                     loaded_messages = load_conversation_to_session(db, conv.session_id, interface_type)
                                     st.session_state[f'{interface_type}_messages'] = loaded_messages
                                     st.rerun()
-                            
-                            with col3:
-                                # Delete button
-                                if st.button("🗑️", key=f"delete_btn_{conv.id}", help="Delete"):
-                                    delete_chat_conversation(db, conv.id, user_id, student_id)
-                                    # If deleting current conversation, clear session
-                                    if is_current:
-                                        st.session_state[f'{interface_type}_current_conversation_id'] = None
-                                        st.session_state[f'{interface_type}_session_id'] = str(uuid.uuid4())
-                                        st.session_state[f'{interface_type}_messages'] = []
-                                    st.success("Deleted!")
+                        
+                        with col2:
+                            if st.button("✏️", key=f"edit_{conv.id}", help="Rename"):
+                                st.session_state[f'rename_conv_{conv.id}'] = True
+                                st.rerun()
+                        
+                        with col3:
+                            if st.button("🗑️", key=f"del_{conv.id}", help="Delete"):
+                                delete_chat_conversation(db, conv.id, user_id, student_id)
+                                if is_current:
+                                    st.session_state[f'{interface_type}_current_conversation_id'] = None
+                                    st.session_state[f'{interface_type}_session_id'] = str(uuid.uuid4())
+                                    st.session_state[f'{interface_type}_messages'] = []
+                                st.rerun()
+                        
+                        # Show rename input if editing
+                        if st.session_state.get(f'rename_conv_{conv.id}', False):
+                            new_title = st.text_input(
+                                "New title:",
+                                value=conv.title,
+                                key=f"rename_input_{conv.id}"
+                            )
+                            rcol1, rcol2 = st.columns(2)
+                            with rcol1:
+                                if st.button("Save", key=f"save_rename_{conv.id}"):
+                                    if new_title and new_title != conv.title:
+                                        rename_chat_conversation(db, conv.id, new_title, user_id, student_id)
+                                    st.session_state[f'rename_conv_{conv.id}'] = False
+                                    st.rerun()
+                            with rcol2:
+                                if st.button("Cancel", key=f"cancel_rename_{conv.id}"):
+                                    st.session_state[f'rename_conv_{conv.id}'] = False
                                     st.rerun()
                 
+                render_conv_list(today, "Today")
+                render_conv_list(yesterday, "Yesterday")
+                render_conv_list(this_week, "This Week")
+                render_conv_list(older, "Previous")
+                
             else:
-                st.info("No chats yet. Click 'New Chat' to start!")
+                st.info("No conversations yet. Start a new chat!")
+            
+            # Bottom action bar with New Chat and Settings
+            st.markdown('<div class="sidebar-bottom-bar">', unsafe_allow_html=True)
+            bottom_col1, bottom_col2 = st.columns(2)
+            with bottom_col1:
+                if st.button("✚ New Chat", key="bottom_new_chat", use_container_width=True):
+                    if interface_type == 'student':
+                        st.session_state.show_subject_selector = True
+                    else:
+                        new_session_id = str(uuid.uuid4())
+                        title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=new_session_id, 
+                            interface_type=interface_type, user_id=user_id, student_id=student_id
+                        )
+                        st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
+                        st.session_state[f'{interface_type}_session_id'] = new_session_id
+                        st.session_state[f'{interface_type}_messages'] = []
+                    st.rerun()
+            with bottom_col2:
+                if st.button("⚙️ Settings", key="bottom_settings", use_container_width=True):
+                    st.session_state['show_settings'] = True
+                    st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
             
         # Return the current session ID
         return st.session_state.get(f'{interface_type}_session_id')
