@@ -3,6 +3,7 @@ from database import get_db, create_user, authenticate_user, authenticate_studen
 import re
 import requests
 import os
+from datetime import datetime, timedelta
 
 PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
 PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
@@ -10,12 +11,24 @@ PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
 MONTHLY_PRICE_ID = 'price_1Sd7RX8PGiRAuUvfzibxCNLV'
 ANNUAL_PRICE_ID = 'price_1Sd7RX8PGiRAuUvfxnQgzmy1'
 
+SUBSCRIPTION_CACHE_TTL = timedelta(minutes=5)
+
 def get_api_headers():
     """Get headers for authenticated API calls to payments service"""
     return {'X-API-Secret': PAYMENTS_API_SECRET, 'Content-Type': 'application/json'}
 
 def check_subscription_status(educator_id):
-    """Check if educator has an active subscription"""
+    """Check if educator has an active subscription (with 5-minute cache)"""
+    cache_key = f'subscription_cache_{educator_id}'
+    cache_time_key = f'subscription_cache_time_{educator_id}'
+    
+    cached_data = st.session_state.get(cache_key)
+    cached_time = st.session_state.get(cache_time_key)
+    
+    if cached_data and cached_time:
+        if datetime.now() - cached_time < SUBSCRIPTION_CACHE_TTL:
+            return cached_data
+    
     try:
         response = requests.get(
             f"{PAYMENTS_SERVICE_URL}/api/subscription-status/{educator_id}",
@@ -25,11 +38,27 @@ def check_subscription_status(educator_id):
         if response.status_code == 200:
             data = response.json()
             if data.get('success'):
-                return data.get('data', {})
-        return {'isActive': False, 'status': 'none'}
+                result = data.get('data', {})
+                st.session_state[cache_key] = result
+                st.session_state[cache_time_key] = datetime.now()
+                return result
+        result = {'isActive': False, 'status': 'none'}
+        st.session_state[cache_key] = result
+        st.session_state[cache_time_key] = datetime.now()
+        return result
     except Exception as e:
         print(f"Error checking subscription: {e}")
         return {'isActive': False, 'status': 'error'}
+
+def invalidate_subscription_cache(educator_id=None):
+    """Invalidate subscription cache after payment or subscription changes"""
+    if educator_id:
+        cache_key = f'subscription_cache_{educator_id}'
+        cache_time_key = f'subscription_cache_time_{educator_id}'
+        if cache_key in st.session_state:
+            del st.session_state[cache_key]
+        if cache_time_key in st.session_state:
+            del st.session_state[cache_time_key]
 
 def create_checkout_session(price_id, educator_id, email):
     """Create a Stripe checkout session"""

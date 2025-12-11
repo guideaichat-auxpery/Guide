@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, show_billing_portal_button
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, show_billing_portal_button, invalidate_subscription_cache
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface
 
@@ -56,6 +56,18 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
+
+# Handle return from Stripe checkout - invalidate subscription cache for fresh status
+try:
+    query_params = st.query_params
+    if query_params.get('subscription') == 'success':
+        educator_id = st.session_state.get('user_id')
+        if educator_id:
+            invalidate_subscription_cache(educator_id)
+            st.success("Payment successful! Your subscription is now active.")
+        st.query_params.clear()
+except Exception as e:
+    logger.warning(f"Error processing subscription return: {e}")
 
 # Session timeout configuration (security - child protection)
 from datetime import datetime, timedelta
