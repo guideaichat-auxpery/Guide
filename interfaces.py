@@ -2698,12 +2698,22 @@ def show_data_access_interface():
 
 def show_account_deletion_interface():
     """Account deletion interface (APP 12/13)"""
-    st.markdown("### 🗑️ Delete My Account")
-    st.markdown("*Permanently remove your account and all associated data*")
     
     user_id = st.session_state.get('user_id')
     is_student = st.session_state.get('is_student', False)
     user_name = st.session_state.get('user_name', '')
+    
+    if not is_student:
+        st.markdown("### 💳 Subscription Management")
+        st.markdown("*Manage your subscription, update payment method, or cancel*")
+        
+        from auth import show_billing_portal_button
+        show_billing_portal_button()
+        
+        st.markdown("---")
+    
+    st.markdown("### 🗑️ Delete My Account")
+    st.markdown("*Permanently remove your account and all associated data*")
     
     st.error("⚠️ **Warning: This action cannot be undone!**")
     

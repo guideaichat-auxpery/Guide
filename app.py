@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, show_billing_portal_button
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface
 
@@ -257,6 +257,19 @@ else:
     
     if is_student is False:
         # Educator interface
+        
+        # Check subscription status for educators
+        educator_id = st.session_state.get('user_id')
+        subscription_info = check_subscription_status(educator_id)
+        has_active_subscription = subscription_info.get('isActive', False)
+        subscription_status = subscription_info.get('status', 'none')
+        
+        # If no active subscription, show pricing page (unless accessing account settings)
+        if not has_active_subscription and subscription_status not in ['trialing', 'active']:
+            # Allow access to account settings and logout even without subscription
+            if st.session_state.get('auth_mode') not in ['account_deletion', 'privacy_policy']:
+                show_pricing_page()
+                st.stop()
         
         # Default to dashboard home for educators
         if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium']:

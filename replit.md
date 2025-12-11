@@ -26,6 +26,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - 2-hour inactivity timeout for students (classroom-appropriate session length)
   - 30-minute inactivity timeout for educators (protects student data access)
   - Automatic conversation restoration on login, visual save confirmations.
+- **Subscription & Payments (December 2025)**:
+  - **Stripe Integration**: Dedicated Node.js payments service (port 3001) handling subscriptions
+  - **Pricing**: $15/month with 14-day trial OR $150/year (2 months free)
+  - **Subscription Gate**: Educators must have active subscription to access app features
+  - **Checkout Flow**: Stripe Checkout for secure payment processing
+  - **Billing Portal**: Self-service subscription management via Stripe Customer Portal
+  - **Webhook Handling**: Real-time subscription status updates (created/updated/cancelled)
+  - **Database Fields**: stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at on users table
 - **Child Safety Measures (December 2025)**:
   - **Content Monitoring**: SafetyAlert model detects concerning content (self-harm, bullying, abuse indicators) in student messages. Keywords classified by severity (high/medium/low). Educators receive alerts for review.
   - **Student Reporting**: "Need to talk to someone?" expander in student interface allows students to confidentially report concerns to their educator.

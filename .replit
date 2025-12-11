@@ -24,6 +24,10 @@ args = "Guide AI Assistant"
 task = "workflow.run"
 args = "Adaptive Learning Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Payments Service"
+
 [[workflows.workflow]]
 name = "Guide AI Assistant"
 author = "agent"
@@ -48,9 +52,29 @@ waitForPort = 3000
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "Payments Service"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node payments/server.js"
+waitForPort = 3001
+
 [[ports]]
 localPort = 3000
 externalPort = 4200
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
+localPort = 3100
+externalPort = 3002
 
 [[ports]]
 localPort = 5000
@@ -58,3 +82,8 @@ externalPort = 80
 
 [agent]
 integrations = ["web_scraper:1.0.0", "python_openai:1.0.0", "python_openai:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+PAYMENTS_API_SECRET = "f00aec46a0a180c67266d64539b908589f20ca92a505cd76be7ba856f631f0e1"

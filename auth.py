@@ -1,6 +1,215 @@
 import streamlit as st
 from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student, check_login_rate_limit, record_login_attempt, clear_login_attempts, create_student_with_consent
 import re
+import requests
+import os
+
+PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
+PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
+
+MONTHLY_PRICE_ID = 'price_1Sd7RX8PGiRAuUvfzibxCNLV'
+ANNUAL_PRICE_ID = 'price_1Sd7RX8PGiRAuUvfxnQgzmy1'
+
+def get_api_headers():
+    """Get headers for authenticated API calls to payments service"""
+    return {'X-API-Secret': PAYMENTS_API_SECRET, 'Content-Type': 'application/json'}
+
+def check_subscription_status(educator_id):
+    """Check if educator has an active subscription"""
+    try:
+        response = requests.get(
+            f"{PAYMENTS_SERVICE_URL}/api/subscription-status/{educator_id}",
+            headers=get_api_headers(),
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                return data.get('data', {})
+        return {'isActive': False, 'status': 'none'}
+    except Exception as e:
+        print(f"Error checking subscription: {e}")
+        return {'isActive': False, 'status': 'error'}
+
+def create_checkout_session(price_id, educator_id, email):
+    """Create a Stripe checkout session"""
+    try:
+        response = requests.post(
+            f"{PAYMENTS_SERVICE_URL}/api/create-checkout-session",
+            json={'priceId': price_id, 'educatorId': educator_id, 'email': email},
+            headers=get_api_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                return data.get('url')
+        return None
+    except Exception as e:
+        print(f"Error creating checkout session: {e}")
+        return None
+
+def create_portal_session(educator_id):
+    """Create a Stripe billing portal session"""
+    try:
+        response = requests.post(
+            f"{PAYMENTS_SERVICE_URL}/api/create-portal-session",
+            json={'educatorId': educator_id},
+            headers=get_api_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                return data.get('url')
+        return None
+    except Exception as e:
+        print(f"Error creating portal session: {e}")
+        return None
+
+def show_pricing_page():
+    """Display the subscription pricing page"""
+    st.markdown("""
+    <style>
+    .pricing-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+    .pricing-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .pricing-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        border: 2px solid #dee2e6;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pricing-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .pricing-card.recommended {
+        border-color: #789A76;
+        background: linear-gradient(135deg, #f0f7ef 0%, #e8f5e8 100%);
+    }
+    .price-amount {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #2E8B57;
+    }
+    .price-period {
+        color: #666;
+        font-size: 1rem;
+    }
+    .feature-list {
+        text-align: left;
+        margin: 1.5rem 0;
+    }
+    .feature-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    .savings-badge {
+        background: #789A76;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="pricing-header">
+        <h1>🌱 Start Your Guide Journey</h1>
+        <p style="font-size: 1.1rem; color: #666; max-width: 600px; margin: 0 auto;">
+            AI-powered Montessori curriculum companion with Australian Curriculum V9 integration. 
+            Start your 14-day free trial today.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    educator_id = st.session_state.get('user_id')
+    email = st.session_state.get('user_email')
+    
+    with col1:
+        st.markdown("""
+        <div class="pricing-card">
+            <h3>Monthly</h3>
+            <div class="price-amount">$15<span class="price-period">/month</span></div>
+            <p style="color: #2E8B57; font-weight: 500;">14-day free trial included</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("Start Free Trial", key="monthly_btn", use_container_width=True, type="primary"):
+            with st.spinner("Preparing checkout..."):
+                checkout_url = create_checkout_session(MONTHLY_PRICE_ID, educator_id, email)
+                if checkout_url:
+                    st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
+                    st.info("Redirecting to secure checkout...")
+                else:
+                    st.error("Unable to create checkout session. Please try again.")
+    
+    with col2:
+        st.markdown("""
+        <div class="pricing-card recommended">
+            <span class="savings-badge">💰 2 Months Free</span>
+            <h3>Annual</h3>
+            <div class="price-amount">$150<span class="price-period">/year</span></div>
+            <p style="color: #2E8B57; font-weight: 500;">Best value - save $30/year</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("Choose Annual", key="annual_btn", use_container_width=True, type="secondary"):
+            with st.spinner("Preparing checkout..."):
+                checkout_url = create_checkout_session(ANNUAL_PRICE_ID, educator_id, email)
+                if checkout_url:
+                    st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
+                    st.info("Redirecting to secure checkout...")
+                else:
+                    st.error("Unable to create checkout session. Please try again.")
+    
+    st.markdown("---")
+    
+    st.markdown("""
+    ### What's Included
+    
+    ✅ **AI-Powered Lesson Planning** - Create detailed, age-appropriate lessons in minutes  
+    ✅ **Australian Curriculum V9 Integration** - Aligned content descriptors and cross-curricular priorities  
+    ✅ **Montessori Philosophy** - Grounded in Cosmic Education principles  
+    ✅ **Student Dashboard** - Track student progress and activities  
+    ✅ **Great Stories Creator** - Generate engaging narratives for new concepts  
+    ✅ **Planning Notes** - Save and organize your lesson plans  
+    ✅ **Child Safety Features** - Content monitoring and safety alerts  
+    ✅ **Australian Privacy Act Compliant** - Your data is protected  
+    """)
+    
+    st.markdown("""
+    ---
+    <p style="text-align: center; color: #666; font-size: 0.9rem;">
+        Questions? Contact us at <a href="mailto:support@auxpery.com.au">support@auxpery.com.au</a>
+    </p>
+    """, unsafe_allow_html=True)
+
+def show_billing_portal_button():
+    """Show button to access Stripe billing portal"""
+    educator_id = st.session_state.get('user_id')
+    if st.button("💳 Manage Subscription", key="billing_portal_btn"):
+        with st.spinner("Opening billing portal..."):
+            portal_url = create_portal_session(educator_id)
+            if portal_url:
+                st.markdown(f'<meta http-equiv="refresh" content="0;url={portal_url}">', unsafe_allow_html=True)
+                st.info("Redirecting to billing portal...")
+            else:
+                st.error("Unable to open billing portal. Please try again.")
 
 def validate_email(email):
     """Validate email format"""
