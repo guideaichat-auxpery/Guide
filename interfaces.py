@@ -1211,8 +1211,8 @@ Keep feedback age-appropriate for {age_group} year olds."""
         add_scroll_to_top_button()
     
     with journey_tab:
-        st.markdown("#### 🗺️ Your Learning Journey Map")
-        st.markdown("*See all the topics you've explored and how they connect!*")
+        st.markdown("### 🗺️ Your Learning Journey Map")
+        st.caption("See all the topics you've explored and how they connect!")
         
         if database_available and student_id:
             from database import get_student_learning_journey
