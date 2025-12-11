@@ -424,8 +424,8 @@ def show_companion_interface():
     st.markdown("*Your philosophical guide to Montessori principles, cosmic education, and educational wisdom*")
     
     # Age group selector for companion (optional - defaults to all ages)
-    st.markdown("#### 🌱 Select Age Group (Optional)")
-    st.markdown("*Choose a specific age range for targeted guidance, or select 'All Ages' for comprehensive support*")
+    st.markdown("### 🌱 Select Age Group (Optional)")
+    st.caption("Choose a specific age range for targeted guidance, or select 'All Ages' for comprehensive support")
     
     companion_age_options = {
         "All Ages (3-18)": "all",
@@ -451,8 +451,8 @@ def show_companion_interface():
     
     # Quick conversation starters - Comprehensive Montessori Guide Topics
     # MOVED TO TOP: Cards stay fixed here, chat flows below
-    st.markdown("#### 📚 Montessori Quick Guides")
-    st.markdown("*Click any topic to explore authentic Montessori wisdom from Dr. Montessori's foundational texts*")
+    st.markdown("### 📚 Montessori Quick Guides")
+    st.caption("Click any topic to explore authentic Montessori wisdom from Dr. Montessori's foundational texts")
     
     quick_prompts = [
         "🌌 What is cosmic education and how do I implement it?",
@@ -509,8 +509,8 @@ def show_companion_interface():
     # to prevent mid-conversation insertion during Streamlit reruns.
     # DO NOT move below chat history - it will appear between messages during multi-turn conversations.
     # Correct flow: Quick Guides → Upload Section → Chat History → Chat Input
-    st.markdown("#### 📁 Upload Teaching Materials for Feedback (Optional)")
-    st.markdown("*Share lesson plans, observations, student work samples, or teaching materials for Montessori-focused feedback*")
+    st.markdown("### 📁 Upload Teaching Materials for Feedback (Optional)")
+    st.caption("Share lesson plans, observations, student work samples, or teaching materials for Montessori-focused feedback")
     
     uploaded_document = st.file_uploader(
         "Upload document for analysis",
@@ -845,7 +845,7 @@ def show_student_interface():
     research_tab, journey_tab = st.tabs(["💬 Research Assistant", "🗺️ My Learning Journey"])
     
     with research_tab:
-        st.markdown("#### 📚 What would you like to explore today?")
+        st.markdown("### 📚 What would you like to explore today?")
         
         # Initialize student-specific subject selector
         if 'student_subjects' not in st.session_state:
@@ -902,7 +902,7 @@ def show_student_interface():
         st.markdown("---")
         
         # File upload for students with rubric support
-        st.markdown("#### 📁 Upload your work for feedback (optional)")
+        st.markdown("### 📁 Upload your work for feedback (optional)")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -1230,11 +1230,11 @@ Keep feedback age-appropriate for {age_group} year olds."""
                             st.plotly_chart(fig, use_container_width=True)
                         
                         st.markdown("---")
-                        st.markdown("#### 📊 Topics by Subject")
+                        st.markdown("### 📊 Topics by Subject")
                         
                         # Count total topics
                         total_topics = sum(len(topics) for topics in journey_data.values())
-                        st.markdown(f"*You've explored **{total_topics}** curriculum topics across **{len(journey_data)}** subjects!*")
+                        st.caption(f"You've explored **{total_topics}** curriculum topics across **{len(journey_data)}** subjects!")
                         
                         for subject, topics in journey_data.items():
                             with st.expander(f"**{subject}** ({len(topics)} topics)"):
@@ -1428,7 +1428,7 @@ def show_student_dashboard_interface():
                         
                         # Display each subject group
                         for subject, subject_chats in grouped_chats.items():
-                            st.markdown(f"#### {subject}")
+                            st.markdown(f"### {subject}")
                             for chat in subject_chats:
                                 with st.expander(f"{chat.title} - {chat.updated_at.strftime('%d/%m/%Y %H:%M')}"):
                                     st.caption(f"**Subject:** {chat.subject_tag or 'General'}")
@@ -1500,7 +1500,7 @@ def show_student_dashboard_interface():
                     st.info("As the primary educator, you have full access to this student's data.")
                     
                     # Grant access to other educators
-                    st.markdown("#### Share Access")
+                    st.markdown("### Share Access")
                     from database import get_all_educators, grant_educator_access, get_student_access_educators, is_institution_enforcement_on, User
                     
                     all_educators = get_all_educators(db)
@@ -1537,7 +1537,7 @@ def show_student_dashboard_interface():
                     # Show current access list
                     access_list = get_student_access_educators(db, selected_student.id)
                     if access_list:
-                        st.markdown("#### Current Access")
+                        st.markdown("### Current Access")
                         for educator in access_list:
                             st.markdown(f"- {educator.full_name} ({educator.email})")
                     
@@ -1593,8 +1593,8 @@ def show_great_story_interface():
     tab1, tab2 = st.tabs(["✨ Create New Story", "📚 My Saved Stories"])
     
     with tab1:
-        st.markdown("#### Theme or Topic")
-        st.markdown("*Enter a theme or topic to develop a Montessori Great Story*")
+        st.markdown("### Theme or Topic")
+        st.caption("Enter a theme or topic to develop a Montessori Great Story")
         
         # Theme/topic input
         theme = st.text_input("Story Theme or Topic:", placeholder="e.g., The Story of Water, The Coming of Life, Ancient Civilizations")
@@ -1613,7 +1613,7 @@ def show_great_story_interface():
         )
         
         # Story development prompts
-        st.markdown("#### Story Development Assistance")
+        st.markdown("### Story Development Assistance")
         
         cols = st.columns(2)
         with cols[0]:
@@ -1743,7 +1743,7 @@ def show_planning_notes_interface():
     
     with tab1:
         # Note selection or creation
-        st.markdown("#### Select or Create Note")
+        st.markdown("### Select or Create Note")
         
         db = get_db()
         existing_notes = []
@@ -1820,7 +1820,7 @@ def show_planning_notes_interface():
         )
         
         # Materials list
-        st.markdown("#### 🧰 Materials & Resources")
+        st.markdown("### 🧰 Materials & Resources")
         materials = st.text_area(
             "Materials List:",
             value=st.session_state.get('note_materials', ''),
