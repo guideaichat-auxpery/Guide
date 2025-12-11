@@ -1111,6 +1111,7 @@ Keep feedback age-appropriate for {age_group} year olds."""
             
             # Save conversation and detect curriculum keywords
             save_success = False
+            detected_keywords = []  # Initialize to avoid unbound variable
             if database_available and student_id:
                 db = get_db()
                 if db:
@@ -1824,8 +1825,8 @@ def show_great_story_interface():
                                 db = get_db()
                                 if db:
                                     try:
-                                        from database import save_great_story
-                                        save_great_story(db, educator_id, story_title, story, age_group, theme)
+                                        from database import create_great_story
+                                        create_great_story(db, educator_id, story_title, theme, story, age_group)
                                         st.success("✅ Story saved successfully!")
                                     except Exception as e:
                                         st.error(f"Error saving story: {str(e)}")
@@ -1851,8 +1852,8 @@ def show_great_story_interface():
                                 
                                 # Delete option
                                 if st.button(f"🗑️ Delete", key=f"delete_story_{story.id}"):
-                                    from database import delete_story
-                                    if delete_story(db, story.id):
+                                    from database import delete_great_story
+                                    if delete_great_story(db, story.id):
                                         st.success("Story deleted")
                                         st.rerun()
                     else:
@@ -2788,7 +2789,7 @@ def show_account_deletion_interface():
                             st.rerun()
                         else:
                             st.error(f"❌ {error_msg}")
-                            if "active student" in error_msg.lower():
+                            if error_msg and "active student" in error_msg.lower():
                                 st.info("💡 **Tip:** Go to 'Create Student Account' to view and delete your students first.")
                 
                 except Exception as e:

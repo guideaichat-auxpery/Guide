@@ -4,7 +4,7 @@ import json
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Table, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 import streamlit as st
 import logging
@@ -754,7 +754,7 @@ def delete_educator(db, educator_id: int):
         return (False, f"Error during deletion: {str(e)}")
 
 # Great Story functions
-def create_great_story(db, educator_id: int, title: str, theme: str, content: str, age_group: str = None, keywords: str = None):
+def create_great_story(db, educator_id: int, title: str, theme: str, content: str, age_group: Optional[str] = None, keywords: Optional[str] = None):
     """Create a new Great Story"""
     story = GreatStory(
         educator_id=educator_id,
@@ -769,7 +769,7 @@ def create_great_story(db, educator_id: int, title: str, theme: str, content: st
     db.refresh(story)
     return story
 
-def update_great_story(db, story_id: int, title: str = None, content: str = None, age_group: str = None, keywords: str = None):
+def update_great_story(db, story_id: int, title: Optional[str] = None, content: Optional[str] = None, age_group: Optional[str] = None, keywords: Optional[str] = None):
     """Update an existing Great Story"""
     story = db.query(GreatStory).filter(GreatStory.id == story_id).first()
     if story:
@@ -804,7 +804,7 @@ def delete_great_story(db, story_id: int):
     return False
 
 # Planning Note functions
-def create_planning_note(db, educator_id: int, title: str, content: str = "", chapters: str = None, images: str = None, materials: str = None):
+def create_planning_note(db, educator_id: int, title: str, content: str = "", chapters: Optional[str] = None, images: Optional[str] = None, materials: Optional[str] = None):
     """Create a new Planning Note"""
     note = PlanningNote(
         educator_id=educator_id,
@@ -819,7 +819,7 @@ def create_planning_note(db, educator_id: int, title: str, content: str = "", ch
     db.refresh(note)
     return note
 
-def update_planning_note(db, note_id: int, title: str = None, content: str = None, chapters: str = None, images: str = None, materials: str = None):
+def update_planning_note(db, note_id: int, title: Optional[str] = None, content: Optional[str] = None, chapters: Optional[str] = None, images: Optional[str] = None, materials: Optional[str] = None):
     """Update an existing Planning Note"""
     note = db.query(PlanningNote).filter(PlanningNote.id == note_id).first()
     if note:
@@ -878,7 +878,7 @@ def trim_message_content(content: str, max_length: int = 10000) -> str:
     return truncated
 
 def save_conversation_message(db, session_id: str, interface_type: str, role: str, content: str, 
-                              user_id: int = None, student_id: int = None):
+                              user_id: Optional[int] = None, student_id: Optional[int] = None):
     """
     Save a conversation message to history.
     Backend optimization: Trims excessively long content to prevent database bloat.
@@ -906,8 +906,8 @@ def get_conversation_history(db, session_id: str, interface_type: str, limit: in
         ConversationHistory.interface_type == interface_type
     ).order_by(ConversationHistory.created_at.desc()).limit(limit).all()
 
-def get_user_conversation_history(db, user_id: int = None, student_id: int = None, 
-                                  interface_type: str = None, limit: int = 50):
+def get_user_conversation_history(db, user_id: Optional[int] = None, student_id: Optional[int] = None, 
+                                  interface_type: Optional[str] = None, limit: int = 50):
     """Get conversation history for a user or student across sessions"""
     query = db.query(ConversationHistory)
     
@@ -938,7 +938,7 @@ def clear_conversation_history(db, session_id: str, interface_type: str):
 
 # Chat Conversation Management functions
 def create_chat_conversation(db, title: str, session_id: str, interface_type: str, 
-                             user_id: int = None, student_id: int = None, subject_tag: str = "General"):
+                             user_id: Optional[int] = None, student_id: Optional[int] = None, subject_tag: str = "General"):
     """Create a new chat conversation with optional subject tagging"""
     conversation = ChatConversation(
         title=title,
@@ -957,8 +957,8 @@ def create_chat_conversation(db, title: str, session_id: str, interface_type: st
     
     return conversation
 
-def get_user_chat_conversations(db, user_id: int = None, student_id: int = None, 
-                                interface_type: str = None):
+def get_user_chat_conversations(db, user_id: Optional[int] = None, student_id: Optional[int] = None, 
+                                interface_type: Optional[str] = None):
     """Get all chat conversations for a user or student"""
     query = db.query(ChatConversation).filter(ChatConversation.is_active == True)
     
@@ -1022,7 +1022,7 @@ def reopen_chat_conversation(db, conversation_id: int, user_id: int = None, stud
     return None
 
 def log_chat_action(db, action_type: str, conversation_id: int, interface_type: str,
-                   user_id: int = None, student_id: int = None):
+                   user_id: Optional[int] = None, student_id: Optional[int] = None):
     """Log chat management actions for analytics"""
     analytics = ChatAnalytics(
         user_id=user_id,
@@ -1158,8 +1158,8 @@ def detect_concerning_content(text: str) -> tuple:
     return len(matched) > 0, highest_severity, matched
 
 def create_safety_alert(db, student_id: int, educator_id: int, alert_type: str,
-                        trigger_text: str = None, matched_keywords: list = None,
-                        severity: str = 'medium', context: str = None):
+                        trigger_text: Optional[str] = None, matched_keywords: Optional[list] = None,
+                        severity: str = 'medium', context: Optional[str] = None):
     """Create a safety alert for educator review."""
     try:
         import json
@@ -1193,7 +1193,7 @@ def get_pending_safety_alerts(db, educator_id: int) -> list:
         logger.error(f"Error getting safety alerts: {str(e)}")
         return []
 
-def review_safety_alert(db, alert_id: int, reviewer_id: int, status: str, notes: str = None):
+def review_safety_alert(db, alert_id: int, reviewer_id: int, status: str, notes: Optional[str] = None):
     """Mark a safety alert as reviewed."""
     try:
         alert = db.query(SafetyAlert).filter(SafetyAlert.id == alert_id).first()
@@ -1232,7 +1232,7 @@ def create_student_concern_report(db, student_id: int, concern_text: str) -> boo
         logger.error(f"Error creating student concern report: {str(e)}")
         return False
 
-def delete_student_and_data(db, student_id: int, educator_id: int, reason: str = None) -> dict:
+def delete_student_and_data(db, student_id: int, educator_id: int, reason: Optional[str] = None) -> dict:
     """Delete a student account and all associated data with audit trail.
     
     This implements the 'right to erasure' under Australian Privacy Act.
@@ -2231,8 +2231,8 @@ def get_student_chats_by_subject(db, student_id: int):
         print(f"Error getting student chats by subject: {str(e)}")
         return {}
 
-def get_filtered_student_chats(db, educator_id: int = None, student_id: int = None, 
-                               subject_tag: str = None):
+def get_filtered_student_chats(db, educator_id: Optional[int] = None, student_id: Optional[int] = None, 
+                               subject_tag: Optional[str] = None):
     """
     Get filtered student chats for educator dashboard
     Filters by student and/or subject
