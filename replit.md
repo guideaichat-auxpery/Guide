@@ -34,12 +34,11 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **Billing Portal**: Self-service subscription management via Stripe Customer Portal
   - **Webhook Handling**: Real-time subscription status updates (created/updated/cancelled)
   - **Database Fields**: stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at on users table
-  - **Marketing Site Integration (December 2025)**: Pay-first flow where users pay on www.auxpery.com.au, then sign up on guide.auxpery.com.au
-    - Public API: POST `/api/public/create-checkout-session` accepts {email, priceId} without authentication
-    - Invite tokens: 64-char hex tokens stored in `pending_subscriptions` table, 7-day expiry
-    - Token validation: GET `/api/public/validate-token/:token` for pre-signup checks
-    - Token redemption: POST `/api/redeem-token` links subscription to new user account
-    - Email locking: Users must sign up with the same email used for payment
+  - **Marketing Site Integration (December 2025)**: Sign-up-first flow where users create account on guide.auxpery.com.au, then pay through pricing page
+    - Simple redirect links from www.auxpery.com.au to guide.auxpery.com.au for signup
+    - After signup, users see pricing page and complete Stripe Checkout
+    - Subscription automatically activated upon payment completion
+    - Optional public API: POST `/api/public/create-checkout-session` for pre-signup payments on marketing site
     - See `MARKETING_SITE_INTEGRATION.md` for frontend implementation guide
 - **Child Safety Measures (December 2025)**:
   - **Content Monitoring**: SafetyAlert model detects concerning content (self-harm, bullying, abuse indicators) in student messages. Keywords classified by severity (high/medium/low). Educators receive alerts for review.

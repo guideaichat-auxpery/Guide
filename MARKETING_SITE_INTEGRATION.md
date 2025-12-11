@@ -2,14 +2,23 @@
 
 ## Overview
 
-This document explains how to integrate your marketing site at www.auxpery.com.au with the Guide payment system. When users want to subscribe to Guide, they will:
+Guide uses a **sign up first, then pay** model. Users create their account on guide.auxpery.com.au and then complete their subscription payment through the pricing page within the app. 
 
-1. Enter their email on your marketing site
-2. Choose a subscription plan (Monthly or Annual)
-3. Click "Subscribe" and be redirected to Stripe Checkout
-4. After successful payment, be redirected to guide.auxpery.com.au to complete their account setup
+Optionally, your marketing site can also offer direct checkout links to accelerate the subscription process.
 
-## API Endpoint
+## User Journey
+
+**Recommended Flow:**
+1. User creates account on guide.auxpery.com.au
+2. After signup, they see the pricing page
+3. They choose a plan and complete Stripe Checkout
+4. Subscription is activated immediately
+5. Full access to Guide features
+
+**Optional Marketing Site Integration:**
+Your marketing site can link directly to Guide's checkout flow if desired using the public API endpoint below.
+
+## API Endpoint (Optional)
 
 **Base URL:** `https://guide.auxpery.com.au` (or your Guide app's deployed URL)
 
@@ -17,7 +26,7 @@ This document explains how to integrate your marketing site at www.auxpery.com.a
 
 **POST** `/api/public/create-checkout-session`
 
-This endpoint is **public** and does not require authentication.
+This endpoint is **public** and does not require authentication. It returns a Stripe Checkout URL that can be used to initiate payments for users who want to pay on your marketing site.
 
 #### Request Body
 
@@ -27,6 +36,8 @@ This endpoint is **public** and does not require authentication.
   "priceId": "price_1Sd7RX8PGiRAuUvfzibxCNLV"
 }
 ```
+
+Note: This API is optional. Most users will go directly to guide.auxpery.com.au to sign up and pay within the app.
 
 #### Price IDs
 
@@ -53,144 +64,47 @@ This endpoint is **public** and does not require authentication.
 }
 ```
 
-## Frontend Implementation Example
+## Simple Redirect Links (Optional)
 
-### HTML Form
+If you want to offer checkout on your marketing site, you can use simple redirect links to Guide's pricing page:
 
 ```html
-<form id="subscribe-form">
-  <h2>Start Your Guide Journey</h2>
-  
-  <div class="form-group">
-    <label for="email">Email Address</label>
-    <input type="email" id="email" name="email" required placeholder="your.email@example.com">
-  </div>
-  
-  <div class="plan-options">
-    <label class="plan-card">
-      <input type="radio" name="plan" value="monthly" checked>
-      <div class="plan-content">
-        <h3>Monthly</h3>
-        <p class="price">$15/month</p>
-        <p class="trial">14-day free trial</p>
-      </div>
-    </label>
-    
-    <label class="plan-card">
-      <input type="radio" name="plan" value="annual">
-      <div class="plan-content">
-        <h3>Annual</h3>
-        <p class="price">$150/year</p>
-        <p class="savings">Save $30 (2 months free!)</p>
-      </div>
-    </label>
-  </div>
-  
-  <button type="submit" id="subscribe-btn">Start Free Trial</button>
-</form>
-
-<div id="error-message" style="display: none; color: red;"></div>
+<a href="https://guide.auxpery.com.au/?utm_source=auxpery&plan=pricing" 
+   class="btn btn-primary">
+   Start Free Trial
+</a>
 ```
 
-### JavaScript
+Users will be directed to:
+1. Create their Guide account
+2. See the pricing page
+3. Complete checkout
 
-```javascript
-const GUIDE_API_URL = 'https://guide.auxpery.com.au';
+This is the recommended approach - no API integration needed on your marketing site.
 
-const PRICE_IDS = {
-  monthly: 'price_1Sd7RX8PGiRAuUvfzibxCNLV',
-  annual: 'price_1Sd7RX8PGiRAuUvfxnQgzmy1'
-};
+## Replit Agent Prompt (Optional)
 
-document.getElementById('subscribe-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const email = document.getElementById('email').value;
-  const plan = document.querySelector('input[name="plan"]:checked').value;
-  const button = document.getElementById('subscribe-btn');
-  const errorDiv = document.getElementById('error-message');
-  
-  // Validate email
-  if (!email || !email.includes('@')) {
-    errorDiv.textContent = 'Please enter a valid email address';
-    errorDiv.style.display = 'block';
-    return;
-  }
-  
-  // Disable button and show loading state
-  button.disabled = true;
-  button.textContent = 'Redirecting to checkout...';
-  errorDiv.style.display = 'none';
-  
-  try {
-    const response = await fetch(`${GUIDE_API_URL}/api/public/create-checkout-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email,
-        priceId: PRICE_IDS[plan]
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success && data.url) {
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || 'Failed to create checkout session');
-    }
-  } catch (error) {
-    console.error('Checkout error:', error);
-    errorDiv.textContent = error.message || 'Something went wrong. Please try again.';
-    errorDiv.style.display = 'block';
-    button.disabled = false;
-    button.textContent = 'Start Free Trial';
-  }
-});
-```
-
-## What Happens After Payment
-
-1. **Stripe Checkout Completion**: User completes payment on Stripe
-2. **Redirect to Guide**: User is redirected to `https://guide.auxpery.com.au/?signup_token=<token>`
-3. **Account Setup**: Guide shows a simplified signup form with:
-   - Email pre-filled and locked (must match the email used for payment)
-   - User enters their name and password
-4. **Subscription Activated**: The subscription is automatically linked to their new account
-5. **Access Granted**: User has immediate access to all Guide features
-
-## Replit Agent Prompt
-
-If you're building the marketing site in Replit, you can copy this prompt to your Replit Agent:
+If your marketing site wants to offer direct checkout, you can build a simple pricing section. Here's the prompt:
 
 ---
 
 **Prompt for Replit Agent:**
 
-Build a pricing/subscription section for my marketing website that integrates with the Guide payment system. 
+Build a pricing section for my marketing website that links to Guide's payment flow. 
 
 Requirements:
-1. Create a clean, professional pricing section with two plan options:
+1. Create a clean, professional pricing section displaying two plan options:
    - Monthly: $15/month with 14-day free trial
    - Annual: $150/year (save $30 - 2 months free)
 
-2. Include an email input field and plan selection
+2. Add a "Start Free Trial" button that links users to Guide's signup and pricing page
 
-3. When the user clicks "Subscribe" or "Start Free Trial":
-   - Make a POST request to `https://guide.auxpery.com.au/api/public/create-checkout-session`
-   - Send JSON body: `{ "email": "<user email>", "priceId": "<selected price id>" }`
-   - Price IDs:
-     - Monthly: `price_1Sd7RX8PGiRAuUvfzibxCNLV`
-     - Annual: `price_1Sd7RX8PGiRAuUvfxnQgzmy1`
-   - On success, redirect the user to the `url` returned in the response
-   - On error, show an error message
+3. Basic implementation:
+   - Link to: `https://guide.auxpery.com.au/?utm_source=auxpery`
+   - Users create their account on Guide
+   - They'll see the pricing page and complete checkout there
 
 4. Style it to match the Auxpery brand with earth tones and professional design
-
-5. Add proper error handling for invalid emails and network errors
 
 ---
 
