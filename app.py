@@ -77,9 +77,17 @@ st.markdown("""
     text-align: center;
     font-family: var(--font-serif);
     color: var(--color-ink);
+    margin-top: -2rem;
     margin-bottom: 0.5rem;
     font-size: 4rem;
     font-weight: 500;
+}
+/* Reduce Streamlit default top padding */
+.stApp > header + div > div {
+    padding-top: 1rem !important;
+}
+.block-container {
+    padding-top: 2rem !important;
 }
 .main-byline {
     text-align: center;
