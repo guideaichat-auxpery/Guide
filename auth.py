@@ -1,5 +1,5 @@
 import streamlit as st
-from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student
+from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student, check_login_rate_limit, record_login_attempt, clear_login_attempts
 import re
 
 def validate_email(email):
@@ -8,9 +8,15 @@ def validate_email(email):
     return re.match(pattern, email) is not None
 
 def validate_password(password):
-    """Validate password strength"""
-    if len(password) < 6:
-        return False, "Password must be at least 6 characters long"
+    """Validate password strength - requires 12+ chars with complexity"""
+    if len(password) < 12:
+        return False, "Password must be at least 12 characters"
+    if not any(c.isupper() for c in password):
+        return False, "Password must contain at least one uppercase letter"
+    if not any(c.islower() for c in password):
+        return False, "Password must contain at least one lowercase letter"
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one number"
     return True, "Password is valid"
 
 def login_page():
@@ -38,8 +44,17 @@ def login_page():
                         st.error("Authentication is not available. Database connection required.")
                         return
                     try:
+                        # Check rate limiting before authentication
+                        is_locked, remaining_seconds, failed_count = check_login_rate_limit(db, email)
+                        if is_locked:
+                            minutes_remaining = remaining_seconds // 60 + 1
+                            st.error(f"Account temporarily locked due to too many failed attempts. Please try again in {minutes_remaining} minute(s).")
+                            return
+                        
                         user = authenticate_user(db, email, password)
                         if user:
+                            # Clear failed attempts on successful login
+                            clear_login_attempts(db, email)
                             st.session_state.user_id = user.id
                             st.session_state.user_type = user.user_type
                             st.session_state.user_name = user.full_name
@@ -52,7 +67,13 @@ def login_page():
                             st.success(f"Welcome back, {user.full_name}!")
                             st.rerun()
                         else:
-                            st.error("Invalid email or password")
+                            # Record failed attempt
+                            record_login_attempt(db, email, attempt_type='educator', success=False)
+                            attempts_remaining = 5 - failed_count - 1
+                            if attempts_remaining > 0:
+                                st.error(f"Invalid email or password. {attempts_remaining} attempt(s) remaining before lockout.")
+                            else:
+                                st.error("Invalid email or password. Account will be locked on next failed attempt.")
                     finally:
                         if db:
                             db.close()
@@ -73,8 +94,17 @@ def login_page():
                         st.error("Authentication is not available. Database connection required.")
                         return
                     try:
+                        # Check rate limiting before authentication
+                        is_locked, remaining_seconds, failed_count = check_login_rate_limit(db, username)
+                        if is_locked:
+                            minutes_remaining = remaining_seconds // 60 + 1
+                            st.error(f"Account temporarily locked due to too many failed attempts. Please try again in {minutes_remaining} minute(s).")
+                            return
+                        
                         student = authenticate_student(db, username, password)
                         if student:
+                            # Clear failed attempts on successful login
+                            clear_login_attempts(db, username)
                             st.session_state.user_id = student.id
                             st.session_state.user_type = "student"
                             st.session_state.user_name = student.full_name
@@ -89,7 +119,13 @@ def login_page():
                             st.success(f"Welcome back, {student.full_name}!")
                             st.rerun()
                         else:
-                            st.error("Invalid username or password")
+                            # Record failed attempt
+                            record_login_attempt(db, username, attempt_type='student', success=False)
+                            attempts_remaining = 5 - failed_count - 1
+                            if attempts_remaining > 0:
+                                st.error(f"Invalid username or password. {attempts_remaining} attempt(s) remaining before lockout.")
+                            else:
+                                st.error("Invalid username or password. Account will be locked on next failed attempt.")
                     finally:
                         if db:
                             db.close()
@@ -99,8 +135,16 @@ def signup_page():
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">📝 Create Your Educator Account</h2>', unsafe_allow_html=True)
     st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
     
-    # Privacy notice before signup
-    st.info("📋 **Privacy Notice:** By creating an account, you agree to our data collection practices. Please read our Terms and Conditions for details on how we handle your information.")
+    # Privacy notice before signup - Enhanced for Australian Privacy Act 1988 compliance
+    st.info("""📋 **Privacy Notice (Australian Privacy Act 1988)**
+
+By creating an account, you acknowledge that:
+- You are responsible for obtaining appropriate parental/guardian consent before creating student accounts
+- Your institution may have additional data protection obligations you must comply with
+- Student data is protected and will be handled in accordance with Australian privacy law
+- AI-generated content uses privacy-preserving data practices
+
+Please read our Terms & Conditions for full details.""")
     
     # Link to terms and conditions
     if st.button("📋 View Terms & Conditions", key="signup_privacy_link"):
@@ -113,7 +157,7 @@ def signup_page():
         email = st.text_input("Email", placeholder="your.email@example.com")
         user_type = st.selectbox("I am a:", ["Educator"])
         user_type = "educator"  # Normalize to single type
-        password = st.text_input("Password", type="password", help="Minimum 6 characters")
+        password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
         confirm_password = st.text_input("Confirm Password", type="password")
         
         # Consent checkboxes
@@ -206,13 +250,24 @@ def create_student_page():
                                      "6-9": "Lower Primary (6-9)",
                                      "3-6": "Early Years (3-6)"
                                  }[x])
-        password = st.text_input("Password", type="password", help="Minimum 6 characters")
+        password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
         confirm_password = st.text_input("Confirm Password", type="password")
+        
+        st.markdown("---")
+        st.markdown("### Guardian Consent Attestation")
+        st.markdown("*Required under Australian Privacy Act 1988 (APP 3)*")
+        consent_confirmed = st.checkbox(
+            "I confirm that I have obtained parental/guardian consent for this student to use Guide in accordance with my institution's policies and the Guide Privacy Policy.",
+            value=False,
+            help="You must confirm guardian consent before creating a student account"
+        )
         
         submit = st.form_submit_button("Create Student Account", use_container_width=True)
         
         if submit:
-            if not all([full_name, username, password, confirm_password]):
+            if not consent_confirmed:
+                st.error("You must confirm guardian consent before creating a student account")
+            elif not all([full_name, username, password, confirm_password]):
                 st.error("Please fill in all fields")
             elif password != confirm_password:
                 st.error("Passwords do not match")
@@ -241,13 +296,13 @@ def create_student_page():
                                 age_group
                             )
                             
-                            # Record parental consent for auditing (APP 3/5 compliance)
+                            # Record parental consent attestation for auditing (APP 3/5 compliance)
                             from database import record_parental_consent, record_consent
                             record_parental_consent(
                                 db, 
                                 student_id=student.id,
                                 educator_id=st.session_state.user_id,
-                                consent_method='educator_confirmed'
+                                consent_method='educator_attestation_checkbox'
                             )
                             
                             # Record privacy consents for student

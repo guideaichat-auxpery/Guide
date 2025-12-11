@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history, apply_chatgpt_chat_style, scroll_chat_to_bottom, inject_chat_auto_scroll
+from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history, apply_chatgpt_chat_style, scroll_chat_to_bottom, inject_chat_auto_scroll, validate_file_upload, sanitize_filename
 import PyPDF2
 from docx import Document
 from PIL import Image
@@ -521,7 +521,11 @@ def show_companion_interface():
     
     # Process uploaded document and add to conversation
     if uploaded_document:
-        if st.button("🌟 Get Montessori Feedback", use_container_width=True, type="primary"):
+        # Validate file upload for security
+        is_valid, error_msg = validate_file_upload(uploaded_document)
+        if not is_valid:
+            st.error(f"File validation failed: {error_msg}")
+        elif st.button("🌟 Get Montessori Feedback", use_container_width=True, type="primary"):
             # Process document file
             document_content = ""
             with st.spinner("Reading your document..."):
@@ -923,7 +927,15 @@ def show_student_interface():
         
         # Feedback button when work is uploaded
         if uploaded_work:
-            if st.button("🌟 How about some feedback?", use_container_width=True, type="primary"):
+            # Validate file uploads for security
+            work_valid, work_error = validate_file_upload(uploaded_work)
+            rubric_valid, rubric_error = validate_file_upload(uploaded_rubric) if uploaded_rubric else (True, None)
+            
+            if not work_valid:
+                st.error(f"Work file validation failed: {work_error}")
+            elif not rubric_valid:
+                st.error(f"Rubric file validation failed: {rubric_error}")
+            elif st.button("🌟 How about some feedback?", use_container_width=True, type="primary"):
                 # Process work file
                 work_content = ""
                 with st.spinner("Reading your work..."):
@@ -1834,6 +1846,13 @@ def show_planning_notes_interface():
         # Save button
         if st.button("💾 Save Note", use_container_width=True, type="primary"):
             if title and content:
+                # Validate image if uploaded
+                if uploaded_image:
+                    img_valid, img_error = validate_file_upload(uploaded_image)
+                    if not img_valid:
+                        st.error(f"Image validation failed: {img_error}")
+                        st.stop()
+                
                 db = get_db()
                 if db and educator_id:
                     try:

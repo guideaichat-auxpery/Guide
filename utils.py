@@ -1460,9 +1460,120 @@ WHAT I WON'T DO:
     
     return base_prompt + montessori_references
 
+def sanitize_pii_for_ai(text: str, student_name: str = None) -> str:
+    """Remove personally identifiable information before sending to AI.
+    
+    Implements data minimization per Australian Privacy Principle 3.
+    """
+    if not text:
+        return text
+    
+    sanitized = text
+    
+    # Remove specific student name if provided
+    if student_name and student_name.strip():
+        # Replace full name and individual name parts
+        sanitized = sanitized.replace(student_name, "[Student]")
+        for name_part in student_name.split():
+            if len(name_part) > 2:  # Skip very short parts
+                sanitized = re.sub(rf'\b{re.escape(name_part)}\b', '[Student]', sanitized, flags=re.IGNORECASE)
+    
+    # Remove common PII patterns
+    # Email addresses
+    sanitized = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[email removed]', sanitized)
+    
+    # Australian phone numbers
+    sanitized = re.sub(r'\b(?:\+?61|0)[2-478](?:[ -]?\d){8}\b', '[phone removed]', sanitized)
+    
+    # Street addresses (basic pattern)
+    sanitized = re.sub(r'\b\d+\s+[A-Za-z]+\s+(?:Street|St|Road|Rd|Avenue|Ave|Drive|Dr|Court|Ct|Place|Pl|Lane|Ln|Way|Crescent|Cres)\b', '[address removed]', sanitized, flags=re.IGNORECASE)
+    
+    # Australian postcodes (4 digits)
+    sanitized = re.sub(r'\b[0-9]{4}\b(?=\s|$|,)', '[postcode]', sanitized)
+    
+    return sanitized
+
+def sanitize_messages_for_ai(messages: list, student_name: str = None) -> list:
+    """Sanitize all messages in a conversation before sending to AI."""
+    sanitized_messages = []
+    for msg in messages:
+        sanitized_msg = msg.copy()
+        if 'content' in sanitized_msg:
+            sanitized_msg['content'] = sanitize_pii_for_ai(sanitized_msg['content'], student_name)
+        sanitized_messages.append(sanitized_msg)
+    return sanitized_messages
+
+# File upload security constants
+MAX_FILE_SIZE_MB = 10
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024  # 10MB
+
+# Allowed MIME types for file uploads
+ALLOWED_MIME_TYPES = {
+    'text/plain': ['.txt'],
+    'application/pdf': ['.pdf'],
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+    'image/jpeg': ['.jpg', '.jpeg'],
+    'image/png': ['.png'],
+}
+
+def validate_file_upload(uploaded_file) -> tuple:
+    """Validate uploaded file for security.
+    
+    Returns:
+        tuple: (is_valid: bool, error_message: str or None)
+    """
+    if uploaded_file is None:
+        return True, None
+    
+    # Check file size
+    file_size = uploaded_file.size
+    if file_size > MAX_FILE_SIZE_BYTES:
+        return False, f"File too large. Maximum size is {MAX_FILE_SIZE_MB}MB. Your file is {file_size / (1024*1024):.1f}MB."
+    
+    # Get file extension
+    filename = uploaded_file.name
+    file_ext = os.path.splitext(filename)[1].lower()
+    
+    # Check MIME type
+    file_type = uploaded_file.type
+    if file_type not in ALLOWED_MIME_TYPES:
+        return False, f"File type '{file_type}' is not allowed. Allowed types: TXT, PDF, DOCX, JPG, PNG."
+    
+    # Verify extension matches MIME type
+    allowed_extensions = ALLOWED_MIME_TYPES.get(file_type, [])
+    if file_ext not in allowed_extensions:
+        return False, f"File extension '{file_ext}' does not match the file type '{file_type}'."
+    
+    # Sanitize filename - remove any path components and dangerous characters
+    sanitized_name = os.path.basename(filename)
+    sanitized_name = re.sub(r'[^\w\s\-\.]', '_', sanitized_name)
+    
+    return True, None
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize a filename to prevent path traversal and injection attacks."""
+    if not filename:
+        return "unnamed_file"
+    
+    # Remove path components
+    safe_name = os.path.basename(filename)
+    
+    # Replace dangerous characters
+    safe_name = re.sub(r'[^\w\s\-\.]', '_', safe_name)
+    
+    # Remove leading/trailing whitespace and dots
+    safe_name = safe_name.strip(' .')
+    
+    # Limit length
+    if len(safe_name) > 200:
+        name, ext = os.path.splitext(safe_name)
+        safe_name = name[:200-len(ext)] + ext
+    
+    return safe_name if safe_name else "unnamed_file"
+
 def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=False, age_group=None, 
                     subject=None, subjects=None, year_level=None, curriculum_type="Blended", use_conversation_history=True,
-                    interface_type=None, planning_type=None):
+                    interface_type=None, planning_type=None, student_name=None):
     """Enhanced OpenAI API call with conversation history and curriculum context
     
     Args:
@@ -1477,8 +1588,21 @@ def call_openai_api(messages, max_tokens=None, system_prompt=None, is_student=Fa
         use_conversation_history: Whether to manage conversation history (default True)
         interface_type: Type of interface (e.g., "lesson_planning" for age-appropriate prompts)
         planning_type: Type of planning (e.g., "Lesson Planning", "Assessment Rubric")
+        student_name: Optional student name for PII sanitization
     """
     try:
+        # Data minimization: ALWAYS sanitize PII before sending to AI (APP 3 compliance)
+        # This is mandatory for all student calls and recommended for educator calls
+        try:
+            # Get student name from session state if not provided
+            if is_student and not student_name:
+                student_name = st.session_state.get('user_name', None)
+        except:
+            pass
+        
+        # Apply sanitization to all messages (student name optional, but pattern matching always runs)
+        messages = sanitize_messages_for_ai(messages, student_name)
+        
         # Determine max_tokens if not specified
         if max_tokens is None:
             max_tokens = get_max_tokens_for_user_type("student" if is_student else "educator")

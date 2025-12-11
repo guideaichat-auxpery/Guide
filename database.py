@@ -269,6 +269,19 @@ class ChatAnalytics(Base):
     interface_type = Column(String, nullable=False)  # 'companion', 'student', 'planning'
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
+class EducatorAuditLog(Base):
+    """Audit log for educator actions on student data (Australian Privacy Act 1988 compliance)"""
+    __tablename__ = "educator_audit_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    educator_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    action_type = Column(String, nullable=False, index=True)  # 'view_student', 'create_student', 'update_student', 'delete_student', 'view_activities'
+    target_student_id = Column(Integer, nullable=True, index=True)  # Student affected (nullable for list views)
+    target_entity = Column(String, nullable=True)  # Entity type affected (student, activity, etc.)
+    details = Column(Text, nullable=True)  # Additional context in JSON format
+    ip_address = Column(String, nullable=True)  # For security audit trail
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
 class SystemConfig(Base):
     __tablename__ = "system_config"
     
@@ -1086,6 +1099,49 @@ def get_analytics_summary(db, user_id: int, days: int = 30):
         'subjects_explored': summary.subjects_explored or 0
     }
 
+# Educator Audit Log functions (Australian Privacy Act 1988 compliance)
+def log_educator_action(db, educator_id: int, action_type: str, target_student_id: int = None,
+                        target_entity: str = None, details: str = None, ip_address: str = None):
+    """Log educator actions on student data for audit trail.
+    
+    Action types: 'view_student', 'create_student', 'update_student', 'delete_student', 
+                  'view_activities', 'export_data', 'share_student'
+    """
+    try:
+        audit_log = EducatorAuditLog(
+            educator_id=educator_id,
+            action_type=action_type,
+            target_student_id=target_student_id,
+            target_entity=target_entity,
+            details=details,
+            ip_address=ip_address
+        )
+        db.add(audit_log)
+        db.commit()
+        db.refresh(audit_log)
+        return audit_log
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to log educator action: {e}")
+        return None
+
+def get_educator_audit_logs(db, educator_id: int = None, student_id: int = None, 
+                            action_type: str = None, days: int = 90):
+    """Retrieve educator audit logs with optional filters"""
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    query = db.query(EducatorAuditLog).filter(EducatorAuditLog.created_at >= cutoff_date)
+    
+    if educator_id:
+        query = query.filter(EducatorAuditLog.educator_id == educator_id)
+    if student_id:
+        query = query.filter(EducatorAuditLog.target_student_id == student_id)
+    if action_type:
+        query = query.filter(EducatorAuditLog.action_type == action_type)
+    
+    return query.order_by(EducatorAuditLog.created_at.desc()).all()
+
 # Curriculum Context functions
 def create_curriculum_context(db, subject: str, year_level: str, descriptor: str,
                               strand: str = None, focus_area: str = None, descriptor_code: str = None,
@@ -1487,6 +1543,80 @@ class ParentalConsentRecord(Base):
     expires_at = Column(DateTime, nullable=True)  # Optional expiry
     withdrawn_at = Column(DateTime, nullable=True)  # If consent withdrawn
     notes = Column(Text, nullable=True)
+
+class LoginAttempt(Base):
+    """Track failed login attempts for rate limiting"""
+    __tablename__ = "login_attempts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    identifier = Column(String, nullable=False, index=True)  # Email or username
+    attempt_type = Column(String, default='educator')  # 'educator' or 'student'
+    success = Column(Boolean, default=False)
+    attempted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    ip_address = Column(String, nullable=True)
+
+# ---- LOGIN RATE LIMITING FUNCTIONS ----
+
+def record_login_attempt(db, identifier: str, attempt_type: str = 'educator', success: bool = False, ip_address: str = None):
+    """Record a login attempt for rate limiting"""
+    try:
+        attempt = LoginAttempt(
+            identifier=identifier.lower(),
+            attempt_type=attempt_type,
+            success=success,
+            attempted_at=datetime.utcnow(),
+            ip_address=ip_address
+        )
+        db.add(attempt)
+        db.commit()
+        return attempt
+    except Exception as e:
+        print(f"Error recording login attempt: {str(e)}")
+        db.rollback()
+        return None
+
+def check_login_rate_limit(db, identifier: str, max_attempts: int = 5, lockout_minutes: int = 15):
+    """Check if account is locked out due to too many failed attempts.
+    Returns (is_locked, remaining_lockout_seconds, failed_count)"""
+    try:
+        cutoff_time = datetime.utcnow() - timedelta(minutes=lockout_minutes)
+        
+        # Count failed attempts since cutoff
+        failed_count = db.query(LoginAttempt).filter(
+            LoginAttempt.identifier == identifier.lower(),
+            LoginAttempt.success == False,
+            LoginAttempt.attempted_at >= cutoff_time
+        ).count()
+        
+        if failed_count >= max_attempts:
+            # Get most recent failed attempt to calculate remaining lockout
+            last_failed = db.query(LoginAttempt).filter(
+                LoginAttempt.identifier == identifier.lower(),
+                LoginAttempt.success == False,
+                LoginAttempt.attempted_at >= cutoff_time
+            ).order_by(LoginAttempt.attempted_at.desc()).first()
+            
+            if last_failed:
+                unlock_time = last_failed.attempted_at + timedelta(minutes=lockout_minutes)
+                remaining_seconds = (unlock_time - datetime.utcnow()).total_seconds()
+                if remaining_seconds > 0:
+                    return (True, int(remaining_seconds), failed_count)
+        
+        return (False, 0, failed_count)
+    except Exception as e:
+        print(f"Error checking rate limit: {str(e)}")
+        return (False, 0, 0)
+
+def clear_login_attempts(db, identifier: str):
+    """Clear failed login attempts after successful login"""
+    try:
+        db.query(LoginAttempt).filter(
+            LoginAttempt.identifier == identifier.lower()
+        ).delete(synchronize_session=False)
+        db.commit()
+    except Exception as e:
+        print(f"Error clearing login attempts: {str(e)}")
+        db.rollback()
 
 # ---- CONSENT TRACKING FUNCTIONS ----
 
