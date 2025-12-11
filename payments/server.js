@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 const Stripe = require('stripe');
 const { Pool } = require('pg');
 require('dotenv').config();
@@ -12,6 +13,11 @@ const db = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const REPLIT_DOMAIN = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
 const BASE_URL = `https://${REPLIT_DOMAIN}`;
+const GUIDE_APP_URL = process.env.GUIDE_APP_URL || 'https://guide.auxpery.com.au';
+
+function generateInviteToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
 const PAYMENTS_API_SECRET = process.env.PAYMENTS_API_SECRET;
 
 app.use(cors());
@@ -149,6 +155,178 @@ app.post('/api/create-checkout-session', requireApiAuth, async (req, res) => {
   }
 });
 
+app.post('/api/public/create-checkout-session', async (req, res) => {
+  try {
+    const { priceId, email } = req.body;
+    
+    if (!priceId || !email) {
+      return res.status(400).json({ success: false, error: 'priceId and email are required' });
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+
+    const inviteToken = generateInviteToken();
+    
+    const customer = await stripe.customers.create({
+      email,
+      metadata: { inviteToken }
+    });
+
+    await db.query(
+      `INSERT INTO pending_subscriptions (invite_token, email, stripe_customer_id)
+       VALUES ($1, $2, $3)`,
+      [inviteToken, email.toLowerCase(), customer.id]
+    );
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customer.id,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${GUIDE_APP_URL}/?signup_token=${inviteToken}`,
+      cancel_url: `${req.headers.referer || 'https://www.auxpery.com.au'}?checkout=cancelled`,
+      metadata: { inviteToken, source: 'marketing_site' }
+    });
+    
+    console.log(`Created public checkout for ${email} with token ${inviteToken.substring(0, 8)}...`);
+    
+    res.json({ success: true, url: session.url });
+  } catch (error) {
+    console.error('Error creating public checkout session:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/public/validate-token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    if (!token || token.length !== 64) {
+      return res.status(400).json({ success: false, error: 'Invalid token format' });
+    }
+
+    const result = await db.query(
+      `SELECT id, email, subscription_status, subscription_plan, redeemed, expires_at
+       FROM pending_subscriptions
+       WHERE invite_token = $1`,
+      [token]
+    );
+    
+    if (!result.rows[0]) {
+      return res.status(404).json({ success: false, error: 'Token not found' });
+    }
+    
+    const pending = result.rows[0];
+    
+    if (pending.redeemed) {
+      return res.status(400).json({ success: false, error: 'Token already redeemed' });
+    }
+    
+    if (new Date(pending.expires_at) < new Date()) {
+      return res.status(400).json({ success: false, error: 'Token expired' });
+    }
+    
+    if (pending.subscription_status !== 'active' && pending.subscription_status !== 'trialing') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Payment not yet completed. Please complete checkout first.',
+        status: pending.subscription_status
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        email: pending.email,
+        subscriptionStatus: pending.subscription_status,
+        subscriptionPlan: pending.subscription_plan
+      }
+    });
+  } catch (error) {
+    console.error('Error validating token:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/redeem-token', requireApiAuth, async (req, res) => {
+  try {
+    const { token, userId, email } = req.body;
+    
+    if (!token || !userId || !email) {
+      return res.status(400).json({ success: false, error: 'token, userId, and email are required' });
+    }
+
+    const pendingResult = await db.query(
+      `SELECT * FROM pending_subscriptions
+       WHERE invite_token = $1 AND redeemed = FALSE AND expires_at > NOW()
+         AND subscription_status IN ('active', 'trialing')`,
+      [token]
+    );
+    
+    if (!pendingResult.rows[0]) {
+      return res.status(400).json({ success: false, error: 'Invalid, expired, or already redeemed token' });
+    }
+    
+    const pending = pendingResult.rows[0];
+    
+    if (pending.email.toLowerCase() !== email.toLowerCase()) {
+      console.warn(`Token redemption email mismatch: token=${token.substring(0, 8)}..., expected=${pending.email}, got=${email}`);
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Email does not match the subscription. You must use the same email address used for payment.' 
+      });
+    }
+
+    await db.query(
+      `UPDATE users SET 
+        stripe_customer_id = $1,
+        stripe_subscription_id = $2,
+        subscription_status = $3,
+        subscription_plan = $4,
+        trial_ends_at = $5,
+        subscription_ends_at = $6
+       WHERE id = $7`,
+      [
+        pending.stripe_customer_id,
+        pending.stripe_subscription_id,
+        pending.subscription_status,
+        pending.subscription_plan,
+        pending.trial_ends_at,
+        pending.subscription_ends_at,
+        userId
+      ]
+    );
+
+    await db.query(
+      `UPDATE pending_subscriptions SET 
+        redeemed = TRUE, 
+        redeemed_at = NOW(), 
+        redeemed_by_user_id = $1
+       WHERE id = $2`,
+      [userId, pending.id]
+    );
+
+    await stripe.customers.update(pending.stripe_customer_id, {
+      metadata: { educatorId: String(userId), inviteToken: null }
+    });
+    
+    console.log(`Redeemed token for user ${userId}, email ${pending.email}`);
+    
+    res.json({ 
+      success: true, 
+      data: {
+        subscriptionStatus: pending.subscription_status,
+        subscriptionPlan: pending.subscription_plan
+      }
+    });
+  } catch (error) {
+    console.error('Error redeeming token:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.post('/api/create-portal-session', requireApiAuth, async (req, res) => {
   try {
     const { educatorId } = req.body;
@@ -218,6 +396,7 @@ async function handleCheckoutCompleted(session) {
   console.log('Checkout completed:', session.id);
   
   const educatorId = session.metadata?.educatorId;
+  const inviteToken = session.metadata?.inviteToken;
   const customerId = session.customer;
   const subscriptionId = session.subscription;
   
@@ -231,6 +410,26 @@ async function handleCheckoutCompleted(session) {
       [customerId, subscriptionId, educatorId]
     );
     console.log(`Updated educator ${educatorId} with subscription ${subscriptionId}`);
+  }
+  
+  if (inviteToken) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const plan = subscription.items?.data[0]?.price?.recurring?.interval === 'year' ? 'annual' : 'monthly';
+    const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
+    const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+    
+    await db.query(
+      `UPDATE pending_subscriptions SET 
+        stripe_subscription_id = $1,
+        stripe_checkout_session_id = $2,
+        subscription_status = $3,
+        subscription_plan = $4,
+        trial_ends_at = $5,
+        subscription_ends_at = $6
+       WHERE invite_token = $7`,
+      [subscriptionId, session.id, subscription.status, plan, trialEnd, currentPeriodEnd, inviteToken]
+    );
+    console.log(`Updated pending subscription for token ${inviteToken.substring(0, 8)}...`);
   }
 }
 
@@ -296,9 +495,35 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP,
       ADD COLUMN IF NOT EXISTS subscription_ends_at TIMESTAMP
     `);
-    console.log('Database columns initialized successfully');
+    
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS pending_subscriptions (
+        id SERIAL PRIMARY KEY,
+        invite_token VARCHAR(64) UNIQUE NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
+        stripe_checkout_session_id TEXT,
+        subscription_status TEXT DEFAULT 'pending',
+        subscription_plan TEXT,
+        trial_ends_at TIMESTAMP,
+        subscription_ends_at TIMESTAMP,
+        redeemed BOOLEAN DEFAULT FALSE,
+        redeemed_at TIMESTAMP,
+        redeemed_by_user_id INTEGER,
+        created_at TIMESTAMP DEFAULT NOW(),
+        expires_at TIMESTAMP DEFAULT (NOW() + INTERVAL '7 days')
+      )
+    `);
+    
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_pending_subscriptions_token ON pending_subscriptions(invite_token);
+      CREATE INDEX IF NOT EXISTS idx_pending_subscriptions_email ON pending_subscriptions(email);
+    `);
+    
+    console.log('Database columns and pending_subscriptions table initialized successfully');
   } catch (error) {
-    console.error('Error initializing database columns:', error.message);
+    console.error('Error initializing database:', error.message);
   }
 }
 

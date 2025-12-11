@@ -67,6 +67,42 @@ def create_portal_session(educator_id):
         print(f"Error creating portal session: {e}")
         return None
 
+def validate_signup_token(token):
+    """Validate a signup token from the marketing site payment flow"""
+    try:
+        response = requests.get(
+            f"{PAYMENTS_SERVICE_URL}/api/public/validate-token/{token}",
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                return data.get('data', {})
+        return None
+    except Exception as e:
+        print(f"Error validating signup token: {e}")
+        return None
+
+def redeem_signup_token(token, user_id, email):
+    """Redeem a signup token after user account creation"""
+    try:
+        response = requests.post(
+            f"{PAYMENTS_SERVICE_URL}/api/redeem-token",
+            json={'token': token, 'userId': user_id, 'email': email},
+            headers=get_api_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                return data.get('data', {})
+        elif response.status_code == 403:
+            print(f"Email mismatch when redeeming token: {response.json().get('error')}")
+        return None
+    except Exception as e:
+        print(f"Error redeeming signup token: {e}")
+        return None
+
 def show_pricing_page():
     """Display the subscription pricing page"""
     st.markdown("""
@@ -341,8 +377,27 @@ def login_page():
 
 def signup_page():
     """Display signup page for new educators"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">📝 Create Your Educator Account</h2>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
+    
+    has_valid_token = st.session_state.get('signup_token_valid', False)
+    token_email = st.session_state.get('signup_token_email', '')
+    token_error = st.session_state.get('signup_token_error', '')
+    
+    if token_error:
+        st.error(token_error)
+        st.info("Please return to [www.auxpery.com.au](https://www.auxpery.com.au) to complete your purchase, or contact support if you believe this is an error.")
+        if st.button("Go to Login"):
+            st.session_state.signup_token_error = None
+            st.session_state.auth_mode = 'login'
+            st.rerun()
+        return
+    
+    if has_valid_token:
+        st.markdown('<h2 style="text-align: center; color: #2E8B57;">🎉 Complete Your Account Setup</h2>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align: center;">Your payment was successful! Just set up your password to get started.</p>', unsafe_allow_html=True)
+        st.success("✅ Your subscription is active and ready!")
+    else:
+        st.markdown('<h2 style="text-align: center; color: #2E8B57;">📝 Create Your Educator Account</h2>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
     
     # Privacy notice before signup - Enhanced for Australian Privacy Act 1988 compliance
     st.info("""📋 **Privacy Notice (Australian Privacy Act 1988)**
@@ -363,7 +418,13 @@ Please read our Terms & Conditions for full details.""")
     with st.form("educator_signup"):
         st.markdown("### Create New Account")
         full_name = st.text_input("Full Name", placeholder="Your full name")
-        email = st.text_input("Email", placeholder="your.email@example.com")
+        
+        if has_valid_token and token_email:
+            st.text_input("Email", value=token_email, disabled=True, help="Email is locked to the one used for payment")
+            email = token_email
+        else:
+            email = st.text_input("Email", placeholder="your.email@example.com")
+        
         user_type = st.selectbox("I am a:", ["Educator"])
         user_type = "educator"  # Normalize to single type
         password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
@@ -428,7 +489,21 @@ Please read our Terms & Conditions for full details.""")
                             record_consent(db, user_id=user.id, consent_type='overseas_transfer', policy_version="1.0")
                             record_consent(db, user_id=user.id, consent_type='privacy_policy', policy_version="1.0")
                             
-                            st.success(f"Account created successfully! Welcome, {full_name}!")
+                            # If this is a token-based signup, redeem the token to transfer subscription
+                            signup_token = st.session_state.get('signup_token')
+                            if signup_token and st.session_state.get('signup_token_valid'):
+                                redemption_result = redeem_signup_token(signup_token, user.id, email)
+                                if redemption_result:
+                                    st.success(f"Account created and subscription activated! Welcome, {full_name}!")
+                                else:
+                                    st.warning("Account created but there was an issue linking your subscription. Please contact support.")
+                                # Clear token session state
+                                for key in ['signup_token', 'signup_token_email', 'signup_token_valid']:
+                                    if key in st.session_state:
+                                        del st.session_state[key]
+                            else:
+                                st.success(f"Account created successfully! Welcome, {full_name}!")
+                            
                             st.session_state.user_id = user.id
                             st.session_state.user_type = user.user_type
                             st.session_state.user_name = user.full_name

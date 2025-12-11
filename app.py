@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, show_billing_portal_button
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, show_billing_portal_button, validate_signup_token
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface
 
@@ -56,6 +56,23 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
+
+# Handle signup_token from marketing site payment flow
+try:
+    query_params = st.query_params
+    signup_token = query_params.get('signup_token')
+    if signup_token and not st.session_state.authenticated:
+        token_data = validate_signup_token(signup_token)
+        if token_data:
+            st.session_state.signup_token = signup_token
+            st.session_state.signup_token_email = token_data.get('email', '')
+            st.session_state.signup_token_valid = True
+            st.session_state.auth_mode = 'signup'
+        else:
+            st.session_state.signup_token_valid = False
+            st.session_state.signup_token_error = "This signup link is invalid, expired, or has already been used."
+except Exception as e:
+    logger.warning(f"Error processing signup token: {e}")
 
 # Session timeout configuration (security - child protection)
 from datetime import datetime, timedelta
