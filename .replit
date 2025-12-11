@@ -28,17 +28,21 @@ args = "Adaptive Learning Server"
 task = "workflow.run"
 args = "Payments Service"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Reverse Proxy"
+
 [[workflows.workflow]]
 name = "Guide AI Assistant"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run app.py --server.port 5000"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
+args = "streamlit run app.py --server.port 8080"
+waitForPort = 8080
 
 [[workflows.workflow]]
 name = "Adaptive Learning Server"
@@ -64,6 +68,18 @@ task = "shell.exec"
 args = "node payments/server.js"
 waitForPort = 3001
 
+[[workflows.workflow]]
+name = "Reverse Proxy"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node proxy_server.js"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[ports]]
 localPort = 3000
 externalPort = 4200
@@ -79,6 +95,14 @@ externalPort = 3002
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8501
+externalPort = 3000
 
 [agent]
 integrations = ["web_scraper:1.0.0", "python_openai:1.0.0", "python_openai:1.0.0"]

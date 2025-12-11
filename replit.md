@@ -27,7 +27,7 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - 30-minute inactivity timeout for educators (protects student data access)
   - Automatic conversation restoration on login, visual save confirmations.
 - **Subscription & Payments (December 2025)**:
-  - **Stripe Integration**: Dedicated Node.js payments service (port 3001) handling subscriptions
+  - **Stripe Integration**: Dedicated Node.js payments service (port 3001) handling subscriptions, proxied through reverse proxy on port 5000
   - **Pricing**: $15/month with 14-day trial OR $150/year (2 months free)
   - **Subscription Gate**: Educators must have active subscription to access app features
   - **Checkout Flow**: Stripe Checkout for secure payment processing
