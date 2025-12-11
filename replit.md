@@ -15,6 +15,13 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 
 ## Technical Implementations
 - **Authentication**: Email/password for educators and username/password for students, with bcrypt hashing and session management, compliant with Australian Privacy Act 1988.
+  - **Password Security (December 2025)**: Minimum 12 characters with complexity requirements (uppercase, lowercase, number).
+  - **Login Rate Limiting (December 2025)**: 5 failed attempts triggers 15-minute account lockout. Tracked in `login_attempts` table.
+  - **Guardian Consent (December 2025)**: Mandatory checkbox attestation when creating student accounts with consent record stored (educator ID, timestamp, attestation text).
+- **Data Privacy & Security (December 2025)**:
+  - **PII Sanitization**: All messages sent to OpenAI are sanitized to remove student names, emails, phone numbers, addresses before API calls.
+  - **File Upload Security**: Server-side MIME validation, 10MB size limit, and filename sanitization for all uploads.
+  - **Audit Logging**: EducatorAuditLog model tracks educator actions on student data with timestamps and action details.
 - **Session Management**: Enhanced Streamlit configuration with 2-hour session timeout, automatic conversation restoration on login, and visual save confirmations.
 - **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and accessibility wizard.
 - **Backend**: Single-file Python application (`app.py`) integrating OpenAI API.
