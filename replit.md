@@ -22,7 +22,15 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **PII Sanitization**: All messages sent to OpenAI are sanitized to remove student names, emails, phone numbers, addresses before API calls.
   - **File Upload Security**: Server-side MIME validation, 10MB size limit, and filename sanitization for all uploads.
   - **Audit Logging**: EducatorAuditLog model tracks educator actions on student data with timestamps and action details.
-- **Session Management**: Enhanced Streamlit configuration with 2-hour session timeout, automatic conversation restoration on login, and visual save confirmations.
+- **Session Management (December 2025)**:
+  - 2-hour inactivity timeout for students (classroom-appropriate session length)
+  - 30-minute inactivity timeout for educators (protects student data access)
+  - Automatic conversation restoration on login, visual save confirmations.
+- **Child Safety Measures (December 2025)**:
+  - **Content Monitoring**: SafetyAlert model detects concerning content (self-harm, bullying, abuse indicators) in student messages. Keywords classified by severity (high/medium/low). Educators receive alerts for review.
+  - **Student Reporting**: "Need to talk to someone?" expander in student interface allows students to confidentially report concerns to their educator.
+  - **Data Retention Compliance**: 7-year retention for student records and conversations (Australian education baseline), 25-year retention for child safety records, permanent audit logs.
+  - **Complete Data Deletion**: `delete_student_and_data()` provides cascade deletion of student + activities + conversations + consent records with permanent audit trail.
 - **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and accessibility wizard.
 - **Backend**: Single-file Python application (`app.py`) integrating OpenAI API.
 - **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts for various features:

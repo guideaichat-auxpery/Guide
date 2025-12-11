@@ -1,5 +1,5 @@
 import streamlit as st
-from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student, check_login_rate_limit, record_login_attempt, clear_login_attempts
+from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student, check_login_rate_limit, record_login_attempt, clear_login_attempts, create_student_with_consent
 import re
 
 def validate_email(email):
@@ -286,34 +286,33 @@ def create_student_page():
                         if existing_student:
                             st.error("A student with this username already exists")
                         else:
-                            # Create new student
-                            student = create_student(
+                            # Create student with consent atomically (APP 3 compliance)
+                            # This ensures consent is recorded in the same transaction as account creation
+                            consent_text = "I confirm that I have obtained parental/guardian consent for this student to use Guide in accordance with my institution's policies and the Guide Privacy Policy."
+                            
+                            student, consent = create_student_with_consent(
                                 db, 
-                                username, 
-                                password, 
-                                full_name, 
-                                st.session_state.user_id, 
-                                age_group
+                                username=username, 
+                                password=password, 
+                                full_name=full_name, 
+                                educator_id=st.session_state.user_id, 
+                                age_group=age_group,
+                                consent_attestation_text=consent_text
                             )
                             
-                            # Record parental consent attestation for auditing (APP 3/5 compliance)
-                            from database import record_parental_consent, record_consent
-                            record_parental_consent(
-                                db, 
-                                student_id=student.id,
-                                educator_id=st.session_state.user_id,
-                                consent_method='educator_attestation_checkbox'
-                            )
-                            
-                            # Record privacy consents for student
-                            record_consent(db, student_id=student.id, consent_type='data_collection', 
-                                         granted_by_id=st.session_state.user_id, policy_version="1.0")
-                            record_consent(db, student_id=student.id, consent_type='overseas_transfer',
-                                         granted_by_id=st.session_state.user_id, policy_version="1.0")
-                            
-                            st.success(f"Student account created successfully for {full_name}!")
-                            st.info(f"Username: {username}")
-                            st.info("The student can now log in using their username and password.")
+                            if student and consent:
+                                # Record additional privacy consents
+                                from database import record_consent
+                                record_consent(db, student_id=student.id, consent_type='data_collection', 
+                                             granted_by_id=st.session_state.user_id, policy_version="1.0")
+                                record_consent(db, student_id=student.id, consent_type='overseas_transfer',
+                                             granted_by_id=st.session_state.user_id, policy_version="1.0")
+                                
+                                st.success(f"Student account created successfully for {full_name}!")
+                                st.info(f"Username: {username}")
+                                st.info("The student can now log in using their username and password.")
+                            else:
+                                st.error("Failed to create student account. Please try again.")
                     finally:
                         if db:
                             db.close()

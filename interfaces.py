@@ -845,6 +845,30 @@ def show_student_interface():
     # Privacy Notice Banner
     st.warning("⚠️ **Privacy Notice:** Do NOT enter personal information (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.", icon="⚠️")
     
+    # Report a Concern Button (Child Safety Feature)
+    with st.expander("🆘 Need to talk to someone?", expanded=False):
+        st.markdown("If you're worried about something or need help, you can send a message to your teacher.")
+        concern_text = st.text_area(
+            "What's on your mind?", 
+            placeholder="Type your concern here... Your teacher will receive this privately.",
+            key="student_concern_report"
+        )
+        if st.button("📨 Send to my teacher", key="submit_concern"):
+            if concern_text and len(concern_text.strip()) > 5:
+                from database import create_student_concern_report
+                db = get_db()
+                if db:
+                    try:
+                        success = create_student_concern_report(db, student_id, concern_text.strip())
+                        if success:
+                            st.success("Your message has been sent to your teacher. They will follow up with you soon.")
+                        else:
+                            st.error("Could not send your message. Please try again or speak to a trusted adult.")
+                    finally:
+                        db.close()
+            else:
+                st.info("Please write a bit more about what's on your mind.")
+    
     # Create tabs for Research Assistant and Learning Journey
     research_tab, journey_tab = st.tabs(["💬 Research Assistant", "🗺️ My Learning Journey"])
     
@@ -2139,7 +2163,7 @@ def show_privacy_policy():
         st.markdown("""
     ## Privacy Policy
     
-    **Last Updated:** October 2025
+    **Last Updated:** December 2025
     
     ### 1. Introduction
     
@@ -2270,15 +2294,26 @@ def show_privacy_policy():
     
     **Retention periods:**
     
-    - Educator and student accounts: kept while active
-    - Conversation history: kept 2 years from last activity
-    - Learning analytics: kept 2 years
-    - Inactive accounts: deleted after 3 years of inactivity
+    In accordance with Australian education record-keeping requirements:
+    
+    - **Student records:** Retained for 7 years from last activity (aligned with Australian school baseline requirements)
+    - **Conversation history:** Retained for 7 years from creation
+    - **Uploaded files:** Retained for 7 years, then automatically purged
+    - **Educator accounts:** Kept while active, deleted after 7 years of inactivity
+    - **Child safety records:** Retained for 25 years (extended retention for legal compliance)
+    - **Audit logs:** Retained permanently for security and compliance purposes
+    
+    **Session Security:**
+    
+    - Student sessions automatically timeout after 2 hours of inactivity
+    - Educator sessions timeout after 30 minutes of inactivity to protect student data access
     
     **Deletion:**
     
-    - You may request deletion of your account and all data at any time
+    - Educators may delete student accounts and all associated data at any time
+    - Parents/guardians may request deletion of their child's data at any time
     - Deletion requests are processed within 7 days
+    - A permanent audit record of the deletion is maintained for accountability
     - Some anonymised analytics may be retained for service improvement
     
     ---
@@ -2314,7 +2349,37 @@ def show_privacy_policy():
     
     ---
     
-    ### 9. Cookies and Tracking
+    ### 9. Child Safety Measures
+    
+    Guide implements comprehensive child safety features:
+    
+    **Content Monitoring:**
+    
+    - Student messages are monitored for concerning content indicators (self-harm, bullying, abuse)
+    - When concerning content is detected, educators are automatically notified for follow-up
+    - No automated actions are taken; educators review alerts and determine appropriate response
+    
+    **Student Reporting:**
+    
+    - Students can confidentially report concerns to their educator using the "Need to talk to someone?" feature
+    - Reports are delivered privately to the supervising educator
+    - Students are encouraged to speak with trusted adults for any concerns
+    
+    **Personal Information Protection:**
+    
+    - All messages sent to AI services are sanitized to remove personal information (names, emails, phone numbers, addresses)
+    - Students receive prominent warnings not to share personal information
+    - File uploads are validated for security and size limits
+    
+    **Educator Accountability:**
+    
+    - All educator actions on student data are logged in permanent audit trails
+    - Access to student records is restricted to the supervising educator
+    - Guardian consent records are stored with timestamps and attestation text
+    
+    ---
+    
+    ### 10. Cookies and Tracking
     
     Guide uses only **essential cookies** for authentication and app functionality (Streamlit session cookies).
     
@@ -2324,7 +2389,7 @@ def show_privacy_policy():
     
     ---
     
-    ### 10. Updates to This Policy (APP 1)
+    ### 11. Updates to This Policy (APP 1)
     
     We may update this policy to reflect:
     
@@ -2338,7 +2403,7 @@ def show_privacy_policy():
     
     ---
     
-    ### 11. Contact and Complaints
+    ### 12. Contact and Complaints
     
     **Privacy Officer**
     
@@ -2364,7 +2429,7 @@ def show_privacy_policy():
     
     ---
     
-    ### 12. Questions
+    ### 13. Questions
     
     If you have any questions about this Privacy Policy or how we handle your data:
     

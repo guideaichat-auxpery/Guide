@@ -57,6 +57,60 @@ if 'authenticated' not in st.session_state:
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
 
+# Session timeout configuration (security - child protection)
+from datetime import datetime, timedelta
+
+SESSION_TIMEOUT_STUDENT = timedelta(hours=2)  # 2 hours for students
+SESSION_TIMEOUT_EDUCATOR = timedelta(minutes=30)  # 30 minutes for educators
+SESSION_WARNING_THRESHOLD = timedelta(minutes=5)  # Warn 5 minutes before timeout
+
+def check_session_timeout():
+    """Check if session has timed out due to inactivity and handle logout"""
+    if not st.session_state.get('authenticated', False):
+        return False
+    
+    last_activity = st.session_state.get('last_activity_time')
+    if not last_activity:
+        # First activity - set the timestamp
+        st.session_state.last_activity_time = datetime.now()
+        return False
+    
+    # Determine timeout based on user type
+    is_student = st.session_state.get('is_student', False)
+    timeout = SESSION_TIMEOUT_STUDENT if is_student else SESSION_TIMEOUT_EDUCATOR
+    user_type = "student" if is_student else "educator"
+    
+    time_since_activity = datetime.now() - last_activity
+    
+    # Check if session has timed out
+    if time_since_activity > timeout:
+        # Log the timeout
+        logger.info(f"Session timeout for {user_type} after {time_since_activity}")
+        
+        # Clear session
+        for key in ['authenticated', 'user_id', 'user_type', 'user_name', 'user_email', 
+                    'is_student', 'username', 'educator_id', 'age_group', 'last_activity_time']:
+            if key in st.session_state:
+                del st.session_state[key]
+        
+        st.warning(f"Your session has expired due to inactivity. Please log in again.")
+        return True
+    
+    # Check if approaching timeout (warning)
+    time_remaining = timeout - time_since_activity
+    if time_remaining < SESSION_WARNING_THRESHOLD and time_remaining > timedelta(0):
+        minutes_left = int(time_remaining.total_seconds() / 60)
+        st.toast(f"Session expires in {minutes_left} minute(s). Activity will extend your session.", icon="⏰")
+    
+    # Update last activity time
+    st.session_state.last_activity_time = datetime.now()
+    return False
+
+# Check session timeout for authenticated users
+if st.session_state.get('authenticated', False):
+    if check_session_timeout():
+        st.rerun()
+
 # Load Design Systems - cached for performance
 @st.cache_data
 def load_css(file_path):

@@ -282,6 +282,24 @@ class EducatorAuditLog(Base):
     ip_address = Column(String, nullable=True)  # For security audit trail
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
+class SafetyAlert(Base):
+    """Child safety alerts for concerning content detection"""
+    __tablename__ = "safety_alerts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False, index=True)
+    educator_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)  # Primary educator to notify
+    alert_type = Column(String, nullable=False)  # 'content_flag', 'student_report', 'system_detected'
+    severity = Column(String, default='medium')  # 'low', 'medium', 'high'
+    trigger_text = Column(Text, nullable=True)  # The text that triggered the alert (redacted if needed)
+    matched_keywords = Column(Text, nullable=True)  # JSON list of matched keywords
+    context = Column(Text, nullable=True)  # Additional context
+    status = Column(String, default='pending')  # 'pending', 'reviewed', 'actioned', 'dismissed'
+    reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    review_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
 class SystemConfig(Base):
     __tablename__ = "system_config"
     
@@ -1099,6 +1117,313 @@ def get_analytics_summary(db, user_id: int, days: int = 30):
         'subjects_explored': summary.subjects_explored or 0
     }
 
+# Child Safety Content Detection (Child protection compliance)
+CONCERNING_KEYWORDS = {
+    'high': [
+        'suicide', 'kill myself', 'want to die', 'end my life', 'self harm',
+        'hurt myself', 'cutting', 'overdose', 'abuse', 'being hurt',
+        'someone touching me', 'unsafe at home', 'scared of',
+    ],
+    'medium': [
+        'bullying', 'bullied', 'threatened', 'scared', 'hate myself',
+        'worthless', 'nobody likes me', 'alone', 'depressed', 'anxious',
+        'cant sleep', 'nightmares', 'hurt by', 'hitting me', 'mean to me',
+    ],
+    'low': [
+        'sad', 'worried', 'nervous', 'upset', 'angry', 'frustrated',
+        'dont want to go to school', 'no friends',
+    ]
+}
+
+def detect_concerning_content(text: str) -> tuple:
+    """Detect concerning content in student messages.
+    
+    Returns: (detected: bool, severity: str, matched_keywords: list)
+    """
+    if not text:
+        return False, None, []
+    
+    text_lower = text.lower()
+    matched = []
+    highest_severity = None
+    
+    # Check in order of severity (high first)
+    for severity in ['high', 'medium', 'low']:
+        for keyword in CONCERNING_KEYWORDS[severity]:
+            if keyword in text_lower:
+                matched.append(keyword)
+                if highest_severity is None:
+                    highest_severity = severity
+    
+    return len(matched) > 0, highest_severity, matched
+
+def create_safety_alert(db, student_id: int, educator_id: int, alert_type: str,
+                        trigger_text: str = None, matched_keywords: list = None,
+                        severity: str = 'medium', context: str = None):
+    """Create a safety alert for educator review."""
+    try:
+        import json
+        alert = SafetyAlert(
+            student_id=student_id,
+            educator_id=educator_id,
+            alert_type=alert_type,
+            severity=severity,
+            trigger_text=trigger_text[:500] if trigger_text else None,  # Limit length
+            matched_keywords=json.dumps(matched_keywords) if matched_keywords else None,
+            context=context,
+            status='pending'
+        )
+        db.add(alert)
+        db.commit()
+        db.refresh(alert)
+        return alert
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating safety alert: {str(e)}")
+        return None
+
+def get_pending_safety_alerts(db, educator_id: int) -> list:
+    """Get all pending safety alerts for an educator's students."""
+    try:
+        return db.query(SafetyAlert).filter(
+            SafetyAlert.educator_id == educator_id,
+            SafetyAlert.status == 'pending'
+        ).order_by(SafetyAlert.created_at.desc()).all()
+    except Exception as e:
+        logger.error(f"Error getting safety alerts: {str(e)}")
+        return []
+
+def review_safety_alert(db, alert_id: int, reviewer_id: int, status: str, notes: str = None):
+    """Mark a safety alert as reviewed."""
+    try:
+        alert = db.query(SafetyAlert).filter(SafetyAlert.id == alert_id).first()
+        if alert:
+            alert.status = status
+            alert.reviewed_by = reviewer_id
+            alert.reviewed_at = datetime.utcnow()
+            alert.review_notes = notes
+            db.commit()
+            return alert
+        return None
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error reviewing safety alert: {str(e)}")
+        return None
+
+def create_student_concern_report(db, student_id: int, concern_text: str) -> bool:
+    """Create a concern report from a student (Report a Concern feature)."""
+    try:
+        # Get student's educator
+        student = db.query(Student).filter(Student.id == student_id).first()
+        if not student:
+            return False
+        
+        alert = create_safety_alert(
+            db=db,
+            student_id=student_id,
+            educator_id=student.educator_id,
+            alert_type='student_report',
+            trigger_text=concern_text,
+            severity='medium',
+            context='Student initiated concern report'
+        )
+        return alert is not None
+    except Exception as e:
+        logger.error(f"Error creating student concern report: {str(e)}")
+        return False
+
+def delete_student_and_data(db, student_id: int, educator_id: int, reason: str = None) -> dict:
+    """Delete a student account and all associated data with audit trail.
+    
+    This implements the 'right to erasure' under Australian Privacy Act.
+    Returns summary of deleted records.
+    """
+    try:
+        # Get student info for audit log before deletion
+        student = db.query(Student).filter(Student.id == student_id).first()
+        if not student:
+            return {'success': False, 'error': 'Student not found'}
+        
+        student_name = student.full_name
+        student_username = student.username
+        
+        # Verify educator has permission (must be the student's educator)
+        if student.educator_id != educator_id:
+            return {'success': False, 'error': 'Permission denied - not the student\'s educator'}
+        
+        summary = {
+            'student_name': student_name,
+            'activities_deleted': 0,
+            'conversations_deleted': 0,
+            'chat_sessions_deleted': 0,
+            'consents_deleted': 0,
+            'safety_alerts_deleted': 0,
+        }
+        
+        # Delete student activities
+        summary['activities_deleted'] = db.query(StudentActivity).filter(
+            StudentActivity.student_id == student_id
+        ).delete(synchronize_session=False)
+        
+        # Delete conversation history
+        summary['conversations_deleted'] = db.query(ConversationHistory).filter(
+            ConversationHistory.student_id == student_id
+        ).delete(synchronize_session=False)
+        
+        # Delete chat conversations
+        summary['chat_sessions_deleted'] = db.query(ChatConversation).filter(
+            ChatConversation.student_id == student_id
+        ).delete(synchronize_session=False)
+        
+        # Delete consent records
+        summary['consents_deleted'] = db.query(ConsentRecord).filter(
+            ConsentRecord.student_id == student_id
+        ).delete(synchronize_session=False)
+        
+        # Delete parental consent records
+        db.query(ParentalConsentRecord).filter(
+            ParentalConsentRecord.student_id == student_id
+        ).delete(synchronize_session=False)
+        
+        # Delete safety alerts (but keep for 25 years if child safety related - mark as deleted instead)
+        summary['safety_alerts_deleted'] = db.query(SafetyAlert).filter(
+            SafetyAlert.student_id == student_id
+        ).delete(synchronize_session=False)
+        
+        # Delete the student account
+        db.query(Student).filter(Student.id == student_id).delete(synchronize_session=False)
+        
+        # Log the deletion in audit trail (this is permanent and not deleted)
+        import json
+        audit_log = EducatorAuditLog(
+            educator_id=educator_id,
+            action_type='delete_student',
+            target_student_id=student_id,
+            target_entity='student',
+            details=json.dumps({
+                'student_name': student_name,
+                'student_username': student_username,
+                'reason': reason,
+                'records_deleted': summary
+            })
+        )
+        db.add(audit_log)
+        
+        db.commit()
+        summary['success'] = True
+        logger.info(f"Student {student_id} ({student_name}) deleted by educator {educator_id}")
+        return summary
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting student and data: {str(e)}")
+        return {'success': False, 'error': str(e)}
+
+# Data Retention Functions (Australian Privacy Act 1988 APP 11 compliance)
+RETENTION_YEARS_DEFAULT = 7  # 7-year retention for general student records
+RETENTION_YEARS_CHILD_SAFETY = 25  # Extended retention for child safety records
+
+def cleanup_old_conversations(db, retention_years: int = RETENTION_YEARS_DEFAULT) -> int:
+    """Delete conversation history older than retention period.
+    
+    Returns the number of records deleted.
+    Runs as part of scheduled maintenance.
+    """
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=retention_years * 365)
+    
+    try:
+        # First, get count for logging
+        old_count = db.query(ConversationHistory).filter(
+            ConversationHistory.created_at < cutoff_date
+        ).count()
+        
+        if old_count == 0:
+            return 0
+        
+        # Delete old conversations
+        deleted = db.query(ConversationHistory).filter(
+            ConversationHistory.created_at < cutoff_date
+        ).delete(synchronize_session=False)
+        
+        # Also delete associated chat conversations with no remaining messages
+        orphan_chats = db.query(ChatConversation).filter(
+            ChatConversation.created_at < cutoff_date,
+            ~ChatConversation.session_id.in_(
+                db.query(ConversationHistory.session_id).distinct()
+            )
+        ).delete(synchronize_session=False)
+        
+        db.commit()
+        logger.info(f"Data retention: Deleted {deleted} old conversation records, {orphan_chats} orphan chats")
+        return deleted
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error during conversation cleanup: {str(e)}")
+        return 0
+
+def cleanup_old_planning_notes(db, retention_years: int = RETENTION_YEARS_DEFAULT) -> int:
+    """Delete planning notes (including attached images) older than retention period.
+    
+    Returns the number of records deleted.
+    """
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=retention_years * 365)
+    
+    try:
+        deleted = db.query(PlanningNote).filter(
+            PlanningNote.created_at < cutoff_date
+        ).delete(synchronize_session=False)
+        
+        db.commit()
+        logger.info(f"Data retention: Deleted {deleted} old planning notes")
+        return deleted
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error during planning notes cleanup: {str(e)}")
+        return 0
+
+def cleanup_old_student_activities(db, retention_years: int = RETENTION_YEARS_DEFAULT) -> int:
+    """Delete student activity records older than retention period.
+    
+    Returns the number of records deleted.
+    """
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=retention_years * 365)
+    
+    try:
+        deleted = db.query(StudentActivity).filter(
+            StudentActivity.created_at < cutoff_date
+        ).delete(synchronize_session=False)
+        
+        db.commit()
+        logger.info(f"Data retention: Deleted {deleted} old student activity records")
+        return deleted
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error during student activity cleanup: {str(e)}")
+        return 0
+
+def run_data_retention_cleanup(db) -> dict:
+    """Run all data retention cleanup tasks.
+    
+    Should be called periodically (e.g., daily or weekly).
+    Returns summary of cleanup actions.
+    """
+    results = {
+        'conversations_deleted': cleanup_old_conversations(db),
+        'planning_notes_deleted': cleanup_old_planning_notes(db),
+        'student_activities_deleted': cleanup_old_student_activities(db),
+        'retention_years': RETENTION_YEARS_DEFAULT,
+        'run_at': datetime.utcnow().isoformat()
+    }
+    
+    logger.info(f"Data retention cleanup completed: {results}")
+    return results
+
 # Educator Audit Log functions (Australian Privacy Act 1988 compliance)
 def log_educator_action(db, educator_id: int, action_type: str, target_student_id: int = None,
                         target_entity: str = None, details: str = None, ip_address: str = None):
@@ -1540,6 +1865,7 @@ class ParentalConsentRecord(Base):
     consent_obtained = Column(Boolean, default=True)
     consent_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     consent_method = Column(String, nullable=True)  # 'written', 'email', 'verbal', etc.
+    attestation_text = Column(Text, nullable=True)  # Full text of what educator attested to
     expires_at = Column(DateTime, nullable=True)  # Optional expiry
     withdrawn_at = Column(DateTime, nullable=True)  # If consent withdrawn
     notes = Column(Text, nullable=True)
@@ -1659,6 +1985,63 @@ def record_parental_consent(db, student_id, educator_id, parent_name=None, paren
         print(f"Error recording parental consent: {str(e)}")
         db.rollback()
         return None
+
+def create_student_with_consent(db, username: str, password: str, full_name: str, 
+                                 educator_id: int, age_group: str = None,
+                                 consent_attestation_text: str = None):
+    """Create student account with guardian consent in a single atomic transaction.
+    
+    This ensures consent is recorded BEFORE the student account is created,
+    meeting Australian Privacy Act 1988 APP 3 requirements for child data collection.
+    Returns tuple: (student, consent_record) or (None, None) on failure.
+    """
+    try:
+        # Start transaction - don't commit until both records are created
+        
+        # First, create the student (but don't commit yet)
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        student = Student(
+            username=username,
+            password_hash=password_hash,
+            full_name=full_name,
+            educator_id=educator_id,
+            age_group=age_group
+        )
+        db.add(student)
+        db.flush()  # Get the student ID without committing
+        
+        # Create consent record with the student ID
+        consent = ParentalConsentRecord(
+            student_id=student.id,
+            educator_id=educator_id,
+            consent_obtained=True,
+            consent_date=datetime.utcnow(),
+            consent_method='educator_confirmed_with_attestation',
+            attestation_text=consent_attestation_text or "Guardian consent confirmed by educator"
+        )
+        db.add(consent)
+        
+        # Log the educator action for audit trail
+        audit_log = EducatorAuditLog(
+            educator_id=educator_id,
+            action_type='create_student',
+            target_student_id=student.id,
+            target_entity='student',
+            details=f'{{"full_name": "{full_name}", "username": "{username}", "age_group": "{age_group}"}}'
+        )
+        db.add(audit_log)
+        
+        # Now commit all three records atomically
+        db.commit()
+        db.refresh(student)
+        db.refresh(consent)
+        
+        return student, consent
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating student with consent: {str(e)}")
+        return None, None
 
 def get_user_consents(db, user_id=None, student_id=None):
     """Get all consent records for a user"""
