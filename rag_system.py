@@ -384,32 +384,34 @@ def retrieve_relevant_chunks(
         cursor = connection.cursor()
         
         try:
+            from psycopg2 import sql as psql
+            
             code_patterns = [f'%{code}%' for code in curriculum_codes] if curriculum_codes else ['%___%']
             
-            # Build WHERE clause with optional filters
-            where_clauses = []
+            # Build WHERE clause with optional filters using psycopg2.sql for safe composition
+            where_conditions = []
             params = [embedding_str, code_patterns]
             
             if framework_filter:
-                where_clauses.append("metadata->>'framework' = %s")
+                where_conditions.append(psql.SQL("metadata->>'framework' = %s"))
                 params.append(framework_filter)
             if year_level:
-                where_clauses.append("metadata->'year_levels' @> %s::jsonb")
+                where_conditions.append(psql.SQL("metadata->'year_levels' @> %s::jsonb"))
                 params.append(json.dumps([year_level]))
             if subject:
-                where_clauses.append("metadata->'subjects' @> %s::jsonb")
+                where_conditions.append(psql.SQL("metadata->'subjects' @> %s::jsonb"))
                 params.append(json.dumps([subject]))
             
-            where_clause = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
-            
-            sql_query = f"""
+            base_query = psql.SQL("""
                 SELECT 
                     chunk_text,
                     source_file,
                     metadata,
                     1 - (embedding <=> %s::vector) as similarity
                 FROM document_chunks
-                {where_clause}
+            """)
+            
+            order_clause = psql.SQL("""
                 ORDER BY (1 - (embedding <=> %s::vector)) * 
                          CASE 
                              WHEN chunk_text ILIKE ANY(%s) THEN 1.5
@@ -417,7 +419,13 @@ def retrieve_relevant_chunks(
                          END DESC,
                          embedding <=> %s::vector
                 LIMIT %s
-            """
+            """)
+            
+            if where_conditions:
+                where_clause = psql.SQL(" WHERE ") + psql.SQL(" AND ").join(where_conditions)
+                sql_query = base_query + where_clause + order_clause
+            else:
+                sql_query = base_query + order_clause
             
             params.extend([embedding_str, code_patterns, embedding_str, top_k])
             cursor.execute(sql_query, params)
