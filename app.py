@@ -77,18 +77,43 @@ st.markdown("""
     text-align: center;
     font-family: var(--font-serif);
     color: var(--color-ink);
-    margin-top: -2rem;
+    margin-top: 0;
     margin-bottom: 0.5rem;
     font-size: 4rem;
     font-weight: 500;
 }
-/* Reduce Streamlit default top padding */
-.stApp > header + div > div {
-    padding-top: 1rem !important;
+/* Hide Streamlit header completely */
+header[data-testid="stHeader"] {
+    display: none !important;
 }
-.block-container {
-    padding-top: 2rem !important;
+/* Target ALL possible Streamlit container classes */
+[data-testid="stAppViewContainer"] > section > div,
+[data-testid="stVerticalBlock"],
+.stMainBlockContainer,
+div[data-testid="stVerticalBlock"] {
+    padding-top: 0 !important;
 }
+/* Specific targeting for main block */
+.stApp [data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"]:first-child {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+</style>
+<script>
+// Force reduce top padding after Streamlit loads
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var containers = document.querySelectorAll('[data-testid="stVerticalBlock"], [class*="stMainBlockContainer"], [class*="block-container"]');
+        containers.forEach(function(el) {
+            el.style.paddingTop = '0';
+            el.style.marginTop = '0';
+        });
+        var header = document.querySelector('header[data-testid="stHeader"]');
+        if (header) header.style.display = 'none';
+    }, 100);
+});
+</script>
+<style>
 .main-byline {
     text-align: center;
     color: var(--color-ink);
@@ -122,8 +147,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Main Header
-st.markdown('<h1 class="main-header">Guide</h1>', unsafe_allow_html=True)
+# Main Header - wrapped with negative margin to reduce top space
+st.markdown('<div style="margin-top: -10rem;"><h1 class="main-header">Guide</h1></div>', unsafe_allow_html=True)
 st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
 
 # Only show subtitle for unauthenticated users
