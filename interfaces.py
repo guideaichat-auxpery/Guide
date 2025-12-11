@@ -1345,7 +1345,7 @@ def show_student_dashboard_interface():
                 st.metric("Status", "Active" if selected_student.is_active else "Inactive")
             
             # Tabs for different views
-            tab1, tab2, tab3 = st.tabs(["📚 Learning Activity", "💬 Chat History", "🔐 Access Management"])
+            tab1, tab2, tab3, tab4 = st.tabs(["📚 Learning Activity", "💬 Chat History", "🔐 Access Management", "🚨 Safety Alerts"])
             
             with tab1:
                 # Get student activities
@@ -1581,19 +1581,122 @@ def show_student_dashboard_interface():
                     st.markdown("---")
                     st.markdown("### ⚠️ Danger Zone")
                     with st.expander("Remove Student Account"):
-                        st.warning("This will permanently delete the student account and all associated data. This action cannot be undone.")
+                        st.warning("This will permanently delete the student account and all associated data (activities, conversations, files, consent records). This action cannot be undone.")
+                        deletion_reason = st.text_input("Reason for deletion (optional):", key="deletion_reason",
+                                                       placeholder="e.g., Student left school, Parent request")
                         confirm_text = st.text_input("Type the student's username to confirm:", key="confirm_delete")
                         if st.button("Permanently Delete Student Account", type="primary"):
                             if confirm_text == selected_student.username:
-                                from database import delete_student
-                                if delete_student(db, selected_student.id):
-                                    st.success(f"✅ Successfully removed {selected_student.full_name}'s account")
-                                    st.info("Refreshing dashboard...")
+                                from database import delete_student_and_data
+                                result = delete_student_and_data(db, selected_student.id, educator_id, deletion_reason or None)
+                                if result.get('success'):
+                                    st.success(f"✅ Successfully removed {selected_student.full_name}'s account and all data")
+                                    st.info(f"Deleted: {result.get('activities_deleted', 0)} activities, "
+                                           f"{result.get('conversations_deleted', 0)} conversations, "
+                                           f"{result.get('consents_deleted', 0)} consent records")
+                                    st.caption("A permanent audit record of this deletion has been created.")
                                     st.rerun()
                                 else:
-                                    st.error("❌ Failed to remove student account. Please try again.")
+                                    st.error(f"❌ {result.get('error', 'Failed to remove student account. Please try again.')}")
                 else:
                     st.info("You have shared access to this student. Contact the primary educator for access management.")
+            
+            with tab4:
+                st.markdown("### 🚨 Safety Alerts")
+                st.markdown("*Review alerts for concerning content or student-reported concerns*")
+                
+                if is_primary_educator:
+                    from database import SafetyAlert, review_safety_alert
+                    import json as json_module
+                    
+                    # Get safety alerts for this student
+                    alerts = db.query(SafetyAlert).filter(
+                        SafetyAlert.student_id == selected_student.id
+                    ).order_by(SafetyAlert.created_at.desc()).all()
+                    
+                    if alerts:
+                        # Count pending alerts
+                        pending_count = len([a for a in alerts if a.status == 'pending'])
+                        reviewed_count = len([a for a in alerts if a.status != 'pending'])
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Pending Review", pending_count, 
+                                     delta="Needs attention" if pending_count > 0 else None,
+                                     delta_color="inverse" if pending_count > 0 else "off")
+                        with col2:
+                            st.metric("Reviewed", reviewed_count)
+                        
+                        st.markdown("---")
+                        
+                        # Show alerts
+                        for alert in alerts:
+                            severity_colors = {
+                                'high': '🔴',
+                                'medium': '🟡',
+                                'low': '🟢'
+                            }
+                            severity_icon = severity_colors.get(alert.severity, '⚪')
+                            
+                            status_badge = "🔔 **PENDING**" if alert.status == 'pending' else f"✅ {alert.status.title()}"
+                            
+                            with st.expander(f"{severity_icon} {alert.alert_type.replace('_', ' ').title()} - {alert.created_at.strftime('%d/%m/%Y %H:%M')} {status_badge}"):
+                                st.markdown(f"**Severity:** {alert.severity.title()}")
+                                st.markdown(f"**Type:** {alert.alert_type.replace('_', ' ').title()}")
+                                
+                                if alert.trigger_text:
+                                    st.markdown("**Content:**")
+                                    st.text_area("", value=alert.trigger_text, disabled=True, key=f"alert_text_{alert.id}")
+                                
+                                if alert.matched_keywords:
+                                    try:
+                                        keywords = json_module.loads(alert.matched_keywords)
+                                        st.markdown(f"**Detected Keywords:** {', '.join(keywords)}")
+                                    except:
+                                        pass
+                                
+                                if alert.context:
+                                    st.markdown(f"**Context:** {alert.context}")
+                                
+                                if alert.status == 'pending':
+                                    st.markdown("---")
+                                    st.markdown("**Take Action:**")
+                                    col1, col2, col3 = st.columns(3)
+                                    with col1:
+                                        if st.button("✅ Mark Reviewed", key=f"review_{alert.id}"):
+                                            review_safety_alert(db, alert.id, educator_id, 'reviewed')
+                                            st.success("Alert marked as reviewed")
+                                            st.rerun()
+                                    with col2:
+                                        if st.button("📋 Mark Actioned", key=f"action_{alert.id}"):
+                                            review_safety_alert(db, alert.id, educator_id, 'actioned')
+                                            st.success("Alert marked as actioned")
+                                            st.rerun()
+                                    with col3:
+                                        if st.button("❌ Dismiss", key=f"dismiss_{alert.id}"):
+                                            review_safety_alert(db, alert.id, educator_id, 'dismissed')
+                                            st.info("Alert dismissed")
+                                            st.rerun()
+                                    
+                                    notes = st.text_area("Review notes:", key=f"notes_{alert.id}", 
+                                                        placeholder="Add notes about your follow-up actions...")
+                                    if st.button("Save Notes", key=f"save_notes_{alert.id}"):
+                                        review_safety_alert(db, alert.id, educator_id, alert.status, notes)
+                                        st.success("Notes saved")
+                                else:
+                                    if alert.review_notes:
+                                        st.markdown(f"**Review Notes:** {alert.review_notes}")
+                                    if alert.reviewed_at:
+                                        st.caption(f"Reviewed on {alert.reviewed_at.strftime('%d/%m/%Y %H:%M')}")
+                    else:
+                        st.info("No safety alerts for this student. This is good news!")
+                        st.markdown("""
+                        **Safety alerts are generated when:**
+                        - Concerning content is detected in student messages (self-harm, bullying indicators)
+                        - A student uses the "Need to talk to someone?" feature to report a concern
+                        """)
+                else:
+                    st.info("Safety alerts are only visible to the primary educator.")
     
     except Exception as e:
         st.error(f"Error loading student data: {str(e)}")
