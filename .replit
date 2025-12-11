@@ -82,8 +82,3 @@ externalPort = 80
 
 [agent]
 integrations = ["web_scraper:1.0.0", "python_openai:1.0.0", "python_openai:1.0.0"]
-
-[userenv]
-
-[userenv.shared]
-PAYMENTS_API_SECRET = "f00aec46a0a180c67266d64539b908589f20ca92a505cd76be7ba856f631f0e1"
