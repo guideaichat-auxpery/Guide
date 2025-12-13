@@ -8,7 +8,8 @@ const PROXY_PORT = 5000;
 const proxy = httpProxy.createProxyServer({
   ws: true,
   changeOrigin: true,
-  xfwd: true
+  xfwd: true,
+  preserveHeaderKeyCase: true
 });
 
 proxy.on('error', (err, req, res) => {
@@ -19,16 +20,31 @@ proxy.on('error', (err, req, res) => {
   }
 });
 
+proxy.on('proxyReq', (proxyReq, req, res, options) => {
+  proxyReq.setHeader('X-Forwarded-Host', req.headers.host);
+  proxyReq.setHeader('X-Forwarded-Proto', 'https');
+  if (req.headers.cookie) {
+    proxyReq.setHeader('Cookie', req.headers.cookie);
+  }
+});
+
 proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
   socket.setTimeout(0);
   socket.setNoDelay(true);
   socket.setKeepAlive(true, 0);
+  
+  proxyReq.setHeader('X-Forwarded-Host', req.headers.host);
+  proxyReq.setHeader('X-Forwarded-Proto', 'https');
+  if (req.headers.cookie) {
+    proxyReq.setHeader('Cookie', req.headers.cookie);
+  }
 });
 
 const server = http.createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Secret');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Secret, X-Xsrftoken');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
@@ -55,7 +71,7 @@ server.on('upgrade', (req, socket, head) => {
   });
   
   proxy.ws(req, socket, head, { 
-    target: `ws://localhost:${STREAMLIT_PORT}`,
+    target: `http://localhost:${STREAMLIT_PORT}`,
     ws: true
   });
 });

@@ -295,29 +295,30 @@ else:
             # Open sticky card container - pins cards at top during interactions
             st.markdown('<div class="sticky-card-container">', unsafe_allow_html=True)
             
+            # Get cached educator profile (single DB query, 60s cache)
+            from database import get_cached_educator_profile, update_educator_institution, get_db, invalidate_educator_profile_cache
+            educator_id = st.session_state.get('user_id')
+            educator_profile = get_cached_educator_profile(educator_id)
+            
             # Institution setting check (inside sticky container)
-            from database import get_db, update_educator_institution, is_institution_enforcement_on, User
-            db = get_db()
-            if db:
-                try:
-                    educator_id = st.session_state.get('user_id')
-                    educator = db.query(User).filter(User.id == educator_id).first()
+            if educator_profile and educator_profile.get('institution_needs_setup'):
+                st.warning("⚠️ **Action Required:** Please set your institution name to enable student sharing.")
+                
+                with st.form("institution_form"):
+                    institution_name = st.text_input(
+                        "Institution Name:",
+                        placeholder="Montessori School",
+                        help="This enables secure student sharing with educators from your institution"
+                    )
+                    submitted = st.form_submit_button("Set Institution")
                     
-                    # Check if institution needs to be set
-                    if not educator.institution_name or educator.institution_name.strip() == '':
-                        st.warning("⚠️ **Action Required:** Please set your institution name to enable student sharing.")
-                        
-                        with st.form("institution_form"):
-                            institution_name = st.text_input(
-                                "Institution Name:",
-                                placeholder="Montessori School",
-                                help="This enables secure student sharing with educators from your institution"
-                            )
-                            submitted = st.form_submit_button("Set Institution")
-                            
-                            if submitted and institution_name:
+                    if submitted and institution_name:
+                        db = get_db()
+                        if db:
+                            try:
                                 success, auto_enabled = update_educator_institution(db, educator_id, institution_name)
                                 if success:
+                                    invalidate_educator_profile_cache(educator_id)
                                     if auto_enabled:
                                         st.success("✅ Institution set! 🚀 All educators now have institutions - enforcement automatically enabled!")
                                     else:
@@ -325,35 +326,24 @@ else:
                                     st.rerun()
                                 else:
                                     st.error("Failed to update institution")
-                except Exception as e:
-                    print(f"Institution check error: {str(e)}")
-                finally:
-                    db.close()
+                            finally:
+                                db.close()
             
             # Educator Dashboard - Welcome and Cards
             educator_name = st.session_state.get('user_email', 'Educator').split('@')[0].title()
             st.markdown(f'<h2 style="margin-bottom: 1rem;">Welcome back, {educator_name}</h2>', unsafe_allow_html=True)
             
-            # Institution badge
-            try:
-                from database import get_db, is_institution_enforcement_on, User
-                db = get_db()
-                if db:
-                    educator_id = st.session_state.get('user_id')
-                    educator = db.query(User).filter(User.id == educator_id).first()
-                    if educator and educator.institution_name:
-                        enforcement_on = is_institution_enforcement_on(db)
-                        status_icon = "🔒" if enforcement_on else "⏳"
-                        status_text = "Active" if enforcement_on else "Grace Period"
-                        st.markdown(f"""
-                        <div style="background-color: rgba(120, 154, 118, 0.08); border-left: 3px solid #789A76; 
-                                    padding: 0.5rem 1rem; margin-bottom: 1.5rem; border-radius: 4px; display: inline-block;">
-                            <span style="font-size: 14px; opacity: 0.75;">{status_icon} <strong>Institution:</strong> {educator.institution_name} | <strong>Sharing Enforcement:</strong> {status_text}</span>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    db.close()
-            except Exception as e:
-                print(f"Error fetching institution info: {e}")
+            # Institution badge (uses cached profile - no extra DB call)
+            if educator_profile and educator_profile.get('institution_name'):
+                enforcement_on = educator_profile.get('enforcement_on', False)
+                status_icon = "🔒" if enforcement_on else "⏳"
+                status_text = "Active" if enforcement_on else "Grace Period"
+                st.markdown(f"""
+                <div style="background-color: rgba(120, 154, 118, 0.08); border-left: 3px solid #789A76; 
+                            padding: 0.5rem 1rem; margin-bottom: 1.5rem; border-radius: 4px; display: inline-block;">
+                    <span style="font-size: 14px; opacity: 0.75;">{status_icon} <strong>Institution:</strong> {educator_profile['institution_name']} | <strong>Sharing Enforcement:</strong> {status_text}</span>
+                </div>
+                """, unsafe_allow_html=True)
             
             # Navigation cards in 3x2 grid
             col1, col2, col3 = st.columns(3)

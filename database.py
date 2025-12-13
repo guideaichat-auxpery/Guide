@@ -2082,6 +2082,68 @@ def withdraw_parental_consent(db, student_id):
 
 # === INSTITUTION-BASED SHARING WITH GRACE PERIOD ===
 
+def get_cached_educator_profile(educator_id):
+    """
+    Get educator profile with caching for dashboard performance.
+    Combines institution info and enforcement status in a single cached call.
+    Cache TTL: 60 seconds
+    """
+    import streamlit as st
+    from datetime import datetime, timedelta
+    
+    cache_key = f'educator_profile_{educator_id}'
+    cache_time_key = f'educator_profile_time_{educator_id}'
+    CACHE_TTL = timedelta(seconds=60)
+    
+    cached_data = st.session_state.get(cache_key)
+    cached_time = st.session_state.get(cache_time_key)
+    
+    if cached_data and cached_time:
+        if datetime.now() - cached_time < CACHE_TTL:
+            return cached_data
+    
+    db = get_db()
+    if not db:
+        return None
+    
+    try:
+        educator = db.query(User).filter(User.id == educator_id).first()
+        if not educator:
+            db.close()
+            return None
+        
+        enforcement_on = is_institution_enforcement_on(db)
+        
+        result = {
+            'id': educator.id,
+            'email': educator.email,
+            'full_name': educator.full_name,
+            'institution_name': educator.institution_name,
+            'institution_needs_setup': not educator.institution_name or educator.institution_name.strip() == '',
+            'enforcement_on': enforcement_on
+        }
+        
+        db.close()
+        
+        st.session_state[cache_key] = result
+        st.session_state[cache_time_key] = datetime.now()
+        return result
+    except Exception as e:
+        print(f"Error getting educator profile: {str(e)}")
+        if db:
+            db.close()
+        return None
+
+def invalidate_educator_profile_cache(educator_id):
+    """Invalidate educator profile cache after updates"""
+    import streamlit as st
+    cache_key = f'educator_profile_{educator_id}'
+    cache_time_key = f'educator_profile_time_{educator_id}'
+    if cache_key in st.session_state:
+        del st.session_state[cache_key]
+    if cache_time_key in st.session_state:
+        del st.session_state[cache_time_key]
+
 def is_institution_enforcement_on(db):
     """Check if institution enforcement is currently active"""
     try:
