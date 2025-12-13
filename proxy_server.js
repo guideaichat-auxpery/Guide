@@ -7,15 +7,22 @@ const PROXY_PORT = 5000;
 
 const proxy = httpProxy.createProxyServer({
   ws: true,
-  changeOrigin: true
+  changeOrigin: true,
+  xfwd: true
 });
 
 proxy.on('error', (err, req, res) => {
   console.error('Proxy error:', err.message);
-  if (res.writeHead) {
+  if (res && res.writeHead) {
     res.writeHead(503, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: false, error: 'Service unavailable' }));
   }
+});
+
+proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
+  socket.setTimeout(0);
+  socket.setNoDelay(true);
+  socket.setKeepAlive(true, 0);
 });
 
 const server = http.createServer((req, res) => {
@@ -38,11 +45,24 @@ const server = http.createServer((req, res) => {
 });
 
 server.on('upgrade', (req, socket, head) => {
-  proxy.ws(req, socket, head, { target: `http://localhost:${STREAMLIT_PORT}` });
+  socket.setTimeout(0);
+  socket.setNoDelay(true);
+  socket.setKeepAlive(true, 0);
+  
+  socket.on('error', (err) => {
+    console.error('WebSocket socket error:', err.message);
+    socket.destroy();
+  });
+  
+  proxy.ws(req, socket, head, { 
+    target: `ws://localhost:${STREAMLIT_PORT}`,
+    ws: true
+  });
 });
 
 server.listen(PROXY_PORT, '0.0.0.0', () => {
   console.log(`🔀 Reverse Proxy running on port ${PROXY_PORT}`);
   console.log(`   → /api/* routes to Payments Service (port ${PAYMENTS_PORT})`);
   console.log(`   → All other routes to Streamlit (port ${STREAMLIT_PORT})`);
+  console.log(`   → WebSocket connections forwarded to Streamlit`);
 });

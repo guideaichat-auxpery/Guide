@@ -14,13 +14,14 @@ MONTHLY_PRICE_ID = os.getenv('STRIPE_MONTHLY_PRICE_ID', 'price_1Sd7RX8PGiRAuUvfz
 ANNUAL_PRICE_ID = os.getenv('STRIPE_ANNUAL_PRICE_ID', 'price_1Sd7RX8PGiRAuUvfxnQgzmy1')
 
 SUBSCRIPTION_CACHE_TTL = timedelta(minutes=5)
+SUBSCRIPTION_STALE_TTL = timedelta(hours=1)
 
 def get_api_headers():
     """Get headers for authenticated API calls to payments service"""
     return {'X-API-Secret': PAYMENTS_API_SECRET, 'Content-Type': 'application/json'}
 
 def check_subscription_status(educator_id):
-    """Check if educator has an active subscription (with 5-minute cache)"""
+    """Check if educator has an active subscription (with fast cache and stale fallback)"""
     cache_key = f'subscription_cache_{educator_id}'
     cache_time_key = f'subscription_cache_time_{educator_id}'
     
@@ -28,14 +29,15 @@ def check_subscription_status(educator_id):
     cached_time = st.session_state.get(cache_time_key)
     
     if cached_data and cached_time:
-        if datetime.now() - cached_time < SUBSCRIPTION_CACHE_TTL:
+        age = datetime.now() - cached_time
+        if age < SUBSCRIPTION_CACHE_TTL:
             return cached_data
     
     try:
         response = requests.get(
             f"{PAYMENTS_SERVICE_URL}/api/subscription-status/{educator_id}",
             headers=get_api_headers(),
-            timeout=5
+            timeout=2
         )
         if response.status_code == 200:
             data = response.json()
@@ -50,6 +52,10 @@ def check_subscription_status(educator_id):
         return result
     except Exception as e:
         print(f"Error checking subscription: {e}")
+        if cached_data and cached_time:
+            age = datetime.now() - cached_time
+            if age < SUBSCRIPTION_STALE_TTL:
+                return cached_data
         return {'isActive': False, 'status': 'error'}
 
 def invalidate_subscription_cache(educator_id=None):
