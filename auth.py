@@ -98,6 +98,44 @@ def create_portal_session(educator_id):
         print(f"Error creating portal session: {e}")
         return None
 
+def cancel_subscription(educator_id):
+    """Cancel subscription at the end of the billing period"""
+    try:
+        response = requests.post(
+            f"{PAYMENTS_SERVICE_URL}/api/subscription/cancel",
+            json={'educatorId': educator_id},
+            headers=get_api_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                invalidate_subscription_cache(educator_id)
+                return data.get('data', {})
+        return None
+    except Exception as e:
+        print(f"Error cancelling subscription: {e}")
+        return None
+
+def reactivate_subscription(educator_id):
+    """Reactivate a subscription that was set to cancel"""
+    try:
+        response = requests.post(
+            f"{PAYMENTS_SERVICE_URL}/api/subscription/reactivate",
+            json={'educatorId': educator_id},
+            headers=get_api_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                invalidate_subscription_cache(educator_id)
+                return data.get('data', {})
+        return None
+    except Exception as e:
+        print(f"Error reactivating subscription: {e}")
+        return None
+
 def validate_signup_token(token):
     """Validate a signup token from the marketing site payment flow"""
     try:
@@ -277,6 +315,98 @@ def show_billing_portal_button():
                 st.info("Redirecting to billing portal...")
             else:
                 st.error("Unable to open billing portal. Please try again.")
+
+def show_account_settings():
+    """Display account settings including subscription management and deactivation"""
+    educator_id = st.session_state.get('user_id')
+    
+    if not educator_id:
+        return
+    
+    sub_status = check_subscription_status(educator_id)
+    
+    st.markdown("### Subscription")
+    
+    if sub_status.get('isActive'):
+        plan = sub_status.get('plan', 'monthly').capitalize()
+        status = sub_status.get('status', 'active').capitalize()
+        
+        if sub_status.get('cancelAtPeriodEnd'):
+            period_end = sub_status.get('currentPeriodEnd')
+            if period_end:
+                try:
+                    end_date = datetime.fromisoformat(period_end.replace('Z', '+00:00'))
+                    formatted_date = end_date.strftime('%B %d, %Y')
+                except:
+                    formatted_date = str(period_end)[:10]
+            else:
+                formatted_date = "the end of your billing period"
+            
+            st.warning(f"Your subscription is set to cancel on **{formatted_date}**. You'll have access until then.")
+            
+            if st.button("Undo Cancellation", key="reactivate_btn", type="primary"):
+                with st.spinner("Reactivating subscription..."):
+                    result = reactivate_subscription(educator_id)
+                    if result:
+                        st.success("Your subscription has been reactivated!")
+                        st.rerun()
+                    else:
+                        st.error("Unable to reactivate. Please try again or contact support.")
+        else:
+            st.success(f"**{plan}** plan - {status}")
+            
+            if st.button("💳 Manage Billing", key="manage_billing_btn"):
+                with st.spinner("Opening billing portal..."):
+                    portal_url = create_portal_session(educator_id)
+                    if portal_url:
+                        st.markdown(f'<meta http-equiv="refresh" content="0;url={portal_url}">', unsafe_allow_html=True)
+                        st.info("Redirecting to billing portal...")
+                    else:
+                        st.error("Unable to open billing portal. Please try again.")
+    
+    st.markdown("---")
+    
+    with st.expander("Account Actions", expanded=False):
+        st.markdown("#### Deactivate Account")
+        
+        if sub_status.get('cancelAtPeriodEnd'):
+            st.info("Your account is already set to deactivate at the end of your billing period.")
+        elif sub_status.get('isActive'):
+            st.markdown("""
+            If you deactivate your account:
+            - Your subscription will be cancelled at the end of your current billing period
+            - You'll keep full access until then
+            - Your data will be preserved and you can reactivate anytime
+            """)
+            
+            confirm_text = st.text_input(
+                "Type 'DEACTIVATE' to confirm",
+                key="deactivate_confirm",
+                placeholder="Type DEACTIVATE"
+            )
+            
+            if st.button("Deactivate Account", key="deactivate_btn", type="secondary"):
+                if confirm_text == "DEACTIVATE":
+                    with st.spinner("Processing deactivation..."):
+                        result = cancel_subscription(educator_id)
+                        if result:
+                            period_end = result.get('currentPeriodEnd')
+                            if period_end:
+                                try:
+                                    end_date = datetime.fromisoformat(str(period_end).replace('Z', '+00:00'))
+                                    formatted_date = end_date.strftime('%B %d, %Y')
+                                except:
+                                    formatted_date = "the end of your billing period"
+                            else:
+                                formatted_date = "the end of your billing period"
+                            st.success(f"Your account is set to deactivate on {formatted_date}. You can undo this anytime before then.")
+                            st.rerun()
+                        else:
+                            st.error("Unable to process deactivation. Please try again or contact support.")
+                else:
+                    st.error("Please type 'DEACTIVATE' exactly to confirm.")
+        else:
+            st.info("No active subscription to cancel.")
 
 def validate_email(email):
     """Validate email format"""

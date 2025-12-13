@@ -419,7 +419,8 @@ app.get('/api/subscription-status/:educatorId', requireApiAuth, async (req, res)
     
     const result = await db.query(
       `SELECT stripe_customer_id, stripe_subscription_id, subscription_status, 
-              subscription_plan, trial_ends_at, subscription_ends_at 
+              subscription_plan, trial_ends_at, subscription_ends_at,
+              cancel_at_period_end, current_period_end, deactivation_requested_at
        FROM users WHERE id = $1`,
       [educatorId]
     );
@@ -438,11 +439,105 @@ app.get('/api/subscription-status/:educatorId', requireApiAuth, async (req, res)
         status: educator.subscription_status || 'none',
         plan: educator.subscription_plan,
         trialEndsAt: educator.trial_ends_at,
-        subscriptionEndsAt: educator.subscription_ends_at
+        subscriptionEndsAt: educator.subscription_ends_at,
+        cancelAtPeriodEnd: educator.cancel_at_period_end || false,
+        currentPeriodEnd: educator.current_period_end,
+        deactivationRequestedAt: educator.deactivation_requested_at
       }
     });
   } catch (error) {
     console.error('Error checking subscription status:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/subscription/cancel', requireApiAuth, async (req, res) => {
+  try {
+    const { educatorId } = req.body;
+    
+    if (!educatorId) {
+      return res.status(400).json({ success: false, error: 'educatorId is required' });
+    }
+
+    const result = await db.query(
+      'SELECT stripe_subscription_id FROM users WHERE id = $1',
+      [educatorId]
+    );
+    
+    const subscriptionId = result.rows[0]?.stripe_subscription_id;
+    
+    if (!subscriptionId) {
+      return res.status(400).json({ success: false, error: 'No active subscription found' });
+    }
+
+    const subscription = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true
+    });
+    
+    const currentPeriodEnd = subscription.current_period_end 
+      ? new Date(subscription.current_period_end * 1000) 
+      : null;
+
+    await db.query(
+      `UPDATE users SET 
+        cancel_at_period_end = TRUE,
+        current_period_end = $1,
+        deactivation_requested_at = NOW()
+       WHERE id = $2`,
+      [currentPeriodEnd, educatorId]
+    );
+    
+    console.log(`Subscription ${subscriptionId} set to cancel at period end for educator ${educatorId}`);
+    
+    res.json({ 
+      success: true, 
+      data: { 
+        cancelAtPeriodEnd: true,
+        currentPeriodEnd 
+      }
+    });
+  } catch (error) {
+    console.error('Error cancelling subscription:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/subscription/reactivate', requireApiAuth, async (req, res) => {
+  try {
+    const { educatorId } = req.body;
+    
+    if (!educatorId) {
+      return res.status(400).json({ success: false, error: 'educatorId is required' });
+    }
+
+    const result = await db.query(
+      'SELECT stripe_subscription_id FROM users WHERE id = $1',
+      [educatorId]
+    );
+    
+    const subscriptionId = result.rows[0]?.stripe_subscription_id;
+    
+    if (!subscriptionId) {
+      return res.status(400).json({ success: false, error: 'No subscription found' });
+    }
+
+    await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: false
+    });
+
+    await db.query(
+      `UPDATE users SET 
+        cancel_at_period_end = FALSE,
+        deactivation_requested_at = NULL
+       WHERE id = $1`,
+      [educatorId]
+    );
+    
+    console.log(`Subscription ${subscriptionId} reactivated for educator ${educatorId}`);
+    
+    res.json({ success: true, data: { cancelAtPeriodEnd: false } });
+  } catch (error) {
+    console.error('Error reactivating subscription:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -489,7 +584,7 @@ async function handleCheckoutCompleted(session) {
 }
 
 async function handleSubscriptionUpdated(subscription) {
-  console.log('Subscription updated:', subscription.id, 'Status:', subscription.status);
+  console.log('Subscription updated:', subscription.id, 'Status:', subscription.status, 'Cancel at period end:', subscription.cancel_at_period_end);
   
   const customerId = subscription.customer;
   const status = subscription.status;
@@ -498,6 +593,7 @@ async function handleSubscriptionUpdated(subscription) {
   
   const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
   const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+  const cancelAtPeriodEnd = subscription.cancel_at_period_end || false;
   
   await db.query(
     `UPDATE users SET 
@@ -505,9 +601,11 @@ async function handleSubscriptionUpdated(subscription) {
       subscription_status = $2,
       subscription_plan = $3,
       trial_ends_at = $4,
-      subscription_ends_at = $5
-     WHERE stripe_customer_id = $6`,
-    [subscription.id, status, plan, trialEnd, currentPeriodEnd, customerId]
+      subscription_ends_at = $5,
+      cancel_at_period_end = $6,
+      current_period_end = $7
+     WHERE stripe_customer_id = $8`,
+    [subscription.id, status, plan, trialEnd, currentPeriodEnd, cancelAtPeriodEnd, currentPeriodEnd, customerId]
   );
   console.log(`Updated subscription for customer ${customerId}`);
 }
@@ -520,7 +618,9 @@ async function handleSubscriptionDeleted(subscription) {
   await db.query(
     `UPDATE users SET 
       subscription_status = 'cancelled',
-      subscription_ends_at = NOW()
+      subscription_ends_at = NOW(),
+      cancel_at_period_end = FALSE,
+      current_period_end = NULL
      WHERE stripe_customer_id = $1`,
     [customerId]
   );
@@ -548,7 +648,10 @@ async function initDatabase() {
       ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'none',
       ADD COLUMN IF NOT EXISTS subscription_plan TEXT,
       ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS subscription_ends_at TIMESTAMP
+      ADD COLUMN IF NOT EXISTS subscription_ends_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS cancel_at_period_end BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS deactivation_requested_at TIMESTAMP
     `);
     
     await db.query(`

@@ -2705,11 +2705,8 @@ def show_account_deletion_interface():
     user_name = st.session_state.get('user_name', '')
     
     if not is_student:
-        st.markdown("### 💳 Subscription Management")
-        st.markdown("*Manage your subscription, update payment method, or cancel*")
-        
-        from auth import show_billing_portal_button
-        show_billing_portal_button()
+        from auth import show_account_settings
+        show_account_settings()
         
         st.markdown("---")
     
