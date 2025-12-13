@@ -8,7 +8,62 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PAYMENTS_PORT || 3001;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Fetch Stripe credentials from Replit connection API
+async function getStripeCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? 'repl ' + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+      ? 'depl ' + process.env.WEB_REPL_RENEWAL
+      : null;
+
+  if (!xReplitToken || !hostname) {
+    // Fall back to environment variable if connection API not available
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (secretKey) {
+      console.log('Using STRIPE_SECRET_KEY from environment');
+      return { secretKey };
+    }
+    throw new Error('Stripe credentials not found. Set up Stripe connection or STRIPE_SECRET_KEY.');
+  }
+
+  const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
+  const targetEnvironment = isProduction ? 'production' : 'development';
+
+  const url = new URL(`https://${hostname}/api/v2/connection`);
+  url.searchParams.set('include_secrets', 'true');
+  url.searchParams.set('connector_names', 'stripe');
+  url.searchParams.set('environment', targetEnvironment);
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      'Accept': 'application/json',
+      'X_REPLIT_TOKEN': xReplitToken
+    }
+  });
+
+  const data = await response.json();
+  const connectionSettings = data.items?.[0];
+
+  if (!connectionSettings?.settings?.secret) {
+    // Fall back to environment variable
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (secretKey) {
+      console.log('Using STRIPE_SECRET_KEY from environment (connection not found)');
+      return { secretKey };
+    }
+    throw new Error(`Stripe ${targetEnvironment} connection not found and STRIPE_SECRET_KEY not set`);
+  }
+
+  console.log(`Using Stripe credentials from Replit connection (${targetEnvironment})`);
+  return {
+    secretKey: connectionSettings.settings.secret,
+    publishableKey: connectionSettings.settings.publishable
+  };
+}
+
+// Initialize Stripe client (will be set during startup)
+let stripe = null;
 const db = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const REPLIT_DOMAIN = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
@@ -528,6 +583,16 @@ async function initDatabase() {
 }
 
 async function startServer() {
+  // Initialize Stripe client
+  try {
+    const { secretKey } = await getStripeCredentials();
+    stripe = new Stripe(secretKey);
+    console.log('✅ Stripe client initialized');
+  } catch (err) {
+    console.error('❌ Failed to initialize Stripe:', err.message);
+    process.exit(1);
+  }
+  
   await initDatabase();
   
   app.listen(PORT, '0.0.0.0', () => {

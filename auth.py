@@ -8,8 +8,10 @@ from datetime import datetime, timedelta
 PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
 PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
 
-MONTHLY_PRICE_ID = 'price_1Sd7RX8PGiRAuUvfzibxCNLV'
-ANNUAL_PRICE_ID = 'price_1Sd7RX8PGiRAuUvfxnQgzmy1'
+# Price IDs - use environment variables for flexibility between sandbox/live
+# Set STRIPE_MONTHLY_PRICE_ID and STRIPE_ANNUAL_PRICE_ID in secrets for each environment
+MONTHLY_PRICE_ID = os.getenv('STRIPE_MONTHLY_PRICE_ID', 'price_1Sd7RX8PGiRAuUvfzibxCNLV')
+ANNUAL_PRICE_ID = os.getenv('STRIPE_ANNUAL_PRICE_ID', 'price_1Sd7RX8PGiRAuUvfxnQgzmy1')
 
 SUBSCRIPTION_CACHE_TTL = timedelta(minutes=5)
 
