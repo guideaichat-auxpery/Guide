@@ -290,9 +290,17 @@ else:
         
         # Check subscription status for educators (uses built-in caching in check_subscription_status)
         educator_id = st.session_state.get('user_id')
+        
+        # Force refresh on first load after login or if requested
+        if st.session_state.get('_force_subscription_refresh', True):
+            invalidate_subscription_cache(educator_id)
+            st.session_state['_force_subscription_refresh'] = False
+        
         subscription_info = check_subscription_status(educator_id)
         has_active_subscription = subscription_info.get('isActive', False)
         subscription_status = subscription_info.get('status', 'none')
+        
+        logger.info(f"[SUBSCRIPTION] educator_id={educator_id}, isActive={has_active_subscription}, status={subscription_status}")
         
         # If no active subscription, show pricing page (unless accessing account settings)
         if not has_active_subscription and subscription_status not in ['trialing', 'active']:

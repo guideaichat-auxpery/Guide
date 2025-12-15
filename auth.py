@@ -31,27 +31,34 @@ def check_subscription_status(educator_id):
     if cached_data and cached_time:
         age = datetime.now() - cached_time
         if age < SUBSCRIPTION_CACHE_TTL:
+            print(f"[SUB CHECK] Using cached data for educator {educator_id}: {cached_data}")
             return cached_data
     
     try:
-        response = requests.get(
-            f"{PAYMENTS_SERVICE_URL}/api/subscription-status/{educator_id}",
-            headers=get_api_headers(),
-            timeout=2
-        )
+        url = f"{PAYMENTS_SERVICE_URL}/api/subscription-status/{educator_id}"
+        headers = get_api_headers()
+        print(f"[SUB CHECK] Calling API: {url}")
+        print(f"[SUB CHECK] API Secret present: {bool(PAYMENTS_API_SECRET)}")
+        
+        response = requests.get(url, headers=headers, timeout=5)
+        print(f"[SUB CHECK] Response status: {response.status_code}")
+        
         if response.status_code == 200:
             data = response.json()
+            print(f"[SUB CHECK] Response data: {data}")
             if data.get('success'):
                 result = data.get('data', {})
                 st.session_state[cache_key] = result
                 st.session_state[cache_time_key] = datetime.now()
                 return result
+        else:
+            print(f"[SUB CHECK] Non-200 response: {response.text}")
         result = {'isActive': False, 'status': 'none'}
         st.session_state[cache_key] = result
         st.session_state[cache_time_key] = datetime.now()
         return result
     except Exception as e:
-        print(f"Error checking subscription: {e}")
+        print(f"[SUB CHECK] Error checking subscription: {e}")
         if cached_data and cached_time:
             age = datetime.now() - cached_time
             if age < SUBSCRIPTION_STALE_TTL:
@@ -207,6 +214,21 @@ def redeem_signup_token(token, user_id, email):
 
 def show_pricing_page():
     """Display the subscription pricing page"""
+    
+    educator_id = st.session_state.get('user_id')
+    user_email = st.session_state.get('user_email')
+    
+    if st.button("🔄 Refresh Subscription Status", key="refresh_sub_btn"):
+        invalidate_subscription_cache(educator_id)
+        if user_email:
+            sync_result = sync_subscription_from_stripe(user_email)
+            if sync_result and sync_result.get('status') == 'active':
+                st.success("Subscription found! Refreshing...")
+                st.rerun()
+            else:
+                st.warning("No active subscription found in Stripe. Please complete payment below.")
+        st.rerun()
+    
     st.markdown("""
     <style>
     .pricing-container {
