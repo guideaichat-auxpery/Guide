@@ -71,17 +71,24 @@ def invalidate_subscription_cache(educator_id=None):
 def create_checkout_session(price_id, educator_id, email):
     """Create a Stripe checkout session"""
     try:
+        print(f"Creating checkout: priceId={price_id}, educatorId={educator_id}, email={email}")
         response = requests.post(
             f"{PAYMENTS_SERVICE_URL}/api/create-checkout-session",
             json={'priceId': price_id, 'educatorId': educator_id, 'email': email},
             headers=get_api_headers(),
             timeout=10
         )
+        print(f"Checkout response status: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
             if data.get('success'):
                 return data.get('url')
-        return None
+            else:
+                print(f"Checkout failed: {data.get('error')}")
+                return None
+        else:
+            print(f"Checkout request failed: {response.status_code} - {response.text}")
+            return None
     except Exception as e:
         print(f"Error creating checkout session: {e}")
         return None
