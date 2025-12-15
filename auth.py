@@ -288,12 +288,13 @@ def show_pricing_page():
         
         if st.button("Choose Annual", key="annual_btn", use_container_width=True, type="secondary"):
             with st.spinner("Preparing checkout..."):
+                st.write(f"Debug: ANNUAL_PRICE_ID={ANNUAL_PRICE_ID}, educator_id={educator_id}, email={email}")
                 checkout_url = create_checkout_session(ANNUAL_PRICE_ID, educator_id, email)
                 if checkout_url:
                     st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
                     st.info("Redirecting to secure checkout...")
                 else:
-                    st.error("Unable to create checkout session. Please try again.")
+                    st.error(f"Unable to create checkout session. Price: {ANNUAL_PRICE_ID}, User: {educator_id}")
     
     st.markdown("---")
     
