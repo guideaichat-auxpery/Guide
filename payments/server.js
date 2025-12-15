@@ -8,8 +8,17 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PAYMENTS_PORT || 3001;
 
-// Fetch Stripe credentials from Replit connection API
+// Fetch Stripe credentials - prioritize STRIPE_SECRET_KEY for live mode
 async function getStripeCredentials() {
+  // First check if STRIPE_SECRET_KEY is explicitly set (for live mode)
+  const envSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (envSecretKey) {
+    const isLiveKey = envSecretKey.startsWith('sk_live_');
+    console.log(`Using STRIPE_SECRET_KEY from environment (${isLiveKey ? 'LIVE' : 'TEST'} mode)`);
+    return { secretKey: envSecretKey };
+  }
+
+  // Fall back to Replit connection API for sandbox/development
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
   const xReplitToken = process.env.REPL_IDENTITY
     ? 'repl ' + process.env.REPL_IDENTITY
@@ -18,13 +27,7 @@ async function getStripeCredentials() {
       : null;
 
   if (!xReplitToken || !hostname) {
-    // Fall back to environment variable if connection API not available
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (secretKey) {
-      console.log('Using STRIPE_SECRET_KEY from environment');
-      return { secretKey };
-    }
-    throw new Error('Stripe credentials not found. Set up Stripe connection or STRIPE_SECRET_KEY.');
+    throw new Error('Stripe credentials not found. Set STRIPE_SECRET_KEY or set up Stripe connection.');
   }
 
   const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
@@ -46,12 +49,6 @@ async function getStripeCredentials() {
   const connectionSettings = data.items?.[0];
 
   if (!connectionSettings?.settings?.secret) {
-    // Fall back to environment variable
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-    if (secretKey) {
-      console.log('Using STRIPE_SECRET_KEY from environment (connection not found)');
-      return { secretKey };
-    }
     throw new Error(`Stripe ${targetEnvironment} connection not found and STRIPE_SECRET_KEY not set`);
   }
 
