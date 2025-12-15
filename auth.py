@@ -547,22 +547,6 @@ def signup_page():
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">📝 Create Your Educator Account</h2>', unsafe_allow_html=True)
     st.markdown('<p style="text-align: center;">Join our Montessori educational planning community</p>', unsafe_allow_html=True)
     
-    # Privacy notice before signup - Enhanced for Australian Privacy Act 1988 compliance
-    st.info("""📋 **Privacy Notice (Australian Privacy Act 1988)**
-
-By creating an account, you acknowledge that:
-- You are responsible for obtaining appropriate parental/guardian consent before creating student accounts
-- Your institution may have additional data protection obligations you must comply with
-- Student data is protected and will be handled in accordance with Australian privacy law
-- AI-generated content uses privacy-preserving data practices
-
-Please read our Terms & Conditions for full details.""")
-    
-    # Link to terms and conditions
-    if st.button("📋 View Terms & Conditions", key="signup_privacy_link"):
-        st.session_state.auth_mode = "privacy_policy"
-        st.rerun()
-    
     with st.form("educator_signup"):
         st.markdown("### Create New Account")
         full_name = st.text_input("Full Name", placeholder="Your full name")
@@ -572,25 +556,6 @@ Please read our Terms & Conditions for full details.""")
         user_type = "educator"  # Normalize to single type
         password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
         confirm_password = st.text_input("Confirm Password", type="password")
-        
-        # Consent checkboxes
-        st.markdown("---")
-        st.markdown("### Privacy & Consent")
-        
-        consent_data_collection = st.checkbox(
-            "I understand that Guide collects and stores my personal information (name, email, usage data) to provide educational services.",
-            value=False
-        )
-        
-        consent_overseas_transfer = st.checkbox(
-            "I consent to my data being sent to OpenAI (United States) for AI processing. I understand Australian privacy laws may not apply to this overseas data transfer.",
-            value=False
-        )
-        
-        consent_privacy_policy = st.checkbox(
-            "I have read and agree to the Terms of Use and Privacy Policy.",
-            value=False
-        )
         
         submit = st.form_submit_button("Create Account", use_container_width=True)
         
@@ -602,12 +567,6 @@ Please read our Terms & Conditions for full details.""")
                 st.error("Please enter a valid email address")
             elif password != confirm_password:
                 st.error("Passwords do not match")
-            elif not consent_data_collection:
-                st.error("Please acknowledge our data collection practices to continue")
-            elif not consent_overseas_transfer:
-                st.error("Please consent to overseas data transfer (required for AI functionality)")
-            elif not consent_privacy_policy:
-                st.error("Please read and agree to the Terms of Use and Privacy Policy")
             else:
                 valid_password, password_message = validate_password(password)
                 if not valid_password:
