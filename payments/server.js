@@ -192,7 +192,8 @@ app.post('/api/create-checkout-session', requireApiAuth, async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${BASE_URL}/?subscription=success`,
       cancel_url: `${BASE_URL}/?subscription=cancelled`,
-      metadata: { educatorId: String(educatorId) }
+      metadata: { educatorId: String(educatorId) },
+      allow_promotion_codes: true
     };
 
     if (customerId) {
@@ -242,7 +243,8 @@ app.post('/api/public/create-checkout-session', async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${GUIDE_APP_URL}/?signup_token=${inviteToken}`,
       cancel_url: `${req.headers.referer || 'https://www.auxpery.com.au'}?checkout=cancelled`,
-      metadata: { inviteToken, source: 'marketing_site' }
+      metadata: { inviteToken, source: 'marketing_site' },
+      allow_promotion_codes: true
     });
     
     console.log(`Created public checkout for ${email} with token ${inviteToken.substring(0, 8)}...`);
