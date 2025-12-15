@@ -332,7 +332,7 @@ else:
                     
                     if submitted and institution_name:
                         db = get_db()
-                        if db:
+                        if db and educator_id:
                             try:
                                 success, auto_enabled = update_educator_institution(db, educator_id, institution_name)
                                 if success:
