@@ -26,16 +26,28 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Google Analytics 4 tracking
+# Google Analytics 4 tracking - deferred for performance
 GA_MEASUREMENT_ID = "G-R7E37XX8KP"
 st.markdown(f"""
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){{dataLayer.push(arguments);}}
-        gtag('js', new Date());
-        gtag('config', '{GA_MEASUREMENT_ID}');
+        (function() {{
+            if (document.readyState === 'loading') {{
+                document.addEventListener('DOMContentLoaded', loadGA);
+            }} else {{
+                loadGA();
+            }}
+            function loadGA() {{
+                const script = document.createElement('script');
+                script.async = true;
+                script.src = 'https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}';
+                document.head.appendChild(script);
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){{dataLayer.push(arguments);}}
+                window.gtag = gtag;
+                gtag('js', new Date());
+                gtag('config', '{GA_MEASUREMENT_ID}');
+            }}
+        }})();
     </script>
 """, unsafe_allow_html=True)
 
@@ -138,18 +150,25 @@ if st.session_state.get('authenticated', False):
 
 # Load Design Systems - cached for performance
 @st.cache_data
-def load_css(file_path):
-    """Load CSS file with caching to improve performance"""
-    with open(file_path) as f:
-        return f'<style>{f.read()}</style>'
+def load_all_css():
+    """Load all CSS files in one call for better performance"""
+    css_files = [
+        'static/css/montessori-theme.css',
+        'static/css/danish-eco-theme.css'
+    ]
+    combined_css = ""
+    for file_path in css_files:
+        try:
+            with open(file_path) as f:
+                combined_css += f.read() + "\n"
+        except Exception:
+            pass
+    return f'<style>{combined_css}</style>'
 
-# Load Montessori theme for general interface
-st.markdown(load_css('static/css/montessori-theme.css'), unsafe_allow_html=True)
+# Load all design systems in single render call
+st.markdown(load_all_css(), unsafe_allow_html=True)
 
-# Load Danish eco theme for educator dashboard cards
-st.markdown(load_css('static/css/danish-eco-theme.css'), unsafe_allow_html=True)
-
-# Additional custom CSS for specific components
+# Inline critical CSS to avoid delay - deferred heavy DOM manipulation
 st.markdown("""
 <style>
 .main-header {
@@ -161,38 +180,12 @@ st.markdown("""
     font-size: 4rem;
     font-weight: 500;
 }
-/* Hide Streamlit header completely */
-header[data-testid="stHeader"] {
-    display: none !important;
-}
-/* Target ALL possible Streamlit container classes */
+header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stAppViewContainer"] > section > div,
 [data-testid="stVerticalBlock"],
 .stMainBlockContainer,
-div[data-testid="stVerticalBlock"] {
-    padding-top: 0 !important;
-}
-/* Specific targeting for main block */
-.stApp [data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"]:first-child {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
-}
-</style>
-<script>
-// Force reduce top padding after Streamlit loads
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-        var containers = document.querySelectorAll('[data-testid="stVerticalBlock"], [class*="stMainBlockContainer"], [class*="block-container"]');
-        containers.forEach(function(el) {
-            el.style.paddingTop = '0';
-            el.style.marginTop = '0';
-        });
-        var header = document.querySelector('header[data-testid="stHeader"]');
-        if (header) header.style.display = 'none';
-    }, 100);
-});
-</script>
-<style>
+div[data-testid="stVerticalBlock"] { padding-top: 0 !important; }
+.stApp [data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"]:first-child { padding-top: 0 !important; margin-top: 0 !important; }
 .main-byline {
     text-align: center;
     color: var(--color-ink);
@@ -224,6 +217,14 @@ document.addEventListener('DOMContentLoaded', function() {
     border-left: 3px solid var(--color-leaf);
 }
 </style>
+<script>
+requestAnimationFrame(function() {
+    var containers = document.querySelectorAll('[data-testid="stVerticalBlock"], [class*="stMainBlockContainer"]');
+    containers.forEach(function(el) { el.style.paddingTop = '0'; el.style.marginTop = '0'; });
+    var header = document.querySelector('header[data-testid="stHeader"]');
+    if (header) header.style.display = 'none';
+});
+</script>
 """, unsafe_allow_html=True)
 
 # Main Header - wrapped with negative margin to reduce top space
@@ -283,9 +284,14 @@ else:
     if is_student is False:
         # Educator interface
         
-        # Check subscription status for educators
+        # Lazy load subscription check with caching to avoid blocking initial render
         educator_id = st.session_state.get('user_id')
-        subscription_info = check_subscription_status(educator_id)
+        
+        @st.cache_data(ttl=300)
+        def get_subscription_cached(eid):
+            return check_subscription_status(eid)
+        
+        subscription_info = get_subscription_cached(educator_id)
         has_active_subscription = subscription_info.get('isActive', False)
         subscription_status = subscription_info.get('status', 'none')
         
