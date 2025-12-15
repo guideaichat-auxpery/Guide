@@ -541,6 +541,50 @@ app.post('/api/subscription/reactivate', requireApiAuth, async (req, res) => {
   }
 });
 
+app.post('/api/admin/sync-by-email', requireApiAuth, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'email is required' });
+    }
+
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    if (!customers.data[0]) {
+      return res.status(404).json({ success: false, error: 'Customer not found in Stripe' });
+    }
+
+    const customerId = customers.data[0].id;
+    const subscriptions = await stripe.subscriptions.list({ customer: customerId, limit: 1 });
+    
+    if (!subscriptions.data[0]) {
+      return res.status(404).json({ success: false, error: 'No subscription found' });
+    }
+
+    const subscription = subscriptions.data[0];
+    const userResult = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    
+    if (!userResult.rows[0]) {
+      return res.status(404).json({ success: false, error: 'User account not found' });
+    }
+
+    const userId = userResult.rows[0].id;
+    await db.query(
+      `UPDATE users SET 
+        stripe_customer_id = $1,
+        stripe_subscription_id = $2,
+        subscription_status = $3
+       WHERE id = $4`,
+      [customerId, subscription.id, subscription.status, userId]
+    );
+
+    console.log(`Synced subscription for ${email}: ${subscription.id}`);
+    res.json({ success: true, data: { customerId, subscriptionId: subscription.id, status: subscription.status } });
+  } catch (error) {
+    console.error('Error syncing subscription:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 async function handleCheckoutCompleted(session) {
   console.log('Checkout completed:', session.id);
   
