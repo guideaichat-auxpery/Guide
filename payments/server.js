@@ -573,17 +573,27 @@ app.post('/api/admin/sync-by-email', requireApiAuth, async (req, res) => {
     }
 
     const userId = userResult.rows[0].id;
+    const plan = subscription.items?.data[0]?.price?.recurring?.interval === 'year' ? 'annual' : 'monthly';
+    const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
+    const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+    const cancelAtPeriodEnd = subscription.cancel_at_period_end || false;
+
     await db.query(
       `UPDATE users SET 
         stripe_customer_id = $1,
         stripe_subscription_id = $2,
-        subscription_status = $3
-       WHERE id = $4`,
-      [customerId, subscription.id, subscription.status, userId]
+        subscription_status = $3,
+        subscription_plan = $4,
+        trial_ends_at = $5,
+        current_period_end = $6,
+        subscription_ends_at = $6,
+        cancel_at_period_end = $7
+       WHERE id = $8`,
+      [customerId, subscription.id, subscription.status, plan, trialEnd, currentPeriodEnd, cancelAtPeriodEnd, userId]
     );
 
-    console.log(`Synced subscription for ${email}: ${subscription.id}`);
-    res.json({ success: true, data: { customerId, subscriptionId: subscription.id, status: subscription.status } });
+    console.log(`Synced full subscription for ${email}: ${subscription.id} (${plan})`);
+    res.json({ success: true, data: { customerId, subscriptionId: subscription.id, status: subscription.status, plan } });
   } catch (error) {
     console.error('Error syncing subscription:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -598,16 +608,25 @@ async function handleCheckoutCompleted(session) {
   const customerId = session.customer;
   const subscriptionId = session.subscription;
   
-  if (educatorId && customerId) {
+  if (educatorId && customerId && subscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const plan = subscription.items?.data[0]?.price?.recurring?.interval === 'year' ? 'annual' : 'monthly';
+    const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
+    const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+    
     await db.query(
       `UPDATE users SET 
         stripe_customer_id = $1,
         stripe_subscription_id = $2,
-        subscription_status = 'active'
-       WHERE id = $3`,
-      [customerId, subscriptionId, educatorId]
+        subscription_status = $3,
+        subscription_plan = $4,
+        trial_ends_at = $5,
+        current_period_end = $6,
+        subscription_ends_at = $6
+       WHERE id = $7`,
+      [customerId, subscriptionId, subscription.status, plan, trialEnd, currentPeriodEnd, educatorId]
     );
-    console.log(`Updated educator ${educatorId} with subscription ${subscriptionId}`);
+    console.log(`Updated educator ${educatorId} with subscription ${subscriptionId} (${plan})`);
   }
   
   if (inviteToken) {
