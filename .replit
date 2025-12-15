@@ -110,8 +110,8 @@ integrations = ["web_scraper:1.0.0", "python_openai:1.0.0", "python_openai:1.0.0
 [userenv]
 
 [userenv.development]
-STRIPE_MONTHLY_PRICE_ID = "price_1SdjKwGiGxVMaO4BlhLv5uoP"
-STRIPE_ANNUAL_PRICE_ID = "price_1SdjKwGiGxVMaO4B1RmkOjuW"
+STRIPE_MONTHLY_PRICE_ID = "price_1Sd7RX8PGiRAuUvfzibxCNLV"
+STRIPE_ANNUAL_PRICE_ID = "price_1SeSbY8PGiRAuUvf0xjZmMXK"
 
 [userenv.production]
 STRIPE_MONTHLY_PRICE_ID = "price_1Sd7RX8PGiRAuUvfzibxCNLV"
