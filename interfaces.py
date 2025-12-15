@@ -2133,7 +2133,7 @@ def show_privacy_policy():
     
     ## 4. Intellectual Property
     
-    All content, design elements, and software comprising Guide — including logos, interface, and educational tools — are the property of **Auxpery Pty Ltd** or its licensors and are protected by copyright, trademark, and other laws.
+    All content, design elements, and software comprising Guide — including logos, interface, and educational tools — are the property of **Auxpery** or its licensors and are protected by copyright, trademark, and other laws.
     
     You may use materials within Guide **solely for educational, non-commercial use**.
     
