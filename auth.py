@@ -557,6 +557,8 @@ def signup_page():
         password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
         confirm_password = st.text_input("Confirm Password", type="password")
         
+        agree_terms = st.checkbox("I have read and agree to the Terms and Conditions", value=False)
+        
         submit = st.form_submit_button("Create Account", use_container_width=True)
         
         if submit:
@@ -567,6 +569,8 @@ def signup_page():
                 st.error("Please enter a valid email address")
             elif password != confirm_password:
                 st.error("Passwords do not match")
+            elif not agree_terms:
+                st.error("Please agree to the Terms and Conditions to continue")
             else:
                 valid_password, password_message = validate_password(password)
                 if not valid_password:
