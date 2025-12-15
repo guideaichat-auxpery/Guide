@@ -68,6 +68,26 @@ def invalidate_subscription_cache(educator_id=None):
         if cache_time_key in st.session_state:
             del st.session_state[cache_time_key]
 
+def sync_subscription_from_stripe(email):
+    """Sync subscription directly from Stripe - fallback when webhook fails"""
+    try:
+        response = requests.post(
+            f"{PAYMENTS_SERVICE_URL}/api/admin/sync-by-email",
+            json={'email': email},
+            headers=get_api_headers(),
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success'):
+                print(f"Synced subscription from Stripe for {email}: {data.get('data')}")
+                return data.get('data')
+        print(f"Sync from Stripe failed: {response.status_code} - {response.text}")
+        return None
+    except Exception as e:
+        print(f"Error syncing from Stripe: {e}")
+        return None
+
 def create_checkout_session(price_id, educator_id, email):
     """Create a Stripe checkout session"""
     try:
@@ -288,13 +308,12 @@ def show_pricing_page():
         
         if st.button("Choose Annual", key="annual_btn", use_container_width=True, type="secondary"):
             with st.spinner("Preparing checkout..."):
-                st.write(f"Debug: ANNUAL_PRICE_ID={ANNUAL_PRICE_ID}, educator_id={educator_id}, email={email}")
                 checkout_url = create_checkout_session(ANNUAL_PRICE_ID, educator_id, email)
                 if checkout_url:
                     st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
                     st.info("Redirecting to secure checkout...")
                 else:
-                    st.error(f"Unable to create checkout session. Price: {ANNUAL_PRICE_ID}, User: {educator_id}")
+                    st.error("Unable to create checkout session. Please try again.")
     
     st.markdown("---")
     

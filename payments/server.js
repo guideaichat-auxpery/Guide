@@ -94,15 +94,20 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+  console.log(`Webhook received at ${new Date().toISOString()}`);
+  console.log(`Webhook secret configured: ${webhookSecret ? 'YES' : 'NO'}`);
+  console.log(`Signature header present: ${sig ? 'YES' : 'NO'}`);
+
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
+    console.error('This usually means STRIPE_WEBHOOK_SECRET does not match the webhook signing secret in your Stripe Dashboard');
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log(`Received Stripe event: ${event.type}`);
+  console.log(`✅ Received Stripe event: ${event.type}`);
 
   try {
     switch (event.type) {

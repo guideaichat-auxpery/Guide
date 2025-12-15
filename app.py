@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, show_billing_portal_button, invalidate_subscription_cache, show_account_settings
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, show_billing_portal_button, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface
 
@@ -70,14 +70,19 @@ if 'authenticated' not in st.session_state:
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
 
-# Handle return from Stripe checkout - invalidate subscription cache for fresh status
+# Handle return from Stripe checkout - sync subscription and invalidate cache
 try:
     query_params = st.query_params
     if query_params.get('subscription') == 'success':
         educator_id = st.session_state.get('user_id')
-        if educator_id:
+        user_email = st.session_state.get('user_email')
+        if educator_id and user_email:
             invalidate_subscription_cache(educator_id)
-            st.success("Payment successful! Your subscription is now active.")
+            sync_result = sync_subscription_from_stripe(user_email)
+            if sync_result and sync_result.get('status') == 'active':
+                st.success("Payment successful! Your subscription is now active.")
+            else:
+                st.success("Payment received! Your subscription should be active shortly.")
         st.query_params.clear()
 except Exception as e:
     logger.warning(f"Error processing subscription return: {e}")
