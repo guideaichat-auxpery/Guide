@@ -26,6 +26,19 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Google Analytics 4 tracking
+GA_MEASUREMENT_ID = "G-R7E37XX8KP"
+st.markdown(f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){{dataLayer.push(arguments);}}
+        gtag('js', new Date());
+        gtag('config', '{GA_MEASUREMENT_ID}');
+    </script>
+""", unsafe_allow_html=True)
+
 # Scroll behavior: Only scroll to top on navigation, not on chat updates
 # Check if this is a navigation action (page/mode change) vs chat action
 from utils import force_scroll_to_top
