@@ -27,14 +27,16 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - 30-minute inactivity timeout for educators (protects student data access)
   - Automatic conversation restoration on login, visual save confirmations.
 - **Subscription & Payments (December 2025)**:
-  - **Stripe Integration**: Dedicated Node.js payments service (port 3001) handling subscriptions, proxied through reverse proxy on port 5000
-  - **API Security**: PAYMENTS_API_SECRET required for authenticated internal API calls between Streamlit and payments service
+  - **Simplified Stripe Architecture (December 2025)**: Direct Python Stripe SDK (`stripe_client.py`) for all user-facing operations (checkout, portal, subscription sync). Node.js payments service (port 3001) now only handles webhooks and marketing site token verification.
+  - **Subscription Sync on Login**: Educator login triggers direct Stripe API sync, ensuring subscription status is always fresh
+  - **Short Cache TTL**: 30-second subscription cache to balance performance with freshness
+  - **Visible Status Indicator**: Sidebar shows current subscription plan, status, and last sync time
   - **Pricing**: $15/month with 14-day trial OR $150/year (2 months free)
   - **Subscription Gate**: Educators must have active subscription to access app features
-  - **Checkout Flow**: Stripe Checkout for secure payment processing
+  - **Checkout Flow**: Stripe Checkout for secure payment processing (via Python Stripe client)
   - **Billing Portal**: Self-service subscription management via Stripe Customer Portal
-  - **Webhook Handling**: Real-time subscription status updates (created/updated/cancelled)
-  - **Database Fields**: stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at on users table
+  - **Webhook Handling**: Real-time subscription status updates (created/updated/cancelled) via Node.js service
+  - **Database Fields**: stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at, subscription_last_checked on users table
   - **Marketing Site Integration (December 2025)**: Sign-up-first flow where users create account on guide.auxpery.com.au, then pay through pricing page
     - Simple redirect links from www.auxpery.com.au to guide.auxpery.com.au for signup
     - After signup, users see pricing page and complete Stripe Checkout
