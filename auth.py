@@ -1,27 +1,25 @@
 import streamlit as st
 from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student, check_login_rate_limit, record_login_attempt, clear_login_attempts, create_student_with_consent
 import re
-import requests
 import os
+import requests
 from datetime import datetime, timedelta
+
+import stripe_client
 
 PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
 PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
 
-# Price IDs - use environment variables for flexibility between sandbox/live
-# Set STRIPE_MONTHLY_PRICE_ID and STRIPE_ANNUAL_PRICE_ID in secrets for each environment
-MONTHLY_PRICE_ID = os.getenv('STRIPE_MONTHLY_PRICE_ID', 'price_1Sd7RX8PGiRAuUvfzibxCNLV')
-ANNUAL_PRICE_ID = os.getenv('STRIPE_ANNUAL_PRICE_ID', 'price_1SeSbY8PGiRAuUvf0xjZmMXK')
+SUBSCRIPTION_CACHE_TTL = timedelta(seconds=30)
 
-SUBSCRIPTION_CACHE_TTL = timedelta(minutes=5)
-SUBSCRIPTION_STALE_TTL = timedelta(hours=1)
 
 def get_api_headers():
-    """Get headers for authenticated API calls to payments service"""
+    """Get headers for authenticated API calls to payments service (for webhook/token operations)"""
     return {'X-API-Secret': PAYMENTS_API_SECRET, 'Content-Type': 'application/json'}
 
+
 def check_subscription_status(educator_id):
-    """Check if educator has an active subscription (with fast cache and stale fallback)"""
+    """Check if educator has an active subscription (with short cache for responsiveness)"""
     cache_key = f'subscription_cache_{educator_id}'
     cache_time_key = f'subscription_cache_time_{educator_id}'
     
@@ -31,39 +29,13 @@ def check_subscription_status(educator_id):
     if cached_data and cached_time:
         age = datetime.now() - cached_time
         if age < SUBSCRIPTION_CACHE_TTL:
-            print(f"[SUB CHECK] Using cached data for educator {educator_id}: {cached_data}")
             return cached_data
     
-    try:
-        url = f"{PAYMENTS_SERVICE_URL}/api/subscription-status/{educator_id}"
-        headers = get_api_headers()
-        print(f"[SUB CHECK] Calling API: {url}")
-        print(f"[SUB CHECK] API Secret present: {bool(PAYMENTS_API_SECRET)}")
-        
-        response = requests.get(url, headers=headers, timeout=5)
-        print(f"[SUB CHECK] Response status: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"[SUB CHECK] Response data: {data}")
-            if data.get('success'):
-                result = data.get('data', {})
-                st.session_state[cache_key] = result
-                st.session_state[cache_time_key] = datetime.now()
-                return result
-        else:
-            print(f"[SUB CHECK] Non-200 response: {response.text}")
-        result = {'isActive': False, 'status': 'none'}
-        st.session_state[cache_key] = result
-        st.session_state[cache_time_key] = datetime.now()
-        return result
-    except Exception as e:
-        print(f"[SUB CHECK] Error checking subscription: {e}")
-        if cached_data and cached_time:
-            age = datetime.now() - cached_time
-            if age < SUBSCRIPTION_STALE_TTL:
-                return cached_data
-        return {'isActive': False, 'status': 'error'}
+    result = stripe_client.get_subscription_from_db(educator_id)
+    st.session_state[cache_key] = result
+    st.session_state[cache_time_key] = datetime.now()
+    print(f"[SUB CHECK] educator_id={educator_id}, result={result}")
+    return result
 
 def invalidate_subscription_cache(educator_id=None):
     """Invalidate subscription cache after payment or subscription changes"""
@@ -75,106 +47,38 @@ def invalidate_subscription_cache(educator_id=None):
         if cache_time_key in st.session_state:
             del st.session_state[cache_time_key]
 
-def sync_subscription_from_stripe(email):
-    """Sync subscription directly from Stripe - fallback when webhook fails"""
-    try:
-        response = requests.post(
-            f"{PAYMENTS_SERVICE_URL}/api/admin/sync-by-email",
-            json={'email': email},
-            headers=get_api_headers(),
-            timeout=10
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                print(f"Synced subscription from Stripe for {email}: {data.get('data')}")
-                return data.get('data')
-        print(f"Sync from Stripe failed: {response.status_code} - {response.text}")
-        return None
-    except Exception as e:
-        print(f"Error syncing from Stripe: {e}")
-        return None
+def sync_subscription_from_stripe(user_id, email):
+    """Sync subscription directly from Stripe to database"""
+    result = stripe_client.sync_subscription_to_db(user_id, email)
+    if result.get('isActive'):
+        invalidate_subscription_cache(user_id)
+    return result
 
-def create_checkout_session(price_id, educator_id, email):
-    """Create a Stripe checkout session"""
-    try:
-        print(f"Creating checkout: priceId={price_id}, educatorId={educator_id}, email={email}")
-        response = requests.post(
-            f"{PAYMENTS_SERVICE_URL}/api/create-checkout-session",
-            json={'priceId': price_id, 'educatorId': educator_id, 'email': email},
-            headers=get_api_headers(),
-            timeout=10
-        )
-        print(f"Checkout response status: {response.status_code}")
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                return data.get('url')
-            else:
-                print(f"Checkout failed: {data.get('error')}")
-                return None
-        else:
-            print(f"Checkout request failed: {response.status_code} - {response.text}")
-            return None
-    except Exception as e:
-        print(f"Error creating checkout session: {e}")
-        return None
+
+def create_checkout_url(educator_id, email, plan='monthly'):
+    """Create a Stripe checkout session and return URL"""
+    return stripe_client.create_checkout_session(educator_id, email, plan)
+
 
 def create_portal_session(educator_id):
     """Create a Stripe billing portal session"""
-    try:
-        response = requests.post(
-            f"{PAYMENTS_SERVICE_URL}/api/create-portal-session",
-            json={'educatorId': educator_id},
-            headers=get_api_headers(),
-            timeout=10
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                return data.get('url')
-        return None
-    except Exception as e:
-        print(f"Error creating portal session: {e}")
-        return None
+    return stripe_client.create_portal_session(educator_id)
+
 
 def cancel_subscription(educator_id):
     """Cancel subscription at the end of the billing period"""
-    try:
-        response = requests.post(
-            f"{PAYMENTS_SERVICE_URL}/api/subscription/cancel",
-            json={'educatorId': educator_id},
-            headers=get_api_headers(),
-            timeout=10
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                invalidate_subscription_cache(educator_id)
-                return data.get('data', {})
-        return None
-    except Exception as e:
-        print(f"Error cancelling subscription: {e}")
-        return None
+    result = stripe_client.cancel_subscription(educator_id)
+    if result:
+        invalidate_subscription_cache(educator_id)
+    return result
+
 
 def reactivate_subscription(educator_id):
     """Reactivate a subscription that was set to cancel"""
-    try:
-        response = requests.post(
-            f"{PAYMENTS_SERVICE_URL}/api/subscription/reactivate",
-            json={'educatorId': educator_id},
-            headers=get_api_headers(),
-            timeout=10
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                invalidate_subscription_cache(educator_id)
-                return data.get('data', {})
-        return None
-    except Exception as e:
-        print(f"Error reactivating subscription: {e}")
-        return None
+    result = stripe_client.reactivate_subscription(educator_id)
+    if result:
+        invalidate_subscription_cache(educator_id)
+    return result
 
 def validate_signup_token(token):
     """Validate a signup token from the marketing site payment flow"""
@@ -220,9 +124,9 @@ def show_pricing_page():
     
     if st.button("🔄 Refresh Subscription Status", key="refresh_sub_btn"):
         invalidate_subscription_cache(educator_id)
-        if user_email:
-            sync_result = sync_subscription_from_stripe(user_email)
-            if sync_result and sync_result.get('status') == 'active':
+        if user_email and educator_id:
+            sync_result = sync_subscription_from_stripe(educator_id, user_email)
+            if sync_result and sync_result.get('isActive'):
                 st.success("Subscription found! Refreshing...")
                 st.rerun()
             else:
@@ -311,7 +215,7 @@ def show_pricing_page():
         
         if st.button("Start Free Trial", key="monthly_btn", use_container_width=True, type="primary"):
             with st.spinner("Preparing checkout..."):
-                checkout_url = create_checkout_session(MONTHLY_PRICE_ID, educator_id, email)
+                checkout_url = create_checkout_url(educator_id, email, 'monthly')
                 if checkout_url:
                     st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
                     st.info("Redirecting to secure checkout...")
@@ -330,7 +234,7 @@ def show_pricing_page():
         
         if st.button("Choose Annual", key="annual_btn", use_container_width=True, type="secondary"):
             with st.spinner("Preparing checkout..."):
-                checkout_url = create_checkout_session(ANNUAL_PRICE_ID, educator_id, email)
+                checkout_url = create_checkout_url(educator_id, email, 'annual')
                 if checkout_url:
                     st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
                     st.info("Redirecting to secure checkout...")
@@ -525,6 +429,11 @@ def login_page():
                             # Clear any existing auth_mode to ensure clean state
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
+                            
+                            # Sync subscription from Stripe on login (ensures up-to-date status)
+                            sync_subscription_from_stripe(user.id, user.email)
+                            invalidate_subscription_cache(user.id)
+                            
                             st.success(f"Welcome back, {user.full_name}!")
                             st.rerun()
                         else:
@@ -759,7 +668,7 @@ def logout():
     st.rerun()
 
 def show_user_info():
-    """Display current user information"""
+    """Display current user information with subscription status"""
     if st.session_state.get('authenticated'):
         if st.session_state.get('is_student'):
             st.sidebar.markdown(f"**Student:** {st.session_state.user_name}")
@@ -767,8 +676,20 @@ def show_user_info():
             if st.session_state.get('age_group'):
                 st.sidebar.markdown(f"**Age Group:** {st.session_state.age_group}")
         else:
-            st.sidebar.markdown(f"**{st.session_state.user_type.title()}:** {st.session_state.user_name}")
+            st.sidebar.markdown(f"**Educator:** {st.session_state.user_name}")
             st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
+            
+            educator_id = st.session_state.get('user_id')
+            if educator_id:
+                sub_info = check_subscription_status(educator_id)
+                if sub_info.get('isActive'):
+                    plan = sub_info.get('plan', 'monthly').capitalize()
+                    if sub_info.get('cancelAtPeriodEnd'):
+                        st.sidebar.markdown(f"**Plan:** {plan} ⚠️ *Ending soon*")
+                    else:
+                        st.sidebar.markdown(f"**Plan:** {plan} ✅")
+                else:
+                    st.sidebar.markdown("**Plan:** None ❌")
         
         if st.sidebar.button("🚪 Logout"):
             logout()
