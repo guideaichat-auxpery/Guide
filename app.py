@@ -154,6 +154,26 @@ st.markdown(load_css('static/css/montessori-theme.css'), unsafe_allow_html=True)
 # Load Danish eco theme for educator dashboard cards
 st.markdown(load_css('static/css/danish-eco-theme.css'), unsafe_allow_html=True)
 
+# Load mobile-responsive styles
+st.markdown(load_css('static/css/mobile-responsive.css'), unsafe_allow_html=True)
+
+# Dark mode support - inject dark mode CSS and body class when enabled
+if st.session_state.get('dark_mode', False):
+    st.markdown(load_css('static/css/dark-mode.css'), unsafe_allow_html=True)
+    st.markdown("""
+    <script>
+    document.body.classList.add('dark-mode');
+    if(document.querySelector('.stApp')) document.querySelector('.stApp').classList.add('dark-mode');
+    </script>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <script>
+    document.body.classList.remove('dark-mode');
+    if(document.querySelector('.stApp')) document.querySelector('.stApp').classList.remove('dark-mode');
+    </script>
+    """, unsafe_allow_html=True)
+
 # Additional custom CSS for specific components
 st.markdown("""
 <style>

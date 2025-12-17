@@ -1,0 +1,141 @@
+/* Dark Mode Theme for Guide - Montessori-inspired dark palette */
+
+body.dark-mode,
+.dark-mode .stApp {
+  /* Dark Montessori Color Palette */
+  --color-sand: #2a2520;
+  --color-clay: #3d3630;
+  --color-sky: #1e2d2a;
+  --color-leaf: #5a8a5a;
+  --color-ink: #e8e4dc;
+  --color-soft-rose: #3d2d2d;
+  --color-paper: #1a1816;
+  
+  /* Dark background */
+  background-color: var(--color-paper) !important;
+  color: var(--color-ink) !important;
+}
+
+.dark-mode .stApp {
+  background-color: #1a1816 !important;
+}
+
+/* Main content */
+.dark-mode .main .block-container,
+.dark-mode [data-testid="stAppViewContainer"] {
+  background-color: #1a1816 !important;
+}
+
+/* Sidebar dark mode */
+.dark-mode [data-testid="stSidebar"],
+.dark-mode [data-testid="stSidebar"] > div {
+  background-color: #222018 !important;
+  color: #e8e4dc !important;
+}
+
+/* Text colors */
+.dark-mode h1, .dark-mode h2, .dark-mode h3, 
+.dark-mode h4, .dark-mode h5, .dark-mode h6,
+.dark-mode p, .dark-mode span, .dark-mode div,
+.dark-mode label, .dark-mode .stMarkdown {
+  color: #e8e4dc !important;
+}
+
+/* Headers specific */
+.dark-mode .main-header,
+.dark-mode .main-byline,
+.dark-mode .subtitle {
+  color: #e8e4dc !important;
+}
+
+/* Input fields */
+.dark-mode input, 
+.dark-mode textarea,
+.dark-mode [data-testid="stTextInput"] input,
+.dark-mode [data-testid="stTextArea"] textarea {
+  background-color: #2a2520 !important;
+  color: #e8e4dc !important;
+  border-color: #4a4540 !important;
+}
+
+/* Select boxes */
+.dark-mode [data-testid="stSelectbox"] > div,
+.dark-mode [data-baseweb="select"] {
+  background-color: #2a2520 !important;
+}
+
+.dark-mode [data-baseweb="select"] * {
+  color: #e8e4dc !important;
+}
+
+/* Buttons */
+.dark-mode .stButton > button {
+  background-color: #3d5a3d !important;
+  color: #e8e4dc !important;
+  border-color: #5a8a5a !important;
+}
+
+.dark-mode .stButton > button:hover {
+  background-color: #4a6a4a !important;
+  border-color: #6a9a6a !important;
+}
+
+/* Expanders */
+.dark-mode [data-testid="stExpander"],
+.dark-mode .streamlit-expanderHeader {
+  background-color: #2a2520 !important;
+  color: #e8e4dc !important;
+}
+
+/* Chat messages */
+.dark-mode [data-testid="stChatMessage"],
+.dark-mode .stChatMessage {
+  background-color: #2a2520 !important;
+}
+
+/* Cards and containers */
+.dark-mode .welcome-box,
+.dark-mode .metric-card,
+.dark-mode .sticky-card-container {
+  background: linear-gradient(135deg, #2a2520, #1e2d2a) !important;
+  border-color: #4a4540 !important;
+}
+
+/* Tabs */
+.dark-mode [data-testid="stTabs"] [data-baseweb="tab-list"] {
+  background-color: #2a2520 !important;
+}
+
+.dark-mode [data-testid="stTabs"] button {
+  color: #e8e4dc !important;
+}
+
+/* Markdown content */
+.dark-mode .stMarkdown a {
+  color: #7aaa7a !important;
+}
+
+/* Info boxes */
+.dark-mode .stAlert {
+  background-color: #2a2520 !important;
+  border-color: #4a4540 !important;
+}
+
+/* Tables */
+.dark-mode table,
+.dark-mode th,
+.dark-mode td {
+  background-color: #2a2520 !important;
+  color: #e8e4dc !important;
+  border-color: #4a4540 !important;
+}
+
+/* Dividers */
+.dark-mode hr {
+  border-color: #4a4540 !important;
+}
+
+/* Plotly charts - light background for readability */
+.dark-mode .js-plotly-plot .plotly {
+  background-color: #2a2520 !important;
+}

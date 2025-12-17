@@ -3,6 +3,7 @@ from database import get_db, create_user, authenticate_user, authenticate_studen
 import re
 import os
 import requests
+import json
 from datetime import datetime, timedelta
 
 import stripe_client
@@ -667,6 +668,168 @@ def logout():
     st.success("You have been logged out successfully!")
     st.rerun()
 
+
+def export_user_data_gdpr():
+    """
+    Export all user data in GDPR-compliant JSON format.
+    Excludes sensitive fields like password hashes and internal IDs.
+    """
+    from database import (User, Student, LessonPlan, GreatStory, PlanningNote,
+                          ChatConversation, ConversationHistory, EducatorAnalytics,
+                          StudentActivity, EducatorAuditLog)
+    
+    db = get_db()
+    if not db:
+        return None
+    
+    try:
+        export_data = {
+            "export_date": datetime.now().isoformat(),
+            "export_type": "GDPR Data Export",
+            "data_controller": "Guide by AUXPERY"
+        }
+        
+        if st.session_state.get('is_student'):
+            student_id = st.session_state.get('user_id')
+            student = db.query(Student).filter(Student.id == student_id).first()
+            
+            if student:
+                export_data["profile"] = {
+                    "username": student.username,
+                    "full_name": student.full_name,
+                    "age_group": student.age_group,
+                    "account_created": student.created_at.isoformat() if student.created_at else None,
+                    "is_active": student.is_active
+                }
+                
+                activities = db.query(StudentActivity).filter(
+                    StudentActivity.student_id == student_id
+                ).order_by(StudentActivity.created_at.desc()).all()
+                
+                export_data["activities"] = [{
+                    "type": a.activity_type,
+                    "prompt": a.prompt_text,
+                    "response": a.response_text,
+                    "session_id": a.session_id,
+                    "created_at": a.created_at.isoformat() if a.created_at else None
+                } for a in activities]
+                
+                conversations = db.query(ChatConversation).filter(
+                    ChatConversation.student_id == student_id
+                ).all()
+                
+                export_data["conversations"] = []
+                for conv in conversations:
+                    messages = db.query(ConversationHistory).filter(
+                        ConversationHistory.session_id == conv.session_id
+                    ).order_by(ConversationHistory.created_at).all()
+                    
+                    export_data["conversations"].append({
+                        "title": conv.title,
+                        "subject": conv.subject_tag,
+                        "created_at": conv.created_at.isoformat() if conv.created_at else None,
+                        "messages": [{
+                            "role": m.role,
+                            "content": m.content,
+                            "created_at": m.created_at.isoformat() if m.created_at else None
+                        } for m in messages]
+                    })
+        else:
+            user_id = st.session_state.get('user_id')
+            user = db.query(User).filter(User.id == user_id).first()
+            
+            if user:
+                export_data["profile"] = {
+                    "email": user.email,
+                    "full_name": user.full_name,
+                    "user_type": user.user_type,
+                    "institution": user.institution_name,
+                    "account_created": user.created_at.isoformat() if user.created_at else None,
+                    "is_active": user.is_active
+                }
+                
+                lesson_plans = db.query(LessonPlan).filter(
+                    LessonPlan.creator_id == user_id
+                ).all()
+                
+                export_data["lesson_plans"] = [{
+                    "title": lp.title,
+                    "description": lp.description,
+                    "content": lp.content,
+                    "curriculum_codes": lp.australian_curriculum_codes,
+                    "montessori_principles": lp.montessori_principles,
+                    "age_group": lp.age_group,
+                    "created_at": lp.created_at.isoformat() if lp.created_at else None,
+                    "updated_at": lp.updated_at.isoformat() if lp.updated_at else None
+                } for lp in lesson_plans]
+                
+                stories = db.query(GreatStory).filter(
+                    GreatStory.educator_id == user_id
+                ).all()
+                
+                export_data["great_stories"] = [{
+                    "title": s.title,
+                    "theme": s.theme,
+                    "content": s.content,
+                    "age_group": s.age_group,
+                    "keywords": s.keywords,
+                    "created_at": s.created_at.isoformat() if s.created_at else None
+                } for s in stories]
+                
+                notes = db.query(PlanningNote).filter(
+                    PlanningNote.educator_id == user_id
+                ).all()
+                
+                export_data["planning_notes"] = [{
+                    "title": n.title,
+                    "content": n.content,
+                    "chapters": n.chapters,
+                    "materials": n.materials,
+                    "created_at": n.created_at.isoformat() if n.created_at else None
+                } for n in notes]
+                
+                conversations = db.query(ChatConversation).filter(
+                    ChatConversation.user_id == user_id
+                ).all()
+                
+                export_data["conversations"] = []
+                for conv in conversations:
+                    messages = db.query(ConversationHistory).filter(
+                        ConversationHistory.session_id == conv.session_id
+                    ).order_by(ConversationHistory.created_at).all()
+                    
+                    export_data["conversations"].append({
+                        "title": conv.title,
+                        "interface_type": conv.interface_type,
+                        "created_at": conv.created_at.isoformat() if conv.created_at else None,
+                        "messages": [{
+                            "role": m.role,
+                            "content": m.content,
+                            "created_at": m.created_at.isoformat() if m.created_at else None
+                        } for m in messages]
+                    })
+                
+                analytics = db.query(EducatorAnalytics).filter(
+                    EducatorAnalytics.user_id == user_id
+                ).order_by(EducatorAnalytics.created_at.desc()).limit(500).all()
+                
+                export_data["usage_analytics"] = [{
+                    "interface_type": a.interface_type,
+                    "subject": a.subject,
+                    "year_level": a.year_level,
+                    "prompt": a.prompt_text,
+                    "tokens_used": a.tokens_used,
+                    "created_at": a.created_at.isoformat() if a.created_at else None
+                } for a in analytics]
+        
+        return json.dumps(export_data, indent=2, ensure_ascii=False)
+    
+    except Exception as e:
+        print(f"[GDPR EXPORT ERROR] {e}")
+        return None
+    finally:
+        db.close()
+
 def show_user_info():
     """Display current user information with subscription status"""
     if st.session_state.get('authenticated'):
@@ -691,5 +854,32 @@ def show_user_info():
                 else:
                     st.sidebar.markdown("**Plan:** None ❌")
         
-        if st.sidebar.button("🚪 Logout"):
-            logout()
+        st.sidebar.divider()
+        
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            if st.button("🚪 Logout", key="logout_btn"):
+                logout()
+        with col2:
+            dark_mode = st.session_state.get('dark_mode', False)
+            if st.button("🌙" if not dark_mode else "☀️", key="theme_toggle", help="Toggle dark/light mode"):
+                st.session_state.dark_mode = not dark_mode
+                st.rerun()
+        
+        with st.sidebar.expander("⬇️ Download My Data"):
+            st.markdown("*Export all your data in JSON format (GDPR compliant)*")
+            if st.button("Generate Export", key="gdpr_export_btn"):
+                with st.spinner("Preparing your data export..."):
+                    export_json = export_user_data_gdpr()
+                    if export_json:
+                        user_type = "student" if st.session_state.get('is_student') else "educator"
+                        filename = f"guide_data_export_{user_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                        st.download_button(
+                            label="📥 Download JSON",
+                            data=export_json,
+                            file_name=filename,
+                            mime="application/json",
+                            key="download_gdpr_data"
+                        )
+                    else:
+                        st.error("Could not generate export. Please try again.")
