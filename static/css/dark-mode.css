@@ -139,3 +139,46 @@ body.dark-mode,
 .dark-mode .js-plotly-plot .plotly {
   background-color: #2a2520 !important;
 }
+
+/* Download button */
+.dark-mode .stDownloadButton > button {
+  background-color: #3d5a3d !important;
+  color: #e8e4dc !important;
+  border-color: #5a8a5a !important;
+}
+
+.dark-mode .stDownloadButton > button:hover {
+  background-color: #4a6a4a !important;
+}
+
+/* Expander content */
+.dark-mode [data-testid="stExpander"] > div {
+  background-color: #222018 !important;
+}
+
+/* Spinner/loading */
+.dark-mode .stSpinner > div {
+  color: #e8e4dc !important;
+}
+
+/* Toast messages */
+.dark-mode [data-testid="stToast"] {
+  background-color: #2a2520 !important;
+  color: #e8e4dc !important;
+}
+
+/* Metric cards */
+.dark-mode [data-testid="stMetric"] {
+  background-color: #2a2520 !important;
+}
+
+.dark-mode [data-testid="stMetric"] label,
+.dark-mode [data-testid="stMetric"] div {
+  color: #e8e4dc !important;
+}
+
+/* Form submit buttons */
+.dark-mode [data-testid="stFormSubmitButton"] > button {
+  background-color: #3d5a3d !important;
+  color: #e8e4dc !important;
+}

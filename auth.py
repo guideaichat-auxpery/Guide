@@ -856,30 +856,49 @@ def show_user_info():
         
         st.sidebar.divider()
         
+        dark_mode = st.session_state.get('dark_mode', False)
+        theme_label = "☀️ Light Mode" if dark_mode else "🌙 Dark Mode"
+        
         col1, col2 = st.sidebar.columns(2)
         with col1:
-            if st.button("🚪 Logout", key="logout_btn"):
+            if st.button("🚪 Logout", key="logout_btn", use_container_width=True):
                 logout()
         with col2:
-            dark_mode = st.session_state.get('dark_mode', False)
-            if st.button("🌙" if not dark_mode else "☀️", key="theme_toggle", help="Toggle dark/light mode"):
+            if st.button(theme_label, key="theme_toggle", use_container_width=True):
                 st.session_state.dark_mode = not dark_mode
                 st.rerun()
         
         with st.sidebar.expander("⬇️ Download My Data"):
             st.markdown("*Export all your data in JSON format (GDPR compliant)*")
-            if st.button("Generate Export", key="gdpr_export_btn"):
-                with st.spinner("Preparing your data export..."):
-                    export_json = export_user_data_gdpr()
-                    if export_json:
-                        user_type = "student" if st.session_state.get('is_student') else "educator"
-                        filename = f"guide_data_export_{user_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                        st.download_button(
-                            label="📥 Download JSON",
-                            data=export_json,
-                            file_name=filename,
-                            mime="application/json",
-                            key="download_gdpr_data"
-                        )
-                    else:
-                        st.error("Could not generate export. Please try again.")
+            
+            if 'gdpr_export_ready' not in st.session_state:
+                st.session_state.gdpr_export_ready = False
+                st.session_state.gdpr_export_data = None
+            
+            if not st.session_state.gdpr_export_ready:
+                if st.button("📦 Prepare Export", key="gdpr_prepare_btn", use_container_width=True):
+                    with st.spinner("Gathering your data..."):
+                        export_json = export_user_data_gdpr()
+                        if export_json:
+                            st.session_state.gdpr_export_data = export_json
+                            st.session_state.gdpr_export_ready = True
+                            st.rerun()
+                        else:
+                            st.error("Could not prepare export. Please try again.")
+            else:
+                user_type = "student" if st.session_state.get('is_student') else "educator"
+                filename = f"guide_data_export_{user_type}_{datetime.now().strftime('%Y%m%d')}.json"
+                
+                st.download_button(
+                    label="📥 Download My Data",
+                    data=st.session_state.gdpr_export_data,
+                    file_name=filename,
+                    mime="application/json",
+                    key="download_gdpr_data",
+                    use_container_width=True
+                )
+                st.caption("✅ Export ready!")
+                if st.button("🔄 Refresh Export", key="gdpr_refresh_btn", use_container_width=True):
+                    st.session_state.gdpr_export_ready = False
+                    st.session_state.gdpr_export_data = None
+                    st.rerun()
