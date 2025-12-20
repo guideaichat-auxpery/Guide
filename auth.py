@@ -441,7 +441,7 @@ def login_page():
                             if stripe_status == 'error':
                                 # Stripe failed - ALWAYS grant grace access (benefit of the doubt)
                                 print(f"[AUTH] Stripe check failed for {user.email}, granting GRACE ACCESS")
-                                db_result = stripe_client.get_subscription_from_db(user.id)
+                                db_result = stripe_client.get_subscription_from_db(int(user.id))
                                 plan = db_result.get('plan')
                                 
                                 # CRITICAL: On Stripe error, ALWAYS grant access temporarily
