@@ -931,19 +931,23 @@ def show_user_info():
                         else:
                             st.error("Could not prepare export. Please try again.")
             else:
-                user_type = "student" if st.session_state.get('is_student') else "educator"
-                filename = f"guide_data_export_{user_type}_{datetime.now().strftime('%Y%m%d')}.json"
-                
-                st.download_button(
-                    label="📥 Download My Data",
-                    data=st.session_state.gdpr_export_data,
-                    file_name=filename,
-                    mime="application/json",
-                    key="download_gdpr_data",
-                    use_container_width=True
-                )
-                st.caption("✅ Export ready!")
-                if st.button("🔄 Refresh Export", key="gdpr_refresh_btn", use_container_width=True):
-                    st.session_state.gdpr_export_ready = False
-                    st.session_state.gdpr_export_data = None
-                    st.rerun()
+                export_data = st.session_state.get('gdpr_export_data')
+                if export_data:
+                    user_type = "student" if st.session_state.get('is_student') else "educator"
+                    filename = f"guide_data_export_{user_type}_{datetime.now().strftime('%Y%m%d')}.json"
+                    
+                    st.download_button(
+                        label="📥 Download My Data",
+                        data=export_data,
+                        file_name=filename,
+                        mime="application/json",
+                        key="download_gdpr_data",
+                        use_container_width=True
+                    )
+                    st.caption("✅ Export ready!")
+                    if st.button("🔄 Refresh Export", key="gdpr_refresh_btn", use_container_width=True):
+                        st.session_state.gdpr_export_ready = False
+                        st.session_state.gdpr_export_data = None
+                        st.rerun()
+                else:
+                    st.error("Export data not available. Please prepare again.")
