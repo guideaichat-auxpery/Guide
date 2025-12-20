@@ -308,11 +308,55 @@ else:
     if is_student is False:
         # Educator interface
         
-        # Check subscription status (synced on login, cached for 30 seconds)
+        # FAILPROOF SUBSCRIPTION CHECK
+        # Trust session state verified at login (Stripe was checked directly)
+        # This eliminates webhook dependency and DB sync issues
         educator_id = st.session_state.get('user_id')
-        subscription_info = check_subscription_status(educator_id)
-        has_active_subscription = subscription_info.get('isActive', False)
-        subscription_status = subscription_info.get('status', 'none')
+        
+        if st.session_state.get('subscription_verified'):
+            # Session already verified with Stripe - trust it completely
+            has_active_subscription = st.session_state.get('subscription_active', False)
+            subscription_status = st.session_state.get('subscription_status', 'none')
+        else:
+            # Not verified yet or Stripe was unavailable - try Stripe again
+            from auth import sync_subscription_from_stripe
+            import stripe_client
+            user_email = st.session_state.get('user_email')
+            
+            if user_email and educator_id:
+                stripe_result = sync_subscription_from_stripe(educator_id, user_email)
+                stripe_status = stripe_result.get('status', 'none') if stripe_result else 'error'
+                
+                if stripe_status == 'error':
+                    # Stripe failed - ALWAYS grant grace access (benefit of the doubt)
+                    print(f"[PAYWALL] Stripe check failed, granting GRACE ACCESS for educator {educator_id}")
+                    db_result = stripe_client.get_subscription_from_db(educator_id)
+                    plan = db_result.get('plan')
+                    
+                    # CRITICAL: On Stripe error, ALWAYS grant access temporarily
+                    # Better to let a non-subscriber in briefly than lock out a paying user
+                    has_active_subscription = True  # GRACE ACCESS
+                    subscription_status = 'grace'
+                    st.session_state.subscription_active = True
+                    st.session_state.subscription_status = 'grace'
+                    st.session_state.subscription_plan = plan or 'grace'
+                    # subscription_verified stays False - will retry on next navigation
+                else:
+                    # Successful Stripe response - authoritative
+                    has_active_subscription = stripe_result.get('isActive', False)
+                    subscription_status = stripe_status
+                    plan = stripe_result.get('plan')
+                    
+                    # Mark as verified - won't retry unless logged out
+                    st.session_state.subscription_verified = True
+                    st.session_state.subscription_active = has_active_subscription
+                    st.session_state.subscription_status = subscription_status
+                    st.session_state.subscription_plan = plan
+            else:
+                # No email in session - use database as last resort
+                subscription_info = check_subscription_status(educator_id)
+                has_active_subscription = subscription_info.get('isActive', False)
+                subscription_status = subscription_info.get('status', 'none')
         
         # If no active subscription, show pricing page (unless accessing account settings)
         if not has_active_subscription and subscription_status not in ['trialing', 'active']:

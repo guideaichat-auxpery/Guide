@@ -431,9 +431,34 @@ def login_page():
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
                             
-                            # Sync subscription from Stripe on login (ensures up-to-date status)
-                            sync_subscription_from_stripe(user.id, user.email)
+                            # FAILPROOF: Check Stripe directly at login, with graceful fallback
+                            stripe_result = sync_subscription_from_stripe(user.id, user.email)
                             invalidate_subscription_cache(user.id)
+                            
+                            # Handle Stripe errors gracefully - NEVER block on transient failures
+                            stripe_status = stripe_result.get('status', 'none') if stripe_result else 'error'
+                            
+                            if stripe_status == 'error':
+                                # Stripe failed - ALWAYS grant grace access (benefit of the doubt)
+                                print(f"[AUTH] Stripe check failed for {user.email}, granting GRACE ACCESS")
+                                db_result = stripe_client.get_subscription_from_db(user.id)
+                                plan = db_result.get('plan')
+                                
+                                # CRITICAL: On Stripe error, ALWAYS grant access temporarily
+                                # Better to let a non-subscriber in briefly than lock out a paying user
+                                st.session_state.subscription_verified = False  # Will retry later
+                                st.session_state.subscription_active = True  # GRACE ACCESS
+                                st.session_state.subscription_status = 'grace'  # Flag for UI
+                                st.session_state.subscription_plan = plan or 'grace'
+                            else:
+                                # Successful Stripe response - this is authoritative
+                                is_active = stripe_result.get('isActive', False)
+                                plan = stripe_result.get('plan')
+                                
+                                st.session_state.subscription_verified = True  # Confirmed with Stripe
+                                st.session_state.subscription_active = is_active
+                                st.session_state.subscription_plan = plan
+                                st.session_state.subscription_status = stripe_status
                             
                             st.success(f"Welcome back, {user.full_name}!")
                             st.rerun()
@@ -657,7 +682,9 @@ def logout():
     """Log out current user"""
     # Clear all authentication-related session state
     for key in ['user_id', 'user_type', 'user_name', 'user_email', 'username', 
-                'educator_id', 'age_group', 'authenticated', 'is_student']:
+                'educator_id', 'age_group', 'authenticated', 'is_student',
+                'subscription_verified', 'subscription_active', 'subscription_plan', 
+                'subscription_status', 'gdpr_export_ready', 'gdpr_export_data']:
         if key in st.session_state:
             del st.session_state[key]
     
@@ -842,17 +869,35 @@ def show_user_info():
             st.sidebar.markdown(f"**Educator:** {st.session_state.user_name}")
             st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
             
-            educator_id = st.session_state.get('user_id')
-            if educator_id:
-                sub_info = check_subscription_status(educator_id)
-                if sub_info.get('isActive'):
-                    plan = sub_info.get('plan', 'monthly').capitalize()
-                    if sub_info.get('cancelAtPeriodEnd'):
-                        st.sidebar.markdown(f"**Plan:** {plan} ⚠️ *Ending soon*")
-                    else:
-                        st.sidebar.markdown(f"**Plan:** {plan} ✅")
+            # Use session-verified subscription status (failproof)
+            sub_status = st.session_state.get('subscription_status', 'none')
+            if st.session_state.get('subscription_active'):
+                plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
+                if sub_status == 'grace':
+                    st.sidebar.markdown(f"**Plan:** {plan} ⏳ *Verifying...*")
                 else:
-                    st.sidebar.markdown("**Plan:** None ❌")
+                    st.sidebar.markdown(f"**Plan:** {plan} ✅")
+            else:
+                st.sidebar.markdown("**Plan:** None ❌")
+            
+            # Re-verify button for users who just paid
+            with st.sidebar.expander("🔄 Subscription"):
+                st.caption("If you just subscribed, click below to verify:")
+                if st.button("Verify Subscription", key="verify_sub_btn", use_container_width=True):
+                    educator_id = st.session_state.get('user_id')
+                    user_email = st.session_state.get('user_email')
+                    if educator_id and user_email:
+                        with st.spinner("Checking with Stripe..."):
+                            result = sync_subscription_from_stripe(educator_id, user_email)
+                            if result and result.get('isActive'):
+                                st.session_state.subscription_verified = True
+                                st.session_state.subscription_active = True
+                                st.session_state.subscription_plan = result.get('plan')
+                                st.session_state.subscription_status = result.get('status')
+                                st.success("Subscription verified!")
+                                st.rerun()
+                            else:
+                                st.warning("No active subscription found. If you just paid, please wait a moment and try again.")
         
         st.sidebar.divider()
         
