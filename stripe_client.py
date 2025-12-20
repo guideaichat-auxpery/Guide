@@ -21,23 +21,67 @@ GUIDE_APP_URL = os.getenv('GUIDE_APP_URL', 'https://guide.auxpery.com.au')
 SUBSCRIPTION_CACHE_TTL = timedelta(seconds=30)
 
 
-def get_subscription_from_stripe(email: str) -> dict:
-    """Fetch subscription status directly from Stripe by email"""
+def get_subscription_from_stripe(email: str, user_id: int = None) -> dict:
+    """Fetch subscription status directly from Stripe.
+    
+    IMPORTANT: Uses stored customer ID first to avoid wrong-customer bug.
+    Only falls back to email search if no customer ID is stored.
+    """
     if not STRIPE_SECRET_KEY:
         print("[STRIPE] No API key configured")
         return {'isActive': False, 'status': 'error', 'error': 'Stripe not configured'}
     
     try:
-        customers = stripe.Customer.list(email=email, limit=1)
-        if not customers.data:
-            print(f"[STRIPE] No customer found for {email}")
-            return {'isActive': False, 'status': 'none'}
+        customer = None
+        stored_customer_id = None
         
-        customer = customers.data[0]
+        # FIRST: Try to get stored customer ID from database (prevents wrong-customer bug)
+        if user_id:
+            db = get_db()
+            if db:
+                try:
+                    result = db.execute(
+                        text("SELECT stripe_customer_id FROM users WHERE id = :user_id"),
+                        {'user_id': user_id}
+                    ).fetchone()
+                    stored_customer_id = result[0] if result and result[0] else None
+                finally:
+                    db.close()
+        
+        # Use stored customer ID if available
+        if stored_customer_id:
+            try:
+                customer = stripe.Customer.retrieve(stored_customer_id)
+                print(f"[STRIPE] Using stored customer ID: {stored_customer_id}")
+            except Exception as e:
+                print(f"[STRIPE] Stored customer ID invalid, falling back to email: {e}")
+                customer = None
+        
+        # FALLBACK: Search by email if no stored ID
+        if not customer:
+            customers = stripe.Customer.list(email=email, limit=10)  # Get more to check for subscriptions
+            if not customers.data:
+                print(f"[STRIPE] No customer found for {email}")
+                return {'isActive': False, 'status': 'none'}
+            
+            # Check ALL customers for this email to find one with subscription
+            for c in customers.data:
+                subs = stripe.Subscription.list(customer=c.id, limit=1)
+                if subs.data:
+                    customer = c
+                    print(f"[STRIPE] Found customer with subscription: {c.id}")
+                    break
+            
+            # If no customer has subscription, use the first one
+            if not customer:
+                customer = customers.data[0]
+                print(f"[STRIPE] No subscription found, using first customer: {customer.id}")
+        
+        # Now check for subscriptions on the selected customer
         subscriptions = stripe.Subscription.list(customer=customer.id, limit=1)
         
         if not subscriptions.data:
-            print(f"[STRIPE] No subscription found for {email}")
+            print(f"[STRIPE] No subscription found for customer {customer.id}")
             return {'isActive': False, 'status': 'none', 'customerId': customer.id}
         
         sub = subscriptions.data[0]
@@ -70,7 +114,7 @@ def get_subscription_from_stripe(email: str) -> dict:
 
 def sync_subscription_to_db(user_id: int, email: str) -> dict:
     """Sync subscription from Stripe to database and return status"""
-    stripe_data = get_subscription_from_stripe(email)
+    stripe_data = get_subscription_from_stripe(email, user_id=user_id)
     
     if stripe_data.get('status') == 'error':
         return stripe_data
