@@ -28,14 +28,19 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - Automatic conversation restoration on login, visual save confirmations.
 - **Subscription & Payments (December 2025)**:
   - **Simplified Stripe Architecture (December 2025)**: Direct Python Stripe SDK (`stripe_client.py`) for all user-facing operations (checkout, portal, subscription sync). Node.js payments service (port 3001) now only handles webhooks and marketing site token verification.
-  - **Subscription Sync on Login**: Educator login triggers direct Stripe API sync, ensuring subscription status is always fresh
-  - **Short Cache TTL**: 30-second subscription cache to balance performance with freshness
-  - **Visible Status Indicator**: Sidebar shows current subscription plan, status, and last sync time
+  - **Bulletproof Subscription Verification (December 2025)**: Session-based verification with grace access:
+    - At login: Check Stripe directly, store result in session (`subscription_verified`, `subscription_active`, `subscription_plan`, `subscription_status`)
+    - If Stripe succeeds: Mark verified, trust for entire session
+    - If Stripe errors: Grant GRACE ACCESS (subscription_active=True), don't mark verified (auto-retries on next navigation)
+    - This ensures Stripe outages or webhook delays NEVER block paying users
+  - **Grace Access Mode**: When Stripe API is unavailable, users are granted temporary access with "⏳ Verifying..." status indicator
+  - **Manual Re-verify**: "Verify Subscription" button in sidebar expander for users who just subscribed
+  - **Visible Status Indicator**: Sidebar shows current subscription plan with status (✅ verified, ⏳ verifying, ❌ none)
   - **Pricing**: $15/month with 14-day trial OR $150/year (2 months free)
   - **Subscription Gate**: Educators must have active subscription to access app features
   - **Checkout Flow**: Stripe Checkout for secure payment processing (via Python Stripe client)
   - **Billing Portal**: Self-service subscription management via Stripe Customer Portal
-  - **Webhook Handling**: Real-time subscription status updates (created/updated/cancelled) via Node.js service
+  - **Webhook Handling**: Real-time subscription status updates (created/updated/cancelled) via Node.js service (non-blocking)
   - **Database Fields**: stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at, subscription_last_checked on users table
   - **Marketing Site Integration (December 2025)**: Sign-up-first flow where users create account on guide.auxpery.com.au, then pay through pricing page
     - Simple redirect links from www.auxpery.com.au to guide.auxpery.com.au for signup
