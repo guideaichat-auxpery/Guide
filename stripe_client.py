@@ -21,7 +21,7 @@ GUIDE_APP_URL = os.getenv('GUIDE_APP_URL', 'https://guide.auxpery.com.au')
 SUBSCRIPTION_CACHE_TTL = timedelta(seconds=30)
 
 
-def get_subscription_from_stripe(email: str, user_id: int = None) -> dict:
+def get_subscription_from_stripe(email: str, user_id: Optional[int] = None) -> dict:
     """Fetch subscription status directly from Stripe.
     
     IMPORTANT: Uses stored customer ID first to avoid wrong-customer bug.

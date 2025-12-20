@@ -358,8 +358,8 @@ else:
                 has_active_subscription = subscription_info.get('isActive', False)
                 subscription_status = subscription_info.get('status', 'none')
         
-        # If no active subscription, show pricing page (unless accessing account settings)
-        if not has_active_subscription and subscription_status not in ['trialing', 'active']:
+        # If no active subscription, show pricing page (unless accessing account settings or in grace access)
+        if not has_active_subscription and subscription_status not in ['trialing', 'active', 'grace']:
             # Allow access to account settings and logout even without subscription
             if st.session_state.get('auth_mode') not in ['account_deletion', 'privacy_policy']:
                 show_pricing_page()
