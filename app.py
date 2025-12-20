@@ -26,7 +26,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Google Analytics 4 tracking
+# Show loading indicator only on first load
+if 'app_loading_shown' not in st.session_state:
+    st.session_state.app_loading_shown = True
+    placeholder = st.empty()
+    with placeholder.container():
+        st.info("🌱 Loading Guide... initializing your prepared environment", icon="⏳")
+
+# Google Analytics 4 tracking (non-blocking load)
 GA_MEASUREMENT_ID = "G-R7E37XX8KP"
 st.markdown(f"""
     <!-- Google tag (gtag.js) -->
@@ -61,6 +68,9 @@ if not database_available:
 else:
     # Run one-time initialization (tables, migrations) - process-level, not per-session
     initialize_database_once()
+    # Clear loading message after initialization
+    if st.session_state.get('app_loading_shown'):
+        st.session_state.app_loading_shown = True
 
 # Initialize session state
 if 'messages' not in st.session_state:
