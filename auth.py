@@ -313,38 +313,67 @@ def show_account_settings():
     # Admin Tools Section (only visible to admin users)
     if st.session_state.get('is_admin'):
         st.markdown("### 🔧 Admin Tools")
-        with st.expander("User Password Reset", expanded=False):
+        has_lookup_result = st.session_state.get('admin_lookup_result') is not None
+        with st.expander("User Password Reset", expanded=has_lookup_result):
             st.markdown("Look up a user by email and reset their password.")
             lookup_email = st.text_input("User Email to Reset", key="admin_lookup_email", placeholder="user@example.com")
             
-            if lookup_email:
-                db = get_db()
-                if db:
-                    try:
-                        from database import User
-                        user = db.query(User).filter(User.email == lookup_email).first()
-                        if user:
-                            st.success(f"Found user: **{user.full_name}** (ID: {user.id})")
-                            st.info(f"Account created: {user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown'}")
-                            
-                            new_temp_password = st.text_input("New Password for User", type="password", key="admin_new_pwd")
-                            if st.button("Reset User Password", key="admin_reset_btn", type="primary"):
-                                if new_temp_password:
-                                    is_valid, msg = validate_password(new_temp_password)
-                                    if not is_valid:
-                                        st.error(msg)
-                                    else:
-                                        result = admin_reset_password(user.id, new_temp_password)
-                                        if result['success']:
-                                            st.success(f"Password reset for {user.email}. Please send them the new password.")
-                                        else:
-                                            st.error(result['error'])
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                lookup_clicked = st.button("Look Up User", key="admin_lookup_btn")
+            
+            if lookup_clicked:
+                if not lookup_email:
+                    st.warning("Please enter an email address to look up")
+                else:
+                    db = get_db()
+                    if db:
+                        try:
+                            from database import User
+                            user = db.query(User).filter(User.email == lookup_email).first()
+                            if user:
+                                st.session_state['admin_lookup_result'] = {
+                                    'found': True,
+                                    'user_id': user.id,
+                                    'name': user.full_name,
+                                    'email': user.email,
+                                    'created': user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown'
+                                }
+                                st.rerun()
+                            else:
+                                st.session_state['admin_lookup_result'] = {'found': False, 'email': lookup_email}
+                                st.rerun()
+                        finally:
+                            db.close()
+            
+            lookup_result = st.session_state.get('admin_lookup_result')
+            if lookup_result:
+                if lookup_result.get('found'):
+                    st.success(f"Found user: **{lookup_result['name']}** ({lookup_result['email']})")
+                    st.info(f"Account created: {lookup_result['created']}")
+                    
+                    new_temp_password = st.text_input("New Password for User", type="password", key="admin_new_pwd")
+                    if st.button("Reset User Password", key="admin_reset_btn", type="primary"):
+                        if new_temp_password:
+                            is_valid, msg = validate_password(new_temp_password)
+                            if not is_valid:
+                                st.error(msg)
+                            else:
+                                result = admin_reset_password(lookup_result['user_id'], new_temp_password)
+                                if result['success']:
+                                    st.success(f"Password reset for {lookup_result['email']}. Please send them the new password.")
+                                    st.session_state['admin_lookup_result'] = None
+                                    st.rerun()
                                 else:
-                                    st.error("Please enter a new password")
+                                    st.error(result['error'])
                         else:
-                            st.warning("No user found with that email")
-                    finally:
-                        db.close()
+                            st.error("Please enter a new password")
+                else:
+                    searched_email = lookup_result.get('email', 'unknown')
+                    st.error(f"No user found with email: {searched_email}")
+                    if st.button("Clear", key="admin_clear_lookup"):
+                        st.session_state['admin_lookup_result'] = None
+                        st.rerun()
         
         st.markdown("---")
     
