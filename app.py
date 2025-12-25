@@ -26,13 +26,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Show loading indicator only on first load
-if 'app_loading_shown' not in st.session_state:
-    st.session_state.app_loading_shown = True
-    placeholder = st.empty()
-    with placeholder.container():
-        st.info("🌱 Loading Guide... initializing your prepared environment", icon="⏳")
-
 # Google Analytics 4 tracking (non-blocking load)
 GA_MEASUREMENT_ID = "G-R7E37XX8KP"
 st.markdown(f"""
@@ -68,9 +61,6 @@ if not database_available:
 else:
     # Run one-time initialization (tables, migrations) - process-level, not per-session
     initialize_database_once()
-    # Clear loading message after initialization
-    if st.session_state.get('app_loading_shown'):
-        st.session_state.app_loading_shown = True
 
 # Initialize session state
 if 'messages' not in st.session_state:
@@ -323,7 +313,11 @@ else:
         # This eliminates webhook dependency and DB sync issues
         educator_id = st.session_state.get('user_id')
         
-        if st.session_state.get('subscription_verified'):
+        # ADMIN BYPASS: Skip all subscription checks for admin users
+        if st.session_state.get('is_admin'):
+            has_active_subscription = True
+            subscription_status = 'admin'
+        elif st.session_state.get('subscription_verified'):
             # Session already verified with Stripe - trust it completely
             has_active_subscription = st.session_state.get('subscription_active', False)
             subscription_status = st.session_state.get('subscription_status', 'none')
@@ -368,8 +362,8 @@ else:
                 has_active_subscription = subscription_info.get('isActive', False)
                 subscription_status = subscription_info.get('status', 'none')
         
-        # If no active subscription, show pricing page (unless accessing account settings or in grace access)
-        if not has_active_subscription and subscription_status not in ['trialing', 'active', 'grace']:
+        # If no active subscription, show pricing page (unless accessing account settings, admin, or in grace access)
+        if not has_active_subscription and subscription_status not in ['trialing', 'active', 'grace', 'admin']:
             # Allow access to account settings and logout even without subscription
             if st.session_state.get('auth_mode') not in ['account_deletion', 'privacy_policy']:
                 show_pricing_page()

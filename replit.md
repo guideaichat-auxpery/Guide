@@ -18,6 +18,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **Password Security (December 2025)**: Minimum 12 characters with complexity requirements (uppercase, lowercase, number).
   - **Login Rate Limiting (December 2025)**: 5 failed attempts triggers 15-minute account lockout. Tracked in `login_attempts` table.
   - **Guardian Consent (December 2025)**: Mandatory checkbox attestation when creating student accounts with consent record stored (educator ID, timestamp, attestation text).
+  - **Password Management (December 2025)**:
+    - **Change Password**: In Account Settings, users can change their password by entering current password + new password with validation.
+    - **Forgot Password**: Login page displays contact email (guide@auxpery.com.au) for password reset requests.
+    - **Admin Password Reset**: Admin users can look up any user by email and reset their password via Admin Tools section.
+  - **Admin System (December 2025)**:
+    - **Admin Account**: is_admin column on users table, admin@auxpery.com.au account with ADMIN_PASSWORD env var.
+    - **Subscription Bypass**: Admin users skip all Stripe/subscription checks, have full access to all features.
+    - **Admin Tools**: User lookup and password reset functionality in Account Settings (only visible to admins).
 - **Data Privacy & Security (December 2025)**:
   - **PII Sanitization**: All messages sent to OpenAI are sanitized to remove student names, emails, phone numbers, addresses before API calls.
   - **File Upload Security**: Server-side MIME validation, 10MB size limit, and filename sanitization for all uploads.

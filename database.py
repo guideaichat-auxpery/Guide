@@ -112,6 +112,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     institution_name = Column(Text, nullable=True)  # For institution-based sharing
+    is_admin = Column(Boolean, default=False)  # Admin users bypass subscription checks
     
     # Relationship to students they manage (primary educator)
     students = relationship("Student", back_populates="educator")
@@ -373,6 +374,44 @@ def initialize_database_once():
         # Run one-time migrations
         db = SessionLocal()
         try:
+            # Migration: Add is_admin column to users table if not exists
+            try:
+                conn = engine.connect()
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE"))
+                conn.commit()
+                conn.close()
+                logger.info("Added is_admin column to users table (or already exists)")
+            except Exception as e:
+                logger.info(f"is_admin column migration: {str(e)}")
+            
+            # Create admin account if not exists (requires ADMIN_PASSWORD env var)
+            from database import User
+            admin_email = "admin@auxpery.com.au"
+            admin_password = os.getenv('ADMIN_PASSWORD')
+            existing_admin = db.query(User).filter(User.email == admin_email).first()
+            
+            if admin_password:
+                if not existing_admin:
+                    admin_password_hash = bcrypt.hashpw(admin_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    admin_user = User(
+                        email=admin_email,
+                        password_hash=admin_password_hash,
+                        full_name="Admin",
+                        user_type="educator",
+                        is_admin=True,
+                        is_active=True
+                    )
+                    db.add(admin_user)
+                    db.commit()
+                    logger.info(f"Created admin account: {admin_email}")
+                elif existing_admin and not getattr(existing_admin, 'is_admin', False):
+                    # Ensure existing admin has is_admin flag set
+                    existing_admin.is_admin = True
+                    db.commit()
+                    logger.info(f"Updated admin flag for: {admin_email}")
+            else:
+                logger.warning("ADMIN_PASSWORD not set - skipping admin account creation")
+            
             # Migrate legacy chats to General subject
             from database import ChatConversation
             updated = db.query(ChatConversation).filter(

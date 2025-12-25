@@ -283,7 +283,77 @@ def show_account_settings():
     if not educator_id:
         return
     
+    # Change Password Section
+    st.markdown("### Change Password")
+    with st.form("change_password_form"):
+        current_password = st.text_input("Current Password", type="password", key="current_pwd")
+        new_password = st.text_input("New Password (min 12 characters)", type="password", key="new_pwd")
+        confirm_password = st.text_input("Confirm New Password", type="password", key="confirm_pwd")
+        change_pwd_submit = st.form_submit_button("Update Password", use_container_width=True)
+        
+        if change_pwd_submit:
+            if not current_password or not new_password or not confirm_password:
+                st.error("Please fill in all password fields")
+            elif new_password != confirm_password:
+                st.error("New passwords do not match")
+            else:
+                is_valid, msg = validate_password(new_password)
+                if not is_valid:
+                    st.error(msg)
+                else:
+                    # Verify current password and update
+                    result = change_user_password(educator_id, current_password, new_password)
+                    if result['success']:
+                        st.success("Password updated successfully!")
+                    else:
+                        st.error(result['error'])
+    
+    st.markdown("---")
+    
+    # Admin Tools Section (only visible to admin users)
+    if st.session_state.get('is_admin'):
+        st.markdown("### 🔧 Admin Tools")
+        with st.expander("User Password Reset", expanded=False):
+            st.markdown("Look up a user by email and reset their password.")
+            lookup_email = st.text_input("User Email to Reset", key="admin_lookup_email", placeholder="user@example.com")
+            
+            if lookup_email:
+                db = get_db()
+                if db:
+                    try:
+                        from database import User
+                        user = db.query(User).filter(User.email == lookup_email).first()
+                        if user:
+                            st.success(f"Found user: **{user.full_name}** (ID: {user.id})")
+                            st.info(f"Account created: {user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown'}")
+                            
+                            new_temp_password = st.text_input("New Password for User", type="password", key="admin_new_pwd")
+                            if st.button("Reset User Password", key="admin_reset_btn", type="primary"):
+                                if new_temp_password:
+                                    is_valid, msg = validate_password(new_temp_password)
+                                    if not is_valid:
+                                        st.error(msg)
+                                    else:
+                                        result = admin_reset_password(user.id, new_temp_password)
+                                        if result['success']:
+                                            st.success(f"Password reset for {user.email}. Please send them the new password.")
+                                        else:
+                                            st.error(result['error'])
+                                else:
+                                    st.error("Please enter a new password")
+                        else:
+                            st.warning("No user found with that email")
+                    finally:
+                        db.close()
+        
+        st.markdown("---")
+    
     sub_status = check_subscription_status(educator_id)
+    
+    # Admin users don't need subscription display
+    if st.session_state.get('is_admin'):
+        st.info("👑 Admin account - Full access enabled")
+        return
     
     st.markdown("### Subscription")
     
@@ -373,6 +443,58 @@ def validate_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
+def change_user_password(user_id, current_password, new_password):
+    """Change user's password after verifying current password"""
+    import bcrypt
+    db = get_db()
+    if not db:
+        return {'success': False, 'error': 'Database unavailable'}
+    
+    try:
+        from database import User
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {'success': False, 'error': 'User not found'}
+        
+        # Verify current password
+        if not bcrypt.checkpw(current_password.encode('utf-8'), user.password_hash.encode('utf-8')):
+            return {'success': False, 'error': 'Current password is incorrect'}
+        
+        # Hash and update new password
+        new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        user.password_hash = new_hash
+        db.commit()
+        return {'success': True}
+    except Exception as e:
+        db.rollback()
+        return {'success': False, 'error': f'Error updating password: {str(e)}'}
+    finally:
+        db.close()
+
+def admin_reset_password(user_id, new_password):
+    """Admin function to reset a user's password"""
+    import bcrypt
+    db = get_db()
+    if not db:
+        return {'success': False, 'error': 'Database unavailable'}
+    
+    try:
+        from database import User
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {'success': False, 'error': 'User not found'}
+        
+        # Hash and update new password
+        new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        user.password_hash = new_hash
+        db.commit()
+        return {'success': True}
+    except Exception as e:
+        db.rollback()
+        return {'success': False, 'error': f'Error resetting password: {str(e)}'}
+    finally:
+        db.close()
+
 def validate_password(password):
     """Validate password strength - requires 12+ chars with complexity"""
     if len(password) < 12:
@@ -388,6 +510,13 @@ def validate_password(password):
 def login_page():
     """Display login page for educators and students"""
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
+    
+    # Forgot password link
+    st.markdown("""
+    <p style="text-align: center; font-size: 0.9rem; color: #666;">
+        Forgot your password? Contact us at <a href="mailto:guide@auxpery.com.au">guide@auxpery.com.au</a>
+    </p>
+    """, unsafe_allow_html=True)
     
     # Choose login type
     login_type = st.selectbox("I am a:", ["Educator", "Student"])
@@ -427,9 +556,20 @@ def login_page():
                             st.session_state.user_email = user.email
                             st.session_state.authenticated = True
                             st.session_state.is_student = False
+                            # Store admin status for bypassing subscription checks
+                            st.session_state.is_admin = getattr(user, 'is_admin', False)
                             # Clear any existing auth_mode to ensure clean state
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
+                            
+                            # Admin users bypass subscription checks entirely
+                            if st.session_state.is_admin:
+                                st.session_state.subscription_verified = True
+                                st.session_state.subscription_active = True
+                                st.session_state.subscription_status = 'admin'
+                                st.session_state.subscription_plan = 'admin'
+                                st.success(f"Welcome back, {user.full_name}! (Admin)")
+                                st.rerun()
                             
                             # FAILPROOF: Check Stripe directly at login, with graceful fallback
                             stripe_result = sync_subscription_from_stripe(user.id, user.email)
