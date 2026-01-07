@@ -845,35 +845,12 @@ def show_student_interface():
     # Privacy Notice Banner
     st.warning("⚠️ **Privacy Notice:** Do NOT enter personal information (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.", icon="⚠️")
     
-    # Report a Concern Button (Child Safety Feature)
-    with st.expander("🆘 Need to talk to someone?", expanded=False):
-        st.markdown("If you're worried about something or need help, you can send a message to your teacher.")
-        concern_text = st.text_area(
-            "What's on your mind?", 
-            placeholder="Type your concern here... Your teacher will receive this privately.",
-            key="student_concern_report"
-        )
-        if st.button("📨 Send to my teacher", key="submit_concern"):
-            if concern_text and len(concern_text.strip()) > 5:
-                from database import create_student_concern_report
-                db = get_db()
-                if db:
-                    try:
-                        success = create_student_concern_report(db, student_id, concern_text.strip())
-                        if success:
-                            st.success("Your message has been sent to your teacher. They will follow up with you soon.")
-                        else:
-                            st.error("Could not send your message. Please try again or speak to a trusted adult.")
-                    finally:
-                        db.close()
-            else:
-                st.info("Please write a bit more about what's on your mind.")
-    
-    # Create tabs for Research Assistant and Learning Journey
-    research_tab, journey_tab = st.tabs(["💬 Research Assistant", "🗺️ My Learning Journey"])
+    # Create tab for Learning Assistant
+    research_tab, journey_tab, history_tab = st.tabs(["💬 Learning Assistant", "🗺️ My Learning Journey", "📜 Previous Conversations"])
     
     with research_tab:
-        st.markdown("### 📚 What would you like to explore today?")
+        st.markdown("### 🔍 Montessori Learning Assistant")
+        st.markdown("*Explore the universe, ask questions, and discover connections*")
         
         # Initialize student-specific subject selector
         if 'student_subjects' not in st.session_state:
