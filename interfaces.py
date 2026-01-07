@@ -846,7 +846,7 @@ def show_student_interface():
     st.warning("⚠️ **Privacy Notice:** Do NOT enter personal information (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.", icon="⚠️")
     
     # Create tab for Learning Assistant
-    research_tab, journey_tab, history_tab = st.tabs(["💬 Learning Assistant", "🗺️ My Learning Journey", "📜 Previous Conversations"])
+    research_tab, history_tab = st.tabs(["💬 Learning Assistant", "📜 Previous Conversations"])
     
     with research_tab:
         st.markdown("### 🔍 Montessori Learning Assistant")
@@ -1224,127 +1224,6 @@ Keep feedback age-appropriate for {age_group} year olds."""
         # Add scroll to top button
         add_scroll_to_top_button()
     
-    with journey_tab:
-        st.markdown("### 🗺️ Your Learning Journey")
-        
-        if database_available and student_id:
-            from database import get_student_learning_journey
-            from utils import create_learning_journey_map, get_journey_summary_stats
-            
-            db = get_db()
-            if db:
-                try:
-                    journey_data = get_student_learning_journey(db, student_id)
-                    
-                    if journey_data:
-                        # Get summary statistics
-                        stats = get_journey_summary_stats(journey_data)
-                        
-                        # Encouraging introduction with personalised stats
-                        st.markdown("""
-                        <div style="background: linear-gradient(135deg, #f8f6f0 0%, #e8e4d8 100%); 
-                                    padding: 16px 20px; border-radius: 12px; margin-bottom: 20px;
-                                    border-left: 4px solid #5B8A72;">
-                            <p style="margin: 0; color: #4A5568; font-size: 15px; line-height: 1.6;">
-                                <strong>Your learning adventure so far!</strong> Each circle below represents a topic you've explored. 
-                                <span style="color: #5B8A72;">Bigger circles</span> = topics you've returned to often. 
-                                Hover over any topic to learn more.
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Summary metrics in columns
-                        if stats:
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                st.metric(
-                                    label="Topics Explored",
-                                    value=stats['total_topics'],
-                                    help="Unique curriculum topics you've asked about"
-                                )
-                            with col2:
-                                st.metric(
-                                    label="Subject Areas",
-                                    value=stats['subjects_count'],
-                                    help="Different subjects you've touched on"
-                                )
-                            with col3:
-                                if stats['most_explored']:
-                                    st.metric(
-                                        label="Most Explored",
-                                        value=stats['most_explored']['keyword'][:15],
-                                        help=f"You've explored this {stats['most_explored']['count']} times!"
-                                    )
-                                else:
-                                    st.metric(label="Research Chats", value=stats['total_explorations'])
-                        
-                        st.markdown("")
-                        
-                        # Create visualization
-                        fig = create_learning_journey_map(journey_data)
-                        if fig:
-                            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-                        
-                        # Subject breakdown with progress bars
-                        st.markdown("---")
-                        st.markdown("### 📚 Your Subject Exploration")
-                        
-                        # Sort subjects by exploration count
-                        sorted_subjects = sorted(
-                            journey_data.items(), 
-                            key=lambda x: sum(t['count'] for t in x[1]), 
-                            reverse=True
-                        )
-                        
-                        for subject, topics in sorted_subjects:
-                            total_count = sum(t['count'] for t in topics)
-                            topic_names = [t['keyword'] for t in topics[:3]]
-                            preview = ", ".join(topic_names)
-                            if len(topics) > 3:
-                                preview += f" +{len(topics) - 3} more"
-                            
-                            with st.expander(f"**{subject}** — {len(topics)} topics explored"):
-                                st.caption(f"Total explorations: {total_count}")
-                                for topic in topics:
-                                    stars = "⭐" * min(topic['count'], 5)
-                                    st.markdown(f"• **{topic['keyword']}** {stars}")
-                        
-                        # Encouragement for continued exploration
-                        st.markdown("---")
-                        st.info("💡 **Keep exploring!** Ask questions in the Research Assistant tab to discover new topics and watch your journey grow.")
-                    
-                    else:
-                        # Empty state for new students
-                        st.markdown("""
-                        <div style="text-align: center; padding: 40px 20px; background: #f8f6f0; border-radius: 16px; margin: 20px 0;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">🌱</div>
-                            <h3 style="color: #2E4A3E; margin-bottom: 12px;">Your Learning Journey Starts Here</h3>
-                            <p style="color: #6B7280; max-width: 400px; margin: 0 auto; line-height: 1.6;">
-                                As you ask questions and explore topics in the <strong>Research Assistant</strong> tab, 
-                                your personalised journey map will grow to show all the wonderful connections in your learning.
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        st.markdown("")
-                        st.markdown("**Try asking about:**")
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.markdown("🌍 Geography topics")
-                        with col2:
-                            st.markdown("📜 History events")
-                        with col3:
-                            st.markdown("🔬 Science concepts")
-                
-                except Exception as e:
-                    print(f"Error loading learning journey: {str(e)}")
-                    st.error("Unable to load your learning journey. Please try again later.")
-                finally:
-                    db.close()
-        else:
-            st.info("Sign in to see your personalised Learning Journey Map!")
-
-
 def show_student_dashboard_interface():
     """Student observation dashboard for educators"""
     scroll_to_top()
