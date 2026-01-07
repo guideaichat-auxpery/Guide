@@ -3470,14 +3470,15 @@ def get_trending_topics_context(db, limit=3):
 
 def create_learning_journey_map(journey_data, connections=None):
     """
-    Create an interactive Plotly network graph visualization of a student's learning journey.
+    Create an interactive Plotly visualization of a student's learning journey.
+    Redesigned for clarity, visual hierarchy, and meaningful storytelling.
     
     Args:
         journey_data: Dict from get_student_learning_journey() {subject: [{keyword, count, ...}]}
         connections: Optional list of (topic1, topic2, weight) - if None, auto-generates from journey_data
     
     Returns:
-        Plotly figure object for the network graph
+        Plotly figure object for the learning journey visualization
     """
     import plotly.graph_objects as go
     import math
@@ -3485,152 +3486,239 @@ def create_learning_journey_map(journey_data, connections=None):
     if not journey_data:
         return None
     
-    # Auto-generate connections from journey_data if not provided
-    # Connect topics within the same subject (they're related by subject matter)
-    if connections is None:
-        connections = []
-        for subject, topics in journey_data.items():
-            # Connect topics within the same subject
-            for i in range(len(topics)):
-                for j in range(i + 1, len(topics)):
-                    key1 = f"{subject}|{topics[i]['keyword']}"
-                    key2 = f"{subject}|{topics[j]['keyword']}"
-                    # Weight based on combined exploration count
-                    weight = min(topics[i]['count'], topics[j]['count'])
-                    connections.append((key1, key2, weight))
-    
-    # Subject colors (Montessori-inspired earth tones)
+    # Subject colors (Montessori-inspired, warm and distinct)
     subject_colors = {
-        'Geography': '#A7C796',
-        'History': '#C9A7E3',
-        'Science': '#74B3A1',
-        'English': '#E4C29B',
-        'Mathematics': '#8FB8DE',
-        'Art': '#F2A2A2',
-        'Music': '#FFD699',
-        'Technology': '#B8D4E8',
-        'Civics': '#B8A7C7',
-        'Economics': '#D4B896',
-        'Physical Education': '#9ED99E',
-        'Languages': '#F5C7D3'
+        'Geography': '#5B8A72',
+        'History': '#9B7BB8',
+        'Science': '#3D8B7A',
+        'English': '#D4A574',
+        'Mathematics': '#6A9BC3',
+        'Art': '#E07B7B',
+        'Music': '#E8A642',
+        'Technology': '#7BA3C9',
+        'Civics and Citizenship': '#8B7BA8',
+        'Civics': '#8B7BA8',
+        'Economics': '#B89B6A',
+        'Physical Education': '#6AB86A',
+        'Languages': '#D4899B',
+        'HASS (Humanities and Social Sciences)': '#8B7BA8',
+        'HASS': '#8B7BA8'
     }
     
-    # Build nodes and edges
-    nodes = []
-    node_positions = {}
-    node_colors = []
-    node_sizes = []
-    node_texts = []
-    
-    # Position nodes in a circular layout grouped by subject
-    subjects = list(journey_data.keys())
-    num_subjects = len(subjects)
-    
-    node_index = 0
-    for i, subject in enumerate(subjects):
-        # Calculate base angle for this subject's cluster
-        base_angle = (2 * math.pi * i) / max(num_subjects, 1)
-        topics = journey_data[subject]
-        
-        for j, topic in enumerate(topics):
-            # Position topics within subject cluster
-            topic_angle = base_angle + (0.3 * (j - len(topics)/2) / max(len(topics), 1))
-            radius = 1.5 + (0.3 * j)
-            
-            x = radius * math.cos(topic_angle)
-            y = radius * math.sin(topic_angle)
-            
-            key = f"{subject}|{topic['keyword']}"
-            node_positions[key] = (x, y, node_index)
-            
-            nodes.append({
-                'key': key,
-                'keyword': topic['keyword'],
+    # Collect all topics across subjects
+    all_topics = []
+    for subject, topics in journey_data.items():
+        for topic in topics:
+            all_topics.append({
                 'subject': subject,
-                'count': topic['count'],
-                'x': x,
-                'y': y
+                'keyword': topic['keyword'],
+                'count': topic['count']
             })
-            
-            node_colors.append(subject_colors.get(subject, '#888888'))
-            node_sizes.append(15 + min(topic['count'] * 5, 30))  # Size based on frequency
-            node_texts.append(f"<b>{topic['keyword']}</b><br>Subject: {subject}<br>Explored {topic['count']} time(s)")
-            
-            node_index += 1
     
-    # Create edge traces for connections
-    edge_x = []
-    edge_y = []
-    for topic1, topic2, weight in connections:
-        if topic1 in node_positions and topic2 in node_positions:
-            x0, y0, _ = node_positions[topic1]
-            x1, y1, _ = node_positions[topic2]
-            edge_x.extend([x0, x1, None])
-            edge_y.extend([y0, y1, None])
+    if not all_topics:
+        return None
     
-    # Create the figure
+    # Sort subjects by total exploration count for visual priority
+    subject_totals = {}
+    for subject, topics in journey_data.items():
+        subject_totals[subject] = sum(t['count'] for t in topics)
+    sorted_subjects = sorted(subject_totals.keys(), key=lambda s: subject_totals[s], reverse=True)
+    
+    # Create a structured grid layout - subjects as rows, topics as columns
     fig = go.Figure()
     
-    # Add edges (connections between topics)
+    # Position subjects vertically, topics horizontally within each subject
+    y_spacing = 1.0
+    x_spacing = 1.2
+    
+    nodes_x = []
+    nodes_y = []
+    nodes_text = []
+    nodes_colors = []
+    nodes_sizes = []
+    nodes_hover = []
+    
+    # Subject label positions
+    subject_labels_x = []
+    subject_labels_y = []
+    subject_labels_text = []
+    
+    max_topics_in_row = max(len(topics) for topics in journey_data.values()) if journey_data else 1
+    
+    for row_idx, subject in enumerate(sorted_subjects):
+        topics = journey_data[subject]
+        y_pos = -row_idx * y_spacing
+        
+        # Add subject label on the left
+        subject_labels_x.append(-1.5)
+        subject_labels_y.append(y_pos)
+        short_subject = subject.replace('(Humanities and Social Sciences)', '').strip()
+        if len(short_subject) > 15:
+            short_subject = short_subject[:14] + '…'
+        subject_labels_text.append(short_subject)
+        
+        # Position topics in this row
+        num_topics = len(topics)
+        start_x = -(num_topics - 1) * x_spacing / 2
+        
+        for col_idx, topic in enumerate(topics):
+            x_pos = start_x + col_idx * x_spacing
+            
+            nodes_x.append(x_pos)
+            nodes_y.append(y_pos)
+            
+            # Truncate long keywords for display
+            keyword = topic['keyword']
+            display_text = keyword[:18] + '…' if len(keyword) > 18 else keyword
+            nodes_text.append(display_text)
+            
+            color = subject_colors.get(subject, '#888888')
+            nodes_colors.append(color)
+            
+            # Size based on exploration count (meaningful scaling)
+            base_size = 25
+            size = base_size + min(topic['count'] * 8, 35)
+            nodes_sizes.append(size)
+            
+            # Rich hover information
+            hover_text = (
+                f"<b>{keyword}</b><br>"
+                f"<span style='color:{color}'>● {subject}</span><br>"
+                f"Explored <b>{topic['count']}</b> time{'s' if topic['count'] > 1 else ''}"
+            )
+            nodes_hover.append(hover_text)
+    
+    # Draw connections between topics in the same subject (subtle lines)
+    edge_x = []
+    edge_y = []
+    
+    current_idx = 0
+    for subject in sorted_subjects:
+        topics = journey_data[subject]
+        num_topics = len(topics)
+        
+        if num_topics > 1:
+            for i in range(num_topics - 1):
+                idx1 = current_idx + i
+                idx2 = current_idx + i + 1
+                if idx1 < len(nodes_x) and idx2 < len(nodes_x):
+                    edge_x.extend([nodes_x[idx1], nodes_x[idx2], None])
+                    edge_y.extend([nodes_y[idx1], nodes_y[idx2], None])
+        
+        current_idx += num_topics
+    
+    # Add connection lines (subtle, behind nodes)
     if edge_x:
         fig.add_trace(go.Scatter(
             x=edge_x, y=edge_y,
             mode='lines',
-            line=dict(width=1.5, color='rgba(150,150,150,0.4)'),
+            line=dict(width=2, color='rgba(180,180,180,0.3)'),
             hoverinfo='none',
-            name='Connections'
+            showlegend=False
         ))
     
-    # Add nodes (topics)
+    # Add subject labels on the left
     fig.add_trace(go.Scatter(
-        x=[n['x'] for n in nodes],
-        y=[n['y'] for n in nodes],
+        x=subject_labels_x,
+        y=subject_labels_y,
+        mode='text',
+        text=subject_labels_text,
+        textposition='middle left',
+        textfont=dict(size=12, color='#4A5568', family='Arial'),
+        hoverinfo='none',
+        showlegend=False
+    ))
+    
+    # Add topic nodes
+    fig.add_trace(go.Scatter(
+        x=nodes_x,
+        y=nodes_y,
         mode='markers+text',
         marker=dict(
-            size=node_sizes,
-            color=node_colors,
+            size=nodes_sizes,
+            color=nodes_colors,
             line=dict(width=2, color='white'),
             opacity=0.9
         ),
-        text=[n['keyword'][:12] + '...' if len(n['keyword']) > 12 else n['keyword'] for n in nodes],
+        text=nodes_text,
         textposition='bottom center',
-        textfont=dict(size=10, color='#333'),
+        textfont=dict(size=9, color='#4A5568'),
         hoverinfo='text',
-        hovertext=node_texts,
-        name='Topics'
+        hovertext=nodes_hover,
+        showlegend=False
     ))
     
-    # Update layout
+    # Calculate figure dimensions based on content
+    num_rows = len(sorted_subjects)
+    fig_height = max(350, 120 + num_rows * 80)
+    
+    # Calculate x-axis range based on content
+    if nodes_x:
+        x_min = min(nodes_x) - 2
+        x_max = max(nodes_x) + 1
+    else:
+        x_min, x_max = -3, 3
+    
     fig.update_layout(
-        title=dict(
-            text='🗺️ Your Learning Journey',
-            font=dict(size=20, color='#2E4A3E')
-        ),
         showlegend=False,
         hovermode='closest',
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        plot_bgcolor='rgba(250,249,246,0.8)',
+        xaxis=dict(
+            showgrid=False, 
+            zeroline=False, 
+            showticklabels=False,
+            range=[x_min, x_max]
+        ),
+        yaxis=dict(
+            showgrid=False, 
+            zeroline=False, 
+            showticklabels=False,
+            range=[-(num_rows - 0.5) * y_spacing - 0.5, 0.8]
+        ),
+        plot_bgcolor='rgba(250,249,246,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20, r=20, t=60, b=20),
-        height=500
+        margin=dict(l=10, r=10, t=10, b=30),
+        height=fig_height
     )
     
-    # Add subject legend as annotations
-    legend_y = 1.1
-    for i, subject in enumerate(subjects[:6]):  # Show top 6 subjects
-        fig.add_annotation(
-            x=0.02 + (i * 0.16),
-            y=legend_y,
-            xref='paper',
-            yref='paper',
-            text=f"●{subject}",
-            showarrow=False,
-            font=dict(size=10, color=subject_colors.get(subject, '#888888')),
-            xanchor='left'
-        )
-    
     return fig
+
+
+def get_journey_summary_stats(journey_data):
+    """
+    Calculate summary statistics for the learning journey.
+    Returns dict with total_topics, total_explorations, subjects_count, most_explored, etc.
+    """
+    if not journey_data:
+        return None
+    
+    total_topics = sum(len(topics) for topics in journey_data.values())
+    total_explorations = sum(
+        sum(t['count'] for t in topics) 
+        for topics in journey_data.values()
+    )
+    subjects_count = len(journey_data)
+    
+    # Find most explored topic
+    most_explored = None
+    max_count = 0
+    for subject, topics in journey_data.items():
+        for topic in topics:
+            if topic['count'] > max_count:
+                max_count = topic['count']
+                most_explored = {'keyword': topic['keyword'], 'subject': subject, 'count': topic['count']}
+    
+    # Find subject with most topics
+    subject_topic_counts = {s: len(t) for s, t in journey_data.items()}
+    most_active_subject = max(subject_topic_counts, key=subject_topic_counts.get) if subject_topic_counts else None
+    
+    return {
+        'total_topics': total_topics,
+        'total_explorations': total_explorations,
+        'subjects_count': subjects_count,
+        'most_explored': most_explored,
+        'most_active_subject': most_active_subject,
+        'subject_topic_counts': subject_topic_counts
+    }
 
 def get_age_appropriate_lesson_planning_prompt(age_group):
     """
