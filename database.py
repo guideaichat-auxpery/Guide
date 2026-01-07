@@ -384,6 +384,30 @@ def initialize_database_once():
             except Exception as e:
                 logger.info(f"is_admin column migration: {str(e)}")
             
+            # Migration: Create persistent_sessions table for login persistence
+            try:
+                conn = engine.connect()
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS persistent_sessions (
+                        id SERIAL PRIMARY KEY,
+                        token VARCHAR(64) UNIQUE NOT NULL,
+                        user_id INTEGER REFERENCES users(id),
+                        student_id INTEGER REFERENCES students(id),
+                        user_type VARCHAR NOT NULL,
+                        created_at TIMESTAMP DEFAULT NOW(),
+                        expires_at TIMESTAMP NOT NULL,
+                        last_activity TIMESTAMP DEFAULT NOW(),
+                        is_active BOOLEAN DEFAULT TRUE,
+                        user_agent VARCHAR
+                    )
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_persistent_sessions_token ON persistent_sessions(token)"))
+                conn.commit()
+                conn.close()
+                logger.info("Created persistent_sessions table (or already exists)")
+            except Exception as e:
+                logger.info(f"persistent_sessions table migration: {str(e)}")
+            
             # Create admin account if not exists (requires ADMIN_PASSWORD env var)
             from database import User
             admin_email = "admin@auxpery.com.au"
@@ -1982,6 +2006,129 @@ def clear_login_attempts(db, identifier: str):
     except Exception as e:
         print(f"Error clearing login attempts: {str(e)}")
         db.rollback()
+
+
+class PersistentSession(Base):
+    """Store persistent session tokens for login persistence across browser refresh"""
+    __tablename__ = "persistent_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String(64), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)
+    user_type = Column(String, nullable=False)  # 'educator' or 'student'
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    last_activity = Column(DateTime, default=datetime.utcnow, nullable=False)
+    is_active = Column(Boolean, default=True)
+    user_agent = Column(String, nullable=True)
+
+
+def create_persistent_session(db, user_id=None, student_id=None, user_type='educator', 
+                               duration_hours=24, user_agent=None):
+    """Create a new persistent session token for browser persistence.
+    Returns the session token string."""
+    import secrets
+    
+    try:
+        token = secrets.token_urlsafe(48)
+        expires_at = datetime.utcnow() + timedelta(hours=duration_hours)
+        
+        session = PersistentSession(
+            token=token,
+            user_id=user_id,
+            student_id=student_id,
+            user_type=user_type,
+            created_at=datetime.utcnow(),
+            expires_at=expires_at,
+            last_activity=datetime.utcnow(),
+            is_active=True,
+            user_agent=user_agent
+        )
+        db.add(session)
+        db.commit()
+        return token
+    except Exception as e:
+        print(f"Error creating persistent session: {str(e)}")
+        db.rollback()
+        return None
+
+
+def validate_persistent_session(db, token: str):
+    """Validate a session token and return user info if valid.
+    Returns dict with user_id/student_id, user_type, or None if invalid."""
+    try:
+        session = db.query(PersistentSession).filter(
+            PersistentSession.token == token,
+            PersistentSession.is_active == True,
+            PersistentSession.expires_at > datetime.utcnow()
+        ).first()
+        
+        if not session:
+            return None
+        
+        session.last_activity = datetime.utcnow()
+        db.commit()
+        
+        return {
+            'user_id': session.user_id,
+            'student_id': session.student_id,
+            'user_type': session.user_type,
+            'created_at': session.created_at
+        }
+    except Exception as e:
+        print(f"Error validating session: {str(e)}")
+        return None
+
+
+def invalidate_persistent_session(db, token: str):
+    """Invalidate/logout a session by token"""
+    try:
+        session = db.query(PersistentSession).filter(
+            PersistentSession.token == token
+        ).first()
+        if session:
+            session.is_active = False
+            db.commit()
+            return True
+        return False
+    except Exception as e:
+        print(f"Error invalidating session: {str(e)}")
+        db.rollback()
+        return False
+
+
+def invalidate_all_user_sessions(db, user_id=None, student_id=None):
+    """Invalidate all sessions for a user (e.g., on password change)"""
+    try:
+        query = db.query(PersistentSession).filter(PersistentSession.is_active == True)
+        if user_id:
+            query = query.filter(PersistentSession.user_id == user_id)
+        if student_id:
+            query = query.filter(PersistentSession.student_id == student_id)
+        
+        query.update({PersistentSession.is_active: False}, synchronize_session=False)
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"Error invalidating sessions: {str(e)}")
+        db.rollback()
+        return False
+
+
+def cleanup_expired_sessions(db):
+    """Remove expired sessions from database"""
+    try:
+        deleted = db.query(PersistentSession).filter(
+            PersistentSession.expires_at < datetime.utcnow()
+        ).delete(synchronize_session=False)
+        db.commit()
+        return deleted
+    except Exception as e:
+        print(f"Error cleaning up sessions: {str(e)}")
+        db.rollback()
+        return 0
+
 
 # ---- CONSENT TRACKING FUNCTIONS ----
 

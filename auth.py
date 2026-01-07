@@ -1,17 +1,264 @@
 import streamlit as st
-from database import get_db, create_user, authenticate_user, authenticate_student, get_user_by_email, get_student_by_username, create_student, check_login_rate_limit, record_login_attempt, clear_login_attempts, create_student_with_consent
+from database import (
+    get_db, create_user, authenticate_user, authenticate_student, 
+    get_user_by_email, get_student_by_username, create_student, 
+    check_login_rate_limit, record_login_attempt, clear_login_attempts, 
+    create_student_with_consent, create_persistent_session, 
+    validate_persistent_session, invalidate_persistent_session,
+    invalidate_all_user_sessions
+)
 import re
 import os
 import requests
 import json
 from datetime import datetime, timedelta
+import streamlit.components.v1 as components
 
 import stripe_client
+
+SESSION_COOKIE_NAME = "guide_session"
+EDUCATOR_SESSION_HOURS = 24
+STUDENT_SESSION_HOURS = 8
 
 PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
 PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
 
 SUBSCRIPTION_CACHE_TTL = timedelta(seconds=30)
+
+
+def set_session_cookie(token: str, days: int = 1):
+    """Set a session cookie using JavaScript injection"""
+    expires_date = (datetime.utcnow() + timedelta(days=days)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+    # Only add Secure flag when on HTTPS (production)
+    is_https = os.getenv('HTTPS', 'false').lower() == 'true' or os.getenv('REPLIT_DEV_DOMAIN', '')
+    secure_flag = "; Secure" if is_https else ""
+    js_code = f"""
+    <script>
+        document.cookie = "{SESSION_COOKIE_NAME}={token}; path=/; expires={expires_date}; SameSite=Lax{secure_flag}";
+    </script>
+    """
+    components.html(js_code, height=0, width=0)
+
+
+def clear_session_cookie():
+    """Clear the session cookie"""
+    is_https = os.getenv('HTTPS', 'false').lower() == 'true' or os.getenv('REPLIT_DEV_DOMAIN', '')
+    secure_flag = "; Secure" if is_https else ""
+    js_code = f"""
+    <script>
+        document.cookie = "{SESSION_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax{secure_flag}";
+    </script>
+    """
+    components.html(js_code, height=0, width=0)
+
+
+def get_session_from_query_params():
+    """Get session token from URL query params (used for session restoration)"""
+    params = st.query_params
+    return params.get("session", None)
+
+
+def inject_session_cookie_reader():
+    """Inject JavaScript to read session cookie and set it as a query param if found.
+    This bridges the gap between browser cookies and Streamlit's Python context."""
+    js_code = f"""
+    <script>
+        (function() {{
+            // Check if we already have session param in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('session')) {{
+                return; // Already have session param, skip
+            }}
+            
+            // Read session cookie
+            const cookies = document.cookie.split(';');
+            let sessionToken = null;
+            for (let cookie of cookies) {{
+                const [name, value] = cookie.trim().split('=');
+                if (name === '{SESSION_COOKIE_NAME}' && value) {{
+                    sessionToken = value;
+                    break;
+                }}
+            }}
+            
+            // If we have a session cookie, reload with session param
+            if (sessionToken && sessionToken.length > 10) {{
+                const url = new URL(window.location);
+                url.searchParams.set('session', sessionToken);
+                window.location.replace(url.toString());
+            }}
+        }})();
+    </script>
+    """
+    components.html(js_code, height=0, width=0)
+
+
+def restore_session_from_token(token: str):
+    """Restore user session from a valid token. Returns True if successful."""
+    if not token:
+        return False
+    
+    db = get_db()
+    if not db:
+        return False
+    
+    try:
+        session_data = validate_persistent_session(db, token)
+        if not session_data:
+            return False
+        
+        user_type = session_data.get('user_type')
+        
+        if user_type == 'educator' and session_data.get('user_id'):
+            from database import User
+            user = db.query(User).filter(User.id == session_data['user_id']).first()
+            if user and user.is_active:
+                st.session_state.user_id = user.id
+                st.session_state.user_type = user.user_type
+                st.session_state.user_name = user.full_name
+                st.session_state.user_email = user.email
+                st.session_state.authenticated = True
+                st.session_state.is_student = False
+                st.session_state.is_admin = getattr(user, 'is_admin', False)
+                st.session_state.session_token = token
+                
+                if st.session_state.is_admin:
+                    st.session_state.subscription_verified = True
+                    st.session_state.subscription_active = True
+                    st.session_state.subscription_status = 'admin'
+                    st.session_state.subscription_plan = 'admin'
+                else:
+                    stripe_result = stripe_client.sync_subscription_to_db(user.id, user.email)
+                    if stripe_result:
+                        st.session_state.subscription_verified = True
+                        st.session_state.subscription_active = stripe_result.get('isActive', False)
+                        st.session_state.subscription_plan = stripe_result.get('plan')
+                        st.session_state.subscription_status = stripe_result.get('status', 'none')
+                    else:
+                        st.session_state.subscription_verified = False
+                        st.session_state.subscription_active = True
+                        st.session_state.subscription_status = 'grace'
+                
+                print(f"[SESSION] Restored educator session for {user.email}")
+                return True
+        
+        elif user_type == 'student' and session_data.get('student_id'):
+            from database import Student
+            student = db.query(Student).filter(Student.id == session_data['student_id']).first()
+            if student and student.is_active:
+                st.session_state.user_id = student.id
+                st.session_state.user_type = 'student'
+                st.session_state.user_name = student.full_name
+                st.session_state.authenticated = True
+                st.session_state.is_student = True
+                st.session_state.student_id = student.id
+                st.session_state.student_username = student.username
+                st.session_state.student_year_level = student.year_level
+                st.session_state.session_token = token
+                
+                print(f"[SESSION] Restored student session for {student.username}")
+                return True
+        
+        return False
+    except Exception as e:
+        print(f"[SESSION] Error restoring session: {str(e)}")
+        return False
+    finally:
+        db.close()
+
+
+def check_and_restore_session():
+    """Check for existing session token and restore if valid.
+    Should be called at app startup before showing login page.
+    Returns True if session was restored."""
+    
+    if st.session_state.get('authenticated'):
+        return True
+    
+    # Check for session token in query params (set by cookie reader JS)
+    token = get_session_from_query_params()
+    if token:
+        if st.session_state.get('session_restore_attempted'):
+            return False
+        
+        st.session_state.session_restore_attempted = True
+        
+        if restore_session_from_token(token):
+            # Clear the session param from URL after successful restore
+            st.query_params.clear()
+            st.rerun()
+            return True
+        else:
+            # Invalid token, clear it from URL
+            st.query_params.clear()
+    else:
+        # No session param yet - inject JS to read cookie and reload with param
+        if not st.session_state.get('cookie_reader_injected'):
+            st.session_state.cookie_reader_injected = True
+            inject_session_cookie_reader()
+    
+    return False
+
+
+def create_login_session(user_id=None, student_id=None, user_type='educator'):
+    """Create a persistent session after successful login.
+    Sets a flag for deferred cookie setting (cookie must be set after page renders)."""
+    db = get_db()
+    if not db:
+        return None
+    
+    try:
+        duration = EDUCATOR_SESSION_HOURS if user_type == 'educator' else STUDENT_SESSION_HOURS
+        token = create_persistent_session(
+            db, 
+            user_id=user_id, 
+            student_id=student_id, 
+            user_type=user_type,
+            duration_hours=duration
+        )
+        
+        if token:
+            st.session_state.session_token = token
+            # Store cookie params for deferred setting (will be set after page renders)
+            st.session_state.pending_session_cookie = {
+                'token': token,
+                'days': duration // 24 if duration >= 24 else 1
+            }
+            print(f"[SESSION] Created persistent session for {user_type}")
+        
+        return token
+    except Exception as e:
+        print(f"[SESSION] Error creating session: {str(e)}")
+        return None
+    finally:
+        db.close()
+
+
+def render_pending_session_cookie():
+    """Render the pending session cookie JS if one is waiting.
+    Should be called at the end of the page render cycle."""
+    pending = st.session_state.get('pending_session_cookie')
+    if pending:
+        set_session_cookie(pending['token'], pending['days'])
+        del st.session_state['pending_session_cookie']
+
+
+def logout_with_session_cleanup():
+    """Logout user and invalidate their persistent session"""
+    token = st.session_state.get('session_token')
+    
+    if token:
+        db = get_db()
+        if db:
+            try:
+                invalidate_persistent_session(db, token)
+            finally:
+                db.close()
+    
+    clear_session_cookie()
+    
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
 
 
 def get_api_headers():
@@ -597,8 +844,10 @@ def login_page():
                                 st.session_state.subscription_active = True
                                 st.session_state.subscription_status = 'admin'
                                 st.session_state.subscription_plan = 'admin'
+                                create_login_session(user_id=user.id, user_type='educator')
                                 st.success(f"Welcome back, {user.full_name}! (Admin)")
-                                st.rerun()
+                                st.session_state.pending_login_rerun = True
+                                return
                             
                             # FAILPROOF: Check Stripe directly at login, with graceful fallback
                             stripe_result = sync_subscription_from_stripe(user.id, user.email)
@@ -629,8 +878,10 @@ def login_page():
                                 st.session_state.subscription_plan = plan
                                 st.session_state.subscription_status = stripe_status
                             
+                            create_login_session(user_id=user.id, user_type='educator')
                             st.success(f"Welcome back, {user.full_name}!")
-                            st.rerun()
+                            st.session_state.pending_login_rerun = True
+                            return
                         else:
                             # Record failed attempt
                             record_login_attempt(db, email, attempt_type='educator', success=False)
@@ -678,11 +929,16 @@ def login_page():
                             st.session_state.age_group = student.age_group
                             st.session_state.authenticated = True
                             st.session_state.is_student = True
+                            st.session_state.student_id = student.id
+                            st.session_state.student_username = student.username
+                            st.session_state.student_year_level = getattr(student, 'year_level', None)
                             # Clear any existing auth_mode to prevent educator features from showing
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
+                            create_login_session(student_id=student.id, user_type='student')
                             st.success(f"Welcome back, {student.full_name}!")
-                            st.rerun()
+                            st.session_state.pending_login_rerun = True
+                            return
                         else:
                             # Record failed attempt
                             record_login_attempt(db, username, attempt_type='student', success=False)
@@ -848,19 +1104,8 @@ def create_student_page():
                             db.close()
 
 def logout():
-    """Log out current user"""
-    # Clear all authentication-related session state
-    for key in ['user_id', 'user_type', 'user_name', 'user_email', 'username', 
-                'educator_id', 'age_group', 'authenticated', 'is_student',
-                'subscription_verified', 'subscription_active', 'subscription_plan', 
-                'subscription_status', 'gdpr_export_ready', 'gdpr_export_data']:
-        if key in st.session_state:
-            del st.session_state[key]
-    
-    # Clear messages as well
-    if 'messages' in st.session_state:
-        st.session_state.messages = []
-    
+    """Log out current user and invalidate persistent session"""
+    logout_with_session_cleanup()
     st.success("You have been logged out successfully!")
     st.rerun()
 

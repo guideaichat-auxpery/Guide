@@ -30,10 +30,16 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
   - **PII Sanitization**: All messages sent to OpenAI are sanitized to remove student names, emails, phone numbers, addresses before API calls.
   - **File Upload Security**: Server-side MIME validation, 10MB size limit, and filename sanitization for all uploads.
   - **Audit Logging**: EducatorAuditLog model tracks educator actions on student data with timestamps and action details.
-- **Session Management (December 2025)**:
+- **Session Management (December 2025 - January 2026)**:
   - 2-hour inactivity timeout for students (classroom-appropriate session length)
   - 30-minute inactivity timeout for educators (protects student data access)
   - Automatic conversation restoration on login, visual save confirmations.
+  - **Persistent Login (January 2026)**: Stay logged in across browser refreshes via cookie-based session tokens:
+    - `persistent_sessions` database table stores secure session tokens with expiry
+    - Educators: 24-hour session duration; Students: 8-hour session duration
+    - JavaScript cookie bridge reads token and restores session on page load
+    - Secure token generation (64-char random) with database validation
+    - Automatic session invalidation on logout and token cleanup
 - **Subscription & Payments (December 2025)**:
   - **Simplified Stripe Architecture (December 2025)**: Direct Python Stripe SDK (`stripe_client.py`) for all user-facing operations (checkout, portal, subscription sync). Node.js payments service (port 3001) now only handles webhooks and marketing site token verification.
   - **Bulletproof Subscription Verification (December 2025)**: Session-based verification with grace access:
