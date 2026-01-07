@@ -20,10 +20,11 @@ SESSION_COOKIE_NAME = "guide_session"
 EDUCATOR_SESSION_HOURS = 24
 STUDENT_SESSION_HOURS = 8
 
-@st.cache_resource
 def get_cookie_manager():
-    """Get a cached cookie manager instance"""
-    return stx.CookieManager()
+    """Get a cookie manager instance (stored in session_state to persist across reruns)"""
+    if 'cookie_manager' not in st.session_state:
+        st.session_state.cookie_manager = stx.CookieManager()
+    return st.session_state.cookie_manager
 
 PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
 PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
@@ -796,9 +797,14 @@ def login_page():
                                 st.session_state.subscription_active = True
                                 st.session_state.subscription_status = 'admin'
                                 st.session_state.subscription_plan = 'admin'
-                                create_login_session(user_id=user.id, user_type='educator')
-                                st.success(f"Welcome back, {user.full_name}! (Admin)")
+                                user_id = user.id
+                                user_name = st.session_state.user_name
+                                db.close()  # Close db before calling create_login_session
+                                db = None
+                                create_login_session(user_id=user_id, user_type='educator')
+                                st.success(f"Welcome back, {user_name}! (Admin)")
                                 st.rerun()
+                                return  # Ensure code doesn't continue after rerun
                             
                             # FAILPROOF: Check Stripe directly at login, with graceful fallback
                             stripe_result = sync_subscription_from_stripe(user.id, user.email)
@@ -829,10 +835,13 @@ def login_page():
                                 st.session_state.subscription_plan = plan
                                 st.session_state.subscription_status = stripe_status
                             
-                            create_login_session(user_id=user.id, user_type='educator')
-                            st.success(f"Welcome back, {user.full_name}!")
-                            st.session_state.pending_login_rerun = True
-                            return
+                            user_id = user.id
+                            user_name = st.session_state.user_name
+                            db.close()  # Close db before calling create_login_session
+                            db = None  # Mark as closed
+                            create_login_session(user_id=user_id, user_type='educator')
+                            st.success(f"Welcome back, {user_name}!")
+                            st.rerun()
                         else:
                             # Record failed attempt
                             record_login_attempt(db, email, attempt_type='educator', success=False)
@@ -886,10 +895,13 @@ def login_page():
                             # Clear any existing auth_mode to prevent educator features from showing
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
-                            create_login_session(student_id=student.id, user_type='student')
-                            st.success(f"Welcome back, {student.full_name}!")
-                            st.session_state.pending_login_rerun = True
-                            return
+                            student_id = student.id
+                            student_name = st.session_state.user_name
+                            db.close()  # Close db before calling create_login_session
+                            db = None  # Mark as closed
+                            create_login_session(student_id=student_id, user_type='student')
+                            st.success(f"Welcome back, {student_name}!")
+                            st.rerun()
                         else:
                             # Record failed attempt
                             record_login_attempt(db, username, attempt_type='student', success=False)
