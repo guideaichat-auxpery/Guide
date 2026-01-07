@@ -12,13 +12,18 @@ import os
 import requests
 import json
 from datetime import datetime, timedelta
-import streamlit.components.v1 as components
+import extra_streamlit_components as stx
 
 import stripe_client
 
 SESSION_COOKIE_NAME = "guide_session"
 EDUCATOR_SESSION_HOURS = 24
 STUDENT_SESSION_HOURS = 8
+
+@st.cache_resource
+def get_cookie_manager():
+    """Get a cached cookie manager instance"""
+    return stx.CookieManager()
 
 PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
 PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
@@ -27,70 +32,24 @@ SUBSCRIPTION_CACHE_TTL = timedelta(seconds=30)
 
 
 def set_session_cookie(token: str, days: int = 1):
-    """Set a session cookie using JavaScript injection"""
-    expires_date = (datetime.utcnow() + timedelta(days=days)).strftime("%a, %d %b %Y %H:%M:%S GMT")
-    # Only add Secure flag when on HTTPS (production)
-    is_https = os.getenv('HTTPS', 'false').lower() == 'true' or os.getenv('REPLIT_DEV_DOMAIN', '')
-    secure_flag = "; Secure" if is_https else ""
-    js_code = f"""
-    <script>
-        document.cookie = "{SESSION_COOKIE_NAME}={token}; path=/; expires={expires_date}; SameSite=Lax{secure_flag}";
-    </script>
-    """
-    components.html(js_code, height=0, width=0)
+    """Set a session cookie using CookieManager from extra-streamlit-components"""
+    try:
+        cookie_manager = get_cookie_manager()
+        expires = datetime.utcnow() + timedelta(days=days)
+        cookie_manager.set(SESSION_COOKIE_NAME, token, expires_at=expires)
+        print(f"[SESSION] Cookie set for {days} days")
+    except Exception as e:
+        print(f"[SESSION] Error setting cookie: {str(e)}")
 
 
 def clear_session_cookie():
-    """Clear the session cookie"""
-    is_https = os.getenv('HTTPS', 'false').lower() == 'true' or os.getenv('REPLIT_DEV_DOMAIN', '')
-    secure_flag = "; Secure" if is_https else ""
-    js_code = f"""
-    <script>
-        document.cookie = "{SESSION_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax{secure_flag}";
-    </script>
-    """
-    components.html(js_code, height=0, width=0)
-
-
-def get_session_from_query_params():
-    """Get session token from URL query params (used for session restoration)"""
-    params = st.query_params
-    return params.get("session", None)
-
-
-def inject_session_cookie_reader():
-    """Inject JavaScript to read session cookie and set it as a query param if found.
-    This bridges the gap between browser cookies and Streamlit's Python context."""
-    js_code = f"""
-    <script>
-        (function() {{
-            // Check if we already have session param in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('session')) {{
-                return; // Already have session param, skip
-            }}
-            
-            // Read session cookie
-            const cookies = document.cookie.split(';');
-            let sessionToken = null;
-            for (let cookie of cookies) {{
-                const [name, value] = cookie.trim().split('=');
-                if (name === '{SESSION_COOKIE_NAME}' && value) {{
-                    sessionToken = value;
-                    break;
-                }}
-            }}
-            
-            // If we have a session cookie, reload with session param
-            if (sessionToken && sessionToken.length > 10) {{
-                const url = new URL(window.location);
-                url.searchParams.set('session', sessionToken);
-                window.location.replace(url.toString());
-            }}
-        }})();
-    </script>
-    """
-    components.html(js_code, height=0, width=0)
+    """Clear the session cookie using CookieManager"""
+    try:
+        cookie_manager = get_cookie_manager()
+        cookie_manager.delete(SESSION_COOKIE_NAME)
+        print("[SESSION] Cookie cleared")
+    except Exception as e:
+        print(f"[SESSION] Error clearing cookie: {str(e)}")
 
 
 def restore_session_from_token(token: str):
@@ -167,6 +126,16 @@ def restore_session_from_token(token: str):
         db.close()
 
 
+def get_session_cookie():
+    """Get session token from cookie using CookieManager"""
+    try:
+        cookie_manager = get_cookie_manager()
+        return cookie_manager.get(SESSION_COOKIE_NAME)
+    except Exception as e:
+        print(f"[SESSION] Error reading cookie: {str(e)}")
+        return None
+
+
 def check_and_restore_session():
     """Check for existing session token and restore if valid.
     Should be called at app startup before showing login page.
@@ -175,34 +144,28 @@ def check_and_restore_session():
     if st.session_state.get('authenticated'):
         return True
     
-    # Check for session token in query params (set by cookie reader JS)
-    token = get_session_from_query_params()
+    if st.session_state.get('session_restore_attempted'):
+        return False
+    
+    # Read session token directly from cookie using CookieManager
+    token = get_session_cookie()
+    
     if token:
-        if st.session_state.get('session_restore_attempted'):
-            return False
-        
         st.session_state.session_restore_attempted = True
         
         if restore_session_from_token(token):
-            # Clear the session param from URL after successful restore
-            st.query_params.clear()
-            st.rerun()
+            print(f"[SESSION] Session restored from cookie")
             return True
         else:
-            # Invalid token, clear it from URL
-            st.query_params.clear()
-    else:
-        # No session param yet - inject JS to read cookie and reload with param
-        if not st.session_state.get('cookie_reader_injected'):
-            st.session_state.cookie_reader_injected = True
-            inject_session_cookie_reader()
+            # Invalid token, clear the cookie
+            print(f"[SESSION] Invalid token, clearing cookie")
+            clear_session_cookie()
     
     return False
 
 
 def create_login_session(user_id=None, student_id=None, user_type='educator'):
-    """Create a persistent session after successful login.
-    Sets a flag for deferred cookie setting (cookie must be set after page renders)."""
+    """Create a persistent session after successful login and set cookie immediately."""
     db = get_db()
     if not db:
         return None
@@ -219,12 +182,10 @@ def create_login_session(user_id=None, student_id=None, user_type='educator'):
         
         if token:
             st.session_state.session_token = token
-            # Store cookie params for deferred setting (will be set after page renders)
-            st.session_state.pending_session_cookie = {
-                'token': token,
-                'days': duration // 24 if duration >= 24 else 1
-            }
-            print(f"[SESSION] Created persistent session for {user_type}")
+            # Set cookie immediately using CookieManager
+            days = duration // 24 if duration >= 24 else 1
+            set_session_cookie(token, days)
+            print(f"[SESSION] Created persistent session for {user_type}, token set in cookie")
         
         return token
     except Exception as e:
@@ -232,15 +193,6 @@ def create_login_session(user_id=None, student_id=None, user_type='educator'):
         return None
     finally:
         db.close()
-
-
-def render_pending_session_cookie():
-    """Render the pending session cookie JS if one is waiting.
-    Should be called at the end of the page render cycle."""
-    pending = st.session_state.get('pending_session_cookie')
-    if pending:
-        set_session_cookie(pending['token'], pending['days'])
-        del st.session_state['pending_session_cookie']
 
 
 def logout_with_session_cleanup():
@@ -846,8 +798,7 @@ def login_page():
                                 st.session_state.subscription_plan = 'admin'
                                 create_login_session(user_id=user.id, user_type='educator')
                                 st.success(f"Welcome back, {user.full_name}! (Admin)")
-                                st.session_state.pending_login_rerun = True
-                                return
+                                st.rerun()
                             
                             # FAILPROOF: Check Stripe directly at login, with graceful fallback
                             stripe_result = sync_subscription_from_stripe(user.id, user.email)
