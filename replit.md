@@ -73,7 +73,14 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **NEW - GDPR Data Export (December 2025)**: Users can download all their data in JSON format via sidebar expander. Exports include profile info, lesson plans, stories, planning notes, conversations, and usage analytics. Excludes sensitive fields (password hashes, internal IDs).
 - **NEW - Dark Mode (December 2025)**: Toggle in sidebar switches between light (default warm Montessori) and dark themes. Dark theme uses Montessori-inspired muted earth tones. Preference stored in session state.
 - **NEW - Mobile Responsive (December 2025)**: Enhanced touch targets (minimum 44px per WCAG 2.1), improved sidebar behavior, column stacking on small screens, and reduced-motion support for accessibility.
-- **NEW - Student Learning Journey Map (December 2025)**: Visual Plotly network graph for students showing explored curriculum topics as nodes (sized by frequency, colored by subject with Montessori earth tones) with interconnecting edges. Tabbed interface in student view ("Research Assistant" | "My Learning Journey"). Features topic extraction from chat history, expandable subject lists, and empty state guidance for new students. Supports Montessori Cosmic Education philosophy of interconnected learning.
+- **Student Learning Journey Map (December 2025 - Redesigned January 2026)**: Visual learning progress tracker for students showing explored curriculum topics organized by subject. Features:
+    - **Structured Layout**: Topics displayed in subject rows (most explored subjects at top) with clear visual hierarchy
+    - **Summary Metrics**: Three key stats at top - Topics Explored, Subject Areas, Most Explored topic
+    - **Meaningful Introduction**: Explains purpose ("Your learning adventure so far!") and how to read the visualization
+    - **Interactive Nodes**: Circles sized by exploration frequency, hover for details (topic name, subject, times explored)
+    - **Subject Exploration Section**: Expandable lists per subject with star ratings indicating engagement level
+    - **Empty State**: Encouraging onboarding for new students with exploration suggestions
+    - Supports Montessori Cosmic Education philosophy of interconnected learning
 - **Core Features**:
     - **Dual Interface**: Teacher and student modes for various educational tasks.
     - **Chat Conversation Management**: Sidebar-based system for creating, renaming, deleting, and reopening conversations with real-time persistence and subject-based organization for students.
