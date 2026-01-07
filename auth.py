@@ -32,13 +32,13 @@ PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
 SUBSCRIPTION_CACHE_TTL = timedelta(seconds=30)
 
 
-def set_session_cookie(token: str, days: int = 1):
+def set_session_cookie(token: str, hours: int = 24):
     """Set a session cookie using CookieManager from extra-streamlit-components"""
     try:
         cookie_manager = get_cookie_manager()
-        expires = datetime.utcnow() + timedelta(days=days)
+        expires = datetime.utcnow() + timedelta(hours=hours)
         cookie_manager.set(SESSION_COOKIE_NAME, token, expires_at=expires)
-        print(f"[SESSION] Cookie set for {days} days")
+        print(f"[SESSION] Cookie set for {hours} hours")
     except Exception as e:
         print(f"[SESSION] Error setting cookie: {str(e)}")
 
@@ -183,9 +183,8 @@ def create_login_session(user_id=None, student_id=None, user_type='educator'):
         
         if token:
             st.session_state.session_token = token
-            # Set cookie immediately using CookieManager
-            days = duration // 24 if duration >= 24 else 1
-            set_session_cookie(token, days)
+            # Set cookie with exact duration in hours
+            set_session_cookie(token, hours=duration)
             print(f"[SESSION] Created persistent session for {user_type}, token set in cookie")
         
         return token
