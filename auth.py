@@ -463,18 +463,6 @@ def show_pricing_page():
     </p>
     """, unsafe_allow_html=True)
 
-def show_billing_portal_button():
-    """Show button to access Stripe billing portal"""
-    educator_id = st.session_state.get('user_id')
-    if st.button("💳 Manage Subscription", key="billing_portal_btn"):
-        with st.spinner("Opening billing portal..."):
-            portal_url = create_portal_session(educator_id)
-            if portal_url:
-                st.markdown(f'<meta http-equiv="refresh" content="0;url={portal_url}">', unsafe_allow_html=True)
-                st.info("Redirecting to billing portal...")
-            else:
-                st.error("Unable to open billing portal. Please try again.")
-
 def show_account_settings():
     """Display account settings including subscription management and deactivation"""
     educator_id = st.session_state.get('user_id')
@@ -1256,7 +1244,7 @@ def show_user_info():
             else:
                 st.sidebar.markdown("**Plan:** None ❌")
             
-            # Re-verify button for users who just paid
+            # Subscription management expander
             with st.sidebar.expander("🔄 Subscription"):
                 st.caption("If you just subscribed, click below to verify:")
                 if st.button("Verify Subscription", key="verify_sub_btn", use_container_width=True):
@@ -1274,6 +1262,18 @@ def show_user_info():
                                 st.rerun()
                             else:
                                 st.warning("No active subscription found. If you just paid, please wait a moment and try again.")
+                
+                st.markdown("---")
+                st.caption("Manage billing, update payment method, or cancel:")
+                if st.button("💳 Manage Subscription", key="billing_portal_btn", use_container_width=True):
+                    educator_id = st.session_state.get('user_id')
+                    with st.spinner("Opening billing portal..."):
+                        portal_url = create_portal_session(educator_id)
+                        if portal_url:
+                            st.markdown(f'<meta http-equiv="refresh" content="0;url={portal_url}">', unsafe_allow_html=True)
+                            st.info("Redirecting to billing portal...")
+                        else:
+                            st.error("Unable to open billing portal. Please try again or contact support.")
         
         st.sidebar.divider()
         
