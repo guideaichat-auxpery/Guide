@@ -136,6 +136,11 @@ function requireApiAuth(req, res, next) {
 }
 
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe) {
+    console.error('Webhook received but Stripe not initialized yet');
+    return res.status(503).json({ error: 'Service not ready, retry later' });
+  }
+  
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -182,9 +187,14 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
 app.use(express.json());
 
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
+  const stripeReady = stripe !== null;
+  const status = stripeReady ? 'healthy' : 'initializing';
+  
+  res.status(stripeReady ? 200 : 503).json({
+    status,
     service: 'Guide Payments Service',
+    stripeReady,
+    resendReady: resendClient !== null,
     timestamp: new Date().toISOString()
   });
 });
