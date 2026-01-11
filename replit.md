@@ -62,6 +62,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
     - Subscription automatically activated upon payment completion
     - Optional public API: POST `/api/public/create-checkout-session` for pre-signup payments on marketing site
     - See `MARKETING_SITE_INTEGRATION.md` for frontend implementation guide
+  - **Email Integration (January 2026)**: Automated transactional emails via Resend (guide@auxpery.com.au):
+    - **Welcome Email**: Sent automatically when new subscribers complete Stripe checkout. Features branded HTML template with feature highlights (Lesson Planning Assistant, Great Story Creator, Montessori Companion, Imaginarium). Tracked via `welcome_email_sent_at` column to prevent duplicates.
+    - **Password Reset Email**: Secure token-based reset flow with 1-hour expiry, SHA-256 hashed tokens, rate limiting (3 requests per 15 minutes), and atomic token validation.
 - **Child Safety Measures (December 2025)**:
   - **Content Monitoring**: SafetyAlert model detects concerning content (self-harm, bullying, abuse indicators) in student messages. Keywords classified by severity (high/medium/low). Educators receive alerts for review.
   - **Student Reporting**: "Need to talk to someone?" expander in student interface allows students to confidentially report concerns to their educator.
