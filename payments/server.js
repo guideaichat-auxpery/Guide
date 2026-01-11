@@ -672,6 +672,24 @@ async function handleCheckoutCompleted(session) {
       [customerId, subscriptionId, subscription.status, plan, trialEnd, currentPeriodEnd, educatorId]
     );
     console.log(`Updated educator ${educatorId} with subscription ${subscriptionId} (${plan})`);
+    
+    // Send welcome email if not already sent
+    const userResult = await db.query(
+      'SELECT email, full_name, welcome_email_sent_at FROM users WHERE id = $1',
+      [educatorId]
+    );
+    
+    if (userResult.rows.length > 0 && !userResult.rows[0].welcome_email_sent_at) {
+      const { email, full_name } = userResult.rows[0];
+      const emailSent = await sendWelcomeEmail(email, full_name);
+      
+      if (emailSent) {
+        await db.query(
+          'UPDATE users SET welcome_email_sent_at = NOW() WHERE id = $1',
+          [educatorId]
+        );
+      }
+    }
   }
   
   if (inviteToken) {
@@ -814,6 +832,27 @@ async function initDatabase() {
   }
 }
 
+app.post('/api/email/send-welcome', express.json(), requireApiAuth, async (req, res) => {
+  try {
+    const { email, userName } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+    
+    const sent = await sendWelcomeEmail(email, userName);
+    
+    if (sent) {
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ success: false, error: 'Failed to send welcome email' });
+    }
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    res.status(500).json({ success: false, error: 'Failed to send email' });
+  }
+});
+
 app.post('/api/email/send-password-reset', express.json(), requireApiAuth, async (req, res) => {
   try {
     const { email, resetUrl, userName } = req.body;
@@ -884,6 +923,78 @@ app.post('/api/email/send-password-reset', express.json(), requireApiAuth, async
     res.status(500).json({ success: false, error: 'Failed to send email' });
   }
 });
+
+async function sendWelcomeEmail(email, userName) {
+  if (!resendClient) {
+    console.log('⚠️ Resend not configured - welcome email skipped');
+    return false;
+  }
+  
+  try {
+    const result = await resendClient.emails.send({
+      from: resendFromEmail,
+      to: email,
+      subject: 'Welcome to Guide - Your Cosmic Curriculum Companion 🌍',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #4a6741 0%, #5d7a52 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Guide</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">by AUXPERY</p>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 12px 12px;">
+            <p style="font-size: 16px;">Dear${userName ? ` ${userName}` : ''},</p>
+            
+            <h2 style="color: #4a6741; margin-top: 20px;">Thank you for joining Guide!</h2>
+            
+            <p>We're thrilled to have you as part of our community of educators who believe in the power of interconnected learning.</p>
+            
+            <h3 style="color: #4a6741; margin-top: 25px;">What is Guide?</h3>
+            
+            <p>Guide is your cosmic curriculum companion - bridging Montessori's Cosmic Education with modern curriculum frameworks like the Australian Curriculum V9. We help you create meaningful, interconnected learning experiences that show children their place in the story of the universe.</p>
+            
+            <h3 style="color: #4a6741; margin-top: 25px;">Getting Started</h3>
+            
+            <ul style="padding-left: 20px;">
+              <li style="margin-bottom: 10px;">Explore the <strong>Lesson Planning Assistant</strong> for age-appropriate, cross-curricular lesson ideas</li>
+              <li style="margin-bottom: 10px;">Try the <strong>Great Story Creator</strong> to craft cosmic narratives for your classroom</li>
+              <li style="margin-bottom: 10px;">Use the <strong>Montessori Companion</strong> for professional development</li>
+              <li style="margin-bottom: 10px;">Try the <strong>Imaginarium</strong> for anything and everything else!</li>
+            </ul>
+            
+            <p style="margin-top: 25px;">If you ever need help, just reach out - we're here to support you on this journey.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://guide.auxpery.com.au" style="background: #4a6741; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Go to Guide</a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            
+            <p style="margin-bottom: 5px;">With gratitude,</p>
+            <p style="margin-top: 5px;"><strong>Ben Noble</strong><br><em>Founder, Auxpery</em></p>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+            <p>Guide by AUXPERY - Cosmic Curriculum Companion</p>
+          </div>
+        </body>
+        </html>
+      `
+    });
+    
+    console.log(`✉️ Welcome email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    return false;
+  }
+}
 
 async function startServer() {
   // Initialize Stripe client
