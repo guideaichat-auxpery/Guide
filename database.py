@@ -321,6 +321,20 @@ class PasswordResetToken(Base):
     used_at = Column(DateTime, nullable=True)
     is_valid = Column(Boolean, default=True)
 
+class ContactSubmission(Base):
+    """Contact form submissions from users"""
+    __tablename__ = "contact_submissions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False, index=True)
+    subject = Column(String, nullable=True)
+    message = Column(Text, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    status = Column(String, default='new')
+    autoreply_sent = Column(Boolean, default=False)
+
 def create_tables():
     """Create all database tables with error handling"""
     if not engine:
