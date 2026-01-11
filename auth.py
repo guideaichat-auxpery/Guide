@@ -723,9 +723,6 @@ def validate_password(password):
         return False, "Password must contain at least one number"
     return True, "Password is valid"
 
-import secrets
-import hashlib
-
 def generate_password_reset_token(user_id: int, email: str) -> str:
     """Generate a secure password reset token and store its hash in the database.
     Returns the plain token to be sent via email."""
@@ -812,17 +809,12 @@ def validate_password_reset_token(token: str) -> dict:
         db.close()
 
 def reset_password_with_token(token: str, new_password: str) -> dict:
-    """Reset password using a valid token."""
+    """Reset password using a valid token. Atomic operation to prevent race conditions."""
     import hashlib
     from sqlalchemy import text
     import bcrypt
     
-    # First validate the token
-    validation = validate_password_reset_token(token)
-    if not validation.get('valid'):
-        return {'success': False, 'error': validation.get('error', 'Invalid token')}
-    
-    # Validate the new password
+    # Validate the new password first (before DB operations)
     is_valid, msg = validate_password(new_password)
     if not is_valid:
         return {'success': False, 'error': msg}
@@ -834,17 +826,29 @@ def reset_password_with_token(token: str, new_password: str) -> dict:
     try:
         token_hash = hashlib.sha256(token.encode()).hexdigest()
         
+        # Atomically validate token and mark as used in one query
+        # This prevents race conditions where another request could use the same token
+        result = db.execute(
+            text("""UPDATE password_reset_tokens 
+                    SET is_valid = FALSE, used_at = NOW() 
+                    WHERE token_hash = :token_hash 
+                    AND is_valid = TRUE 
+                    AND expires_at > NOW()
+                    RETURNING user_id"""),
+            {'token_hash': token_hash}
+        ).fetchone()
+        
+        if not result:
+            db.rollback()
+            return {'success': False, 'error': 'Invalid, expired, or already used reset link'}
+        
+        user_id = result[0]
+        
         # Update the user's password
         new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         db.execute(
             text("UPDATE users SET password_hash = :password_hash WHERE id = :user_id"),
-            {'password_hash': new_password_hash, 'user_id': validation['user_id']}
-        )
-        
-        # Mark the token as used
-        db.execute(
-            text("UPDATE password_reset_tokens SET is_valid = FALSE, used_at = NOW() WHERE token_hash = :token_hash"),
-            {'token_hash': token_hash}
+            {'password_hash': new_password_hash, 'user_id': user_id}
         )
         
         db.commit()
@@ -876,6 +880,9 @@ def send_password_reset_email(email: str, reset_url: str, user_name: str = None)
 
 def show_forgot_password_form():
     """Display forgot password form for educators"""
+    import time
+    import random
+    
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔑 Reset Your Password</h2>', unsafe_allow_html=True)
     
     if st.button("← Back to Login"):
@@ -893,30 +900,53 @@ def show_forgot_password_form():
         submit = st.form_submit_button("Send Reset Link", use_container_width=True)
         
         if submit:
+            start_time = time.time()
+            
             if not email:
                 st.error("Please enter your email address")
             elif not validate_email(email):
                 st.error("Please enter a valid email address")
             else:
-                # Look up user
                 db = get_db()
+                rate_limited = False
                 user = None
+                
                 if db:
                     try:
-                        user = get_user_by_email(db, email)
+                        # Check rate limiting (max 3 reset requests per 15 minutes per email)
+                        reset_identifier = f"reset:{email.lower()}"
+                        is_locked, remaining_seconds, attempt_count = check_login_rate_limit(
+                            db, reset_identifier, max_attempts=3, lockout_minutes=15
+                        )
+                        
+                        if is_locked:
+                            rate_limited = True
+                            minutes_remaining = remaining_seconds // 60 + 1
+                            st.warning(f"Too many reset requests. Please wait {minutes_remaining} minute(s) before trying again.")
+                        else:
+                            # Record this reset attempt
+                            record_login_attempt(db, reset_identifier, attempt_type='reset', success=False)
+                            user = get_user_by_email(db, email)
                     finally:
                         db.close()
                 
-                # Always show success message to prevent email enumeration
-                if user:
-                    # Generate token and send email
-                    token = generate_password_reset_token(user.id, user.email)
-                    if token:
-                        base_url = os.getenv('GUIDE_APP_URL', 'https://guide.auxpery.com.au')
-                        reset_url = f"{base_url}/?reset_token={token}"
-                        send_password_reset_email(user.email, reset_url, user.full_name)
-                
-                st.success("If an account exists with that email, you'll receive a password reset link shortly. Please check your inbox and spam folder.")
+                if not rate_limited:
+                    # Always show success message to prevent email enumeration
+                    if user:
+                        # Generate token and send email
+                        token = generate_password_reset_token(user.id, user.email)
+                        if token:
+                            base_url = os.getenv('GUIDE_APP_URL', 'https://guide.auxpery.com.au')
+                            reset_url = f"{base_url}/?reset_token={token}"
+                            send_password_reset_email(user.email, reset_url, user.full_name)
+                    
+                    # Add consistent timing to prevent timing attacks (ensure 1-2 seconds total)
+                    elapsed = time.time() - start_time
+                    target_time = 1.0 + random.uniform(0, 0.5)  # 1.0-1.5 seconds
+                    if elapsed < target_time:
+                        time.sleep(target_time - elapsed)
+                    
+                    st.success("If an account exists with that email, you'll receive a password reset link shortly. Please check your inbox and spam folder.")
     
     st.markdown("""
     <p style="text-align: center; color: #666; font-size: 0.85rem; margin-top: 20px;">
@@ -964,8 +994,10 @@ def show_reset_password_form(token: str):
                 if result.get('success'):
                     st.success("Your password has been reset successfully! You can now log in with your new password.")
                     st.session_state.auth_mode = 'login'
-                    # Clear the reset token from URL
+                    # Clear the reset token from URL and session
                     st.query_params.clear()
+                    if 'reset_token' in st.session_state:
+                        del st.session_state.reset_token
                     st.rerun()
                 else:
                     st.error(result.get('error', 'Failed to reset password'))
