@@ -167,6 +167,9 @@ st.markdown(load_css('static/css/danish-eco-theme.css'), unsafe_allow_html=True)
 # Load mobile-responsive styles
 st.markdown(load_css('static/css/mobile-responsive.css'), unsafe_allow_html=True)
 
+# Load accessibility styles
+st.markdown(load_css('static/css/accessibility.css'), unsafe_allow_html=True)
+
 # Dark mode support - inject dark mode CSS and body class when enabled
 if st.session_state.get('dark_mode', False):
     st.markdown(load_css('static/css/dark-mode.css'), unsafe_allow_html=True)

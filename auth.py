@@ -1006,19 +1006,38 @@ def login_page():
     """Display login page for educators and students"""
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
-    # Forgot password link
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
+    # Clear tabs for educator vs student login
+    st.markdown("""
+    <style>
+    /* Style login tabs for clear distinction */
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 8px;
+        justify-content: center;
+    }
+    div[data-testid="stTabs"] [data-baseweb="tab"] {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Use tabs for clearer separation
+    educator_tab, student_tab = st.tabs(["👩‍🏫 Educator Login", "🎒 Student Login"])
+    
+    with educator_tab:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
+            <p style="color: #666; font-size: 0.95em;">Teachers, principals, and homeschool parents</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Forgot password link for educators
         if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
             st.session_state.auth_mode = 'forgot_password'
             st.rerun()
-    
-    # Choose login type
-    login_type = st.selectbox("I am a:", ["Educator", "Student"])
-    
-    if login_type == "Educator":
+        
         with st.form("educator_login"):
-            st.markdown("### Educator Login")
             email = st.text_input("Email", placeholder="your.email@example.com")
             password = st.text_input("Password", type="password")
             submit = st.form_submit_button("Login", use_container_width=True)
@@ -1120,9 +1139,14 @@ def login_page():
                         if db:
                             db.close()
     
-    else:  # Student login
+    with student_tab:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
+            <p style="color: #666; font-size: 0.95em;">Students - use the username your teacher gave you</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         with st.form("student_login"):
-            st.markdown("### Student Login")
             username = st.text_input("Username", placeholder="your_username")
             password = st.text_input("Password", type="password")
             submit = st.form_submit_button("Login", use_container_width=True)
@@ -1179,6 +1203,14 @@ def login_page():
                     finally:
                         if db:
                             db.close()
+        
+        st.markdown("""
+        <div style="text-align: center; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <p style="color: #666; font-size: 0.9em; margin: 0;">
+                Need help? Ask your teacher for your login details.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def signup_page():
     """Display signup page for new educators"""

@@ -1,0 +1,194 @@
+/* Accessibility Improvements for Guide */
+
+/* Screen reader only text - visually hidden but accessible */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Ensure all buttons have visible focus indicators */
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 3px solid #4a6741 !important;
+  outline-offset: 2px !important;
+}
+
+/* Improved focus visibility for dark mode */
+@media (prefers-color-scheme: dark) {
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a:focus-visible {
+    outline-color: #9BBF9B !important;
+  }
+}
+
+/* Add title attributes to emoji-only buttons via CSS content description */
+/* Streamlit buttons with emojis need hover tooltips */
+[data-testid="stButton"] button {
+  position: relative;
+}
+
+/* Ensure links are distinguishable */
+a {
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px !important;
+}
+
+a:hover {
+  text-decoration-thickness: 2px !important;
+}
+
+/* Skip link for keyboard users */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #4a6741;
+  color: white;
+  padding: 8px 16px;
+  z-index: 100000;
+  text-decoration: none !important;
+  border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  button,
+  [role="button"],
+  a {
+    border: 2px solid currentColor !important;
+  }
+
+  input,
+  textarea,
+  select {
+    border: 2px solid #000 !important;
+  }
+}
+
+/* Ensure sufficient color contrast for text */
+.stMarkdown p,
+.stMarkdown li,
+.stMarkdown span {
+  color: inherit;
+}
+
+/* Form labels - ensure they're associated with inputs */
+label {
+  cursor: pointer;
+}
+
+/* Error messages styling - ARIA roles are set by Streamlit */
+[data-testid="stAlert"] {
+  font-weight: 500;
+}
+
+/* Loading states styling - ARIA roles are set by Streamlit */
+[data-testid="stSpinner"] {
+  min-height: 44px;
+}
+
+/* Tab panels */
+[data-testid="stTabs"] [role="tablist"] {
+  border-bottom: 2px solid #e0e0e0;
+}
+
+[data-testid="stTabs"] [role="tab"] {
+  border-radius: 8px 8px 0 0;
+}
+
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+  background: rgba(74, 103, 65, 0.1);
+  border-bottom: 2px solid #4a6741;
+}
+
+/* Ensure interactive elements have appropriate cursor */
+button,
+[role="button"],
+a,
+label[for],
+input[type="checkbox"],
+input[type="radio"],
+select,
+[tabindex="0"] {
+  cursor: pointer;
+}
+
+/* Disabled elements */
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Expandable sections */
+.streamlit-expanderHeader {
+  cursor: pointer;
+}
+
+/* Progress indicators */
+[role="progressbar"] {
+  min-height: 8px;
+}
+
+/* Minimum tap target size - 44x44px per WCAG 2.1 */
+button,
+[role="button"],
+a,
+input[type="checkbox"] + label,
+input[type="radio"] + label {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Ensure modals trap focus */
+[role="dialog"] {
+  position: fixed;
+}
+
+/* Live regions for dynamic content - ensure they're visible */
+[role="status"],
+[role="alert"],
+[aria-live] {
+  contain: none;
+}
+
+/* Chart/graph styling - enhance visibility */
+[data-testid="stPlotlyChart"] {
+  min-height: 200px;
+}
+
+/* Table accessibility improvements */
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* Improve readability */
+body {
+  line-height: 1.5;
+}
+
+p, li {
+  max-width: 75ch;
+}

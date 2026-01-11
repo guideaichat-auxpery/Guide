@@ -181,3 +181,96 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Fix navigation and overlapping elements on mobile */
+@media (max-width: 768px) {
+  /* Prevent sticky elements from overlapping content */
+  .sticky-card-container,
+  [data-testid="stVerticalBlock"] > div[data-testid="element-container"]:has(.sticky-card-container) {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  /* Login/signup form containers */
+  .login-container,
+  .signup-container,
+  .auth-container {
+    padding: 1rem !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Modal and dialog improvements */
+  [data-testid="stModal"] > div,
+  [data-baseweb="modal"] > div {
+    max-width: 95vw !important;
+    margin: 1rem !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Fix wide tables on mobile */
+  [data-testid="stDataFrame"],
+  [data-testid="stTable"] {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+  }
+
+  /* Metric cards stack nicely */
+  .metric-card {
+    min-width: unset !important;
+    flex: 1 1 100% !important;
+  }
+
+  /* Alert/info boxes full width */
+  [data-testid="stAlert"],
+  .stAlert {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* Multiselect dropdown positioning */
+  [data-baseweb="popover"] {
+    max-width: 90vw !important;
+    left: 5vw !important;
+  }
+
+  /* Form elements stack properly */
+  .stForm [data-testid="stHorizontalBlock"] {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Progress bar visibility */
+  [data-testid="stProgress"] {
+    height: 10px !important;
+  }
+
+  /* Image scaling */
+  [data-testid="stImage"] img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+
+/* Very small phones - additional adjustments */
+@media (max-width: 360px) {
+  .main-header {
+    font-size: 1.75rem !important;
+  }
+
+  .main-byline {
+    font-size: 0.875rem !important;
+  }
+
+  /* Tighter padding */
+  .main .block-container {
+    padding: 0.5rem 0.25rem !important;
+  }
+
+  /* Smaller font for body text */
+  p, li, span {
+    font-size: 0.9rem !important;
+  }
+}
