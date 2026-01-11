@@ -11,6 +11,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 ## UI/UX Decisions
 - **Framework**: Streamlit with a wide layout and dual-mode interface (educator and student).
 - **Design System**: Features a Montessori-themed interface with warm earth tones for general elements and a Danish Eco-Design theme for the educator dashboard, emphasizing clean modern aesthetics, accessibility (WCAG 2.1 AA), and responsive design.
+- **Login Experience (January 2026)**: Clear tab-based separation between Educator and Student login with descriptive text for each user type, reducing confusion for students.
+- **Accessibility (January 2026)**: Comprehensive accessibility.css with focus indicators, high contrast support, minimum tap targets (44px), keyboard navigation, and screen reader improvements.
+- **Mobile Responsive (January 2026)**: Enhanced mobile-responsive.css with fixes for overlapping elements, login forms, modals, tables, and very small phones (360px+).
 - **Streamlit Rerun Architecture**: Static UI elements are strategically placed to render before chat history to ensure consistent display during Streamlit reruns.
 
 ## Technical Implementations
