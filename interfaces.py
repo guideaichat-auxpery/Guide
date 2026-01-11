@@ -3096,6 +3096,7 @@ def show_contact_form():
                         )
                         
                         if submission_id:
+                            email_sent = False
                             try:
                                 response = requests.post(
                                     'http://localhost:3001/api/email/send-contact-autoreply',
@@ -3110,10 +3111,14 @@ def show_contact_form():
                                 
                                 if response.status_code == 200:
                                     mark_contact_autoreply_sent(db, submission_id)
+                                    email_sent = True
                             except Exception as e:
                                 print(f"Error sending auto-reply email: {str(e)}")
                             
-                            st.success("Thank you for your message! We've sent you a confirmation email and will respond within 3 business days.")
+                            if email_sent:
+                                st.success("Thank you for your message! We've sent you a confirmation email and will respond within 3 business days.")
+                            else:
+                                st.success("Thank you for your message! We've received it and will respond within 3 business days. (If you don't receive a confirmation email, please check your spam folder.)")
                         else:
                             st.error("Sorry, there was an issue submitting your message. Please try again.")
                             
