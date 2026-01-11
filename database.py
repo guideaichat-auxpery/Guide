@@ -2576,3 +2576,40 @@ def migrate_legacy_chats_to_general(db):
         print(f"Error migrating legacy chats: {str(e)}")
         db.rollback()
         return 0
+
+def save_contact_submission(db, name: str, email: str, subject: str, message: str, user_id: int = None):
+    """Save a contact form submission to the database"""
+    try:
+        submission = ContactSubmission(
+            name=name,
+            email=email,
+            subject=subject,
+            message=message,
+            user_id=user_id,
+            status='new',
+            autoreply_sent=False
+        )
+        db.add(submission)
+        db.commit()
+        return submission.id
+    except Exception as e:
+        print(f"Error saving contact submission: {str(e)}")
+        db.rollback()
+        return None
+
+def mark_contact_autoreply_sent(db, submission_id: int):
+    """Mark a contact submission as having received the auto-reply"""
+    try:
+        submission = db.query(ContactSubmission).filter(
+            ContactSubmission.id == submission_id
+        ).first()
+        
+        if submission:
+            submission.autoreply_sent = True
+            db.commit()
+            return True
+        return False
+    except Exception as e:
+        print(f"Error marking autoreply sent: {str(e)}")
+        db.rollback()
+        return False

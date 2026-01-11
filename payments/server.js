@@ -832,6 +832,74 @@ async function initDatabase() {
   }
 }
 
+app.post('/api/email/send-contact-autoreply', express.json(), requireApiAuth, async (req, res) => {
+  try {
+    const { email, userName, subject } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+    
+    if (!resendClient) {
+      console.log('⚠️ Resend not configured - contact auto-reply skipped');
+      return res.status(500).json({ success: false, error: 'Email service not configured' });
+    }
+    
+    const result = await resendClient.emails.send({
+      from: resendFromEmail,
+      to: email,
+      subject: 'Thank you for contacting Guide',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #4a6741 0%, #5d7a52 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Guide</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">by AUXPERY</p>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 12px 12px;">
+            <p style="font-size: 16px;">Dear${userName ? ` ${userName}` : ''},</p>
+            
+            <h2 style="color: #4a6741; margin-top: 20px;">Thank you for reaching out!</h2>
+            
+            <p>We've received your message${subject ? ` regarding "<strong>${subject}</strong>"` : ''} and wanted to let you know that it's in safe hands.</p>
+            
+            <p>As a small team dedicated to supporting educators, we do our very best to respond to every message thoughtfully. Please allow <strong>up to 3 business days</strong> for us to get back to you with a personal response.</p>
+            
+            <p>We truly appreciate your patience and are grateful that you've taken the time to connect with us.</p>
+            
+            <div style="background: #fff; border-left: 4px solid #4a6741; padding: 15px 20px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+              <p style="margin: 0; font-style: italic; color: #666;">"The greatest sign of success for a teacher is to be able to say, 'The children are now working as if I did not exist.'"</p>
+              <p style="margin: 10px 0 0 0; font-size: 0.9em; color: #888;">— Maria Montessori</p>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            
+            <p style="margin-bottom: 5px;">With warmth,</p>
+            <p style="margin-top: 5px;"><strong>The Guide Team</strong><br><em>Auxpery</em></p>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+            <p>Guide by AUXPERY - Cosmic Curriculum Companion</p>
+          </div>
+        </body>
+        </html>
+      `
+    });
+    
+    console.log(`✉️ Contact auto-reply sent to ${email}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error sending contact auto-reply:', error);
+    res.status(500).json({ success: false, error: 'Failed to send email' });
+  }
+});
+
 app.post('/api/email/send-welcome', express.json(), requireApiAuth, async (req, res) => {
   try {
     const { email, userName } = req.body;
