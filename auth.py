@@ -723,16 +723,257 @@ def validate_password(password):
         return False, "Password must contain at least one number"
     return True, "Password is valid"
 
+import secrets
+import hashlib
+
+def generate_password_reset_token(user_id: int, email: str) -> str:
+    """Generate a secure password reset token and store its hash in the database.
+    Returns the plain token to be sent via email."""
+    import secrets
+    import hashlib
+    from sqlalchemy import text
+    
+    db = get_db()
+    if not db:
+        return None
+    
+    try:
+        # Generate a secure random token
+        token = secrets.token_urlsafe(48)
+        
+        # Hash the token for secure storage
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        
+        # Invalidate any previous tokens for this user
+        db.execute(
+            text("UPDATE password_reset_tokens SET is_valid = FALSE WHERE user_id = :user_id"),
+            {'user_id': user_id}
+        )
+        
+        # Store the hashed token with 1-hour expiry
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+        db.execute(
+            text("""INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+                    VALUES (:user_id, :token_hash, :expires_at)"""),
+            {'user_id': user_id, 'token_hash': token_hash, 'expires_at': expires_at}
+        )
+        db.commit()
+        
+        return token
+    except Exception as e:
+        db.rollback()
+        print(f"Error generating reset token: {e}")
+        return None
+    finally:
+        db.close()
+
+def validate_password_reset_token(token: str) -> dict:
+    """Validate a password reset token and return user info if valid."""
+    import hashlib
+    from sqlalchemy import text
+    
+    db = get_db()
+    if not db:
+        return {'valid': False, 'error': 'Database unavailable'}
+    
+    try:
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        
+        result = db.execute(
+            text("""SELECT prt.id, prt.user_id, prt.expires_at, prt.is_valid, u.email, u.full_name
+                    FROM password_reset_tokens prt
+                    JOIN users u ON prt.user_id = u.id
+                    WHERE prt.token_hash = :token_hash"""),
+            {'token_hash': token_hash}
+        ).fetchone()
+        
+        if not result:
+            return {'valid': False, 'error': 'Invalid or expired reset link'}
+        
+        token_id, user_id, expires_at, is_valid, email, full_name = result
+        
+        if not is_valid:
+            return {'valid': False, 'error': 'This reset link has already been used'}
+        
+        if datetime.utcnow() > expires_at:
+            return {'valid': False, 'error': 'This reset link has expired. Please request a new one.'}
+        
+        return {
+            'valid': True,
+            'token_id': token_id,
+            'user_id': user_id,
+            'email': email,
+            'full_name': full_name
+        }
+    except Exception as e:
+        print(f"Error validating reset token: {e}")
+        return {'valid': False, 'error': 'Error validating reset link'}
+    finally:
+        db.close()
+
+def reset_password_with_token(token: str, new_password: str) -> dict:
+    """Reset password using a valid token."""
+    import hashlib
+    from sqlalchemy import text
+    import bcrypt
+    
+    # First validate the token
+    validation = validate_password_reset_token(token)
+    if not validation.get('valid'):
+        return {'success': False, 'error': validation.get('error', 'Invalid token')}
+    
+    # Validate the new password
+    is_valid, msg = validate_password(new_password)
+    if not is_valid:
+        return {'success': False, 'error': msg}
+    
+    db = get_db()
+    if not db:
+        return {'success': False, 'error': 'Database unavailable'}
+    
+    try:
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        
+        # Update the user's password
+        new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        db.execute(
+            text("UPDATE users SET password_hash = :password_hash WHERE id = :user_id"),
+            {'password_hash': new_password_hash, 'user_id': validation['user_id']}
+        )
+        
+        # Mark the token as used
+        db.execute(
+            text("UPDATE password_reset_tokens SET is_valid = FALSE, used_at = NOW() WHERE token_hash = :token_hash"),
+            {'token_hash': token_hash}
+        )
+        
+        db.commit()
+        return {'success': True}
+    except Exception as e:
+        db.rollback()
+        print(f"Error resetting password: {e}")
+        return {'success': False, 'error': 'Error resetting password'}
+    finally:
+        db.close()
+
+def send_password_reset_email(email: str, reset_url: str, user_name: str = None) -> bool:
+    """Send password reset email via Resend (through payments service)."""
+    try:
+        response = requests.post(
+            f"{PAYMENTS_SERVICE_URL}/api/email/send-password-reset",
+            json={'email': email, 'resetUrl': reset_url, 'userName': user_name},
+            headers=get_api_headers(),
+            timeout=15
+        )
+        if response.status_code == 200:
+            return True
+        else:
+            print(f"Email send failed: {response.status_code} - {response.text}")
+            return False
+    except Exception as e:
+        print(f"Error sending password reset email: {e}")
+        return False
+
+def show_forgot_password_form():
+    """Display forgot password form for educators"""
+    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔑 Reset Your Password</h2>', unsafe_allow_html=True)
+    
+    if st.button("← Back to Login"):
+        st.session_state.auth_mode = 'login'
+        st.rerun()
+    
+    st.markdown("""
+    <p style="text-align: center; margin: 20px 0;">
+        Enter your email address and we'll send you a link to reset your password.
+    </p>
+    """, unsafe_allow_html=True)
+    
+    with st.form("forgot_password_form"):
+        email = st.text_input("Email Address", placeholder="your.email@example.com")
+        submit = st.form_submit_button("Send Reset Link", use_container_width=True)
+        
+        if submit:
+            if not email:
+                st.error("Please enter your email address")
+            elif not validate_email(email):
+                st.error("Please enter a valid email address")
+            else:
+                # Look up user
+                user = get_user_by_email(email)
+                
+                # Always show success message to prevent email enumeration
+                if user:
+                    # Generate token and send email
+                    token = generate_password_reset_token(user.id, user.email)
+                    if token:
+                        base_url = os.getenv('GUIDE_APP_URL', 'https://guide.auxpery.com.au')
+                        reset_url = f"{base_url}/?reset_token={token}"
+                        send_password_reset_email(user.email, reset_url, user.full_name)
+                
+                st.success("If an account exists with that email, you'll receive a password reset link shortly. Please check your inbox and spam folder.")
+    
+    st.markdown("""
+    <p style="text-align: center; color: #666; font-size: 0.85rem; margin-top: 20px;">
+        Note: Students should ask their educator to reset their password.
+    </p>
+    """, unsafe_allow_html=True)
+
+def show_reset_password_form(token: str):
+    """Display the password reset form after clicking email link"""
+    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Create New Password</h2>', unsafe_allow_html=True)
+    
+    # Validate the token first
+    validation = validate_password_reset_token(token)
+    
+    if not validation.get('valid'):
+        st.error(validation.get('error', 'Invalid reset link'))
+        st.markdown("""
+        <p style="text-align: center; margin-top: 20px;">
+            The password reset link is invalid or has expired.
+        </p>
+        """, unsafe_allow_html=True)
+        if st.button("Request New Reset Link"):
+            st.session_state.auth_mode = 'forgot_password'
+            st.rerun()
+        return
+    
+    st.markdown(f"""
+    <p style="text-align: center; margin: 20px 0;">
+        Create a new password for <strong>{validation.get('email')}</strong>
+    </p>
+    """, unsafe_allow_html=True)
+    
+    with st.form("reset_password_form"):
+        new_password = st.text_input("New Password (min 12 characters)", type="password")
+        confirm_password = st.text_input("Confirm New Password", type="password")
+        submit = st.form_submit_button("Reset Password", use_container_width=True)
+        
+        if submit:
+            if not new_password or not confirm_password:
+                st.error("Please fill in both password fields")
+            elif new_password != confirm_password:
+                st.error("Passwords do not match")
+            else:
+                result = reset_password_with_token(token, new_password)
+                if result.get('success'):
+                    st.success("Your password has been reset successfully! You can now log in with your new password.")
+                    st.session_state.auth_mode = 'login'
+                    # Clear the reset token from URL
+                    st.query_params.clear()
+                    st.rerun()
+                else:
+                    st.error(result.get('error', 'Failed to reset password'))
+
 def login_page():
     """Display login page for educators and students"""
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
     # Forgot password link
-    st.markdown("""
-    <p style="text-align: center; font-size: 0.9rem; color: #666;">
-        Forgot your password? Contact us at <a href="mailto:guide@auxpery.com.au">guide@auxpery.com.au</a>
-    </p>
-    """, unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
+            st.session_state.auth_mode = 'forgot_password'
+            st.rerun()
     
     # Choose login type
     login_type = st.selectbox("I am a:", ["Educator", "Student"])

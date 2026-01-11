@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface
 
@@ -88,8 +88,14 @@ try:
             else:
                 st.success("Payment received! Your subscription should be active shortly.")
         st.query_params.clear()
+    
+    # Handle password reset token from email link
+    reset_token = query_params.get('reset_token')
+    if reset_token:
+        st.session_state.auth_mode = 'reset_password'
+        st.session_state.reset_token = reset_token
 except Exception as e:
-    logger.warning(f"Error processing subscription return: {e}")
+    logger.warning(f"Error processing query params: {e}")
 
 # Session timeout configuration (security - child protection)
 from datetime import datetime, timedelta
@@ -299,6 +305,17 @@ if not st.session_state.authenticated:
         signup_page()
     elif st.session_state.auth_mode == "privacy_policy":
         show_privacy_policy()
+    elif st.session_state.auth_mode == "forgot_password":
+        show_forgot_password_form()
+    elif st.session_state.auth_mode == "reset_password":
+        reset_token = st.session_state.get('reset_token')
+        if reset_token:
+            show_reset_password_form(reset_token)
+        else:
+            st.error("Invalid reset link. Please request a new password reset.")
+            if st.button("Request New Reset Link"):
+                st.session_state.auth_mode = 'forgot_password'
+                st.rerun()
     
 
 else:

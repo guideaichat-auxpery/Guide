@@ -309,6 +309,18 @@ class SystemConfig(Base):
     config_value = Column(Text, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class PasswordResetToken(Base):
+    """Secure password reset tokens for forgot password flow"""
+    __tablename__ = "password_reset_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(64), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    is_valid = Column(Boolean, default=True)
+
 def create_tables():
     """Create all database tables with error handling"""
     if not engine:

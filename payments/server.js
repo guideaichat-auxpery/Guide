@@ -3,7 +3,52 @@ const cors = require('cors');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const { Pool } = require('pg');
+const { Resend } = require('resend');
 require('dotenv').config();
+
+let resendClient = null;
+let resendFromEmail = null;
+
+async function getResendCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? 'repl ' + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+      ? 'depl ' + process.env.WEB_REPL_RENEWAL
+      : null;
+
+  if (!xReplitToken || !hostname) {
+    console.log('Resend credentials not available via Replit connector');
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://${hostname}/api/v2/connection?include_secrets=true&connector_names=resend`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X_REPLIT_TOKEN': xReplitToken
+        }
+      }
+    );
+    const data = await response.json();
+    const connectionSettings = data.items?.[0];
+
+    if (!connectionSettings?.settings?.api_key) {
+      console.log('Resend connection not found');
+      return null;
+    }
+
+    return {
+      apiKey: connectionSettings.settings.api_key,
+      fromEmail: connectionSettings.settings.from_email || 'noreply@auxpery.com.au'
+    };
+  } catch (err) {
+    console.error('Error fetching Resend credentials:', err.message);
+    return null;
+  }
+}
 
 const app = express();
 const PORT = process.env.PAYMENTS_PORT || 3001;
@@ -746,11 +791,99 @@ async function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_pending_subscriptions_email ON pending_subscriptions(email);
     `);
     
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        token_hash VARCHAR(64) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        expires_at TIMESTAMP NOT NULL,
+        used_at TIMESTAMP,
+        is_valid BOOLEAN DEFAULT TRUE
+      )
+    `);
+    
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_hash ON password_reset_tokens(token_hash);
+      CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens(user_id);
+    `);
+    
     console.log('Database columns and pending_subscriptions table initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error.message);
   }
 }
+
+app.post('/api/email/send-password-reset', express.json(), requireApiAuth, async (req, res) => {
+  try {
+    const { email, resetUrl, userName } = req.body;
+    
+    if (!email || !resetUrl) {
+      return res.status(400).json({ success: false, error: 'Email and resetUrl are required' });
+    }
+    
+    if (!resendClient) {
+      console.error('Resend client not initialized');
+      return res.status(500).json({ success: false, error: 'Email service not available' });
+    }
+    
+    const result = await resendClient.emails.send({
+      from: resendFromEmail,
+      to: email,
+      subject: 'Reset Your Guide Password',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #4a6741 0%, #5d7a52 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Guide</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">by AUXPERY</p>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 12px 12px;">
+            <h2 style="color: #4a6741; margin-top: 0;">Password Reset Request</h2>
+            
+            <p>Hello${userName ? ` ${userName}` : ''},</p>
+            
+            <p>We received a request to reset your password for your Guide account. Click the button below to create a new password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background: #4a6741; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Reset My Password</a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">This link will expire in 1 hour for security reasons.</p>
+            
+            <p style="color: #666; font-size: 14px;">If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+            
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            
+            <p style="color: #999; font-size: 12px; text-align: center;">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${resetUrl}" style="color: #4a6741; word-break: break-all;">${resetUrl}</a>
+            </p>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+            <p>Guide by AUXPERY - Cosmic Curriculum Companion</p>
+            <p>This is an automated message. Please do not reply.</p>
+          </div>
+        </body>
+        </html>
+      `
+    });
+    
+    console.log(`Password reset email sent to ${email}`);
+    res.json({ success: true, messageId: result.id });
+    
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    res.status(500).json({ success: false, error: 'Failed to send email' });
+  }
+});
 
 async function startServer() {
   // Initialize Stripe client
@@ -761,6 +894,20 @@ async function startServer() {
   } catch (err) {
     console.error('❌ Failed to initialize Stripe:', err.message);
     process.exit(1);
+  }
+  
+  // Initialize Resend client for email
+  try {
+    const resendCreds = await getResendCredentials();
+    if (resendCreds) {
+      resendClient = new Resend(resendCreds.apiKey);
+      resendFromEmail = resendCreds.fromEmail;
+      console.log('✅ Resend client initialized (from:', resendFromEmail, ')');
+    } else {
+      console.log('⚠️ Resend not configured - password reset emails disabled');
+    }
+  } catch (err) {
+    console.error('⚠️ Failed to initialize Resend:', err.message);
   }
   
   await initDatabase();
