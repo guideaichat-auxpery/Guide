@@ -316,6 +316,11 @@ if not st.session_state.authenticated:
             if st.button("Request New Reset Link"):
                 st.session_state.auth_mode = 'forgot_password'
                 st.rerun()
+    elif st.session_state.auth_mode == "contact":
+        if st.button("← Back to Login", key="back_contact_guest"):
+            st.session_state.auth_mode = "login"
+            st.rerun()
+        show_contact_form()
     
 
 else:
