@@ -3,7 +3,7 @@ import logging
 import sys
 from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form
 from database import create_tables, database_status_message, database_available
-from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface
+from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
 
 # ---- STRUCTURED LOGGING CONFIGURATION ----
 # Centralized logging setup for the entire application
@@ -574,19 +574,34 @@ else:
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
         show_account_deletion_interface()
+    elif st.session_state.auth_mode == "contact":
+        # Back button - go to previous page or login
+        if st.session_state.get('logged_in'):
+            if st.button("← Back to Dashboard", key="back_contact"):
+                st.session_state.auth_mode = "dashboard_home"
+                st.rerun()
+        else:
+            if st.button("← Back to Login", key="back_contact_login"):
+                st.session_state.auth_mode = "login"
+                st.rerun()
+        show_contact_form()
     
 # Main app logic continues here
 
-# Footer
+# Footer with contact link
 st.markdown("---")
-st.markdown(
-    """
-    <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
-        <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
-        Guide - Your prepared digital environment<br>
-        Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em><br><br>
-        Contact us at guide@auxpery.com.au
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+footer_col1, footer_col2, footer_col3 = st.columns([1, 2, 1])
+with footer_col2:
+    st.markdown(
+        """
+        <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
+            <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
+            Guide - Your prepared digital environment<br>
+            Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    if st.button("📬 Contact Us", key="footer_contact", use_container_width=True):
+        st.session_state.auth_mode = "contact"
+        st.rerun()

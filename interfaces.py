@@ -3037,3 +3037,98 @@ def show_imaginarium_interface():
     
     # Add scroll to top button
     add_scroll_to_top_button()
+
+
+def show_contact_form():
+    """Contact form with automatic email reply"""
+    import requests
+    from database import save_contact_submission, mark_contact_autoreply_sent, session_scope
+    from auth import get_api_headers
+    
+    st.markdown("### 📬 Contact Us")
+    st.markdown("*Have a question, feedback, or need assistance? We'd love to hear from you!*")
+    
+    st.markdown("---")
+    
+    # Get user info if logged in
+    user_id = st.session_state.get('user_id')
+    user_name = st.session_state.get('user_name', '')
+    user_email = st.session_state.get('user_email', '')
+    
+    with st.form("contact_form", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            name = st.text_input("Your Name *", value=user_name, placeholder="Enter your name")
+        
+        with col2:
+            email = st.text_input("Your Email *", value=user_email, placeholder="you@example.com")
+        
+        subject = st.text_input("Subject", placeholder="What is your message about?")
+        
+        message = st.text_area(
+            "Your Message *", 
+            placeholder="Please share your question, feedback, or how we can help...",
+            height=200
+        )
+        
+        submitted = st.form_submit_button("Send Message", use_container_width=True, type="primary")
+        
+        if submitted:
+            if not name or not name.strip():
+                st.error("Please enter your name.")
+            elif not email or not email.strip():
+                st.error("Please enter your email address.")
+            elif '@' not in email or '.' not in email:
+                st.error("Please enter a valid email address.")
+            elif not message or not message.strip():
+                st.error("Please enter your message.")
+            else:
+                try:
+                    with session_scope() as db:
+                        submission_id = save_contact_submission(
+                            db,
+                            name=name.strip(),
+                            email=email.strip(),
+                            subject=subject.strip() if subject else None,
+                            message=message.strip(),
+                            user_id=user_id
+                        )
+                        
+                        if submission_id:
+                            try:
+                                response = requests.post(
+                                    'http://localhost:3001/api/email/send-contact-autoreply',
+                                    json={
+                                        'email': email.strip(),
+                                        'userName': name.strip(),
+                                        'subject': subject.strip() if subject else None
+                                    },
+                                    headers=get_api_headers(),
+                                    timeout=10
+                                )
+                                
+                                if response.status_code == 200:
+                                    mark_contact_autoreply_sent(db, submission_id)
+                            except Exception as e:
+                                print(f"Error sending auto-reply email: {str(e)}")
+                            
+                            st.success("Thank you for your message! We've sent you a confirmation email and will respond within 3 business days.")
+                        else:
+                            st.error("Sorry, there was an issue submitting your message. Please try again.")
+                            
+                except Exception as e:
+                    print(f"Error in contact form submission: {str(e)}")
+                    st.error("Sorry, there was an issue submitting your message. Please try again.")
+    
+    st.markdown("---")
+    
+    st.markdown("""
+    <div style='text-align: center; color: #666; font-size: 0.9em; padding: 20px;'>
+        <p>Alternatively, you can email us directly at:<br>
+        <strong>guide@auxpery.com.au</strong></p>
+        <p style='margin-top: 15px; font-style: italic;'>
+        As a small team, we appreciate your patience. We aim to respond to all messages within 3 business days.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
