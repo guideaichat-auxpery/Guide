@@ -899,7 +899,13 @@ def show_forgot_password_form():
                 st.error("Please enter a valid email address")
             else:
                 # Look up user
-                user = get_user_by_email(email)
+                db = get_db()
+                user = None
+                if db:
+                    try:
+                        user = get_user_by_email(db, email)
+                    finally:
+                        db.close()
                 
                 # Always show success message to prevent email enumeration
                 if user:
