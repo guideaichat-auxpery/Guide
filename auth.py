@@ -1588,17 +1588,8 @@ def show_user_info():
         
         st.sidebar.divider()
         
-        dark_mode = st.session_state.get('dark_mode', False)
-        theme_label = "☀️ Light Mode" if dark_mode else "🌙 Dark Mode"
-        
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            if st.button("🚪 Logout", key="logout_btn", use_container_width=True):
-                logout()
-        with col2:
-            if st.button(theme_label, key="theme_toggle", use_container_width=True):
-                st.session_state.dark_mode = not dark_mode
-                st.rerun()
+        if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
+            logout()
         
         with st.sidebar.expander("⬇️ Download My Data"):
             st.markdown("*Export all your data in JSON format (GDPR compliant)*")
