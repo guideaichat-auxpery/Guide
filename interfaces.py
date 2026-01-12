@@ -2770,6 +2770,65 @@ def show_pd_expert_interface():
         5️⃣ Next steps or reflective prompt
         """)
     
+    # Document upload section for PD Expert
+    st.markdown("#### 📄 Upload a Document")
+    st.caption("Share PD materials, research papers, or workshop resources for analysis")
+    
+    pd_uploaded_document = st.file_uploader(
+        "Upload document for analysis",
+        type=['txt', 'pdf', 'jpg', 'png', 'docx'],
+        help="Upload professional development materials for feedback and analysis",
+        key="pd_document_upload"
+    )
+    
+    # Process uploaded document
+    if pd_uploaded_document:
+        is_valid, error_msg = validate_file_upload(pd_uploaded_document)
+        if not is_valid:
+            st.error(f"File validation failed: {error_msg}")
+        else:
+            document_content = ""
+            with st.spinner("Reading your document..."):
+                if pd_uploaded_document.type == "application/pdf":
+                    import io
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pd_uploaded_document.read()))
+                    extracted_pages = [page.extract_text() or "" for page in pdf_reader.pages]
+                    document_content = "\n".join(extracted_pages)
+                    if not document_content.strip():
+                        document_content = f"[PDF uploaded: {pd_uploaded_document.name} - appears to be scanned/image-based. Text extraction not possible. Please describe the content or upload a text-based version.]"
+                elif pd_uploaded_document.type in ["image/jpeg", "image/png"]:
+                    try:
+                        from PIL import Image
+                        import io
+                        image = Image.open(pd_uploaded_document)
+                        document_content = pytesseract.image_to_string(image)
+                        if not document_content.strip():
+                            document_content = f"[Image uploaded: {pd_uploaded_document.name} - visual content not extractable as text]"
+                    except:
+                        document_content = f"[Image uploaded: {pd_uploaded_document.name} - could not process]"
+                elif pd_uploaded_document.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    import io
+                    doc = Document(io.BytesIO(pd_uploaded_document.read()))
+                    document_content = "\n".join([para.text for para in doc.paragraphs])
+                else:
+                    document_content = pd_uploaded_document.read().decode('utf-8', errors='ignore')
+            
+            if document_content.strip():
+                st.success(f"✅ Document '{sanitize_filename(pd_uploaded_document.name)}' loaded successfully!")
+                
+                # Store document content in session for use in chat
+                st.session_state.pd_document_content = document_content
+                st.session_state.pd_document_name = sanitize_filename(pd_uploaded_document.name)
+                
+                # Show preview
+                with st.expander("📖 Document Preview", expanded=False):
+                    preview_text = document_content[:2000] + ("..." if len(document_content) > 2000 else "")
+                    st.text_area("Content", preview_text, height=200, disabled=True)
+                
+                st.info("💡 Now ask a question about this document in the chat below!")
+    
+    st.markdown("---")
+    
     # Initialize PD messages in session state
     if 'pd_messages' not in st.session_state:
         st.session_state.pd_messages = []
@@ -2808,8 +2867,19 @@ def show_pd_expert_interface():
                     # Initialize OpenAI client
                     openai_client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
                     
+                    # Build prompt with document context if available
+                    full_prompt = user_prompt
+                    if st.session_state.get('pd_document_content'):
+                        doc_name = st.session_state.get('pd_document_name', 'uploaded document')
+                        doc_content = st.session_state.get('pd_document_content', '')
+                        # Truncate very long documents to avoid token limits
+                        max_doc_chars = 15000
+                        if len(doc_content) > max_doc_chars:
+                            doc_content = doc_content[:max_doc_chars] + "\n\n[Document truncated due to length...]"
+                        full_prompt = f"[User has uploaded a document: {doc_name}]\n\n--- DOCUMENT CONTENT ---\n{doc_content}\n--- END DOCUMENT ---\n\nUser's question: {user_prompt}"
+                    
                     # Call PD Expert function
-                    result = call_pd_expert(user_email, user_prompt, openai_client)
+                    result = call_pd_expert(user_email, full_prompt, openai_client)
                     
                     if result.get('success'):
                         expert_response = result.get('output', '')
@@ -2832,12 +2902,23 @@ def show_pd_expert_interface():
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
     
-    # Clear conversation button
-    if st.session_state.pd_messages:
+    # Clear conversation and document buttons
+    if st.session_state.pd_messages or st.session_state.get('pd_document_content'):
         st.markdown("---")
-        if st.button("🗑️ Clear Conversation", use_container_width=True):
-            st.session_state.pd_messages = []
-            st.rerun()
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🗑️ Clear Conversation", use_container_width=True):
+                st.session_state.pd_messages = []
+                st.rerun()
+        with col2:
+            if st.session_state.get('pd_document_content'):
+                if st.button("📄 Clear Document", use_container_width=True):
+                    st.session_state.pd_document_content = None
+                    st.session_state.pd_document_name = None
+                    # Reset file uploader widget by clearing its key
+                    if 'pd_document_upload' in st.session_state:
+                        del st.session_state['pd_document_upload']
+                    st.rerun()
     
     # Add scroll to top button
     add_scroll_to_top_button()
