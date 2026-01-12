@@ -147,14 +147,15 @@ button:disabled,
   min-height: 8px;
 }
 
-/* Minimum tap target size - 44x44px per WCAG 2.1 */
-button,
-[role="button"],
-a,
-input[type="checkbox"] + label,
-input[type="radio"] + label {
-  min-height: 44px;
-  min-width: 44px;
+/* Minimum tap target size - 44x44px per WCAG 2.1 - only on touch devices */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  input[type="checkbox"] + label,
+  input[type="radio"] + label {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Ensure modals trap focus */
@@ -180,15 +181,10 @@ table {
 }
 
 th {
-  text-align: left;
   font-weight: 600;
 }
 
-/* Improve readability */
+/* Improve readability - only apply line-height, don't constrain widths */
 body {
   line-height: 1.5;
-}
-
-p, li {
-  max-width: 75ch;
 }
