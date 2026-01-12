@@ -23,7 +23,7 @@ st.set_page_config(
     page_title="Guide - Your prepared digital environment",
     page_icon="🌟",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="auto"
 )
 
 # Google Analytics 4 tracking (non-blocking load)
@@ -493,8 +493,9 @@ else:
                     st.session_state.auth_mode = "account_deletion"
                     st.rerun()
             
-            # PD Expert Mode
-            if st.session_state.get('user_email') == "guideaichat@gmail.com":
+            # PD Expert Mode - restricted to authorized emails
+            authorized_pd_emails = ["guideaichat@gmail.com", "ben@hmswairoa.net"]
+            if st.session_state.get('user_email') in authorized_pd_emails:
                 st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
                 if st.button("🔬 PD Expert Mode", use_container_width=True, type="primary"):
                     st.session_state.auth_mode = "pd_expert"
@@ -602,7 +603,7 @@ footer_col1, footer_col2, footer_col3 = st.columns([1, 2, 1])
 with footer_col2:
     st.markdown(
         """
-        <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem;'>
+        <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem; margin-bottom: 1.5rem;'>
             <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
             Guide - Your prepared digital environment<br>
             Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
