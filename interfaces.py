@@ -845,98 +845,95 @@ def show_student_interface():
     # Privacy Notice Banner
     st.warning("⚠️ **Privacy Notice:** Do NOT enter personal information (name, birthdate, home/school address, or details of real people). Keep all inputs anonymous.", icon="⚠️")
     
-    # Create tab for Learning Assistant
-    research_tab, history_tab = st.tabs(["💬 Learning Assistant", "📜 Previous Conversations"])
+    st.markdown("### 🔍 Montessori Learning Assistant")
+    st.markdown("*Explore the universe, ask questions, and discover connections*")
     
-    with research_tab:
-        st.markdown("### 🔍 Montessori Learning Assistant")
-        st.markdown("*Explore the universe, ask questions, and discover connections*")
-        
-        # Initialize student-specific subject selector
-        if 'student_subjects' not in st.session_state:
-            st.session_state.student_subjects = []
-        
-        # Get age-appropriate subjects
-        from utils import map_age_to_year_levels
-        year_levels = map_age_to_year_levels(age_group)
-        
-        # Determine subject options based on age group
-        if age_group in ["3-6", "6-9", "9-12"]:
-            subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
-                              "Art", "Music", "Technology"]
-        else:  # adolescent
-            subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
-                              "Civics", "Economics", "Technology", "Art", "Music"]
-        
-        selected_subjects = st.multiselect(
-            "Choose your subjects:",
-            subject_options,
-            default=st.session_state.student_subjects,
-            help="Select subjects you're interested in learning about"
+    # Initialize student-specific subject selector
+    if 'student_subjects' not in st.session_state:
+        st.session_state.student_subjects = []
+    
+    # Get age-appropriate subjects
+    from utils import map_age_to_year_levels
+    year_levels = map_age_to_year_levels(age_group)
+    
+    # Determine subject options based on age group
+    if age_group in ["3-6", "6-9", "9-12"]:
+        subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
+                          "Art", "Music", "Technology"]
+    else:  # adolescent
+        subject_options = ["English", "Mathematics", "Science", "History", "Geography", 
+                          "Civics", "Economics", "Technology", "Art", "Music"]
+    
+    selected_subjects = st.multiselect(
+        "Choose your subjects:",
+        subject_options,
+        default=st.session_state.student_subjects,
+        help="Select subjects you're interested in learning about"
+    )
+    st.session_state.student_subjects = selected_subjects
+    
+    # Year level selector for students
+    if 'student_year_selector' not in st.session_state:
+        st.session_state.student_year_selector = year_levels[0] if year_levels else "Year 6"
+    
+    if year_levels and len(year_levels) > 1:
+        selected_year_level = st.selectbox(
+            "What year level are you studying?",
+            year_levels,
+            index=year_levels.index(st.session_state.student_year_selector) if st.session_state.student_year_selector in year_levels else 0
         )
-        st.session_state.student_subjects = selected_subjects
-        
-        # Year level selector for students
-        if 'student_year_selector' not in st.session_state:
-            st.session_state.student_year_selector = year_levels[0] if year_levels else "Year 6"
-        
-        if year_levels and len(year_levels) > 1:
-            selected_year_level = st.selectbox(
-                "What year level are you studying?",
-                year_levels,
-                index=year_levels.index(st.session_state.student_year_selector) if st.session_state.student_year_selector in year_levels else 0
-            )
-            st.session_state.student_year_selector = selected_year_level
-        
-        # Manage conversation history (keep last 10 messages)
-        st.session_state.student_messages = manage_conversation_history(
-            st.session_state.student_messages, max_history=10
+        st.session_state.student_year_selector = selected_year_level
+    
+    # Manage conversation history (keep last 10 messages)
+    st.session_state.student_messages = manage_conversation_history(
+        st.session_state.student_messages, max_history=10
+    )
+    
+    # Display chat history
+    ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
+    for message in st.session_state.student_messages:
+        avatar = ai_avatar if message["role"] == "assistant" else None
+        with st.chat_message(message["role"], avatar=avatar):
+            st.markdown(message["content"])
+    
+    # Scroll to bottom of chat after displaying messages
+    if st.session_state.student_messages:
+        scroll_chat_to_bottom()
+    
+    st.markdown("---")
+    
+    # File upload for students with rubric support
+    st.markdown("### 📁 Upload your work for feedback (optional)")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        uploaded_work = st.file_uploader(
+            "Share your writing, drawing, or project",
+            type=['txt', 'pdf', 'jpg', 'png', 'docx'],
+            help="Upload your work for feedback",
+            key="work_upload"
         )
+    
+    with col2:
+        uploaded_rubric = st.file_uploader(
+            "Upload assessment rubric (optional)",
+            type=['txt', 'pdf', 'docx'],
+            help="Upload a rubric to guide the feedback",
+            key="rubric_upload"
+        )
+    
+    # Feedback button when work is uploaded
+    if uploaded_work:
+        # Validate file uploads for security
+        work_valid, work_error = validate_file_upload(uploaded_work)
+        rubric_valid, rubric_error = validate_file_upload(uploaded_rubric) if uploaded_rubric else (True, None)
         
-        # Display chat history
-        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
-        for message in st.session_state.student_messages:
-            avatar = ai_avatar if message["role"] == "assistant" else None
-            with st.chat_message(message["role"], avatar=avatar):
-                st.markdown(message["content"])
-        
-        # Scroll to bottom of chat after displaying messages
-        if st.session_state.student_messages:
-            scroll_chat_to_bottom()
-        
-        st.markdown("---")
-        
-        # File upload for students with rubric support
-        st.markdown("### 📁 Upload your work for feedback (optional)")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            uploaded_work = st.file_uploader(
-                "Share your writing, drawing, or project",
-                type=['txt', 'pdf', 'jpg', 'png', 'docx'],
-                help="Upload your work for feedback",
-                key="work_upload"
-            )
-        
-        with col2:
-            uploaded_rubric = st.file_uploader(
-                "Upload assessment rubric (optional)",
-                type=['txt', 'pdf', 'docx'],
-                help="Upload a rubric to guide the feedback",
-                key="rubric_upload"
-            )
-        
-        # Feedback button when work is uploaded
-        if uploaded_work:
-            # Validate file uploads for security
-            work_valid, work_error = validate_file_upload(uploaded_work)
-            rubric_valid, rubric_error = validate_file_upload(uploaded_rubric) if uploaded_rubric else (True, None)
-            
-            if not work_valid:
-                st.error(f"Work file validation failed: {work_error}")
-            elif not rubric_valid:
-                st.error(f"Rubric file validation failed: {rubric_error}")
-            elif st.button("🌟 How about some feedback?", use_container_width=True, type="primary"):
+        if not work_valid:
+            st.error(f"Work file validation failed: {work_error}")
+        elif not rubric_valid:
+            st.error(f"Rubric file validation failed: {rubric_error}")
+        else:
+            if st.button("🌟 How about some feedback?", use_container_width=True, type="primary"):
                 # Process work file
                 work_content = ""
                 with st.spinner("Reading your work..."):
@@ -949,6 +946,7 @@ def show_student_interface():
                             work_content = f"[PDF uploaded: {uploaded_work.name} - appears to be scanned/image-based. Text extraction not possible.]"
                     elif uploaded_work.type in ["image/jpeg", "image/png"]:
                         try:
+                            from PIL import Image
                             image = Image.open(uploaded_work)
                             work_content = f"[Student uploaded an image: {uploaded_work.name}]"
                         except:
