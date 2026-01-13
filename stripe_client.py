@@ -200,13 +200,16 @@ def create_checkout_session(user_id: int, email: str, plan: str = 'monthly') -> 
     try:
         db = get_db()
         customer_id = None
+        has_previous_subscription = False
         if db:
             try:
                 result = db.execute(
-                    text("SELECT stripe_customer_id FROM users WHERE id = :user_id"),
+                    text("SELECT stripe_customer_id, stripe_subscription_id FROM users WHERE id = :user_id"),
                     {'user_id': user_id}
                 ).fetchone()
                 customer_id = result[0] if result else None
+                # Check if user has ever had a subscription (returning customer)
+                has_previous_subscription = bool(result[1]) if result else False
             finally:
                 db.close()
         
@@ -227,18 +230,30 @@ def create_checkout_session(user_id: int, email: str, plan: str = 'monthly') -> 
                 finally:
                     db.close()
         
-        session = stripe.checkout.Session.create(
-            mode='subscription',
-            customer=customer_id,
-            line_items=[{'price': price_id, 'quantity': 1}],
-            subscription_data={
-                'trial_period_days': 14  # 14-day free trial for all new subscribers
-            },
-            success_url=f"{GUIDE_APP_URL}/?subscription=success",
-            cancel_url=f"{GUIDE_APP_URL}/?subscription=cancelled",
-            metadata={'educatorId': str(user_id)},
-            allow_promotion_codes=True
-        )
+        # Only offer trial to new customers who have never had a subscription
+        subscription_data = {}
+        if not has_previous_subscription:
+            subscription_data['trial_period_days'] = 14  # 14-day free trial for new subscribers only
+            print(f"[STRIPE] New customer {user_id} - offering 14-day trial")
+        else:
+            print(f"[STRIPE] Returning customer {user_id} - no trial (has previous subscription)")
+        
+        # Build checkout session params
+        checkout_params = {
+            'mode': 'subscription',
+            'customer': customer_id,
+            'line_items': [{'price': price_id, 'quantity': 1}],
+            'success_url': f"{GUIDE_APP_URL}/?subscription=success",
+            'cancel_url': f"{GUIDE_APP_URL}/?subscription=cancelled",
+            'metadata': {'educatorId': str(user_id)},
+            'allow_promotion_codes': True
+        }
+        
+        # Only include subscription_data with trial for new customers
+        if subscription_data:
+            checkout_params['subscription_data'] = subscription_data
+        
+        session = stripe.checkout.Session.create(**checkout_params)
         
         print(f"[STRIPE] Created checkout session for user {user_id} ({plan})")
         return session.url
