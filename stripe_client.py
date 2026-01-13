@@ -231,6 +231,9 @@ def create_checkout_session(user_id: int, email: str, plan: str = 'monthly') -> 
             mode='subscription',
             customer=customer_id,
             line_items=[{'price': price_id, 'quantity': 1}],
+            subscription_data={
+                'trial_period_days': 14  # 14-day free trial for all new subscribers
+            },
             success_url=f"{GUIDE_APP_URL}/?subscription=success",
             cancel_url=f"{GUIDE_APP_URL}/?subscription=cancelled",
             metadata={'educatorId': str(user_id)},
