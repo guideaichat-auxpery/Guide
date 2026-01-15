@@ -1,6 +1,7 @@
 import streamlit as st
 import logging
 import sys
+import os
 from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
@@ -69,6 +70,17 @@ if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'auth_mode' not in st.session_state:
     st.session_state.auth_mode = 'login'  # 'login', 'signup', 'create_student'
+
+# PAYMENT BYPASS MODE: Controlled by environment variable (secure server-side check)
+# Set BYPASS_PAYMENT_MODE=true in environment to enable free access
+# This is meant for separate deployments (e.g., guidechat.replit.app)
+BYPASS_PAYMENT_MODE = os.environ.get('BYPASS_PAYMENT_MODE', 'false').lower() == 'true'
+
+# Initialize bypass state from environment variable (secure - can't be spoofed)
+if 'url_bypass_access' not in st.session_state:
+    st.session_state.url_bypass_access = BYPASS_PAYMENT_MODE
+    if BYPASS_PAYMENT_MODE:
+        logger.info("[BYPASS] Payment bypass mode enabled via environment variable")
 
 # Persistent session restoration: Check for saved session token on page load
 if database_available and not st.session_state.get('authenticated'):
@@ -329,6 +341,11 @@ else:
         if st.session_state.get('is_admin'):
             has_active_subscription = True
             subscription_status = 'admin'
+        # URL BYPASS: Free access for users on bypass domains (e.g., guidechat.replit.app)
+        elif st.session_state.get('url_bypass_access'):
+            has_active_subscription = True
+            subscription_status = 'bypass'
+            logger.info(f"[BYPASS] Educator {educator_id} granted free access via bypass domain")
         elif st.session_state.get('subscription_verified'):
             # Session already verified with Stripe - trust it completely
             has_active_subscription = st.session_state.get('subscription_active', False)
@@ -375,7 +392,7 @@ else:
                 subscription_status = subscription_info.get('status', 'none')
         
         # If no active subscription, show pricing page (unless accessing account settings, admin, or in grace access)
-        if not has_active_subscription and subscription_status not in ['trialing', 'active', 'grace', 'admin']:
+        if not has_active_subscription and subscription_status not in ['trialing', 'active', 'grace', 'admin', 'bypass']:
             # Allow access to account settings and logout even without subscription
             if st.session_state.get('auth_mode') not in ['account_deletion', 'privacy_policy']:
                 show_pricing_page()
