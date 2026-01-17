@@ -399,7 +399,7 @@ def show_pricing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     educator_id = st.session_state.get('user_id')
     email = st.session_state.get('user_email')
@@ -440,6 +440,18 @@ def show_pricing_page():
                     st.info("Redirecting to secure checkout...")
                 else:
                     st.error("Unable to create checkout session. Please try again.")
+    
+    with col3:
+        st.markdown("""
+        <div class="pricing-card" style="border-color: #4A90A4; background: linear-gradient(135deg, #f0f7fa 0%, #e8f4f8 100%);">
+            <span class="savings-badge" style="background: #4A90A4;">🏫 Schools</span>
+            <h3>School Plan</h3>
+            <div class="price-amount" style="font-size: 1.8rem;">15+ Teachers</div>
+            <p style="color: #4A90A4; font-weight: 500;">Custom pricing & bulk discount codes</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.link_button("📧 Contact Us", "mailto:guide@auxpery.com.au?subject=School%20Subscription%20Enquiry&body=Hi%2C%0A%0AI%27m%20interested%20in%20a%20school%20subscription%20for%20Guide.%0A%0ASchool%20Name%3A%20%0ANumber%20of%20Teachers%3A%20%0A%0AThank%20you!", use_container_width=True)
     
     st.markdown("---")
     
