@@ -27,7 +27,7 @@ st.set_page_config(
 )
 
 # Google Analytics 4 tracking (non-blocking load)
-GA_MEASUREMENT_ID = "G-R7E37XX8KP"
+GA_MEASUREMENT_ID = "G-L1LH5117YK"
 st.markdown(f"""
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
