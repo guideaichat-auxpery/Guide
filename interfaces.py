@@ -1477,11 +1477,11 @@ def show_student_dashboard_interface():
                             if messages:
                                 for msg in messages:
                                     if msg['role'] == 'user':
-                                        st.markdown(f"**Student:**")
+                                        st.markdown("**Student:**")
                                     else:
-                                        st.markdown(f"**AI:**")
+                                        st.markdown("**AI:**")
                                     st.markdown(msg["content"])
-                                    st.markdown("---")
+                                    st.divider()
                             else:
                                 st.info("No messages in this conversation yet.")
                 else:
