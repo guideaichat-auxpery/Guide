@@ -1416,11 +1416,11 @@ def show_student_dashboard_interface():
                         
                         with st.expander(expander_title):
                             if activity.prompt_text:
-                                st.markdown(f"**Full Question:**")
+                                st.markdown(f"**Student:**")
                                 st.markdown(activity.prompt_text)
                             if activity.response_text:
-                                st.markdown(f"**AI Response:**")
-                                st.markdown(activity.response_text[:500] + ("..." if len(activity.response_text) > 500 else ""))
+                                st.markdown(f"**AI:**")
+                                st.markdown(activity.response_text)
                             if activity.extra_data:
                                 try:
                                     extra = json.loads(activity.extra_data)
@@ -1461,82 +1461,29 @@ def show_student_dashboard_interface():
                 )
                 
                 if chats:
-                    st.markdown(f"**Showing {len(chats)} conversation(s)**")
-                    st.markdown("---")
+                    st.caption(f"{len(chats)} conversation(s)")
                     
-                    # Display chats grouped by subject if showing all
-                    if selected_subject == "All Subjects":
-                        # Group by subject
-                        from collections import defaultdict
-                        grouped_chats = defaultdict(list)
-                        for chat in chats:
-                            subject = chat.subject_tag or "General"
-                            grouped_chats[subject].append(chat)
+                    # Display all chats chronologically (no subject grouping)
+                    for chat in chats:
+                        # Simple expander title: subject tag + title + date
+                        subject_label = f"[{chat.subject_tag}] " if chat.subject_tag else ""
+                        expander_title = f"{subject_label}{chat.title} • {chat.updated_at.strftime('%d/%m/%Y')}"
                         
-                        # Display each subject group
-                        for subject, subject_chats in grouped_chats.items():
-                            st.markdown(f"### {subject}")
-                            for chat in subject_chats:
-                                with st.expander(f"{chat.title} - {chat.updated_at.strftime('%d/%m/%Y %H:%M')}"):
-                                    st.caption(f"**Subject:** {chat.subject_tag or 'General'}")
-                                    st.caption(f"**Started:** {chat.created_at.strftime('%d/%m/%Y %H:%M')}")
-                                    st.caption(f"**Last Updated:** {chat.updated_at.strftime('%d/%m/%Y %H:%M')}")
-                                    
-                                    if chat.summary:
-                                        st.markdown(f"**Summary:** {chat.summary}")
-                                    
-                                    # Load and display conversation messages
-                                    from database import load_conversation_to_session
-                                    messages = load_conversation_to_session(db, chat.session_id, 'student')
-                                    
-                                    if messages:
-                                        st.markdown(f"**Full Conversation ({len(messages)} messages):**")
-                                        # Build scrollable HTML for full conversation (with escaped content for XSS safety)
-                                        import html
-                                        chat_html = '<div style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">'
-                                        for msg in messages:
-                                            # Escape HTML and convert newlines to <br>
-                                            safe_content = html.escape(msg["content"]).replace('\n', '<br>')
-                                            if msg['role'] == 'user':
-                                                chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #e3f2fd; border-radius: 6px;"><strong>👤 Student:</strong><br>{safe_content}</div>'
-                                            else:
-                                                chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #fff; border-radius: 6px; border: 1px solid #eee;"><strong>🤖 AI:</strong><br>{safe_content}</div>'
-                                        chat_html += '</div>'
-                                        st.markdown(chat_html, unsafe_allow_html=True)
+                        with st.expander(expander_title):
+                            # Load and display conversation messages naturally
+                            from database import load_conversation_to_session
+                            messages = load_conversation_to_session(db, chat.session_id, 'student')
+                            
+                            if messages:
+                                for msg in messages:
+                                    if msg['role'] == 'user':
+                                        st.markdown(f"**Student:**")
                                     else:
-                                        st.info("No messages in this conversation yet.")
-                            st.markdown("---")
-                    else:
-                        # Display filtered chats for selected subject
-                        for chat in chats:
-                            with st.expander(f"{chat.title} - {chat.updated_at.strftime('%d/%m/%Y %H:%M')}"):
-                                st.caption(f"**Subject:** {chat.subject_tag or 'General'}")
-                                st.caption(f"**Started:** {chat.created_at.strftime('%d/%m/%Y %H:%M')}")
-                                st.caption(f"**Last Updated:** {chat.updated_at.strftime('%d/%m/%Y %H:%M')}")
-                                
-                                if chat.summary:
-                                    st.markdown(f"**Summary:** {chat.summary}")
-                                
-                                # Load and display conversation messages
-                                from database import load_conversation_to_session
-                                messages = load_conversation_to_session(db, chat.session_id, 'student')
-                                
-                                if messages:
-                                    st.markdown(f"**Full Conversation ({len(messages)} messages):**")
-                                    # Build scrollable HTML for full conversation (with escaped content for XSS safety)
-                                    import html
-                                    chat_html = '<div style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">'
-                                    for msg in messages:
-                                        # Escape HTML and convert newlines to <br>
-                                        safe_content = html.escape(msg["content"]).replace('\n', '<br>')
-                                        if msg['role'] == 'user':
-                                            chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #e3f2fd; border-radius: 6px;"><strong>👤 Student:</strong><br>{safe_content}</div>'
-                                        else:
-                                            chat_html += f'<div style="margin-bottom: 12px; padding: 8px; background: #fff; border-radius: 6px; border: 1px solid #eee;"><strong>🤖 AI:</strong><br>{safe_content}</div>'
-                                    chat_html += '</div>'
-                                    st.markdown(chat_html, unsafe_allow_html=True)
-                                else:
-                                    st.info("No messages in this conversation yet.")
+                                        st.markdown(f"**AI:**")
+                                    st.markdown(msg["content"])
+                                    st.markdown("---")
+                            else:
+                                st.info("No messages in this conversation yet.")
                 else:
                     st.info(f"No chat conversations found{' for ' + selected_subject if selected_subject != 'All Subjects' else ''}.")
             
