@@ -115,8 +115,17 @@ def show_lesson_planning_interface():
     if st.session_state.planning_messages:
         scroll_chat_to_bottom()
     
+    # Check for pending follow-up prompt from button clicks
+    pending_followup = st.session_state.pop('planning_followup_prompt', None)
+    
     # Chat input for planning questions
-    if prompt := st.chat_input("Tell me your year level/age, topic, time, and instructions"):
+    prompt = st.chat_input("Tell me your year level/age, topic, time, and instructions")
+    
+    # Use follow-up prompt if set, otherwise use chat input
+    if pending_followup:
+        prompt = pending_followup
+    
+    if prompt:
         st.session_state.planning_messages.append({
             "role": "user",
             "content": prompt
@@ -223,27 +232,62 @@ KEY MONTESSORI PRINCIPLES FOR AGES 9-12:
 - Timeline Work: Great lessons extended into detailed timeline exploration
 - Entrepreneurial Spirit: Micro-economy, business ventures, real-world problem solving""",
                         
-                        "12-15": """You are creating a lesson plan for the Third Plane of Development (ages 12-15 / Years 7-9 / Cycle 4) following Australian Curriculum V9 as the primary framework, interpreted through Montessori "Cosmic Education" and systems thinking perspective.
+                        "12-15": """You are an expert curriculum designer for adolescent learners following the GUIDE Learning Design Protocol.
+Your job is to design learning experiences that are human, inquiry-driven, and experiential — not traditional worksheet-based instruction.
 
-🎯 CRITICAL CURRICULUM RULE FOR AGES 12-15 (ADOLESCENCE):
-- PRIMARY FRAMEWORK: Australian Curriculum V9 (Years 7-9)
-- INTERPRETATION LENS: Montessori "Cosmic Education" / systems perspective
-- ALWAYS include AC content descriptor codes (e.g., AC9HH7K01, AC9E7LA01)
-- Structure the lesson using AC content descriptors as the foundation
-- Apply Montessori's cosmic education philosophy to interpret and deliver the AC content
-- Emphasize interconnections, big picture thinking, and the adolescent's place in society
+🎯 THE GUIDE LEARNING DESIGN PROTOCOL
+All learning designs must follow these four stages in order:
 
-KEY MONTESSORI PRINCIPLES FOR AGES 12-15:
-- Erdkinder (Children of the Earth): Learning through land-based work and community contribution
+**STAGE 1 — ANCHOR IN MEANING**
+Every unit must clearly define:
+1. **Human Theme**: A universal concept relevant to being human (e.g., Identity, Power, Change, Belonging, Systems, Progress, Conflict, Truth)
+2. **Driving Question**: A debatable, real-world question that frames the entire unit and creates intellectual tension
+3. **Purpose Statement**: A one-sentence explanation of why this learning matters in the real world
+If any of these three are missing, the design is incomplete.
+
+**STAGE 2 — BUILD THE LEARNING STORY**
+The unit must follow this five-phase narrative structure:
+- **Hook & Tension**: Create curiosity, emotional engagement, or cognitive dissonance
+- **Investigation**: Explicit teaching, research, experimentation, modelling, and skill development — always in service of the Driving Question
+- **Construction**: Students create a meaningful product, argument, design, solution, or performance that responds to the Driving Question
+- **Public Thinking**: Students share, defend, critique, revise, and articulate their thinking
+- **Reflection**: Students explicitly describe what they now understand, how their thinking changed, and what they can now do
+
+**STAGE 3 — DAILY SESSION DESIGN RULE**
+Each learning session must answer:
+- What thinking is being advanced today?
+- What will learners do?
+- What support or instruction is required?
+- How will progress be visible today?
+Sessions must always move the learning story forward.
+
+**STAGE 4 — SYSTEM ALIGNMENT (LAST STEP ONLY)**
+- Australian Curriculum V9 outcomes (Years 7-9) with AC content descriptor codes (e.g., AC9HH7K01, AC9E7LA01)
+- Assessment language and reporting structures
+- Learning design ALWAYS comes first, curriculum alignment is applied only after the experience is fully designed
+
+🚫 NON-NEGOTIABLE CONSTRAINTS:
+- Do NOT start from curriculum outcomes
+- Do NOT design worksheet-driven lessons
+- Do NOT generate activities without first establishing meaning and narrative flow
+- ALWAYS prioritise inquiry, construction, and reflection
+
+📋 OUTPUT FORMAT (Follow this order):
+1. Human Theme
+2. Driving Question
+3. Purpose Statement
+4. Learning Story (aligned with timeframe specified)
+5. Session-by-Session Plan
+6. Curriculum & Assessment Alignment (AC V9 codes)
+
+✅ QUALITY CHECK (Before responding, internally verify):
+Does this design feel like a real learning journey, not a school template? If not, revise.
+
+MONTESSORI ADOLESCENT PRINCIPLES TO INTEGRATE:
+- Erdkinder (Children of the Earth): Learning through meaningful work and community contribution
+- Valorisation: Development of self-worth through authentic purpose
 - Social Development: Peer relationships, identity formation, place in society
-- Valorisation: Development of self-worth through meaningful work
-- Real-World Application: Economics, agriculture, hospitality, entrepreneurship
-- Intellectual Engagement: Academic excellence through authentic purpose
-- Physical Activity: Outdoor work, farming, construction projects
-- Community Living: Shared responsibility, democratic governance
-- Emotional Development: Understanding self, managing emotions, building resilience
-- Passage to Independence: Preparation for adult life and societal contribution
-- Cosmic Education: Understanding systems, interdependence, and meaningful contribution to the world"""
+- Cosmic Education: Understanding systems, interdependence, and contribution to the world"""
                     }
                     system_context = montessori_context.get(age_group, "You are creating a lesson plan with Montessori principles and Australian Curriculum V9 alignment.")
                 else:  # assessment_rubric
@@ -357,6 +401,27 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                     file_name=filename,
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
+        
+        # Follow-up prompt suggestions for lesson plans
+        if planning_type == "lesson_plan" and len(st.session_state.planning_messages) >= 2:
+            st.markdown("---")
+            st.markdown("**Continue your planning:**")
+            follow_up_cols = st.columns(3)
+            
+            with follow_up_cols[0]:
+                if st.button("📊 Design a Rubric", key="followup_rubric", use_container_width=True):
+                    st.session_state.planning_followup_prompt = "Based on the lesson plan above, design a comprehensive assessment rubric using the four performance levels: Sophisticated, High Expectation Met, Expectation Met, and Developing. Include criteria that assess both the learning process and final product."
+                    st.rerun()
+            
+            with follow_up_cols[1]:
+                if st.button("📝 Student Templates", key="followup_templates", use_container_width=True):
+                    st.session_state.planning_followup_prompt = "Create student work templates and scaffolds for this unit. Include templates for the Construction phase that help students organise their thinking, track their progress, and present their final product. Design these to support student agency while providing structure."
+                    st.rerun()
+            
+            with follow_up_cols[2]:
+                if st.button("🎯 Differentiation", key="followup_differentiation", use_container_width=True):
+                    st.session_state.planning_followup_prompt = "Suggest differentiation strategies for this unit to support diverse learners. Include modifications for students who need additional support, extension opportunities for advanced learners, and strategies for different learning styles and needs."
+                    st.rerun()
     
     # Add scroll to top button
     add_scroll_to_top_button()
