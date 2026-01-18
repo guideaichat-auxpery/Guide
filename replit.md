@@ -26,6 +26,13 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and accessibility wizard.
 - **Backend**: Single-file Python application integrating OpenAI API.
 - **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts for various features: Student Research Assistant, Age-Appropriate Lesson Planning, Professional Development Expert, and Imaginarium.
+- **GUIDE Learning Design Protocol (January 2026)**: For adolescent learners (12-15), lesson planning follows the GUIDE Protocol:
+  - Stage 1: Anchor in Meaning (Human Theme, Driving Question, Purpose Statement)
+  - Stage 2: Build the Learning Story (Hook & Tension, Investigation, Construction, Public Thinking, Reflection)
+  - Stage 3: Daily Session Design (What thinking, What learners do, Support required, Visible progress)
+  - Stage 4: System Alignment (Curriculum outcomes applied LAST, not first)
+  - Non-negotiable: No starting from outcomes, no worksheet-driven lessons, prioritize inquiry and construction
+  - Follow-up buttons: "Design a Rubric", "Student Templates", "Differentiation Strategies"
 - **RAG System**: Hybrid semantic and keyword document retrieval using PostgreSQL pgvector and OpenAI embeddings, with metadata filtering.
 - **Data Management**: PostgreSQL for persistence of conversation history, analytics, planning notes, and RAG document chunks. Supports professional PDF and DOCX export, and GDPR data export in JSON format.
 - **Student Learning Journey Map**: Visual learning progress tracker showing explored curriculum topics, summary metrics, interactive nodes, and subject exploration sections.
