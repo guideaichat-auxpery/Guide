@@ -583,20 +583,21 @@ else:
     
 # Main app logic continues here
 
-# Footer with contact link
-st.markdown("---")
-footer_col1, footer_col2, footer_col3 = st.columns([1, 2, 1])
-with footer_col2:
-    st.markdown(
-        """
-        <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem; margin-bottom: 1.5rem;'>
-            <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
-            Guide - Your prepared digital environment<br>
-            Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    if st.button("📬 Contact Us", key="footer_contact", use_container_width=True):
-        st.session_state.auth_mode = "contact"
-        st.rerun()
+# Footer with contact link - only show on homepage (login page)
+if st.session_state.auth_mode == "login":
+    st.markdown("---")
+    footer_col1, footer_col2, footer_col3 = st.columns([1, 2, 1])
+    with footer_col2:
+        st.markdown(
+            """
+            <div style='text-align: center; color: #666; font-size: 0.8em; margin-top: 2rem; margin-bottom: 1.5rem;'>
+                <em>"The child is both a hope and a promise for mankind." - Maria Montessori</em><br><br>
+                Guide - Your prepared digital environment<br>
+                Brought to you by Auxpery - <em>Gentle Technology for Thoughtful Education</em>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        if st.button("📬 Contact Us", key="footer_contact", use_container_width=True):
+            st.session_state.auth_mode = "contact"
+            st.rerun()
