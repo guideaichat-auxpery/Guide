@@ -10,97 +10,26 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 
 ## UI/UX Decisions
 - **Framework**: Streamlit with a wide layout and dual-mode interface (educator and student).
-- **Design System**: Features a Montessori-themed interface with warm earth tones for general elements and a Danish Eco-Design theme for the educator dashboard, emphasizing clean modern aesthetics, accessibility (WCAG 2.1 AA), and responsive design.
-- **Login Experience (January 2026)**: Clear tab-based separation between Educator and Student login with descriptive text for each user type, reducing confusion for students.
-- **Accessibility (January 2026)**: Comprehensive accessibility.css with focus indicators, high contrast support, minimum tap targets (44px), keyboard navigation, and screen reader improvements.
-- **Mobile Responsive (January 2026)**: Enhanced mobile-responsive.css with fixes for overlapping elements, login forms, modals, tables, and very small phones (360px+).
-- **Streamlit Rerun Architecture**: Static UI elements are strategically placed to render before chat history to ensure consistent display during Streamlit reruns.
+- **Design System**: Montessori-themed interface with warm earth tones and a Danish Eco-Design theme for the educator dashboard, emphasizing clean modern aesthetics, accessibility (WCAG 2.1 AA), and responsive design. Includes dark mode and enhanced mobile responsiveness.
+- **Login Experience**: Clear tab-based separation for Educator and Student login.
+- **Sidebar UX**: Redesigned conversation sidebar with warm earth-tone gradient background, new chat button, hover-to-reveal edit/delete actions, floating toggle button, date grouping for conversation history, and AI auto-titling.
+- **Streamlit Rerun Architecture**: Static UI elements render before chat history for consistent display.
 
 ## Technical Implementations
-- **Authentication**: Email/password for educators and username/password for students, with bcrypt hashing and session management, compliant with Australian Privacy Act 1988.
-  - **Password Security (December 2025)**: Minimum 12 characters with complexity requirements (uppercase, lowercase, number).
-  - **Login Rate Limiting (December 2025)**: 5 failed attempts triggers 15-minute account lockout. Tracked in `login_attempts` table.
-  - **Guardian Consent (December 2025)**: Mandatory checkbox attestation when creating student accounts with consent record stored (educator ID, timestamp, attestation text).
-  - **Password Management (December 2025)**:
-    - **Change Password**: In Account Settings, users can change their password by entering current password + new password with validation.
-    - **Forgot Password**: Login page displays contact email (guide@auxpery.com.au) for password reset requests.
-    - **Admin Password Reset**: Admin users can look up any user by email and reset their password via Admin Tools section.
-  - **Admin System (December 2025)**:
-    - **Admin Account**: is_admin column on users table, admin@auxpery.com.au account with ADMIN_PASSWORD env var.
-    - **Subscription Bypass**: Admin users skip all Stripe/subscription checks, have full access to all features.
-    - **Admin Tools**: User lookup and password reset functionality in Account Settings (only visible to admins).
-- **Data Privacy & Security (December 2025)**:
-  - **PII Sanitization**: All messages sent to OpenAI are sanitized to remove student names, emails, phone numbers, addresses before API calls.
-  - **File Upload Security**: Server-side MIME validation, 10MB size limit, and filename sanitization for all uploads.
-  - **Audit Logging**: EducatorAuditLog model tracks educator actions on student data with timestamps and action details.
-- **Session Management (December 2025 - January 2026)**:
-  - 2-hour inactivity timeout for students (classroom-appropriate session length)
-  - 30-minute inactivity timeout for educators (protects student data access)
-  - Automatic conversation restoration on login, visual save confirmations.
-  - **Persistent Login (January 2026)**: Stay logged in across browser refreshes via cookie-based session tokens:
-    - `persistent_sessions` database table stores secure session tokens with expiry
-    - Educators: 24-hour session duration; Students: 8-hour session duration
-    - JavaScript cookie bridge reads token and restores session on page load
-    - Secure token generation (64-char random) with database validation
-    - Automatic session invalidation on logout and token cleanup
-- **Subscription & Payments (December 2025)**:
-  - **Simplified Stripe Architecture (December 2025)**: Direct Python Stripe SDK (`stripe_client.py`) for all user-facing operations (checkout, portal, subscription sync). Node.js payments service (port 3001) now only handles webhooks and marketing site token verification.
-  - **Bulletproof Subscription Verification (December 2025)**: Session-based verification with grace access:
-    - At login: Check Stripe directly, store result in session (`subscription_verified`, `subscription_active`, `subscription_plan`, `subscription_status`)
-    - If Stripe succeeds: Mark verified, trust for entire session
-    - If Stripe errors: Grant GRACE ACCESS (subscription_active=True), don't mark verified (auto-retries on next navigation)
-    - This ensures Stripe outages or webhook delays NEVER block paying users
-  - **Grace Access Mode**: When Stripe API is unavailable, users are granted temporary access with "⏳ Verifying..." status indicator
-  - **Manual Re-verify**: "Verify Subscription" button in sidebar expander for users who just subscribed
-  - **Visible Status Indicator**: Sidebar shows current subscription plan with status (✅ verified, ⏳ verifying, ❌ none)
-  - **Pricing**: $15/month with 14-day trial OR $150/year (2 months free)
-  - **Subscription Gate**: Educators must have active subscription to access app features
-  - **Checkout Flow**: Stripe Checkout for secure payment processing (via Python Stripe client)
-  - **Billing Portal**: Self-service subscription management via Stripe Customer Portal
-  - **Webhook Handling**: Real-time subscription status updates (created/updated/cancelled) via Node.js service (non-blocking)
-  - **Database Fields**: stripe_customer_id, stripe_subscription_id, subscription_status, trial_ends_at, subscription_last_checked on users table
-  - **Marketing Site Integration (December 2025)**: Sign-up-first flow where users create account on guide.auxpery.com.au, then pay through pricing page
-    - Simple redirect links from www.auxpery.com.au to guide.auxpery.com.au for signup
-    - After signup, users see pricing page and complete Stripe Checkout
-    - Subscription automatically activated upon payment completion
-    - Optional public API: POST `/api/public/create-checkout-session` for pre-signup payments on marketing site
-    - See `MARKETING_SITE_INTEGRATION.md` for frontend implementation guide
-  - **Email Integration (January 2026)**: Automated transactional emails via Resend (guide@auxpery.com.au):
-    - **Welcome Email**: Sent automatically when new subscribers complete Stripe checkout. Features branded HTML template with feature highlights (Lesson Planning Assistant, Great Story Creator, Montessori Companion, Imaginarium). Tracked via `welcome_email_sent_at` column to prevent duplicates.
-    - **Password Reset Email**: Secure token-based reset flow with 1-hour expiry, SHA-256 hashed tokens, rate limiting (3 requests per 15 minutes), and atomic token validation.
-    - **Contact Form Auto-Reply**: Friendly automatic acknowledgment email sent when users submit the contact form. Mentions 3-business-day response time. Stored in `contact_submissions` table with `autoreply_sent` tracking.
-- **Child Safety Measures (December 2025)**:
-  - **Content Monitoring**: SafetyAlert model detects concerning content (self-harm, bullying, abuse indicators) in student messages. Keywords classified by severity (high/medium/low). Educators receive alerts for review.
-  - **Student Reporting**: "Need to talk to someone?" expander in student interface allows students to confidentially report concerns to their educator.
-  - **Data Retention Compliance**: 7-year retention for student records and conversations (Australian education baseline), 25-year retention for child safety records, permanent audit logs.
-  - **Complete Data Deletion**: `delete_student_and_data()` provides cascade deletion of student + activities + conversations + consent records with permanent audit trail.
+- **Authentication**: Email/password for educators and username/password for students, with bcrypt hashing, session management, and compliance with Australian Privacy Act 1988. Features password security, login rate limiting, guardian consent for student accounts, and comprehensive password management.
+- **Admin System**: `is_admin` column on users table, bypassing subscription checks for admin users, and admin tools for user lookup and password reset.
+- **Data Privacy & Security**: PII sanitization for OpenAI API calls, server-side file upload security, audit logging for educator actions on student data, and data retention compliance (7 years for student records, 25 years for child safety records).
+- **Session Management**: Inactivity timeouts (2 hours for students, 30 minutes for educators), automatic conversation restoration, and persistent login via cookie-based session tokens.
+- **Subscription & Payments**: Simplified Stripe integration using Python SDK for user-facing operations. Features bulletproof subscription verification with grace access, manual re-verification, visible status indicators, pricing tiers, Stripe Checkout for payment, and Stripe Customer Portal for self-service management. Integrated with marketing site for signup-first flow.
+- **Email Integration**: Automated transactional emails via Resend for welcome, password reset, and contact form auto-reply.
+- **Child Safety Measures**: Content monitoring for concerning student messages with alerts to educators, confidential student reporting, and complete data deletion functionality.
 - **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and accessibility wizard.
-- **Backend**: Single-file Python application (`app.py`) integrating OpenAI API.
-- **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts for various features:
-    - **Student Research Assistant**: Provides year-level adaptive AI tutoring in Structure/Scaffold or Research modes, with enhanced source filtering prioritizing educational domains and specific Australian resources.
-    - **Age-Appropriate Lesson Planning**: AI assistant provides developmental stage-specific, highly detailed lesson plans with mandatory differentiation and cross-curricular connections, aligning with Australian Curriculum V9 and Montessori frameworks.
-    - **Professional Development Expert**: A restricted-access, advanced PD coaching system.
-    - **Imaginarium (Creative Space)**: Free-form creative space for brainstorming and innovative lesson concepts with high creativity and extended conversation history.
-- **RAG System**: Hybrid semantic and keyword document retrieval using PostgreSQL pgvector and OpenAI embeddings, enhanced with metadata filtering for year level and subject.
-- **Data Management**: PostgreSQL for persistence of conversation history, analytics, planning notes, and RAG document chunks. Supports PDF and DOCX export. **NEW - Professional PDF Export (December 2025)**: Enhanced print-friendly A4 formatting with professional header (Guide by AUXPERY branding + date), improved typography, justified text alignment, better table formatting, comprehensive bullet/list marker handling, and branded footer.
-- **NEW - GDPR Data Export (December 2025)**: Users can download all their data in JSON format via sidebar expander. Exports include profile info, lesson plans, stories, planning notes, conversations, and usage analytics. Excludes sensitive fields (password hashes, internal IDs).
-- **NEW - Dark Mode (December 2025)**: Toggle in sidebar switches between light (default warm Montessori) and dark themes. Dark theme uses Montessori-inspired muted earth tones. Preference stored in session state.
-- **NEW - Mobile Responsive (December 2025)**: Enhanced touch targets (minimum 44px per WCAG 2.1), improved sidebar behavior, column stacking on small screens, and reduced-motion support for accessibility.
-- **Student Learning Journey Map (December 2025 - Redesigned January 2026)**: Visual learning progress tracker for students showing explored curriculum topics organized by subject. Features:
-    - **Structured Layout**: Topics displayed in subject rows (most explored subjects at top) with clear visual hierarchy
-    - **Summary Metrics**: Three key stats at top - Topics Explored, Subject Areas, Most Explored topic
-    - **Meaningful Introduction**: Explains purpose ("Your learning adventure so far!") and how to read the visualization
-    - **Interactive Nodes**: Circles sized by exploration frequency, hover for details (topic name, subject, times explored)
-    - **Subject Exploration Section**: Expandable lists per subject with star ratings indicating engagement level
-    - **Empty State**: Encouraging onboarding for new students with exploration suggestions
-    - Supports Montessori Cosmic Education philosophy of interconnected learning
-- **Core Features**:
-    - **Dual Interface**: Teacher and student modes for various educational tasks.
-    - **Chat Conversation Management**: Sidebar-based system for creating, renaming, deleting, and reopening conversations with real-time persistence and subject-based organization for students.
-    - **Curriculum Integration**: Incorporates Australian Curriculum V9 and Montessori National Curriculum (2011), rooted in Montessori's Cosmic Education.
-    - **AI-Powered Tools**: Includes Great Story Creator, Planning Notes, Educator Observation Dashboard, Lesson Planning Assistant, Big Picture Curriculum Mapping, Student Work Analysis, Imaginarium, and an advanced Rubric Generator.
-    - **Document Upload & Analysis**: Educators and students can upload various file types (TXT, PDF, DOCX, JPG, PNG) for AI feedback and analysis through a Montessori lens, with robust handling for scanned documents.
-    - **Accessibility**: Universal Design for Learning interface.
+- **Backend**: Single-file Python application integrating OpenAI API.
+- **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts for various features: Student Research Assistant, Age-Appropriate Lesson Planning, Professional Development Expert, and Imaginarium.
+- **RAG System**: Hybrid semantic and keyword document retrieval using PostgreSQL pgvector and OpenAI embeddings, with metadata filtering.
+- **Data Management**: PostgreSQL for persistence of conversation history, analytics, planning notes, and RAG document chunks. Supports professional PDF and DOCX export, and GDPR data export in JSON format.
+- **Student Learning Journey Map**: Visual learning progress tracker showing explored curriculum topics, summary metrics, interactive nodes, and subject exploration sections.
+- **Core Features**: Dual Teacher/Student Interface, Chat Conversation Management, Curriculum Integration (Australian Curriculum V9, Montessori National Curriculum), AI-Powered Tools (Great Story Creator, Lesson Planning Assistant, etc.), Document Upload & Analysis, and Universal Design for Learning.
 
 # External Dependencies
 
@@ -108,17 +37,13 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **OpenAI API**: GPT-4o-mini model.
 
 ## Python Libraries
-- **streamlit**: Web application framework.
-- **pandas**: Data manipulation.
-- **plotly.express & plotly.graph_objects**: Interactive visualizations.
-- **openai**: Official OpenAI Python client.
-- **datetime**: Date and time handling.
-- **reportlab & python-docx**: PDF and DOCX export.
+- **streamlit**
+- **pandas**
+- **plotly.express & plotly.graph_objects**
+- **openai**
+- **datetime**
+- **reportlab & python-docx**
 
 ## Curriculum Frameworks
 - **Australian Curriculum V9**
 - **Montessori National Curriculum (2011)**
-- **Dr. Montessori's Own Handbook**
-- **The Absorbent Mind**
-- **The Montessori Method**
-- **Montessori Curriculum Australia**
