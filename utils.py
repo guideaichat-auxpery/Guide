@@ -55,6 +55,180 @@ def extract_subject_from_query(query: str) -> str:
             return subject
     return None
 
+def generate_smart_title(first_message: str) -> str:
+    """
+    Generate a smart, descriptive title for a conversation based on the first message.
+    Uses AI to create a concise 3-6 word title that captures the topic.
+    Non-blocking with fast fallback - should never delay chat UX.
+    
+    Args:
+        first_message: The user's first message in the conversation
+        
+    Returns:
+        A short, descriptive title (or fallback to truncated message if AI fails)
+    """
+    if not first_message or len(first_message.strip()) < 3:
+        return "New conversation"
+    
+    # Fast fallback title (used if AI fails or times out)
+    clean_msg = first_message.strip()[:40]
+    if len(first_message) > 40:
+        clean_msg += "..."
+    fallback_title = clean_msg
+    
+    try:
+        # Check if OpenAI API key is available
+        api_key = os.getenv('OPENAI_API_KEY') or os.getenv('AI_INTEGRATIONS_OPENAI_API_KEY')
+        if not api_key:
+            logger.warning("No OpenAI API key available for title generation")
+            return fallback_title
+        
+        client = OpenAI(timeout=5.0)  # 5 second timeout to avoid blocking
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Generate a short, descriptive title (3-6 words) for this conversation based on the user's message. The title should capture the main topic or request. Do not use quotes. Just output the title, nothing else."
+                },
+                {
+                    "role": "user",
+                    "content": first_message[:500]
+                }
+            ],
+            max_tokens=20,
+            temperature=0.3
+        )
+        
+        title = response.choices[0].message.content.strip()
+        if title and len(title) > 2:
+            if len(title) > 50:
+                title = title[:47] + "..."
+            return title
+        
+        return fallback_title
+            
+    except Exception as e:
+        logger.warning(f"Smart title generation failed (using fallback): {str(e)}")
+        return fallback_title
+
+def update_conversation_title_if_needed(db, conversation_id: int, interface_type: str, first_message: str):
+    """
+    Update a conversation's title with a smart auto-generated title based on the first message.
+    Only updates if the title is still the default "New conversation".
+    
+    Args:
+        db: Database session
+        conversation_id: ID of the conversation to update
+        interface_type: Type of interface (for session state key)
+        first_message: The user's first message
+    """
+    try:
+        from database import ChatConversation
+        
+        conv = db.query(ChatConversation).filter(ChatConversation.id == conversation_id).first()
+        if conv and conv.title in ["New conversation", "New Conversation"]:
+            new_title = generate_smart_title(first_message)
+            conv.title = new_title
+            db.commit()
+            logger.info(f"Auto-titled conversation {conversation_id}: {new_title}")
+            return new_title
+    except Exception as e:
+        logger.warning(f"Failed to auto-title conversation: {str(e)}")
+    return None
+
+def inject_sidebar_toggle_button():
+    """
+    Inject a floating toggle button that appears when the sidebar is collapsed.
+    This helps users reopen the sidebar easily.
+    """
+    toggle_css_js = """
+    <style>
+    /* Floating sidebar toggle button - appears when sidebar is collapsed */
+    .sidebar-reopen-btn {
+        position: fixed;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 999999;
+        background: #3d5a3d;
+        color: white;
+        border: none;
+        border-radius: 0 8px 8px 0;
+        padding: 16px 8px;
+        cursor: pointer;
+        box-shadow: 2px 2px 12px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
+        font-size: 16px;
+        display: none;
+    }
+    
+    .sidebar-reopen-btn:hover {
+        background: #4a6b4a;
+        padding-left: 14px;
+    }
+    
+    /* Show button when sidebar is collapsed */
+    [data-testid="stSidebar"][aria-expanded="false"] ~ .main .sidebar-reopen-btn,
+    [data-testid="collapsedControl"] ~ .sidebar-reopen-btn {
+        display: block !important;
+    }
+    </style>
+    
+    <script>
+    (function() {
+        // Check if button already exists
+        if (window.parent.document.getElementById('sidebar-reopen-btn')) return;
+        
+        // Create the toggle button
+        var btn = window.parent.document.createElement('button');
+        btn.id = 'sidebar-reopen-btn';
+        btn.className = 'sidebar-reopen-btn';
+        btn.innerHTML = '☰';
+        btn.title = 'Open sidebar';
+        btn.setAttribute('aria-label', 'Open sidebar');
+        
+        // Add click handler to open sidebar
+        btn.onclick = function() {
+            var sidebarBtn = window.parent.document.querySelector('[data-testid="collapsedControl"]');
+            if (sidebarBtn) {
+                sidebarBtn.click();
+            }
+        };
+        
+        // Append to body
+        window.parent.document.body.appendChild(btn);
+        
+        // Observer to show/hide button based on sidebar state
+        var observer = new MutationObserver(function(mutations) {
+            var sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+            var collapsedControl = window.parent.document.querySelector('[data-testid="collapsedControl"]');
+            
+            if (collapsedControl && sidebar) {
+                var isCollapsed = sidebar.getAttribute('aria-expanded') === 'false';
+                btn.style.display = isCollapsed ? 'block' : 'none';
+            }
+        });
+        
+        observer.observe(window.parent.document.body, {
+            attributes: true,
+            subtree: true,
+            attributeFilter: ['aria-expanded']
+        });
+        
+        // Initial check
+        setTimeout(function() {
+            var sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+            if (sidebar && sidebar.getAttribute('aria-expanded') === 'false') {
+                btn.style.display = 'block';
+            }
+        }, 500);
+    })();
+    </script>
+    """
+    st.markdown(toggle_css_js, unsafe_allow_html=True)
+
 # ---- SCROLL UTILITIES ----
 def force_scroll_to_top():
     """
@@ -329,87 +503,185 @@ def get_relative_time(dt):
         return dt.strftime('%d/%m/%Y')
 
 def apply_chatgpt_sidebar_style():
-    """Apply ChatGPT-style CSS to the sidebar"""
+    """Apply warm Montessori earth-tone styling to the sidebar"""
     sidebar_css = """
     <style>
-    /* ChatGPT-style sidebar */
+    /* Warm Montessori sidebar theme */
     [data-testid="stSidebar"] {
-        background: #202123 !important;
+        background: linear-gradient(180deg, #f5f0e8 0%, #ebe4d8 100%) !important;
     }
     
     [data-testid="stSidebar"] * {
-        color: #ececf1 !important;
+        color: #4a4a4a !important;
     }
     
     [data-testid="stSidebar"] .stMarkdown h3 {
-        color: #ececf1 !important;
-        font-weight: 500 !important;
+        color: #3d5a3d !important;
+        font-weight: 600 !important;
     }
     
-    /* Style all sidebar buttons as list items */
+    /* Conversation row container - hover reveals actions */
+    .conversation-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin: 2px 0;
+        transition: background 0.15s ease;
+        position: relative;
+    }
+    
+    .conversation-row:hover {
+        background: rgba(61, 90, 61, 0.08);
+    }
+    
+    .conversation-row .action-buttons {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        display: flex;
+        gap: 4px;
+    }
+    
+    .conversation-row:hover .action-buttons {
+        opacity: 1;
+    }
+    
+    /* Style all sidebar buttons */
     [data-testid="stSidebar"] .stButton > button {
         background: transparent !important;
         border: none !important;
         border-radius: 8px !important;
-        color: #ececf1 !important;
+        color: #4a4a4a !important;
         text-align: left !important;
         padding: 10px 12px !important;
         font-size: 14px !important;
-        transition: background 0.15s !important;
+        transition: all 0.15s ease !important;
     }
     
     [data-testid="stSidebar"] .stButton > button:hover {
-        background: #2a2b32 !important;
+        background: rgba(61, 90, 61, 0.1) !important;
     }
     
     /* Primary buttons (current conversation) */
     [data-testid="stSidebar"] .stButton > button[kind="primary"] {
-        background: #343541 !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
+        background: #3d5a3d !important;
+        color: #ffffff !important;
+        border: none !important;
     }
     
-    /* Small icon buttons (edit/delete) */
+    [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+        background: #4a6b4a !important;
+    }
+    
+    /* New Chat button - prominent styling */
+    .new-chat-btn {
+        background: #3d5a3d !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-weight: 500 !important;
+        margin-bottom: 16px !important;
+    }
+    
+    /* Small icon buttons (edit/delete) - subtle until hover */
     [data-testid="stSidebar"] .stButton > button[data-testid*="edit"],
     [data-testid="stSidebar"] .stButton > button[data-testid*="del"] {
-        padding: 6px 10px !important;
-        font-size: 12px !important;
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+        min-height: 28px !important;
+        background: transparent !important;
+        opacity: 0.6 !important;
+    }
+    
+    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"]:hover,
+    [data-testid="stSidebar"] .stButton > button[data-testid*="del"]:hover {
+        opacity: 1 !important;
+        background: rgba(61, 90, 61, 0.15) !important;
     }
     
     /* Section headers */
     .sidebar-section-header {
         font-size: 11px !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        opacity: 0.6 !important;
-        padding: 12px 12px 6px 12px !important;
+        letter-spacing: 0.8px !important;
+        font-weight: 600 !important;
+        padding: 16px 12px 8px 12px !important;
         margin-top: 8px !important;
-        color: #8e8ea0 !important;
+        color: #6b7c6b !important;
+        border-top: 1px solid rgba(61, 90, 61, 0.1) !important;
     }
     
-    /* Bottom action bar */
-    .sidebar-bottom-bar {
-        position: sticky !important;
-        bottom: 0 !important;
-        background: #202123 !important;
-        padding: 12px 0 !important;
-        border-top: 1px solid rgba(255,255,255,0.1) !important;
-        margin-top: 20px !important;
+    .sidebar-section-header:first-of-type {
+        border-top: none !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Keyboard shortcut hint */
+    .keyboard-hint {
+        font-size: 10px;
+        color: #8a8a8a;
+        background: rgba(0,0,0,0.05);
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 8px;
+        font-family: monospace;
     }
     
     /* Info box in sidebar */
     [data-testid="stSidebar"] [data-testid="stAlert"] {
-        background: #2a2b32 !important;
-        border: none !important;
+        background: rgba(61, 90, 61, 0.08) !important;
+        border: 1px solid rgba(61, 90, 61, 0.15) !important;
+        border-radius: 8px !important;
     }
     
     /* Dividers */
     [data-testid="stSidebar"] hr {
-        border-color: rgba(255,255,255,0.1) !important;
+        border-color: rgba(61, 90, 61, 0.15) !important;
     }
     
     /* Caption text */
     [data-testid="stSidebar"] .stCaption {
-        color: #8e8ea0 !important;
+        color: #6b7c6b !important;
+    }
+    
+    /* Sidebar toggle button for reopening */
+    .sidebar-toggle-btn {
+        position: fixed;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        background: #3d5a3d;
+        color: white;
+        border: none;
+        border-radius: 0 8px 8px 0;
+        padding: 12px 8px;
+        cursor: pointer;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+        transition: all 0.2s ease;
+    }
+    
+    .sidebar-toggle-btn:hover {
+        background: #4a6b4a;
+        padding-left: 12px;
+    }
+    
+    /* Scrollbar styling for sidebar */
+    [data-testid="stSidebar"]::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    [data-testid="stSidebar"]::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    [data-testid="stSidebar"]::-webkit-scrollbar-thumb {
+        background: rgba(61, 90, 61, 0.3);
+        border-radius: 3px;
+    }
+    
+    [data-testid="stSidebar"]::-webkit-scrollbar-thumb:hover {
+        background: rgba(61, 90, 61, 0.5);
     }
     </style>
     """
@@ -446,6 +718,14 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
         
         # Sidebar for conversation management
         with st.sidebar:
+            # NEW CHAT BUTTON AT TOP with keyboard shortcut hint
+            st.markdown("""
+                <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                    <span style="flex-grow: 1;"></span>
+                    <span class="keyboard-hint" title="Keyboard shortcut">Ctrl+N</span>
+                </div>
+            """, unsafe_allow_html=True)
+            
             # Subject selector for student chats (shown when creating new chat)
             if interface_type == 'student' and st.session_state.get('show_subject_selector', False):
                 from database import get_available_subjects
@@ -480,8 +760,27 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                     if st.button("Cancel", use_container_width=True):
                         st.session_state.show_subject_selector = False
                         st.rerun()
+            else:
+                # New Chat button - prominent at top
+                if st.button("✚ New Chat", key="top_new_chat", type="primary", use_container_width=True):
+                    if interface_type == 'student':
+                        st.session_state.show_subject_selector = True
+                    else:
+                        new_session_id = str(uuid.uuid4())
+                        title = f"New conversation"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=new_session_id, 
+                            interface_type=interface_type, user_id=user_id, student_id=student_id
+                        )
+                        st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
+                        st.session_state[f'{interface_type}_session_id'] = new_session_id
+                        st.session_state[f'{interface_type}_messages'] = []
+                        st.session_state[f'{interface_type}_needs_auto_title'] = True
+                    st.rerun()
+                
+                st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
             
-            # Display conversation list (ChatGPT-style)
+            # Display conversation list
             if conversations:
                 # Group by time period
                 today = []
@@ -576,31 +875,7 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                 render_conv_list(older, "Previous")
                 
             else:
-                st.info("No conversations yet. Start a new chat!")
-            
-            # Bottom action bar with New Chat and Settings
-            st.markdown('<div class="sidebar-bottom-bar">', unsafe_allow_html=True)
-            bottom_col1, bottom_col2 = st.columns(2)
-            with bottom_col1:
-                if st.button("✚ New Chat", key="bottom_new_chat", use_container_width=True):
-                    if interface_type == 'student':
-                        st.session_state.show_subject_selector = True
-                    else:
-                        new_session_id = str(uuid.uuid4())
-                        title = f"Chat {datetime.now().strftime('%d/%m %H:%M')}"
-                        new_conv = create_chat_conversation(
-                            db, title=title, session_id=new_session_id, 
-                            interface_type=interface_type, user_id=user_id, student_id=student_id
-                        )
-                        st.session_state[f'{interface_type}_current_conversation_id'] = new_conv.id
-                        st.session_state[f'{interface_type}_session_id'] = new_session_id
-                        st.session_state[f'{interface_type}_messages'] = []
-                    st.rerun()
-            with bottom_col2:
-                if st.button("⚙️ Settings", key="bottom_settings", use_container_width=True):
-                    st.session_state['show_settings'] = True
-                    st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+                st.info("No conversations yet. Click 'New Chat' above to get started!")
             
         # Return the current session ID
         return st.session_state.get(f'{interface_type}_session_id')

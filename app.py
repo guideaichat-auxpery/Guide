@@ -41,7 +41,7 @@ st.markdown(f"""
 
 # Scroll behavior: Only scroll to top on navigation, not on chat updates
 # Check if this is a navigation action (page/mode change) vs chat action
-from utils import force_scroll_to_top
+from utils import force_scroll_to_top, inject_sidebar_toggle_button
 
 # Track previous mode to detect navigation
 current_mode = st.session_state.get('auth_mode', 'login')
@@ -250,6 +250,9 @@ document.addEventListener('DOMContentLoaded', function() {
 # Main Header - wrapped with negative margin to reduce top space
 st.markdown('<div style="margin-top: -10rem;"><h1 class="main-header">Guide</h1></div>', unsafe_allow_html=True)
 st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
+
+# Inject floating sidebar toggle button (appears when sidebar is collapsed) - for all users
+inject_sidebar_toggle_button()
 
 # Only show subtitle for unauthenticated users
 if not st.session_state.authenticated:

@@ -126,6 +126,7 @@ def show_lesson_planning_interface():
         save_success = False
         if database_available and user_id:
             from database import save_conversation_message
+            from utils import update_conversation_title_if_needed
             db = get_db()
             if db:
                 try:
@@ -139,6 +140,11 @@ def show_lesson_planning_interface():
                         student_id=None
                     )
                     save_success = True
+                    
+                    # Auto-title on first message
+                    conv_id = st.session_state.get('planning_current_conversation_id')
+                    if conv_id and len(st.session_state.planning_messages) == 1:
+                        update_conversation_title_if_needed(db, conv_id, 'planning', prompt)
                 except Exception as e:
                     print(f"Error saving planning user message: {str(e)}")
                     st.warning("⚠️ Unable to save message. Please check your connection.")
@@ -657,6 +663,7 @@ def show_companion_interface():
         # Save user message to database
         save_success = False
         if database_available and user_id:
+            from utils import update_conversation_title_if_needed
             db = get_db()
             if db:
                 try:
@@ -676,6 +683,11 @@ def show_companion_interface():
                         tokens_used=estimate_tokens(prompt)
                     )
                     save_success = True
+                    
+                    # Auto-title on first message
+                    conv_id = st.session_state.get('companion_current_conversation_id')
+                    if conv_id and len(st.session_state.companion_messages) == 1:
+                        update_conversation_title_if_needed(db, conv_id, 'companion', prompt)
                 except Exception as e:
                     print(f"Error saving conversation: {str(e)}")
                     st.warning("⚠️ Unable to save message. Please check your connection.")
@@ -3089,6 +3101,7 @@ def show_imaginarium_interface():
         
         # Save to database with validation
         if database_available and user_id:
+            from utils import update_conversation_title_if_needed
             session_id = st.session_state.get('imaginarium_session_id')
             if not session_id:
                 print("ERROR: imaginarium_session_id is not set! Cannot save message.")
@@ -3107,6 +3120,11 @@ def show_imaginarium_interface():
                             student_id=None
                         )
                         st.toast("✓ Message saved", icon="💾")
+                        
+                        # Auto-title on first message
+                        conv_id = st.session_state.get('imaginarium_current_conversation_id')
+                        if conv_id and len(st.session_state.imaginarium_messages) == 1:
+                            update_conversation_title_if_needed(db, conv_id, 'imaginarium', prompt)
                     except Exception as e:
                         print(f"Error saving conversation: {str(e)}")
                         st.warning("⚠️ Unable to save message. Please check your connection.")
