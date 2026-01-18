@@ -88,16 +88,27 @@ def restore_session_from_token(token: str):
                     st.session_state.subscription_status = 'admin'
                     st.session_state.subscription_plan = 'admin'
                 else:
-                    stripe_result = stripe_client.sync_subscription_to_db(user.id, user.email)
-                    if stripe_result:
+                    # First check database for subscription status (fast, reliable)
+                    db_result = stripe_client.get_subscription_from_db(user.id)
+                    if db_result.get('isActive'):
+                        # Database confirms active subscription - trust it
                         st.session_state.subscription_verified = True
-                        st.session_state.subscription_active = stripe_result.get('isActive', False)
-                        st.session_state.subscription_plan = stripe_result.get('plan')
-                        st.session_state.subscription_status = stripe_result.get('status', 'none')
-                    else:
-                        st.session_state.subscription_verified = False
                         st.session_state.subscription_active = True
-                        st.session_state.subscription_status = 'grace'
+                        st.session_state.subscription_plan = db_result.get('plan', 'monthly')
+                        st.session_state.subscription_status = db_result.get('status', 'active')
+                    else:
+                        # Try to sync with Stripe (may fail if Stripe is down)
+                        stripe_result = stripe_client.sync_subscription_to_db(user.id, user.email)
+                        if stripe_result and stripe_result.get('status') != 'error':
+                            st.session_state.subscription_verified = True
+                            st.session_state.subscription_active = stripe_result.get('isActive', False)
+                            st.session_state.subscription_plan = stripe_result.get('plan')
+                            st.session_state.subscription_status = stripe_result.get('status', 'none')
+                        else:
+                            # Stripe failed and no active subscription in DB
+                            st.session_state.subscription_verified = False
+                            st.session_state.subscription_active = True
+                            st.session_state.subscription_status = 'grace'
                 
                 print(f"[SESSION] Restored educator session for {user.email}")
                 return True
@@ -1111,17 +1122,24 @@ def login_page():
                             stripe_status = stripe_result.get('status', 'none') if stripe_result else 'error'
                             
                             if stripe_status == 'error':
-                                # Stripe failed - ALWAYS grant grace access (benefit of the doubt)
-                                print(f"[AUTH] Stripe check failed for {user.email}, granting GRACE ACCESS")
+                                # Stripe failed - check database for existing subscription
+                                print(f"[AUTH] Stripe check failed for {user.email}, checking database...")
                                 db_result = stripe_client.get_subscription_from_db(int(user.id))
-                                plan = db_result.get('plan')
                                 
-                                # CRITICAL: On Stripe error, ALWAYS grant access temporarily
-                                # Better to let a non-subscriber in briefly than lock out a paying user
-                                st.session_state.subscription_verified = False  # Will retry later
-                                st.session_state.subscription_active = True  # GRACE ACCESS
-                                st.session_state.subscription_status = 'grace'  # Flag for UI
-                                st.session_state.subscription_plan = plan or 'grace'
+                                if db_result.get('isActive'):
+                                    # Database has confirmed active subscription - trust it!
+                                    print(f"[AUTH] Database confirms active subscription for {user.email}")
+                                    st.session_state.subscription_verified = True
+                                    st.session_state.subscription_active = True
+                                    st.session_state.subscription_status = db_result.get('status', 'active')
+                                    st.session_state.subscription_plan = db_result.get('plan', 'monthly')
+                                else:
+                                    # No active subscription in DB, grant grace access
+                                    print(f"[AUTH] No active subscription in DB, granting GRACE ACCESS")
+                                    st.session_state.subscription_verified = False
+                                    st.session_state.subscription_active = True  # GRACE ACCESS
+                                    st.session_state.subscription_status = 'grace'
+                                    st.session_state.subscription_plan = db_result.get('plan') or 'grace'
                             else:
                                 # Successful Stripe response - this is authoritative
                                 is_active = stripe_result.get('isActive', False)
