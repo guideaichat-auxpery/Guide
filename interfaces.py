@@ -2758,8 +2758,61 @@ def show_pd_expert_interface():
     """Professional Development Expert Mode - Available to all authenticated educators"""
     scroll_to_top()
     apply_chatgpt_chat_style()
+    inject_chat_auto_scroll()
+    
+    # Import database functions for conversation persistence
+    from database import (get_user_chat_conversations, create_chat_conversation, 
+                         load_conversation_to_session, save_conversation_message)
     
     user_email = st.session_state.get('user_email', '')
+    user_id = st.session_state.get('user_id')
+    
+    # Initialize session ID for PD Expert if not exists
+    if 'pd_expert_session_id' not in st.session_state:
+        if database_available and user_id:
+            db = get_db()
+            if db:
+                try:
+                    # Auto-load most recent conversation for this interface
+                    existing_conversations = get_user_chat_conversations(
+                        db, user_id=user_id, interface_type='pd_expert'
+                    )
+                    
+                    if existing_conversations and len(existing_conversations) > 0:
+                        # Auto-load most recent conversation
+                        most_recent = existing_conversations[0]
+                        st.session_state.pd_expert_session_id = most_recent.session_id
+                        st.session_state['pd_expert_current_conversation_id'] = most_recent.id
+                        
+                        # Load messages from database
+                        loaded_messages = load_conversation_to_session(
+                            db, most_recent.session_id, 'pd_expert'
+                        )
+                        if loaded_messages:
+                            st.session_state.pd_messages = loaded_messages
+                            # Show restore notification
+                            restore_time = most_recent.last_activity.strftime('%d/%m/%Y %H:%M') if hasattr(most_recent, 'last_activity') and most_recent.last_activity else 'earlier'
+                            st.toast(f"✓ Restored your conversation from {restore_time}", icon="🔄")
+                    else:
+                        # Create first conversation for new users
+                        st.session_state.pd_expert_session_id = str(uuid.uuid4())
+                        title = f"PD Expert {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=st.session_state.pd_expert_session_id,
+                            interface_type='pd_expert', user_id=user_id, student_id=None
+                        )
+                        st.session_state['pd_expert_current_conversation_id'] = new_conv.id
+                except Exception as e:
+                    print(f"Error loading/creating pd_expert conversation: {str(e)}")
+                    st.session_state.pd_expert_session_id = str(uuid.uuid4())
+                finally:
+                    db.close()
+        else:
+            st.session_state.pd_expert_session_id = str(uuid.uuid4())
+    
+    # Render conversation sidebar (handles conversation management)
+    if database_available and user_id:
+        render_conversation_sidebar('pd_expert', user_id=user_id)
     
     # Header with special badge
     st.markdown("### 🧭 Professional Development Expert Mode")
@@ -2860,6 +2913,25 @@ def show_pd_expert_interface():
     
     # Chat input
     if user_prompt := st.chat_input("Ask your professional development question...", key="pd_expert_input"):
+        # Ensure session_id exists before saving
+        if 'pd_expert_session_id' not in st.session_state or not st.session_state.pd_expert_session_id:
+            st.session_state.pd_expert_session_id = str(uuid.uuid4())
+            # Create conversation record if needed
+            if database_available and user_id:
+                db = get_db()
+                if db:
+                    try:
+                        title = f"PD Expert {datetime.now().strftime('%d/%m %H:%M')}"
+                        new_conv = create_chat_conversation(
+                            db, title=title, session_id=st.session_state.pd_expert_session_id,
+                            interface_type='pd_expert', user_id=user_id, student_id=None
+                        )
+                        st.session_state['pd_expert_current_conversation_id'] = new_conv.id
+                    except Exception as e:
+                        print(f"Error creating conversation: {str(e)}")
+                    finally:
+                        db.close()
+        
         # Display user message
         with st.chat_message("user"):
             st.markdown(user_prompt)
@@ -2868,6 +2940,33 @@ def show_pd_expert_interface():
             "role": "user",
             "content": user_prompt
         })
+        
+        # Save user message to database
+        if database_available and user_id:
+            from utils import update_conversation_title_if_needed
+            session_id = st.session_state.get('pd_expert_session_id')
+            if session_id:
+                db = get_db()
+                if db:
+                    try:
+                        save_conversation_message(
+                            db,
+                            session_id=session_id,
+                            interface_type='pd_expert',
+                            role='user',
+                            content=user_prompt,
+                            user_id=user_id,
+                            student_id=None
+                        )
+                        
+                        # Auto-title on first message
+                        conv_id = st.session_state.get('pd_expert_current_conversation_id')
+                        if conv_id and len(st.session_state.pd_messages) == 1:
+                            update_conversation_title_if_needed(db, conv_id, 'pd_expert', user_prompt)
+                    except Exception as e:
+                        print(f"Error saving user message: {str(e)}")
+                    finally:
+                        db.close()
         
         # Call PD Expert API (Python implementation)
         with st.chat_message("assistant", avatar="assets/montessori-avatar.png"):
@@ -2905,14 +3004,33 @@ def show_pd_expert_interface():
                             "content": expert_response
                         })
                         
+                        # Save assistant response to database
+                        if database_available and user_id:
+                            session_id = st.session_state.get('pd_expert_session_id')
+                            if session_id:
+                                db = get_db()
+                                if db:
+                                    try:
+                                        save_conversation_message(
+                                            db,
+                                            session_id=session_id,
+                                            interface_type='pd_expert',
+                                            role='assistant',
+                                            content=expert_response,
+                                            user_id=user_id,
+                                            student_id=None
+                                        )
+                                        st.toast("✓ Conversation saved", icon="💾")
+                                    except Exception as e:
+                                        print(f"Error saving assistant message: {str(e)}")
+                                    finally:
+                                        db.close()
+                        
                         # Scroll to beginning of new response
                         scroll_to_latest_response()
                     else:
                         error_msg = result.get('error', 'Unknown error')
-                        if 'Access denied' in error_msg:
-                            st.error("🔒 Access denied. This feature is restricted.")
-                        else:
-                            st.error(f"Error: {error_msg}")
+                        st.error(f"Error: {error_msg}")
                         
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
