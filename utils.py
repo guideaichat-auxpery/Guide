@@ -550,53 +550,58 @@ def apply_chatgpt_sidebar_style():
     [data-testid="stSidebar"] .stButton > button {
         background: transparent !important;
         border: none !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         color: #4a4a4a !important;
         text-align: left !important;
-        padding: 10px 12px !important;
-        font-size: 14px !important;
+        padding: 6px 10px !important;
+        font-size: 13px !important;
         transition: all 0.15s ease !important;
+        min-height: 32px !important;
+        line-height: 1.2 !important;
     }
     
     [data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(61, 90, 61, 0.1) !important;
+        background: rgba(61, 90, 61, 0.08) !important;
     }
     
-    /* Primary buttons (current conversation) */
+    /* Primary buttons (current conversation & new chat) */
     [data-testid="stSidebar"] .stButton > button[kind="primary"] {
         background: #3d5a3d !important;
         color: #ffffff !important;
         border: none !important;
+        font-weight: 500 !important;
     }
     
     [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
         background: #4a6b4a !important;
-    }
-    
-    /* New Chat button - prominent styling */
-    .new-chat-btn {
-        background: #3d5a3d !important;
         color: #ffffff !important;
-        border-radius: 8px !important;
-        padding: 12px 16px !important;
-        font-weight: 500 !important;
-        margin-bottom: 16px !important;
     }
     
-    /* Small icon buttons (edit/delete) - subtle until hover */
-    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"],
-    [data-testid="stSidebar"] .stButton > button[data-testid*="del"] {
-        padding: 4px 8px !important;
-        font-size: 11px !important;
-        min-height: 28px !important;
+    /* New Chat button specific */
+    button[key="top_new_chat"] {
+        margin-bottom: 8px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Small icon buttons (edit/delete) */
+    [data-testid="stSidebar"] .stButton > button[key^="edit_"],
+    [data-testid="stSidebar"] .stButton > button[key^="del_"] {
+        padding: 2px !important;
+        min-height: 24px !important;
+        width: 24px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         background: transparent !important;
-        opacity: 0.6 !important;
+        font-size: 12px !important;
+        opacity: 0.5 !important;
     }
     
-    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"]:hover,
-    [data-testid="stSidebar"] .stButton > button[data-testid*="del"]:hover {
+    [data-testid="stSidebar"] .stButton > button[key^="edit_"]:hover,
+    [data-testid="stSidebar"] .stButton > button[key^="del_"]:hover {
         opacity: 1 !important;
-        background: rgba(61, 90, 61, 0.15) !important;
+        background: rgba(61, 90, 61, 0.1) !important;
+        color: #3d5a3d !important;
     }
     
     /* Section headers */
@@ -815,18 +820,19 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                         title_display = conv.title[:20] + "..." if len(conv.title) > 20 else conv.title
                         
                         # Row with clickable title and action buttons
-                        col1, col2, col3 = st.columns([7, 1, 1])
+                        col1, col2, col3 = st.columns([8, 1, 1])
                         
                         with col1:
                             # Main conversation button - clicking opens it
                             icon = "▸" if is_current else "💬"
-                            btn_label = f"{icon} {title_display} · {timestamp}"
+                            btn_label = f"{icon} {title_display}"
                             
                             if st.button(
                                 btn_label,
                                 key=f"open_{conv.id}",
                                 use_container_width=True,
-                                type="primary" if is_current else "secondary"
+                                type="primary" if is_current else "secondary",
+                                help=f"Created {timestamp}"
                             ):
                                 if not is_current:
                                     reopen_chat_conversation(db, conv.id, user_id, student_id)
