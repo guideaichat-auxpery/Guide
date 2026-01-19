@@ -1575,8 +1575,8 @@ def show_user_info():
             st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
             
             # Use session-verified subscription status (failproof)
-            if st.session_state.get('subscription_active'):
-                plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
+            # if st.session_state.get('subscription_active'):
+            #     plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
             
             # Subscription management expander
             with st.sidebar.expander("🔄 Subscription"):
