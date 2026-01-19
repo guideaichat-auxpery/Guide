@@ -2759,6 +2759,8 @@ def show_pd_expert_interface():
     scroll_to_top()
     apply_chatgpt_chat_style()
     
+    user_email = st.session_state.get('user_email', '')
+    
     # Header with special badge
     st.markdown("### 🧭 Professional Development Expert Mode")
     st.markdown("*Evidence-based PD coaching with self-learning memory and Montessori expertise*")
