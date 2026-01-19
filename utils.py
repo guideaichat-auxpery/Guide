@@ -4315,7 +4315,7 @@ def call_pd_expert(user_email: str, prompt: str, openai_client) -> dict:
     Provides comprehensive PD coaching with self-learning memory and contextual analysis.
     
     Args:
-        user_email: Email of the user (must be guideaichat@gmail.com)
+        user_email: Email of the user
         prompt: The PD question from the user
         openai_client: Initialized OpenAI client
         
@@ -4327,13 +4327,6 @@ def call_pd_expert(user_email: str, prompt: str, openai_client) -> dict:
     from datetime import datetime, timedelta
     
     try:
-        # Access restriction
-        if user_email != "guideaichat@gmail.com":
-            return {
-                "success": False,
-                "error": "Access denied. This function is restricted to the authorized account."
-            }
-        
         # Connect to database for memory retrieval
         db_url = os.environ.get('DATABASE_URL')
         conn = psycopg2.connect(db_url)
