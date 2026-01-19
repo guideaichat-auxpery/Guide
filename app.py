@@ -26,16 +26,24 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
-# Google Analytics 4 tracking (non-blocking load)
+# Google Analytics 4 tracking (deferred load for faster initial page render)
 GA_MEASUREMENT_ID = "G-L1LH5117YK"
 st.markdown(f"""
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+    <!-- Google tag (gtag.js) - deferred to not block page render -->
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){{dataLayer.push(arguments);}}
-        gtag('js', new Date());
-        gtag('config', '{GA_MEASUREMENT_ID}');
+        // Load GA script after page is interactive, then configure
+        window.addEventListener('load', function() {{
+            var s = document.createElement('script');
+            s.src = 'https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}';
+            s.async = true;
+            s.onload = function() {{
+                gtag('js', new Date());
+                gtag('config', '{GA_MEASUREMENT_ID}');
+            }};
+            document.head.appendChild(s);
+        }});
     </script>
 """, unsafe_allow_html=True)
 
@@ -151,26 +159,26 @@ if st.session_state.get('authenticated', False):
     if check_session_timeout():
         st.rerun()
 
-# Load Design Systems - cached for performance
+# Load Design Systems - combined and cached for faster page load
 @st.cache_data
-def load_css(file_path):
-    """Load CSS file with caching to improve performance"""
-    with open(file_path) as f:
-        return f'<style>{f.read()}</style>'
+def load_all_css():
+    """Load all CSS files in a single cached operation for faster page load"""
+    css_files = [
+        'static/css/montessori-theme.css',
+        'static/css/danish-eco-theme.css', 
+        'static/css/mobile-responsive.css',
+        'static/css/accessibility.css'
+    ]
+    combined_css = []
+    for file_path in css_files:
+        with open(file_path) as f:
+            combined_css.append(f.read())
+    return f'<style>{" ".join(combined_css)}</style>'
 
-# Load Montessori theme for general interface
-st.markdown(load_css('static/css/montessori-theme.css'), unsafe_allow_html=True)
+# Load all CSS in a single markdown call (reduces render overhead)
+st.markdown(load_all_css(), unsafe_allow_html=True)
 
-# Load Danish eco theme for educator dashboard cards
-st.markdown(load_css('static/css/danish-eco-theme.css'), unsafe_allow_html=True)
-
-# Load mobile-responsive styles
-st.markdown(load_css('static/css/mobile-responsive.css'), unsafe_allow_html=True)
-
-# Load accessibility styles
-st.markdown(load_css('static/css/accessibility.css'), unsafe_allow_html=True)
-
-# Additional custom CSS for specific components
+# Additional custom CSS for specific components (combined into single block for faster render)
 st.markdown("""
 <style>
 .main-header {
@@ -182,38 +190,15 @@ st.markdown("""
     font-size: 4rem;
     font-weight: 500;
 }
-/* Hide Streamlit header completely */
-header[data-testid="stHeader"] {
-    display: none !important;
-}
-/* Target ALL possible Streamlit container classes */
+header[data-testid="stHeader"] { display: none !important; }
 [data-testid="stAppViewContainer"] > section > div,
 [data-testid="stVerticalBlock"],
 .stMainBlockContainer,
-div[data-testid="stVerticalBlock"] {
-    padding-top: 0 !important;
-}
-/* Specific targeting for main block */
+div[data-testid="stVerticalBlock"] { padding-top: 0 !important; }
 .stApp [data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"]:first-child {
     padding-top: 0 !important;
     margin-top: 0 !important;
 }
-</style>
-<script>
-// Force reduce top padding after Streamlit loads
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-        var containers = document.querySelectorAll('[data-testid="stVerticalBlock"], [class*="stMainBlockContainer"], [class*="block-container"]');
-        containers.forEach(function(el) {
-            el.style.paddingTop = '0';
-            el.style.marginTop = '0';
-        });
-        var header = document.querySelector('header[data-testid="stHeader"]');
-        if (header) header.style.display = 'none';
-    }, 100);
-});
-</script>
-<style>
 .main-byline {
     text-align: center;
     color: var(--color-ink);
@@ -245,6 +230,17 @@ document.addEventListener('DOMContentLoaded', function() {
     border-left: 3px solid var(--color-leaf);
 }
 </style>
+<script>
+// Layout fix - waits for DOM then uses rAF for smooth execution
+document.addEventListener('DOMContentLoaded', function() {
+    requestAnimationFrame(function() {
+        var containers = document.querySelectorAll('[data-testid="stVerticalBlock"], [class*="stMainBlockContainer"]');
+        containers.forEach(function(el) { el.style.paddingTop = '0'; el.style.marginTop = '0'; });
+        var header = document.querySelector('header[data-testid="stHeader"]');
+        if (header) header.style.display = 'none';
+    });
+});
+</script>
 """, unsafe_allow_html=True)
 
 # Main Header - wrapped with reduced negative margin to avoid title being cut off
