@@ -247,8 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 """, unsafe_allow_html=True)
 
-# Main Header - wrapped with negative margin to reduce top space
-st.markdown('<div style="margin-top: -10rem;"><h1 class="main-header">Guide</h1></div>', unsafe_allow_html=True)
+# Main Header - wrapped with reduced negative margin to avoid title being cut off
+st.markdown('<div style="margin-top: -4rem;"><h1 class="main-header">Guide</h1></div>', unsafe_allow_html=True)
 st.markdown('<p class="main-byline">Your prepared digital environment</p>', unsafe_allow_html=True)
 
 # Inject floating sidebar toggle button (appears when sidebar is collapsed) - for all users
