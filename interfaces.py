@@ -2761,9 +2761,15 @@ def show_pd_expert_interface():
     
     user_email = st.session_state.get('user_email', '')
     
-    # Access control - restrict to authorized emails
-    authorized_pd_emails = ["guideaichat@gmail.com", "ben@hmswairoa.net"]
-    if user_email not in authorized_pd_emails:
+    # Access control - allow admins OR specific authorized emails
+    is_admin = st.session_state.get('is_admin', False)
+    authorized_pd_emails = ["guideaichat@gmail.com", "ben@hmswairoa.net", "admin@auxpery.com.au"]
+    
+    # Debug logging for access control - check session state keys
+    if user_email:
+        print(f"[PD ACCESS] email={user_email}, is_admin={is_admin}, keys={list(st.session_state.keys())}")
+    
+    if not is_admin and user_email not in authorized_pd_emails:
         st.error("🔒 Access Denied")
         st.info("This Professional Development Expert Mode is restricted to authorized accounts only.")
         return
