@@ -548,20 +548,23 @@ def apply_chatgpt_sidebar_style():
     
     /* Style all sidebar buttons */
     [data-testid="stSidebar"] .stButton > button {
-        background: transparent !important;
-        border: none !important;
+        background: #f5f0e8 !important;
+        border: 1px solid rgba(61, 90, 61, 0.2) !important;
         border-radius: 6px !important;
         color: #4a4a4a !important;
         text-align: left !important;
-        padding: 6px 10px !important;
-        font-size: 13px !important;
+        padding: 4px 8px !important;
+        font-size: 12px !important;
         transition: all 0.15s ease !important;
-        min-height: 32px !important;
+        min-height: 28px !important;
         line-height: 1.2 !important;
+        width: 100% !important;
+        margin-bottom: 4px !important;
     }
     
     [data-testid="stSidebar"] .stButton > button:hover {
         background: rgba(61, 90, 61, 0.08) !important;
+        border-color: rgba(61, 90, 61, 0.4) !important;
     }
     
     /* Primary buttons (current conversation & new chat) */
@@ -570,6 +573,9 @@ def apply_chatgpt_sidebar_style():
         color: #ffffff !important;
         border: none !important;
         font-weight: 500 !important;
+        padding: 6px 10px !important;
+        min-height: 32px !important;
+        font-size: 13px !important;
     }
     
     [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
@@ -579,22 +585,37 @@ def apply_chatgpt_sidebar_style():
     
     /* New Chat button specific */
     button[key="top_new_chat"] {
-        margin-bottom: 8px !important;
+        margin-bottom: 12px !important;
         font-weight: 600 !important;
     }
     
+    /* Download data button specific refinement */
+    [data-testid="stSidebar"] div[data-testid="stExpander"] {
+        background: transparent !important;
+        border: 1px solid rgba(61, 90, 61, 0.1) !important;
+        border-radius: 6px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    [data-testid="stSidebar"] div[data-testid="stExpander"] summary {
+        padding: 4px 8px !important;
+        font-size: 12px !important;
+    }
+
     /* Small icon buttons (edit/delete) */
     [data-testid="stSidebar"] .stButton > button[key^="edit_"],
     [data-testid="stSidebar"] .stButton > button[key^="del_"] {
-        padding: 2px !important;
-        min-height: 24px !important;
-        width: 24px !important;
+        padding: 0px !important;
+        min-height: 20px !important;
+        width: 20px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        background: transparent !important;
-        font-size: 12px !important;
-        opacity: 0.5 !important;
+        background: white !important;
+        border: 1px solid rgba(0,0,0,0.1) !important;
+        font-size: 10px !important;
+        opacity: 0.7 !important;
+        margin: 0 2px !important;
     }
     
     [data-testid="stSidebar"] .stButton > button[key^="edit_"]:hover,
@@ -649,16 +670,22 @@ def apply_chatgpt_sidebar_style():
         color: #6b7c6b !important;
     }
     
-    /* Sidebar toggle button for reopening */
-    .sidebar-toggle-btn {
-        position: fixed;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 1000;
-        background: #3d5a3d;
-        color: white;
-        border: none;
+    /* Logout button specific - make it compact and subtle */
+    [data-testid="stSidebarNav"] + div .stButton > button,
+    [data-testid="stSidebar"] button:contains("Logout"),
+    [data-testid="stSidebar"] button:has(div:contains("Logout")) {
+        background: rgba(210, 180, 140, 0.1) !important;
+        border: 1px solid rgba(210, 180, 140, 0.3) !important;
+        color: #8B4513 !important;
+        font-size: 11px !important;
+        min-height: 26px !important;
+        padding: 2px 8px !important;
+        margin-top: 10px !important;
+        width: auto !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        display: block !important;
+    }
         border-radius: 0 8px 8px 0;
         padding: 12px 8px;
         cursor: pointer;
