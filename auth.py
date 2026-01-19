@@ -1577,9 +1577,6 @@ def show_user_info():
             # Use session-verified subscription status (failproof)
             if st.session_state.get('subscription_active'):
                 plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
-                st.sidebar.markdown(f"**Plan:** {plan} ✅")
-            else:
-                st.sidebar.markdown("**Plan:** None ❌")
             
             # Subscription management expander
             with st.sidebar.expander("🔄 Subscription"):
