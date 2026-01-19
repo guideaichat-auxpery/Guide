@@ -75,20 +75,17 @@ function hideLoading() {
     }
 }
 
-// More robust check: wait for the app container OR a reasonable timeout
-let checks = 0;
+// Streamlit specific check: wait for the main app view to be populated
 const checkStreamlit = setInterval(() => {
-    checks++;
     const mainApp = document.querySelector('[data-testid="stAppViewContainer"]');
-    // If we find the app or we've checked for 3 seconds, hide the loader
-    if (mainApp || checks > 30) {
+    if (mainApp) {
         hideLoading();
         clearInterval(checkStreamlit);
     }
 }, 100);
 
-// Ultimate fallback: clear anyway after 4 seconds to ensure no lockout
-setTimeout(hideLoading, 4000);
+// Fallback: clear anyway after 5 seconds
+setTimeout(hideLoading, 5000);
 </script>
 """, unsafe_allow_html=True)
 
