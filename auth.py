@@ -1575,13 +1575,9 @@ def show_user_info():
             st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
             
             # Use session-verified subscription status (failproof)
-            sub_status = st.session_state.get('subscription_status', 'none')
             if st.session_state.get('subscription_active'):
                 plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
-                if sub_status == 'grace':
-                    st.sidebar.markdown(f"**Plan:** {plan} ⏳ *Verifying...*")
-                else:
-                    st.sidebar.markdown(f"**Plan:** {plan} ✅")
+                st.sidebar.markdown(f"**Plan:** {plan} ✅")
             else:
                 st.sidebar.markdown("**Plan:** None ❌")
             
