@@ -543,9 +543,11 @@ def show_companion_interface():
         "📊 How do I assess learning in a Montessori way?"
     ]
     
+    st.markdown('<div class="quick-guide-grid">', unsafe_allow_html=True)
     cols = st.columns(3)
     for idx, prompt_text in enumerate(quick_prompts):
         with cols[idx % 3]:
+            st.markdown('<div class="companion-card-container">', unsafe_allow_html=True)
             if st.button(prompt_text, key=f"quick_{idx}", use_container_width=True):
                 # Add prompt to conversation
                 st.session_state.companion_messages.append({
@@ -573,6 +575,8 @@ def show_companion_interface():
                             db.close()
                 
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown("---")
     

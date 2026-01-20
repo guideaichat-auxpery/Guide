@@ -1056,9 +1056,11 @@ def login_page():
         """, unsafe_allow_html=True)
         
         # Forgot password link for educators
+        st.markdown('<div class="forgot-password-link">', unsafe_allow_html=True)
         if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
             st.session_state.auth_mode = 'forgot_password'
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
         
         with st.form("educator_login"):
             email = st.text_input("Email", placeholder="your.email@example.com")
@@ -1611,8 +1613,10 @@ def show_user_info():
         
         st.sidebar.divider()
         
+        st.sidebar.markdown('<div class="logout-btn-wrapper">', unsafe_allow_html=True)
         if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
             logout()
+        st.sidebar.markdown('</div>', unsafe_allow_html=True)
         
         with st.sidebar.expander("⬇️ Download My Data"):
             st.markdown("*Export all your data in JSON format (GDPR compliant)*")
