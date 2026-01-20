@@ -1028,20 +1028,13 @@ def show_reset_password_form(token: str):
 def login_page():
     """Display login page for educators and students"""
     
-    # Page-specific CSS for centered, narrow layout
+    # Initialize login tab if not set
+    if 'login_tab' not in st.session_state:
+        st.session_state.login_tab = 'educator'
+    
+    # Page-specific CSS for centered, narrow layout and pill buttons
     st.markdown("""
     <style>
-    /* Auth page breathing room */
-    .main .block-container {
-        padding-top: 2.5rem !important;
-        max-width: 560px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-    /* Center tabs */
-    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
-        justify-content: center !important;
-    }
     /* Forgot password link - borderless, link-style */
     .forgot-password-link .stButton > button,
     .forgot-password-link .stButton > button[kind="secondary"] {
@@ -1059,22 +1052,73 @@ def login_page():
         border: none !important;
         box-shadow: none !important;
     }
+    /* Pill button row styling */
+    .pill-btn-row .stButton > button {
+        border-radius: 20px !important;
+        padding: 0.4rem 1rem !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+    }
+    .pill-btn-active .stButton > button {
+        background: #789A76 !important;
+        color: white !important;
+        border: 1px solid #789A76 !important;
+    }
+    .pill-btn-inactive .stButton > button {
+        background: transparent !important;
+        color: #789A76 !important;
+        border: 1px solid #789A76 !important;
+    }
+    .pill-btn-inactive .stButton > button:hover {
+        background: rgba(120, 154, 118, 0.1) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<h2 style="text-align: center; color: #789A76; margin-bottom: 1.5rem;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: #789A76; margin-bottom: 1rem;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
-    # Use tabs for clearer separation
-    educator_tab, student_tab = st.tabs(["👩‍🏫 Educator Login", "🎒 Student Login"])
+    # 4 pill-style buttons in a row
+    col1, col2, col3, col4 = st.columns(4)
     
-    with educator_tab:
-        # Forgot password link for educators - wrapped for CSS targeting
-        st.markdown('<div class="forgot-password-link">', unsafe_allow_html=True)
-        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
-            st.session_state.auth_mode = 'forgot_password'
+    with col1:
+        btn_class = "pill-btn-active" if st.session_state.login_tab == 'educator' else "pill-btn-inactive"
+        st.markdown(f'<div class="pill-btn-row {btn_class}">', unsafe_allow_html=True)
+        if st.button("👩‍🏫 Educator Login", key="pill_educator", use_container_width=True):
+            st.session_state.login_tab = 'educator'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-        
+    
+    with col2:
+        btn_class = "pill-btn-active" if st.session_state.login_tab == 'student' else "pill-btn-inactive"
+        st.markdown(f'<div class="pill-btn-row {btn_class}">', unsafe_allow_html=True)
+        if st.button("🎒 Student Login", key="pill_student", use_container_width=True):
+            st.session_state.login_tab = 'student'
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown('<div class="pill-btn-row pill-btn-inactive">', unsafe_allow_html=True)
+        if st.button("📝 Sign Up", key="pill_signup", use_container_width=True):
+            st.session_state.auth_mode = 'signup'
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown('<div class="pill-btn-row pill-btn-inactive">', unsafe_allow_html=True)
+        if st.button("📋 T&Cs", key="pill_tcs", use_container_width=True):
+            st.session_state.auth_mode = 'privacy_policy'
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Forgot password link - centered
+    st.markdown('<div class="forgot-password-link" style="text-align: center; margin: 1rem 0;">', unsafe_allow_html=True)
+    if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
+        st.session_state.auth_mode = 'forgot_password'
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Show form based on selected tab
+    if st.session_state.login_tab == 'educator':
         with st.form("educator_login"):
             email = st.text_input("Email", placeholder="your.email@example.com")
             password = st.text_input("Password", type="password")
@@ -1184,13 +1228,8 @@ def login_page():
                         if db:
                             db.close()
     
-    with student_tab:
-        st.markdown("""
-        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
-            <p style="color: #666; font-size: 0.95em;">Students - use the username your teacher gave you</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
+    else:
+        # Student login form
         with st.form("student_login"):
             username = st.text_input("Username", placeholder="your_username")
             password = st.text_input("Password", type="password")
@@ -1248,14 +1287,6 @@ def login_page():
                     finally:
                         if db:
                             db.close()
-        
-        st.markdown("""
-        <div style="text-align: center; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-            <p style="color: #666; font-size: 0.9em; margin: 0;">
-                Need help? Ask your teacher for your login details.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
 
 def signup_page():
     """Display signup page for new educators"""

@@ -267,33 +267,8 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
     
-    # Authentication mode selector - all buttons in one row
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("👩‍🏫 Educator Login", use_container_width=True):
-            st.session_state.auth_mode = "login"
-            st.session_state.login_tab = "educator"
-            st.rerun()
-    
-    with col2:
-        if st.button("🎒 Student Login", use_container_width=True):
-            st.session_state.auth_mode = "login"
-            st.session_state.login_tab = "student"
-            st.rerun()
-    
-    with col3:
-        if st.button("📝 Sign Up", use_container_width=True):
-            st.session_state.auth_mode = "signup"
-            st.rerun()
-    
-    with col4:
-        if st.button("📋 Terms & Conditions", use_container_width=True):
-            st.session_state.auth_mode = "privacy_policy"
-            st.rerun()
-    
-    # Display appropriate authentication form
-    if st.session_state.auth_mode == "login":
+    # Show login page by default (contains the pill buttons for navigation)
+    if st.session_state.auth_mode == "login" or st.session_state.auth_mode is None:
         login_page()
     elif st.session_state.auth_mode == "signup":
         signup_page()
