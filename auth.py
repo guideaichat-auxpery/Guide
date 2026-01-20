@@ -1035,55 +1035,69 @@ def login_page():
     # Page-specific CSS for centered, narrow layout and pill buttons
     st.markdown("""
     <style>
-    /* Forgot password link - borderless, link-style */
-    .forgot-password-link .stButton > button,
-    .forgot-password-link .stButton > button[kind="secondary"] {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        color: #789A76 !important;
-        text-decoration: underline !important;
-        padding: 0.5rem !important;
+    /* Login page container - centered and narrow */
+    .login-container {
+        max-width: 560px;
+        margin: 0 auto;
     }
-    .forgot-password-link .stButton > button:hover,
-    .forgot-password-link .stButton > button[kind="secondary"]:hover {
-        background: transparent !important;
-        color: #5a7a58 !important;
-        border: none !important;
-        box-shadow: none !important;
+    /* Pill buttons container - centered flex */
+    .pill-buttons-container {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
     }
-    /* Pill button row styling */
+    /* Pill button styling */
     .pill-btn-row .stButton > button {
         border-radius: 20px !important;
-        padding: 0.4rem 1rem !important;
+        padding: 0.5rem 1.25rem !important;
         font-size: 0.85rem !important;
         font-weight: 500 !important;
+        white-space: nowrap !important;
     }
     .pill-btn-active .stButton > button {
-        background: #789A76 !important;
-        color: white !important;
-        border: 1px solid #789A76 !important;
+        background: linear-gradient(135deg, #d4e6d3 0%, #c5ddc4 100%) !important;
+        color: #2E2E2B !important;
+        border: 1px solid #b8d4b6 !important;
     }
     .pill-btn-inactive .stButton > button {
-        background: transparent !important;
-        color: #789A76 !important;
-        border: 1px solid #789A76 !important;
+        background: #FAF9F6 !important;
+        color: #555 !important;
+        border: 1px solid #E4E1DC !important;
     }
     .pill-btn-inactive .stButton > button:hover {
-        background: rgba(120, 154, 118, 0.1) !important;
+        background: #f0efec !important;
+        border-color: #d0cdc8 !important;
+    }
+    /* Forgot password pill button */
+    .forgot-password-pill .stButton > button {
+        border-radius: 20px !important;
+        padding: 0.5rem 1.5rem !important;
+        background: #FAF9F6 !important;
+        color: #555 !important;
+        border: 1px solid #E4E1DC !important;
+        font-size: 0.85rem !important;
+    }
+    .forgot-password-pill .stButton > button:hover {
+        background: #f0efec !important;
+        border-color: #d0cdc8 !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<h2 style="text-align: center; color: #789A76; margin-bottom: 1rem;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: #2E2E2B; margin-bottom: 1.5rem;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
-    # 4 pill-style buttons in a row
-    col1, col2, col3, col4 = st.columns(4)
+    # 4 pill-style buttons in a centered row using HTML/CSS flex container
+    st.markdown('<div class="pill-buttons-container">', unsafe_allow_html=True)
+    
+    # Use narrow columns with spacers to center the buttons
+    spacer1, col1, col2, col3, col4, spacer2 = st.columns([0.5, 1, 1, 1, 1, 0.5])
     
     with col1:
         btn_class = "pill-btn-active" if st.session_state.login_tab == 'educator' else "pill-btn-inactive"
         st.markdown(f'<div class="pill-btn-row {btn_class}">', unsafe_allow_html=True)
-        if st.button("👩‍🏫 Educator Login", key="pill_educator", use_container_width=True):
+        if st.button("📚 Educator Login", key="pill_educator", use_container_width=True):
             st.session_state.login_tab = 'educator'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1110,12 +1124,16 @@ def login_page():
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Forgot password link - centered
-    st.markdown('<div class="forgot-password-link" style="text-align: center; margin: 1rem 0;">', unsafe_allow_html=True)
-    if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
-        st.session_state.auth_mode = 'forgot_password'
-        st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Forgot password as a pill button - centered
+    spacer_left, forgot_col, spacer_right = st.columns([1, 2, 1])
+    with forgot_col:
+        st.markdown('<div class="forgot-password-pill">', unsafe_allow_html=True)
+        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True):
+            st.session_state.auth_mode = 'forgot_password'
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Show form based on selected tab
     if st.session_state.login_tab == 'educator':
