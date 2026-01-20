@@ -291,7 +291,8 @@ if not st.session_state.authenticated:
     elif st.session_state.auth_mode == "signup":
         signup_page()
     elif st.session_state.auth_mode == "privacy_policy":
-        show_privacy_policy()
+        import interfaces
+        interfaces.show_privacy_policy()
     elif st.session_state.auth_mode == "forgot_password":
         show_forgot_password_form()
     elif st.session_state.auth_mode == "reset_password":
@@ -307,7 +308,8 @@ if not st.session_state.authenticated:
         if st.button("← Back to Login", key="back_contact_guest"):
             st.session_state.auth_mode = "login"
             st.rerun()
-        show_contact_form()
+        import interfaces
+        interfaces.show_contact_form()
     
 
 else:
