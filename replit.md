@@ -11,8 +11,18 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 ## UI/UX Decisions
 - **Framework**: Streamlit with a wide layout and dual-mode interface (educator and student).
 - **Design System**: Montessori-themed interface with warm earth tones and a Danish Eco-Design theme for the educator dashboard, emphasizing clean modern aesthetics, accessibility (WCAG 2.1 AA), and responsive design. Includes dark mode and enhanced mobile responsiveness.
-- **Login Experience**: Clear tab-based separation for Educator and Student login.
-- **Sidebar UX**: Redesigned conversation sidebar with warm earth-tone gradient background, new chat button, hover-to-reveal edit/delete actions, floating toggle button, date grouping for conversation history, and AI auto-titling.
+- **Color Palette (January 2026)**:
+  - Primary Accent: #789A76 (soft green)
+  - Hover Accent: #5a7a58
+  - Cream Background: #FAF9F6
+  - Text Primary: #2E2E2B
+  - Border: #E4E1DC
+  - No dark green (#3d5a3d) used anywhere
+- **Login Experience**: Clear tab-based separation for Educator and Student login. Centered 560px max-width layout with soft green header. Forgot password styled as underlined text link.
+- **Sidebar UX**: Enhanced user card with subscription badge (Admin/Active/Inactive), Tools section with navigation buttons, Account section with subscription management. Redesigned conversation sidebar with warm earth-tone gradient background, new chat button, hover-to-reveal edit/delete actions, floating toggle button, date grouping for conversation history, and AI auto-titling.
+- **Button System**: Primary buttons have gradient (#789A76 to #5a7a58), secondary buttons have clean cream background with subtle border, hover effects with lift animation.
+- **Quick Guide Cards**: 120px height, cream background (#FAF9F6), no borders, subtle shadow, 3-column grid with hover lift effect.
+- **Streamlit CSS Targeting**: Wrapper div pattern used for custom styling (e.g., .companion-card-container, .forgot-password-link) since Streamlit doesn't support direct class assignment to widgets.
 - **Streamlit Rerun Architecture**: Static UI elements render before chat history for consistent display.
 
 ## Technical Implementations

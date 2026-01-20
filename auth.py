@@ -1027,23 +1027,62 @@ def show_reset_password_form(token: str):
 
 def login_page():
     """Display login page for educators and students"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
-    # Clear tabs for educator vs student login
+    # Page-specific CSS for centered, narrow layout
     st.markdown("""
     <style>
-    /* Style login tabs for clear distinction */
+    /* Auth page breathing room - centered narrow container */
+    .main .block-container {
+        padding-top: 2.5rem !important;
+        max-width: 560px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+    /* Center tabs */
     div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        justify-content: center !important;
         gap: 8px;
-        justify-content: center;
     }
     div[data-testid="stTabs"] [data-baseweb="tab"] {
         padding: 12px 24px;
         border-radius: 8px;
         font-weight: 500;
     }
+    /* Forgot password link - borderless, link-style */
+    .forgot-password-link .stButton > button,
+    .forgot-password-link .stButton > button[kind="secondary"],
+    .forgot-password-link button[data-testid="stBaseButton-secondary"] {
+        background: none !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #789A76 !important;
+        text-decoration: underline !important;
+        font-size: 0.9rem !important;
+        font-weight: 400 !important;
+        padding: 0.5rem 0 !important;
+        min-height: unset !important;
+        height: auto !important;
+        line-height: 1.5 !important;
+    }
+    .forgot-password-link .stButton > button:hover,
+    .forgot-password-link .stButton > button[kind="secondary"]:hover,
+    .forgot-password-link button[data-testid="stBaseButton-secondary"]:hover {
+        color: #5a7a58 !important;
+        background: none !important;
+        background-color: transparent !important;
+    }
+    .forgot-password-link .stButton {
+        display: flex !important;
+        justify-content: center !important;
+    }
+    .forgot-password-link .stButton > button p {
+        text-decoration: underline !important;
+    }
     </style>
     """, unsafe_allow_html=True)
+    
+    st.markdown('<h2 style="text-align: center; color: #789A76; margin-bottom: 1.5rem;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
     # Use tabs for clearer separation
     educator_tab, student_tab = st.tabs(["👩‍🏫 Educator Login", "🎒 Student Login"])
@@ -1055,9 +1094,25 @@ def login_page():
         </div>
         """, unsafe_allow_html=True)
         
-        # Forgot password link for educators
-        st.markdown('<div class="forgot-password-link">', unsafe_allow_html=True)
-        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
+        # Forgot password link for educators - centered, simple text link style
+        st.markdown("""
+        <div style="text-align: center; margin: 0.5rem 0 1rem 0;">
+            <a href="#" onclick="
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (btn.innerText.includes('Forgot your password')) {
+                        btn.click();
+                    }
+                });
+                return false;
+            " style="color: #789A76; text-decoration: underline; font-size: 0.9rem; cursor: pointer;">
+                Forgot your password?
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
+        # Hidden button for actual functionality
+        st.markdown('<div style="display: none;">', unsafe_allow_html=True)
+        if st.button("Forgot your password?", key="forgot_pwd_link"):
             st.session_state.auth_mode = 'forgot_password'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1565,20 +1620,126 @@ def export_user_data_gdpr():
         db.close()
 
 def show_user_info():
-    """Display current user information with subscription status"""
+    """Display current user information with enhanced sidebar navigation"""
     if st.session_state.get('authenticated'):
+        # Sidebar styling
+        st.sidebar.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            background-color: #FAF9F6;
+        }
+        [data-testid="stSidebar"] .stButton > button {
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        [data-testid="stSidebar"] .stButton > button:hover {
+            background-color: rgba(120, 154, 118, 0.1);
+            border-color: #789A76;
+        }
+        .sidebar-user-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(46, 46, 43, 0.06);
+        }
+        .sidebar-user-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #2E2E2B;
+            margin-bottom: 0.25rem;
+        }
+        .sidebar-user-email {
+            font-size: 0.85rem;
+            color: rgba(46, 46, 43, 0.65);
+        }
+        .sidebar-plan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        .sidebar-plan-active {
+            background: rgba(120, 154, 118, 0.15);
+            color: #5a7a58;
+        }
+        .sidebar-plan-inactive {
+            background: rgba(220, 53, 69, 0.1);
+            color: #c82333;
+        }
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(46, 46, 43, 0.45);
+            margin: 1.25rem 0 0.75rem 0;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(120, 154, 118, 0.12);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         if st.session_state.get('is_student'):
-            st.sidebar.markdown(f"**Student:** {st.session_state.user_name}")
-            st.sidebar.markdown(f"**Username:** {st.session_state.username}")
-            if st.session_state.get('age_group'):
-                st.sidebar.markdown(f"**Age Group:** {st.session_state.age_group}")
+            # Student sidebar - compact card
+            st.sidebar.markdown(f'''
+            <div class="sidebar-user-card">
+                <div class="sidebar-user-name">👤 {st.session_state.user_name}</div>
+                <div class="sidebar-user-email">@{st.session_state.get('username', '')}</div>
+            </div>
+            ''', unsafe_allow_html=True)
         else:
-            st.sidebar.markdown(f"**Educator:** {st.session_state.user_name}")
-            st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
+            # Educator sidebar - enhanced with subscription badge
+            is_active = st.session_state.get('subscription_active', False)
+            plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
             
-            # Use session-verified subscription status (failproof)
-            # if st.session_state.get('subscription_active'):
-            #     plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
+            if st.session_state.get('is_admin'):
+                badge_html = '<span class="sidebar-plan-badge sidebar-plan-active">✓ Admin</span>'
+            elif is_active:
+                badge_html = f'<span class="sidebar-plan-badge sidebar-plan-active">✓ {plan}</span>'
+            else:
+                badge_html = '<span class="sidebar-plan-badge sidebar-plan-inactive">No plan</span>'
+            
+            st.sidebar.markdown(f'''
+            <div class="sidebar-user-card">
+                <div class="sidebar-user-name">{st.session_state.user_name or 'Educator'}</div>
+                <div class="sidebar-user-email">{st.session_state.user_email}</div>
+                {badge_html}
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            # TOOLS Section
+            st.sidebar.markdown('<div class="sidebar-section-title">Tools</div>', unsafe_allow_html=True)
+            
+            nav_items = [
+                {"icon": "🏠", "label": "Dashboard", "mode": "dashboard_home"},
+                {"icon": "📚", "label": "Lesson Planning", "mode": "lesson_planning"},
+                {"icon": "🌱", "label": "Companion", "mode": "companion"},
+                {"icon": "👥", "label": "Students", "mode": "student_dashboard"},
+                {"icon": "📝", "label": "Planning Notes", "mode": "planning_notes"},
+                {"icon": "📖", "label": "Great Stories", "mode": "great_stories"},
+                {"icon": "✨", "label": "Imaginarium", "mode": "imaginarium"},
+            ]
+            
+            current_mode = st.session_state.get('auth_mode', 'dashboard_home')
+            
+            for item in nav_items:
+                is_current = current_mode == item["mode"]
+                btn_type = "primary" if is_current else "secondary"
+                if st.sidebar.button(
+                    f"{item['icon']} {item['label']}", 
+                    key=f"nav_{item['mode']}", 
+                    use_container_width=True,
+                    type=btn_type
+                ):
+                    st.session_state.auth_mode = item["mode"]
+                    st.rerun()
+            
+            # ACCOUNT Section
+            st.sidebar.markdown('<div class="sidebar-section-title">Account</div>', unsafe_allow_html=True)
             
             # Subscription management expander
             with st.sidebar.expander("🔄 Subscription"):

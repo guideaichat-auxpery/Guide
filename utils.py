@@ -738,8 +738,26 @@ def apply_chatgpt_sidebar_style():
     .quick-guide-grid [data-testid="stHorizontalBlock"] { 
         gap: 1rem !important; 
     }
+    .quick-guide-grid [data-testid="stVerticalBlockBorderWrapper"],
+    .quick-guide-grid [data-testid="stVerticalBlock"] {
+        gap: 1rem !important;
+    }
+    .quick-guide-grid [data-testid="column"] {
+        padding: 0 !important;
+    }
+    div.companion-card-container {
+        margin-bottom: 1rem !important;
+        padding: 0 !important;
+    }
+    div.companion-card-container > div.stButton {
+        margin: 0 !important;
+    }
     div.companion-card-container > div.stButton > button {
         height: 120px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
         background: #FAF9F6 !important;
         border: none !important;
         color: #2E2E2B !important;
@@ -747,7 +765,8 @@ def apply_chatgpt_sidebar_style():
         box-shadow: 0 2px 8px rgba(46, 46, 43, 0.04) !important;
         font-size: 13px !important;
         line-height: 1.4 !important;
-        padding: 12px !important;
+        padding: 1rem !important;
+        margin: 0 !important;
         text-align: center !important;
         white-space: normal !important;
         word-wrap: break-word !important;
@@ -755,8 +774,9 @@ def apply_chatgpt_sidebar_style():
     div.companion-card-container > div.stButton > button:hover {
         background: rgba(120, 154, 118, 0.12) !important;
         color: #5a7a58 !important;
+        border-color: #789A76 !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 4px 12px rgba(46, 46, 43, 0.08) !important;
+        box-shadow: 0 4px 16px rgba(46, 46, 43, 0.08) !important;
     }
     
     /* Global button system - gradients only on primary */
@@ -764,29 +784,47 @@ def apply_chatgpt_sidebar_style():
         background: linear-gradient(135deg, #789A76 0%, #5a7a58 100%) !important;
         border: none !important;
         color: #ffffff !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1.5rem !important;
+        font-weight: 500 !important;
+        box-shadow: 0 2px 8px rgba(46, 46, 43, 0.06) !important;
+        transition: all 0.2s ease !important;
     }
     .stButton > button[kind="primary"]:hover {
         background: linear-gradient(135deg, #5a7a58 0%, #4a6a48 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.12) !important;
     }
-    /* Secondary buttons - transparent with subtle border */
+    /* Secondary buttons - clean, no gradient */
     .stButton > button[kind="secondary"] {
-        background: transparent !important;
-        border: 1px solid rgba(120, 154, 118, 0.3) !important;
+        background: rgba(250, 249, 246, 0.95) !important;
+        border: 1px solid #E4E1DC !important;
         color: #2E2E2B !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1.5rem !important;
+        font-weight: 500 !important;
+        box-shadow: 0 1px 2px rgba(46, 46, 43, 0.04) !important;
+        transition: all 0.2s ease !important;
     }
     .stButton > button[kind="secondary"]:hover {
-        background: rgba(120, 154, 118, 0.08) !important;
-        border-color: rgba(120, 154, 118, 0.5) !important;
+        background: rgba(120, 154, 118, 0.15) !important;
+        border-color: #789A76 !important;
+        color: #5a7a58 !important;
     }
     /* Default buttons (no kind specified) - subtle styling */
     .stButton > button:not([kind]) {
-        background: transparent !important;
-        border: 1px solid rgba(120, 154, 118, 0.3) !important;
+        background: rgba(250, 249, 246, 0.95) !important;
+        border: 1px solid #E4E1DC !important;
         color: #2E2E2B !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        box-shadow: 0 1px 2px rgba(46, 46, 43, 0.04) !important;
+        transition: all 0.2s ease !important;
     }
     .stButton > button:not([kind]):hover {
-        background: rgba(120, 154, 118, 0.08) !important;
-        border-color: rgba(120, 154, 118, 0.5) !important;
+        background: rgba(120, 154, 118, 0.15) !important;
+        border-color: #789A76 !important;
+        color: #5a7a58 !important;
     }
     </style>
     """
