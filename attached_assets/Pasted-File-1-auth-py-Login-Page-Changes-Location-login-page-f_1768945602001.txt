@@ -1,0 +1,284 @@
+File 1: auth.py - Login Page Changes
+Location: login_page() function
+Replace the opening CSS block with:
+
+def login_page():
+    """Display login page for educators and students"""
+    
+    # Page-specific breathing room for auth pages
+    st.markdown("""
+    <style>
+    /* Auth page breathing room */
+    .main .block-container {
+        padding-top: 2.5rem !important;
+        max-width: 560px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+    /* Center tabs */
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        justify-content: center !important;
+    }
+    /* Forgot password link - borderless, link-style */
+    .forgot-password-link .stButton > button,
+    .forgot-password-link .stButton > button[kind="secondary"] {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #789A76 !important;
+        text-decoration: underline !important;
+        padding: 0.5rem !important;
+    }
+    .forgot-password-link .stButton > button:hover,
+    .forgot-password-link .stButton > button[kind="secondary"]:hover {
+        background: transparent !important;
+        color: #5a7a58 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+Wrap the "Forgot your password?" button:
+
+    with educator_tab:
+        # Forgot password link for educators - wrapped for CSS targeting
+        st.markdown('<div class="forgot-password-link">', unsafe_allow_html=True)
+        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
+            st.session_state.auth_mode = 'forgot_password'
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        with st.form("educator_login"):
+            # ... rest of form
+File 2: auth.py - Sidebar Navigation
+Location: show_user_info() function
+Full sidebar CSS and structure:
+
+def show_user_info():
+    """Display current user information with enhanced sidebar navigation"""
+    if st.session_state.get('authenticated'):
+        # Sidebar styling for cleaner look
+        st.sidebar.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            background-color: #FAF9F6;
+        }
+        [data-testid="stSidebar"] .stButton > button {
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        [data-testid="stSidebar"] .stButton > button:hover {
+            background-color: rgba(120, 154, 118, 0.1);
+            border-color: #789A76;
+        }
+        .sidebar-user-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(46, 46, 43, 0.06);
+        }
+        .sidebar-user-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #2E2E2B;
+            margin-bottom: 0.25rem;
+        }
+        .sidebar-user-email {
+            font-size: 0.85rem;
+            color: rgba(46, 46, 43, 0.65);
+        }
+        .sidebar-plan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        .sidebar-plan-active {
+            background: rgba(120, 154, 118, 0.15);
+            color: #5a7a58;
+        }
+        .sidebar-plan-inactive {
+            background: rgba(220, 53, 69, 0.1);
+            color: #c82333;
+        }
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(46, 46, 43, 0.45);
+            margin: 1.75rem 0 0.75rem 0;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(120, 154, 118, 0.12);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+User card (for educators):
+
+        # Educator sidebar - enhanced
+        sub_status = st.session_state.get('subscription_status', 'none')
+        is_active = st.session_state.get('subscription_active', False)
+        plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
+        
+        if is_active:
+            badge_html = f'<span class="sidebar-plan-badge sidebar-plan-active">✓ {plan}</span>'
+        else:
+            badge_html = '<span class="sidebar-plan-badge sidebar-plan-inactive">No plan</span>'
+        
+        st.sidebar.markdown(f'''
+        <div class="sidebar-user-card">
+            <div class="sidebar-user-name">{st.session_state.user_name or 'Educator'}</div>
+            <div class="sidebar-user-email">{st.session_state.user_email}</div>
+            {badge_html}
+        </div>
+        ''', unsafe_allow_html=True)
+Navigation buttons (TOOLS section):
+
+        # Navigation section for educators
+        current_mode = st.session_state.get('auth_mode', 'dashboard_home')
+        
+        st.sidebar.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
+        st.sidebar.markdown('<div class="sidebar-section-title">Tools</div>', unsafe_allow_html=True)
+        
+        nav_items = [
+            {"icon": "🏠", "label": "Dashboard", "mode": "dashboard_home"},
+            {"icon": "📚", "label": "Lesson Planning", "mode": "lesson_planning"},
+            {"icon": "🌱", "label": "Companion", "mode": "companion"},
+            {"icon": "👥", "label": "Students", "mode": "student_dashboard"},
+            {"icon": "📝", "label": "Planning Notes", "mode": "planning_notes"},
+            {"icon": "📖", "label": "Great Stories", "mode": "great_stories"},
+            {"icon": "✨", "label": "Imaginarium", "mode": "imaginarium"},
+        ]
+        
+        for item in nav_items:
+            is_current = current_mode == item["mode"]
+            btn_type = "primary" if is_current else "secondary"
+            if st.sidebar.button(
+                f"{item['icon']} {item['label']}", 
+                key=f"nav_{item['mode']}", 
+                use_container_width=True,
+                type=btn_type
+            ):
+                st.session_state.auth_mode = item["mode"]
+                st.rerun()
+ACCOUNT section:
+
+        # Subscription management - compact
+        st.sidebar.markdown('<div style="height: 0.75rem; border-top: 1px solid rgba(120, 154, 118, 0.15); margin-top: 1rem;"></div>', unsafe_allow_html=True)
+        st.sidebar.markdown('<div class="sidebar-section-title">Account</div>', unsafe_allow_html=True)
+        
+        with st.sidebar.expander("🔄 Subscription"):
+            # subscription management buttons
+            
+        st.sidebar.divider()
+        
+        if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
+            logout()
+        
+        with st.sidebar.expander("⬇️ Export Data"):
+            # GDPR export buttons
+File 3: interfaces.py - Quick Guide Cards
+Location: Companion interface function
+Wrapper structure:
+
+# Quick conversation starters
+st.markdown('<h4 style="color: var(--ux-text, #2E2E2B); margin-top: 1.5rem; margin-bottom: 0.5rem;">📚 Montessori Quick Guides</h4>', unsafe_allow_html=True)
+st.caption("Click any topic to explore authentic Montessori wisdom")
+quick_prompts = [
+    "🌌 What is cosmic education and how do I implement it?",
+    # ... all prompts
+]
+# Custom Grid for Symmetrical Cards
+st.markdown('<div class="quick-guide-grid">', unsafe_allow_html=True)
+cols = st.columns(3)
+for idx, prompt_text in enumerate(quick_prompts):
+    with cols[idx % 3]:
+        st.markdown(f'<div class="companion-card-container">', unsafe_allow_html=True)
+        if st.button(prompt_text, key=f"quick_{idx}", use_container_width=True):
+            # handle click
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+Inline CSS (add after the grid):
+
+st.markdown("""
+    <style>
+    .quick-guide-grid [data-testid="stHorizontalBlock"] {
+        gap: 1rem !important;
+    }
+    .quick-guide-grid [data-testid="stVerticalBlockBorderWrapper"],
+    .quick-guide-grid [data-testid="stVerticalBlock"] {
+        gap: 1rem !important;
+    }
+    .quick-guide-grid [data-testid="column"] {
+        padding: 0 !important;
+    }
+    div.companion-card-container {
+        margin-bottom: 1rem !important;
+        padding: 0 !important;
+    }
+    div.companion-card-container > div.stButton {
+        margin: 0 !important;
+    }
+    div.companion-card-container > div.stButton > button {
+        height: 120px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        padding: 1rem !important;
+        margin: 0 !important;
+        background: #FAF9F6 !important;
+        border: none !important;
+        color: #2E2E2B !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.4 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 8px rgba(46, 46, 43, 0.04) !important;
+    }
+    div.companion-card-container > div.stButton > button:hover {
+        background: rgba(120, 154, 118, 0.12) !important;
+        color: #5a7a58 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 16px rgba(46, 46, 43, 0.08) !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+File 4: montessori-theme.css - Button System
+Ensure gradient only on primary buttons:
+
+/* PRIMARY buttons get gradient */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #789A76 0%, #5a7a58 100%) !important;
+    border: none !important;
+    color: white !important;
+}
+.stButton > button[kind="primary"]:hover {
+    background: linear-gradient(135deg, #5a7a58 0%, #4a6a48 100%) !important;
+}
+/* SECONDARY buttons stay clean - NO gradient */
+.stButton > button[kind="secondary"],
+.stButton > button:not([kind="primary"]) {
+    background: transparent !important;
+    border: 1px solid rgba(120, 154, 118, 0.3) !important;
+    color: #789A76 !important;
+}
+.stButton > button[kind="secondary"]:hover,
+.stButton > button:not([kind="primary"]):hover {
+    background: rgba(120, 154, 118, 0.08) !important;
+    border-color: #789A76 !important;
+}
+File 5: Global Search & Replace
+Find and replace across all files:
+
+Find	Replace With
+#3d5a3d	#789A76
+#3D5A3D	#789A76
+Home Landing Screen Change
+Remove navigation buttons from home/dashboard - since navigation is now in the sidebar, any duplicate nav buttons on the main content area should be removed.

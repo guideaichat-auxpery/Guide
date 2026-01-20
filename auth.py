@@ -1031,7 +1031,7 @@ def login_page():
     # Page-specific CSS for centered, narrow layout
     st.markdown("""
     <style>
-    /* Auth page breathing room - centered narrow container */
+    /* Auth page breathing room */
     .main .block-container {
         padding-top: 2.5rem !important;
         max-width: 560px !important;
@@ -1041,43 +1041,23 @@ def login_page():
     /* Center tabs */
     div[data-testid="stTabs"] [data-baseweb="tab-list"] {
         justify-content: center !important;
-        gap: 8px;
-    }
-    div[data-testid="stTabs"] [data-baseweb="tab"] {
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 500;
     }
     /* Forgot password link - borderless, link-style */
     .forgot-password-link .stButton > button,
-    .forgot-password-link .stButton > button[kind="secondary"],
-    .forgot-password-link button[data-testid="stBaseButton-secondary"] {
-        background: none !important;
-        background-color: transparent !important;
+    .forgot-password-link .stButton > button[kind="secondary"] {
+        background: transparent !important;
         border: none !important;
         box-shadow: none !important;
         color: #789A76 !important;
         text-decoration: underline !important;
-        font-size: 0.9rem !important;
-        font-weight: 400 !important;
-        padding: 0.5rem 0 !important;
-        min-height: unset !important;
-        height: auto !important;
-        line-height: 1.5 !important;
+        padding: 0.5rem !important;
     }
     .forgot-password-link .stButton > button:hover,
-    .forgot-password-link .stButton > button[kind="secondary"]:hover,
-    .forgot-password-link button[data-testid="stBaseButton-secondary"]:hover {
+    .forgot-password-link .stButton > button[kind="secondary"]:hover {
+        background: transparent !important;
         color: #5a7a58 !important;
-        background: none !important;
-        background-color: transparent !important;
-    }
-    .forgot-password-link .stButton {
-        display: flex !important;
-        justify-content: center !important;
-    }
-    .forgot-password-link .stButton > button p {
-        text-decoration: underline !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -1094,25 +1074,9 @@ def login_page():
         </div>
         """, unsafe_allow_html=True)
         
-        # Forgot password link for educators - centered, simple text link style
-        st.markdown("""
-        <div style="text-align: center; margin: 0.5rem 0 1rem 0;">
-            <a href="#" onclick="
-                const buttons = document.querySelectorAll('button');
-                buttons.forEach(btn => {
-                    if (btn.innerText.includes('Forgot your password')) {
-                        btn.click();
-                    }
-                });
-                return false;
-            " style="color: #789A76; text-decoration: underline; font-size: 0.9rem; cursor: pointer;">
-                Forgot your password?
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
-        # Hidden button for actual functionality
-        st.markdown('<div style="display: none;">', unsafe_allow_html=True)
-        if st.button("Forgot your password?", key="forgot_pwd_link"):
+        # Forgot password link for educators - wrapped for CSS targeting
+        st.markdown('<div class="forgot-password-link">', unsafe_allow_html=True)
+        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
             st.session_state.auth_mode = 'forgot_password'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
