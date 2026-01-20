@@ -256,7 +256,7 @@ The unit must follow this five-phase narrative structure:
 **STAGE 3 — DAILY SESSION DESIGN RULE**
 Each learning session must answer:
 - What thinking is being advanced today?
-- Learning invitation:
+- What will learners do?
 - What support or instruction is required?
 - How will progress be visible today?
 Sessions must always move the learning story forward.
@@ -543,11 +543,9 @@ def show_companion_interface():
         "📊 How do I assess learning in a Montessori way?"
     ]
     
-    st.markdown('<div class="quick-guide-grid">', unsafe_allow_html=True)
     cols = st.columns(3)
     for idx, prompt_text in enumerate(quick_prompts):
         with cols[idx % 3]:
-            st.markdown('<div class="companion-card-container">', unsafe_allow_html=True)
             if st.button(prompt_text, key=f"quick_{idx}", use_container_width=True):
                 # Add prompt to conversation
                 st.session_state.companion_messages.append({
@@ -575,55 +573,6 @@ def show_companion_interface():
                             db.close()
                 
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Quick Guide Cards CSS
-    st.markdown("""
-    <style>
-    .quick-guide-grid [data-testid="stHorizontalBlock"] {
-        gap: 1rem !important;
-    }
-    .quick-guide-grid [data-testid="stVerticalBlockBorderWrapper"],
-    .quick-guide-grid [data-testid="stVerticalBlock"] {
-        gap: 1rem !important;
-    }
-    .quick-guide-grid [data-testid="column"] {
-        padding: 0 !important;
-    }
-    div.companion-card-container {
-        margin-bottom: 1rem !important;
-        padding: 0 !important;
-    }
-    div.companion-card-container > div.stButton {
-        margin: 0 !important;
-    }
-    div.companion-card-container > div.stButton > button {
-        height: 120px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-        padding: 1rem !important;
-        margin: 0 !important;
-        background: #FAF9F6 !important;
-        border: none !important;
-        color: #2E2E2B !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        line-height: 1.4 !important;
-        border-radius: 12px !important;
-        box-shadow: 0 2px 8px rgba(46, 46, 43, 0.04) !important;
-    }
-    div.companion-card-container > div.stButton > button:hover {
-        background: rgba(120, 154, 118, 0.12) !important;
-        color: #5a7a58 !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 16px rgba(46, 46, 43, 0.08) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -2806,64 +2755,18 @@ def show_account_deletion_interface():
 
 
 def show_pd_expert_interface():
-    """Professional Development Expert Mode - Available to all authenticated educators"""
+    """Professional Development Expert Mode - Restricted to authorized educators"""
     scroll_to_top()
     apply_chatgpt_chat_style()
-    inject_chat_auto_scroll()
-    
-    # Import database functions for conversation persistence
-    from database import (get_user_chat_conversations, create_chat_conversation, 
-                         load_conversation_to_session, save_conversation_message)
     
     user_email = st.session_state.get('user_email', '')
-    user_id = st.session_state.get('user_id')
     
-    # Initialize session ID for PD Expert if not exists
-    if 'pd_expert_session_id' not in st.session_state:
-        if database_available and user_id:
-            db = get_db()
-            if db:
-                try:
-                    # Auto-load most recent conversation for this interface
-                    existing_conversations = get_user_chat_conversations(
-                        db, user_id=user_id, interface_type='pd_expert'
-                    )
-                    
-                    if existing_conversations and len(existing_conversations) > 0:
-                        # Auto-load most recent conversation
-                        most_recent = existing_conversations[0]
-                        st.session_state.pd_expert_session_id = most_recent.session_id
-                        st.session_state['pd_expert_current_conversation_id'] = most_recent.id
-                        
-                        # Load messages from database
-                        loaded_messages = load_conversation_to_session(
-                            db, most_recent.session_id, 'pd_expert'
-                        )
-                        if loaded_messages:
-                            st.session_state.pd_messages = loaded_messages
-                            # Show restore notification
-                            restore_time = most_recent.last_activity.strftime('%d/%m/%Y %H:%M') if hasattr(most_recent, 'last_activity') and most_recent.last_activity else 'earlier'
-                            st.toast(f"✓ Restored your conversation from {restore_time}", icon="🔄")
-                    else:
-                        # Create first conversation for new users
-                        st.session_state.pd_expert_session_id = str(uuid.uuid4())
-                        title = f"PD Expert {datetime.now().strftime('%d/%m %H:%M')}"
-                        new_conv = create_chat_conversation(
-                            db, title=title, session_id=st.session_state.pd_expert_session_id,
-                            interface_type='pd_expert', user_id=user_id, student_id=None
-                        )
-                        st.session_state['pd_expert_current_conversation_id'] = new_conv.id
-                except Exception as e:
-                    print(f"Error loading/creating pd_expert conversation: {str(e)}")
-                    st.session_state.pd_expert_session_id = str(uuid.uuid4())
-                finally:
-                    db.close()
-        else:
-            st.session_state.pd_expert_session_id = str(uuid.uuid4())
-    
-    # Render conversation sidebar (handles conversation management)
-    if database_available and user_id:
-        render_conversation_sidebar('pd_expert', user_id=user_id)
+    # Access control - restrict to authorized emails
+    authorized_pd_emails = ["guideaichat@gmail.com", "ben@hmswairoa.net"]
+    if user_email not in authorized_pd_emails:
+        st.error("🔒 Access Denied")
+        st.info("This Professional Development Expert Mode is restricted to authorized accounts only.")
+        return
     
     # Header with special badge
     st.markdown("### 🧭 Professional Development Expert Mode")
@@ -2964,25 +2867,6 @@ def show_pd_expert_interface():
     
     # Chat input
     if user_prompt := st.chat_input("Ask your professional development question...", key="pd_expert_input"):
-        # Ensure session_id exists before saving
-        if 'pd_expert_session_id' not in st.session_state or not st.session_state.pd_expert_session_id:
-            st.session_state.pd_expert_session_id = str(uuid.uuid4())
-            # Create conversation record if needed
-            if database_available and user_id:
-                db = get_db()
-                if db:
-                    try:
-                        title = f"PD Expert {datetime.now().strftime('%d/%m %H:%M')}"
-                        new_conv = create_chat_conversation(
-                            db, title=title, session_id=st.session_state.pd_expert_session_id,
-                            interface_type='pd_expert', user_id=user_id, student_id=None
-                        )
-                        st.session_state['pd_expert_current_conversation_id'] = new_conv.id
-                    except Exception as e:
-                        print(f"Error creating conversation: {str(e)}")
-                    finally:
-                        db.close()
-        
         # Display user message
         with st.chat_message("user"):
             st.markdown(user_prompt)
@@ -2991,33 +2875,6 @@ def show_pd_expert_interface():
             "role": "user",
             "content": user_prompt
         })
-        
-        # Save user message to database
-        if database_available and user_id:
-            from utils import update_conversation_title_if_needed
-            session_id = st.session_state.get('pd_expert_session_id')
-            if session_id:
-                db = get_db()
-                if db:
-                    try:
-                        save_conversation_message(
-                            db,
-                            session_id=session_id,
-                            interface_type='pd_expert',
-                            role='user',
-                            content=user_prompt,
-                            user_id=user_id,
-                            student_id=None
-                        )
-                        
-                        # Auto-title on first message
-                        conv_id = st.session_state.get('pd_expert_current_conversation_id')
-                        if conv_id and len(st.session_state.pd_messages) == 1:
-                            update_conversation_title_if_needed(db, conv_id, 'pd_expert', user_prompt)
-                    except Exception as e:
-                        print(f"Error saving user message: {str(e)}")
-                    finally:
-                        db.close()
         
         # Call PD Expert API (Python implementation)
         with st.chat_message("assistant", avatar="assets/montessori-avatar.png"):
@@ -3055,33 +2912,14 @@ def show_pd_expert_interface():
                             "content": expert_response
                         })
                         
-                        # Save assistant response to database
-                        if database_available and user_id:
-                            session_id = st.session_state.get('pd_expert_session_id')
-                            if session_id:
-                                db = get_db()
-                                if db:
-                                    try:
-                                        save_conversation_message(
-                                            db,
-                                            session_id=session_id,
-                                            interface_type='pd_expert',
-                                            role='assistant',
-                                            content=expert_response,
-                                            user_id=user_id,
-                                            student_id=None
-                                        )
-                                        st.toast("✓ Conversation saved", icon="💾")
-                                    except Exception as e:
-                                        print(f"Error saving assistant message: {str(e)}")
-                                    finally:
-                                        db.close()
-                        
                         # Scroll to beginning of new response
                         scroll_to_latest_response()
                     else:
                         error_msg = result.get('error', 'Unknown error')
-                        st.error(f"Error: {error_msg}")
+                        if 'Access denied' in error_msg:
+                            st.error("🔒 Access denied. This feature is restricted.")
+                        else:
+                            st.error(f"Error: {error_msg}")
                         
                 except Exception as e:
                     st.error(f"Error: {str(e)}")

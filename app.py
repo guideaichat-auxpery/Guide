@@ -3,10 +3,7 @@ import logging
 import sys
 from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form
 from database import create_tables, database_status_message, database_available
-
-def get_interfaces():
-    import interfaces
-    return interfaces
+from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
 
 # ---- STRUCTURED LOGGING CONFIGURATION ----
 # Centralized logging setup for the entire application
@@ -29,6 +26,7 @@ st.set_page_config(
     initial_sidebar_state="auto"
 )
 
+# Google Analytics 4 tracking (deferred load for faster initial page render)
 GA_MEASUREMENT_ID = "G-L1LH5117YK"
 st.markdown(f"""
     <!-- Google tag (gtag.js) - deferred to not block page render -->
@@ -267,14 +265,31 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
     
-    # Show login page by default (contains the pill buttons for navigation)
-    if st.session_state.auth_mode == "login" or st.session_state.auth_mode is None:
+    # Authentication mode selector
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("🔑 Login", use_container_width=True):
+            st.session_state.auth_mode = "login"
+            st.rerun()
+    
+    with col2:
+        if st.button("📝 Sign Up", use_container_width=True):
+            st.session_state.auth_mode = "signup"
+            st.rerun()
+    
+    with col3:
+        if st.button("📋 Terms & Conditions", use_container_width=True):
+            st.session_state.auth_mode = "privacy_policy"
+            st.rerun()
+    
+    # Display appropriate authentication form
+    if st.session_state.auth_mode == "login":
         login_page()
     elif st.session_state.auth_mode == "signup":
         signup_page()
     elif st.session_state.auth_mode == "privacy_policy":
-        import interfaces
-        interfaces.show_privacy_policy()
+        show_privacy_policy()
     elif st.session_state.auth_mode == "forgot_password":
         show_forgot_password_form()
     elif st.session_state.auth_mode == "reset_password":
@@ -290,8 +305,7 @@ if not st.session_state.authenticated:
         if st.button("← Back to Login", key="back_contact_guest"):
             st.session_state.auth_mode = "login"
             st.rerun()
-        import interfaces
-        interfaces.show_contact_form()
+        show_contact_form()
     
 
 else:
@@ -366,14 +380,12 @@ else:
                 show_pricing_page()
                 st.stop()
         
+        # Default to dashboard home for educators
         if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium']:
             st.session_state.auth_mode = 'dashboard_home'
         
         # Show dashboard home or specific interface
         current_mode = st.session_state.get('auth_mode', 'dashboard_home')
-        
-        # Import interfaces here to avoid circular dependencies
-        import interfaces
         
         # Only show dashboard navigation cards on home view
         if current_mode == 'dashboard_home':
@@ -486,7 +498,6 @@ else:
         st.session_state.auth_mode = 'student_companion'
     
     # Display appropriate interface based on mode
-    import interfaces
     if st.session_state.auth_mode == "dashboard_home":
         # Dashboard is already rendered above for educators
         pass
@@ -501,59 +512,59 @@ else:
         if st.button("← Back to Dashboard", key="back_lp"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_lesson_planning_interface()
+        show_lesson_planning_interface()
     elif st.session_state.auth_mode == "companion":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_comp"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_companion_interface()
+        show_companion_interface()
     elif st.session_state.auth_mode == "student_dashboard":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_sd"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_student_dashboard_interface()
+        show_student_dashboard_interface()
     elif st.session_state.auth_mode == "great_stories":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_gs"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_great_story_interface()
+        show_great_story_interface()
     elif st.session_state.auth_mode == "planning_notes":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_pn"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_planning_notes_interface()
+        show_planning_notes_interface()
     elif st.session_state.auth_mode == "pd_expert":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_pd"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_pd_expert_interface()
+        show_pd_expert_interface()
     elif st.session_state.auth_mode == "imaginarium":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_img"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_imaginarium_interface()
+        show_imaginarium_interface()
     elif st.session_state.auth_mode == "student_companion":
-        interfaces.show_student_interface()
+        show_student_interface()
     elif st.session_state.auth_mode == "privacy_policy":
-        interfaces.show_privacy_policy()
+        show_privacy_policy()
     elif st.session_state.auth_mode == "data_access":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_data"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_data_access_interface()
+        show_data_access_interface()
     elif st.session_state.auth_mode == "account_deletion":
         # Back to dashboard button
         if st.button("← Back to Dashboard", key="back_acct"):
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
-        interfaces.show_account_deletion_interface()
+        show_account_deletion_interface()
     elif st.session_state.auth_mode == "contact":
         # Back button - go to previous page or login
         if st.session_state.get('logged_in'):
@@ -564,7 +575,7 @@ else:
             if st.button("← Back to Login", key="back_contact_login"):
                 st.session_state.auth_mode = "login"
                 st.rerun()
-        interfaces.show_contact_form()
+        show_contact_form()
     
 # Main app logic continues here
 

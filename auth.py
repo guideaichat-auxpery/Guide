@@ -1027,128 +1027,39 @@ def show_reset_password_form(token: str):
 
 def login_page():
     """Display login page for educators and students"""
+    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
     
-    # Initialize login tab if not set
-    if 'login_tab' not in st.session_state:
-        st.session_state.login_tab = 'educator'
-    
-    # Page-specific CSS for unified login card design
+    # Clear tabs for educator vs student login
     st.markdown("""
     <style>
-    /* Unified login card container */
-    .login-card-wrapper {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 0;
+    /* Style login tabs for clear distinction */
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 8px;
+        justify-content: center;
     }
-    /* Pill button styling */
-    .pill-btn-row .stButton > button {
-        border-radius: 20px !important;
-        padding: 0.5rem 1rem !important;
-        font-size: 0.85rem !important;
-        font-weight: 500 !important;
-        white-space: nowrap !important;
-    }
-    .pill-btn-active .stButton > button {
-        background: linear-gradient(135deg, #d4e6d3 0%, #c5ddc4 100%) !important;
-        color: #2E2E2B !important;
-        border: 1px solid #b8d4b6 !important;
-    }
-    .pill-btn-inactive .stButton > button {
-        background: #FAF9F6 !important;
-        color: #555 !important;
-        border: 1px solid #E4E1DC !important;
-    }
-    .pill-btn-inactive .stButton > button:hover {
-        background: #f0efec !important;
-        border-color: #d0cdc8 !important;
-    }
-    /* Forgot password - full width rounded field style */
-    .forgot-password-field .stButton > button {
-        border-radius: 25px !important;
-        padding: 0.75rem 1.5rem !important;
-        background: white !important;
-        color: #555 !important;
-        border: 1px solid #E4E1DC !important;
-        font-size: 0.9rem !important;
-        width: 100% !important;
-    }
-    .forgot-password-field .stButton > button:hover {
-        background: #fafafa !important;
-        border-color: #d0cdc8 !important;
-    }
-    /* Login form inputs - rounded style */
-    .login-form-section input[type="text"],
-    .login-form-section input[type="password"] {
-        border-radius: 25px !important;
-        border: 1px solid #E4E1DC !important;
-        padding: 0.75rem 1rem !important;
-    }
-    /* Login button - rounded pill style */
-    .login-form-section .stFormSubmitButton > button {
-        border-radius: 25px !important;
-        background: white !important;
-        color: #555 !important;
-        border: 1px solid #E4E1DC !important;
-        padding: 0.75rem 1.5rem !important;
-    }
-    .login-form-section .stFormSubmitButton > button:hover {
-        background: #f5f5f5 !important;
-        border-color: #d0cdc8 !important;
+    div[data-testid="stTabs"] [data-baseweb="tab"] {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<h2 style="text-align: center; color: #2E2E2B; margin-bottom: 1.5rem;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
+    # Use tabs for clearer separation
+    educator_tab, student_tab = st.tabs(["👩‍🏫 Educator Login", "🎒 Student Login"])
     
-    # Start the unified login card
-    st.markdown('<div class="login-card-wrapper">', unsafe_allow_html=True)
-    
-    # 4 pill-style buttons in a centered row
-    spacer1, col1, col2, col3, col4, spacer2 = st.columns([0.3, 1, 1, 1, 1, 0.3])
-    
-    with col1:
-        btn_class = "pill-btn-active" if st.session_state.login_tab == 'educator' else "pill-btn-inactive"
-        st.markdown(f'<div class="pill-btn-row {btn_class}">', unsafe_allow_html=True)
-        if st.button("📚 Educator Login", key="pill_educator", use_container_width=True):
-            st.session_state.login_tab = 'educator'
+    with educator_tab:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
+            <p style="color: #666; font-size: 0.95em;">Teachers, principals, and homeschool parents</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Forgot password link for educators
+        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
+            st.session_state.auth_mode = 'forgot_password'
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        btn_class = "pill-btn-active" if st.session_state.login_tab == 'student' else "pill-btn-inactive"
-        st.markdown(f'<div class="pill-btn-row {btn_class}">', unsafe_allow_html=True)
-        if st.button("🎒 Student Login", key="pill_student", use_container_width=True):
-            st.session_state.login_tab = 'student'
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown('<div class="pill-btn-row pill-btn-inactive">', unsafe_allow_html=True)
-        if st.button("📝 Sign Up", key="pill_signup", use_container_width=True):
-            st.session_state.auth_mode = 'signup'
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown('<div class="pill-btn-row pill-btn-inactive">', unsafe_allow_html=True)
-        if st.button("📋 T&Cs", key="pill_tcs", use_container_width=True):
-            st.session_state.auth_mode = 'privacy_policy'
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Forgot password - full width rounded field
-    st.markdown('<div class="forgot-password-field" style="margin-top: 1rem;">', unsafe_allow_html=True)
-    if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True):
-        st.session_state.auth_mode = 'forgot_password'
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Form section wrapper
-    st.markdown('<div class="login-form-section">', unsafe_allow_html=True)
-    
-    # Show form based on selected tab
-    if st.session_state.login_tab == 'educator':
+        
         with st.form("educator_login"):
             email = st.text_input("Email", placeholder="your.email@example.com")
             password = st.text_input("Password", type="password")
@@ -1258,8 +1169,13 @@ def login_page():
                         if db:
                             db.close()
     
-    else:
-        # Student login form
+    with student_tab:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
+            <p style="color: #666; font-size: 0.95em;">Students - use the username your teacher gave you</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         with st.form("student_login"):
             username = st.text_input("Username", placeholder="your_username")
             password = st.text_input("Password", type="password")
@@ -1317,10 +1233,14 @@ def login_page():
                     finally:
                         if db:
                             db.close()
-    
-    # Close wrapper divs
-    st.markdown('</div>', unsafe_allow_html=True)  # Close login-form-section
-    st.markdown('</div>', unsafe_allow_html=True)  # Close login-card-wrapper
+        
+        st.markdown("""
+        <div style="text-align: center; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <p style="color: #666; font-size: 0.9em; margin: 0;">
+                Need help? Ask your teacher for your login details.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def signup_page():
     """Display signup page for new educators"""
@@ -1643,126 +1563,27 @@ def export_user_data_gdpr():
         db.close()
 
 def show_user_info():
-    """Display current user information with enhanced sidebar navigation"""
+    """Display current user information with subscription status"""
     if st.session_state.get('authenticated'):
-        # Sidebar styling
-        st.sidebar.markdown("""
-        <style>
-        [data-testid="stSidebar"] {
-            background-color: #FAF9F6;
-        }
-        [data-testid="stSidebar"] .stButton > button {
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        [data-testid="stSidebar"] .stButton > button:hover {
-            background-color: rgba(120, 154, 118, 0.1);
-            border-color: #789A76;
-        }
-        .sidebar-user-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(46, 46, 43, 0.06);
-        }
-        .sidebar-user-name {
-            font-weight: 600;
-            font-size: 1rem;
-            color: #2E2E2B;
-            margin-bottom: 0.25rem;
-        }
-        .sidebar-user-email {
-            font-size: 0.85rem;
-            color: rgba(46, 46, 43, 0.65);
-        }
-        .sidebar-plan-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            margin-top: 0.5rem;
-        }
-        .sidebar-plan-active {
-            background: rgba(120, 154, 118, 0.15);
-            color: #5a7a58;
-        }
-        .sidebar-plan-inactive {
-            background: rgba(220, 53, 69, 0.1);
-            color: #c82333;
-        }
-        .sidebar-section-title {
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: rgba(46, 46, 43, 0.45);
-            margin: 1.25rem 0 0.75rem 0;
-            padding-top: 0.75rem;
-            border-top: 1px solid rgba(120, 154, 118, 0.12);
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
         if st.session_state.get('is_student'):
-            # Student sidebar - compact card
-            st.sidebar.markdown(f'''
-            <div class="sidebar-user-card">
-                <div class="sidebar-user-name">👤 {st.session_state.user_name}</div>
-                <div class="sidebar-user-email">@{st.session_state.get('username', '')}</div>
-            </div>
-            ''', unsafe_allow_html=True)
+            st.sidebar.markdown(f"**Student:** {st.session_state.user_name}")
+            st.sidebar.markdown(f"**Username:** {st.session_state.username}")
+            if st.session_state.get('age_group'):
+                st.sidebar.markdown(f"**Age Group:** {st.session_state.age_group}")
         else:
-            # Educator sidebar - enhanced with subscription badge
-            is_active = st.session_state.get('subscription_active', False)
-            plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
+            st.sidebar.markdown(f"**Educator:** {st.session_state.user_name}")
+            st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
             
-            if st.session_state.get('is_admin'):
-                badge_html = '<span class="sidebar-plan-badge sidebar-plan-active">✓ Admin</span>'
-            elif is_active:
-                badge_html = f'<span class="sidebar-plan-badge sidebar-plan-active">✓ {plan}</span>'
+            # Use session-verified subscription status (failproof)
+            sub_status = st.session_state.get('subscription_status', 'none')
+            if st.session_state.get('subscription_active'):
+                plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
+                if sub_status == 'grace':
+                    st.sidebar.markdown(f"**Plan:** {plan} ⏳ *Verifying...*")
+                else:
+                    st.sidebar.markdown(f"**Plan:** {plan} ✅")
             else:
-                badge_html = '<span class="sidebar-plan-badge sidebar-plan-inactive">No plan</span>'
-            
-            st.sidebar.markdown(f'''
-            <div class="sidebar-user-card">
-                <div class="sidebar-user-name">{st.session_state.user_name or 'Educator'}</div>
-                <div class="sidebar-user-email">{st.session_state.user_email}</div>
-                {badge_html}
-            </div>
-            ''', unsafe_allow_html=True)
-            
-            # TOOLS Section
-            st.sidebar.markdown('<div class="sidebar-section-title">Tools</div>', unsafe_allow_html=True)
-            
-            nav_items = [
-                {"icon": "🏠", "label": "Dashboard", "mode": "dashboard_home"},
-                {"icon": "📚", "label": "Lesson Planning", "mode": "lesson_planning"},
-                {"icon": "🌱", "label": "Companion", "mode": "companion"},
-                {"icon": "👥", "label": "Students", "mode": "student_dashboard"},
-                {"icon": "📝", "label": "Planning Notes", "mode": "planning_notes"},
-                {"icon": "📖", "label": "Great Stories", "mode": "great_stories"},
-                {"icon": "✨", "label": "Imaginarium", "mode": "imaginarium"},
-            ]
-            
-            current_mode = st.session_state.get('auth_mode', 'dashboard_home')
-            
-            for item in nav_items:
-                is_current = current_mode == item["mode"]
-                btn_type = "primary" if is_current else "secondary"
-                if st.sidebar.button(
-                    f"{item['icon']} {item['label']}", 
-                    key=f"nav_{item['mode']}", 
-                    use_container_width=True,
-                    type=btn_type
-                ):
-                    st.session_state.auth_mode = item["mode"]
-                    st.rerun()
-            
-            # ACCOUNT Section
-            st.sidebar.markdown('<div class="sidebar-section-title">Account</div>', unsafe_allow_html=True)
+                st.sidebar.markdown("**Plan:** None ❌")
             
             # Subscription management expander
             with st.sidebar.expander("🔄 Subscription"):
@@ -1797,10 +1618,8 @@ def show_user_info():
         
         st.sidebar.divider()
         
-        st.sidebar.markdown('<div class="logout-btn-wrapper">', unsafe_allow_html=True)
         if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
             logout()
-        st.sidebar.markdown('</div>', unsafe_allow_html=True)
         
         with st.sidebar.expander("⬇️ Download My Data"):
             st.markdown("*Export all your data in JSON format (GDPR compliant)*")

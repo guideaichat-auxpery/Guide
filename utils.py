@@ -152,7 +152,7 @@ def inject_sidebar_toggle_button():
         top: 50%;
         transform: translateY(-50%);
         z-index: 999999;
-        background: #789A76;
+        background: #3d5a3d;
         color: white;
         border: none;
         border-radius: 0 8px 8px 0;
@@ -165,7 +165,7 @@ def inject_sidebar_toggle_button():
     }
     
     .sidebar-reopen-btn:hover {
-        background: #5a7a58;
+        background: #4a6b4a;
         padding-left: 14px;
     }
     
@@ -512,11 +512,11 @@ def apply_chatgpt_sidebar_style():
     }
     
     [data-testid="stSidebar"] * {
-        color: #2E2E2B !important;
+        color: #4a4a4a !important;
     }
     
     [data-testid="stSidebar"] .stMarkdown h3 {
-        color: #789A76 !important;
+        color: #3d5a3d !important;
         font-weight: 600 !important;
     }
     
@@ -532,7 +532,7 @@ def apply_chatgpt_sidebar_style():
     }
     
     .conversation-row:hover {
-        background: rgba(120, 154, 118, 0.08);
+        background: rgba(61, 90, 61, 0.08);
     }
     
     .conversation-row .action-buttons {
@@ -546,83 +546,57 @@ def apply_chatgpt_sidebar_style():
         opacity: 1;
     }
     
-    /* Style all sidebar buttons - secondary style */
+    /* Style all sidebar buttons */
     [data-testid="stSidebar"] .stButton > button {
         background: transparent !important;
-        border: 1px solid rgba(120, 154, 118, 0.3) !important;
-        border-radius: 6px !important;
-        color: #2E2E2B !important;
+        border: none !important;
+        border-radius: 8px !important;
+        color: #4a4a4a !important;
         text-align: left !important;
-        padding: 4px 8px !important;
-        font-size: 12px !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
         transition: all 0.15s ease !important;
-        min-height: 28px !important;
-        line-height: 1.2 !important;
-        width: 100% !important;
-        margin-bottom: 4px !important;
     }
     
     [data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(120, 154, 118, 0.08) !important;
-        border-color: rgba(120, 154, 118, 0.5) !important;
+        background: rgba(61, 90, 61, 0.1) !important;
     }
     
-    /* Primary buttons (current conversation & new chat) - gradient */
+    /* Primary buttons (current conversation) */
     [data-testid="stSidebar"] .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #789A76 0%, #5a7a58 100%) !important;
+        background: #3d5a3d !important;
         color: #ffffff !important;
         border: none !important;
-        font-weight: 500 !important;
-        padding: 6px 10px !important;
-        min-height: 32px !important;
-        font-size: 13px !important;
     }
     
     [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
-        background: linear-gradient(135deg, #5a7a58 0%, #4a6a48 100%) !important;
+        background: #4a6b4a !important;
+    }
+    
+    /* New Chat button - prominent styling */
+    .new-chat-btn {
+        background: #3d5a3d !important;
         color: #ffffff !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-weight: 500 !important;
+        margin-bottom: 16px !important;
     }
     
-    /* New Chat button specific */
-    button[key="top_new_chat"] {
-        margin-bottom: 12px !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Download data button specific refinement */
-    [data-testid="stSidebar"] div[data-testid="stExpander"] {
-        background: transparent !important;
-        border: 1px solid rgba(120, 154, 118, 0.2) !important;
-        border-radius: 6px !important;
-        margin-bottom: 8px !important;
-    }
-    
-    [data-testid="stSidebar"] div[data-testid="stExpander"] summary {
+    /* Small icon buttons (edit/delete) - subtle until hover */
+    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"],
+    [data-testid="stSidebar"] .stButton > button[data-testid*="del"] {
         padding: 4px 8px !important;
-        font-size: 12px !important;
-    }
-
-    /* Small icon buttons (edit/delete) */
-    [data-testid="stSidebar"] .stButton > button[key^="edit_"],
-    [data-testid="stSidebar"] .stButton > button[key^="del_"] {
-        padding: 0px !important;
-        min-height: 20px !important;
-        width: 20px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: white !important;
-        border: 1px solid rgba(0,0,0,0.1) !important;
-        font-size: 10px !important;
-        opacity: 0.7 !important;
-        margin: 0 2px !important;
+        font-size: 11px !important;
+        min-height: 28px !important;
+        background: transparent !important;
+        opacity: 0.6 !important;
     }
     
-    [data-testid="stSidebar"] .stButton > button[key^="edit_"]:hover,
-    [data-testid="stSidebar"] .stButton > button[key^="del_"]:hover {
+    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"]:hover,
+    [data-testid="stSidebar"] .stButton > button[data-testid*="del"]:hover {
         opacity: 1 !important;
-        background: rgba(120, 154, 118, 0.1) !important;
-        color: #789A76 !important;
+        background: rgba(61, 90, 61, 0.15) !important;
     }
     
     /* Section headers */
@@ -634,7 +608,7 @@ def apply_chatgpt_sidebar_style():
         padding: 16px 12px 8px 12px !important;
         margin-top: 8px !important;
         color: #6b7c6b !important;
-        border-top: 1px solid rgba(120, 154, 118, 0.15) !important;
+        border-top: 1px solid rgba(61, 90, 61, 0.1) !important;
     }
     
     .sidebar-section-header:first-of-type {
@@ -655,14 +629,14 @@ def apply_chatgpt_sidebar_style():
     
     /* Info box in sidebar */
     [data-testid="stSidebar"] [data-testid="stAlert"] {
-        background: rgba(120, 154, 118, 0.08) !important;
-        border: 1px solid rgba(120, 154, 118, 0.15) !important;
+        background: rgba(61, 90, 61, 0.08) !important;
+        border: 1px solid rgba(61, 90, 61, 0.15) !important;
         border-radius: 8px !important;
     }
     
     /* Dividers */
     [data-testid="stSidebar"] hr {
-        border-color: rgba(120, 154, 118, 0.15) !important;
+        border-color: rgba(61, 90, 61, 0.15) !important;
     }
     
     /* Caption text */
@@ -670,33 +644,25 @@ def apply_chatgpt_sidebar_style():
         color: #6b7c6b !important;
     }
     
-    /* Logout button wrapper - use .logout-btn-wrapper class in Python */
-    .logout-btn-wrapper .stButton > button {
-        background: rgba(210, 180, 140, 0.1) !important;
-        border: 1px solid rgba(210, 180, 140, 0.3) !important;
-        color: #8B4513 !important;
-        font-size: 11px !important;
-        min-height: 26px !important;
-        padding: 2px 8px !important;
-        margin-top: 10px !important;
-        width: auto !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        display: block !important;
-    }
-    
-    /* Sidebar toggle button */
+    /* Sidebar toggle button for reopening */
     .sidebar-toggle-btn {
+        position: fixed;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        background: #3d5a3d;
+        color: white;
+        border: none;
         border-radius: 0 8px 8px 0;
         padding: 12px 8px;
         cursor: pointer;
         box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
         transition: all 0.2s ease;
-        background: #789A76;
     }
     
     .sidebar-toggle-btn:hover {
-        background: #5a7a58;
+        background: #4a6b4a;
         padding-left: 12px;
     }
     
@@ -710,121 +676,12 @@ def apply_chatgpt_sidebar_style():
     }
     
     [data-testid="stSidebar"]::-webkit-scrollbar-thumb {
-        background: rgba(120, 154, 118, 0.3);
+        background: rgba(61, 90, 61, 0.3);
         border-radius: 3px;
     }
     
     [data-testid="stSidebar"]::-webkit-scrollbar-thumb:hover {
-        background: rgba(120, 154, 118, 0.5);
-    }
-    
-    /* Forgot password link styling */
-    .forgot-password-link .stButton > button {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        color: #789A76 !important;
-        text-decoration: underline !important;
-        font-size: 13px !important;
-        min-height: 24px !important;
-        padding: 4px !important;
-    }
-    .forgot-password-link .stButton > button:hover {
-        color: #5a7a58 !important;
-        background: transparent !important;
-    }
-    
-    /* Quick Guide Cards styling */
-    .quick-guide-grid [data-testid="stHorizontalBlock"] { 
-        gap: 1rem !important; 
-    }
-    .quick-guide-grid [data-testid="stVerticalBlockBorderWrapper"],
-    .quick-guide-grid [data-testid="stVerticalBlock"] {
-        gap: 1rem !important;
-    }
-    .quick-guide-grid [data-testid="column"] {
-        padding: 0 !important;
-    }
-    div.companion-card-container {
-        margin-bottom: 1rem !important;
-        padding: 0 !important;
-    }
-    div.companion-card-container > div.stButton {
-        margin: 0 !important;
-    }
-    div.companion-card-container > div.stButton > button {
-        height: 120px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: #FAF9F6 !important;
-        border: none !important;
-        color: #2E2E2B !important;
-        border-radius: 12px !important;
-        box-shadow: 0 2px 8px rgba(46, 46, 43, 0.04) !important;
-        font-size: 13px !important;
-        line-height: 1.4 !important;
-        padding: 1rem !important;
-        margin: 0 !important;
-        text-align: center !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-    }
-    div.companion-card-container > div.stButton > button:hover {
-        background: rgba(120, 154, 118, 0.12) !important;
-        color: #5a7a58 !important;
-        border-color: #789A76 !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 16px rgba(46, 46, 43, 0.08) !important;
-    }
-    
-    /* Global button system - gradients only on primary */
-    .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #789A76 0%, #5a7a58 100%) !important;
-        border: none !important;
-        color: #ffffff !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 1.5rem !important;
-        font-weight: 500 !important;
-        box-shadow: 0 2px 8px rgba(46, 46, 43, 0.06) !important;
-        transition: all 0.2s ease !important;
-    }
-    .stButton > button[kind="primary"]:hover {
-        background: linear-gradient(135deg, #5a7a58 0%, #4a6a48 100%) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 24px rgba(20, 20, 20, 0.12) !important;
-    }
-    /* Secondary buttons - clean, no gradient */
-    .stButton > button[kind="secondary"] {
-        background: rgba(250, 249, 246, 0.95) !important;
-        border: 1px solid #E4E1DC !important;
-        color: #2E2E2B !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 1.5rem !important;
-        font-weight: 500 !important;
-        box-shadow: 0 1px 2px rgba(46, 46, 43, 0.04) !important;
-        transition: all 0.2s ease !important;
-    }
-    .stButton > button[kind="secondary"]:hover {
-        background: rgba(120, 154, 118, 0.15) !important;
-        border-color: #789A76 !important;
-        color: #5a7a58 !important;
-    }
-    /* Default buttons (no kind specified) - subtle styling */
-    .stButton > button:not([kind]) {
-        background: rgba(250, 249, 246, 0.95) !important;
-        border: 1px solid #E4E1DC !important;
-        color: #2E2E2B !important;
-        border-radius: 8px !important;
-        font-weight: 500 !important;
-        box-shadow: 0 1px 2px rgba(46, 46, 43, 0.04) !important;
-        transition: all 0.2s ease !important;
-    }
-    .stButton > button:not([kind]):hover {
-        background: rgba(120, 154, 118, 0.15) !important;
-        border-color: #789A76 !important;
-        color: #5a7a58 !important;
+        background: rgba(61, 90, 61, 0.5);
     }
     </style>
     """
@@ -958,19 +815,18 @@ def render_conversation_sidebar(interface_type, user_id=None, student_id=None):
                         title_display = conv.title[:20] + "..." if len(conv.title) > 20 else conv.title
                         
                         # Row with clickable title and action buttons
-                        col1, col2, col3 = st.columns([8, 1, 1])
+                        col1, col2, col3 = st.columns([7, 1, 1])
                         
                         with col1:
                             # Main conversation button - clicking opens it
                             icon = "▸" if is_current else "💬"
-                            btn_label = f"{icon} {title_display}"
+                            btn_label = f"{icon} {title_display} · {timestamp}"
                             
                             if st.button(
                                 btn_label,
                                 key=f"open_{conv.id}",
                                 use_container_width=True,
-                                type="primary" if is_current else "secondary",
-                                help=f"Created {timestamp}"
+                                type="primary" if is_current else "secondary"
                             ):
                                 if not is_current:
                                     reopen_chat_conversation(db, conv.id, user_id, student_id)
@@ -4459,7 +4315,7 @@ def call_pd_expert(user_email: str, prompt: str, openai_client) -> dict:
     Provides comprehensive PD coaching with self-learning memory and contextual analysis.
     
     Args:
-        user_email: Email of the user
+        user_email: Email of the user (must be guideaichat@gmail.com)
         prompt: The PD question from the user
         openai_client: Initialized OpenAI client
         
@@ -4471,6 +4327,13 @@ def call_pd_expert(user_email: str, prompt: str, openai_client) -> dict:
     from datetime import datetime, timedelta
     
     try:
+        # Access restriction
+        if user_email != "guideaichat@gmail.com":
+            return {
+                "success": False,
+                "error": "Access denied. This function is restricted to the authorized account."
+            }
+        
         # Connect to database for memory retrieval
         db_url = os.environ.get('DATABASE_URL')
         conn = psycopg2.connect(db_url)
