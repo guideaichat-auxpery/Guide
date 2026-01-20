@@ -267,20 +267,27 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
     
-    # Authentication mode selector
-    col1, col2, col3 = st.columns(3)
+    # Authentication mode selector - all buttons in one row
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("🔑 Login", use_container_width=True):
+        if st.button("👩‍🏫 Educator Login", use_container_width=True):
             st.session_state.auth_mode = "login"
+            st.session_state.login_tab = "educator"
             st.rerun()
     
     with col2:
+        if st.button("🎒 Student Login", use_container_width=True):
+            st.session_state.auth_mode = "login"
+            st.session_state.login_tab = "student"
+            st.rerun()
+    
+    with col3:
         if st.button("📝 Sign Up", use_container_width=True):
             st.session_state.auth_mode = "signup"
             st.rerun()
     
-    with col3:
+    with col4:
         if st.button("📋 Terms & Conditions", use_container_width=True):
             st.session_state.auth_mode = "privacy_policy"
             st.rerun()
