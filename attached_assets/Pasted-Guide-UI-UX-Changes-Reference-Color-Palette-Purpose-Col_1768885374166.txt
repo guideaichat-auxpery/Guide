@@ -1,0 +1,91 @@
+Guide UI/UX Changes Reference
+Color Palette
+Purpose	Color	Usage
+Primary Accent	#789A76	Links, highlights, accent text
+Hover Accent	#5a7a58	Hover states
+Cream Background	#FAF9F6	Card backgrounds
+Text Primary	#2E2E2B	Body text
+Subtle Background	rgba(120, 154, 118, 0.08)	Light hovers
+Medium Background	rgba(120, 154, 118, 0.12)	Active hovers
+Soft Shadow	rgba(46, 46, 43, 0.04)	Card shadows
+IMPORTANT: Zero dark green (#3d5a3d) anywhere.
+
+Streamlit CSS Targeting Pattern
+Since Streamlit doesn't support adding classes directly to widgets:
+
+st.markdown('<div class="my-custom-class">', unsafe_allow_html=True)
+# Streamlit widget here
+st.markdown('</div>', unsafe_allow_html=True)
+Then target with: .my-custom-class .stButton > button { /* styles */ }
+
+Note: :has() and :contains() selectors don't work in Streamlit.
+
+Change 1: Quick Guide Cards
+Location: interfaces.py
+
+Python:
+
+st.markdown('<div class="quick-guide-grid">', unsafe_allow_html=True)
+cols = st.columns(3)
+for idx, prompt_text in enumerate(quick_prompts):
+    with cols[idx % 3]:
+        st.markdown('<div class="companion-card-container">', unsafe_allow_html=True)
+        if st.button(prompt_text, key=f"quick_{idx}", use_container_width=True):
+            # handle click
+        st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+CSS:
+
+.quick-guide-grid [data-testid="stHorizontalBlock"] { gap: 1rem !important; }
+div.companion-card-container > div.stButton > button {
+    height: 120px !important;
+    background: #FAF9F6 !important;
+    border: none !important;
+    color: #2E2E2B !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(46, 46, 43, 0.04) !important;
+}
+div.companion-card-container > div.stButton > button:hover {
+    background: rgba(120, 154, 118, 0.12) !important;
+    color: #5a7a58 !important;
+    transform: translateY(-2px) !important;
+}
+Change 2: Forgot Password Link
+Location: auth.py - login_page() function
+
+Python:
+
+st.markdown('<div class="forgot-password-link">', unsafe_allow_html=True)
+if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
+    st.session_state.auth_mode = 'forgot_password'
+    st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
+CSS:
+
+.forgot-password-link .stButton > button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #789A76 !important;
+    text-decoration: underline !important;
+}
+.forgot-password-link .stButton > button:hover {
+    color: #5a7a58 !important;
+}
+Change 3: Button System (montessori-theme.css)
+Gradients only on primary buttons:
+
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #789A76 0%, #5a7a58 100%) !important;
+}
+.stButton > button[kind="secondary"],
+.stButton > button:not([kind="primary"]) {
+    background: transparent !important;
+    border: 1px solid rgba(120, 154, 118, 0.3) !important;
+}
+Quick Checklist
+Replace #3d5a3d with #789A76
+Apply border: none to cards and secondary buttons
+Use wrapper div pattern for custom Streamlit styling
+Ensure gradient only on primary buttons
+Test all hover states
