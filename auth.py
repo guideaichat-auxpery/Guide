@@ -1186,10 +1186,12 @@ def login_page():
                         if db:
                             db.close()
         
-        # Small forgot password link
-        if st.button("Forgot your password?", key="forgot_pwd_link", type="secondary"):
-            st.session_state.auth_mode = 'forgot_password'
-            st.rerun()
+        # Small forgot password link - centered below form
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Forgot your password?", key="forgot_pwd_link", type="secondary"):
+                st.session_state.auth_mode = 'forgot_password'
+                st.rerun()
     
     with student_tab:
         st.markdown("""
