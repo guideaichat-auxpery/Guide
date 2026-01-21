@@ -1177,6 +1177,7 @@ def login_page():
                         else:
                             # Record failed attempt
                             record_login_attempt(db, email, attempt_type='educator', success=False)
+                            st.session_state.show_forgot_password = True
                             attempts_remaining = 5 - failed_count - 1
                             if attempts_remaining > 0:
                                 st.error(f"Invalid email or password. {attempts_remaining} attempt(s) remaining before lockout.")
@@ -1186,12 +1187,14 @@ def login_page():
                         if db:
                             db.close()
         
-        # Small forgot password link - centered below form
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("Forgot your password?", key="forgot_pwd_link", type="secondary"):
-                st.session_state.auth_mode = 'forgot_password'
-                st.rerun()
+        # Show forgot password link only after failed login attempt
+        if st.session_state.get('show_forgot_password'):
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("Forgot your password?", key="forgot_pwd_link", type="secondary"):
+                    st.session_state.auth_mode = 'forgot_password'
+                    st.session_state.show_forgot_password = False
+                    st.rerun()
     
     with student_tab:
         st.markdown("""
