@@ -23,7 +23,7 @@ st.set_page_config(
     page_title="Guide - Your prepared digital environment",
     page_icon="🌟",
     layout="wide",
-    initial_sidebar_state="auto"
+    initial_sidebar_state="expanded"
 )
 
 # Google Analytics 4 tracking (deferred load for faster initial page render)
