@@ -1063,6 +1063,13 @@ def login_page():
         background: linear-gradient(135deg, #C4A882 0%, #B8956A 100%) !important;
         border-color: rgba(166, 123, 91, 0.5) !important;
     }
+    /* Small forgot password button */
+    button[data-testid="baseButton-secondary"] {
+        padding: 4px 12px !important;
+        font-size: 0.75rem !important;
+        min-height: unset !important;
+        height: auto !important;
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -1070,12 +1077,6 @@ def login_page():
     educator_tab, student_tab, signup_tab, terms_tab = st.tabs(["👩‍🏫 Educator", "🎒 Student", "✨ Sign Up", "📜 Terms"])
     
     with educator_tab:
-        
-        # Forgot password link for educators
-        if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
-            st.session_state.auth_mode = 'forgot_password'
-            st.rerun()
-        
         with st.form("educator_login"):
             email = st.text_input("Email", placeholder="your.email@example.com")
             password = st.text_input("Password", type="password")
@@ -1184,6 +1185,11 @@ def login_page():
                     finally:
                         if db:
                             db.close()
+        
+        # Small forgot password link
+        if st.button("Forgot your password?", key="forgot_pwd_link", type="secondary"):
+            st.session_state.auth_mode = 'forgot_password'
+            st.rerun()
     
     with student_tab:
         st.markdown("""
