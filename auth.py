@@ -1685,6 +1685,7 @@ def show_user_info():
             manage_tools = [
                 {"icon": "👥", "title": "Student Dashboard", "desc": "Track student learning", "mode": "student_dashboard", "key": "sb_sd"},
                 {"icon": "📝", "title": "Planning Notes", "desc": "Save lesson plans", "mode": "planning_notes", "key": "sb_pn"},
+                {"icon": "👤", "title": "Create Student", "desc": "Add new student", "mode": "create_student", "key": "sb_cs"},
             ]
             
             for tool in manage_tools:
@@ -1738,8 +1739,15 @@ def show_user_info():
         if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
             logout()
         
-        with st.sidebar.expander("⬇️ Download My Data"):
-            st.markdown("*Export all your data in JSON format (GDPR compliant)*")
+        # My Data expander
+        with st.sidebar.expander("📊 My Data"):
+            st.markdown("*View and export your data*")
+            if st.button("View Data Dashboard", key="view_data_btn", use_container_width=True):
+                st.session_state.auth_mode = "data_access"
+                st.rerun()
+            
+            st.markdown("---")
+            st.caption("Export all your data (GDPR compliant):")
             
             if 'gdpr_export_ready' not in st.session_state:
                 st.session_state.gdpr_export_ready = False
@@ -1776,3 +1784,10 @@ def show_user_info():
                         st.rerun()
                 else:
                     st.error("Export data not available. Please prepare again.")
+        
+        # Account Settings expander
+        with st.sidebar.expander("⚙️ Account Settings"):
+            st.markdown("*Manage your account*")
+            if st.button("Open Account Settings", key="open_account_btn", use_container_width=True):
+                st.session_state.auth_mode = "account_deletion"
+                st.rerun()
