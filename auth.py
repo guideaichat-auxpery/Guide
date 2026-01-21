@@ -1029,7 +1029,7 @@ def login_page():
     """Display login page for educators and students"""
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Welcome to Guide</h2>', unsafe_allow_html=True)
     
-    # Style for tabs
+    # Style for tabs and sandy buttons
     st.markdown("""
     <style>
     /* Style login tabs for clear distinction */
@@ -1042,6 +1042,26 @@ def login_page():
         border-radius: 8px;
         font-weight: 500;
         font-size: 0.9rem;
+    }
+    /* Sandy colour for secondary buttons */
+    button[data-testid="baseButton-secondary"] {
+        background: linear-gradient(135deg, #D7C3AA 0%, #C4A882 100%) !important;
+        border: 1px solid rgba(166, 123, 91, 0.3) !important;
+        color: #5a4a3a !important;
+    }
+    button[data-testid="baseButton-secondary"]:hover {
+        background: linear-gradient(135deg, #C4A882 0%, #B8956A 100%) !important;
+        border-color: rgba(166, 123, 91, 0.5) !important;
+    }
+    /* Sandy colour for link buttons */
+    a[data-testid="baseLinkButton-secondary"] {
+        background: linear-gradient(135deg, #D7C3AA 0%, #C4A882 100%) !important;
+        border: 1px solid rgba(166, 123, 91, 0.3) !important;
+        color: #5a4a3a !important;
+    }
+    a[data-testid="baseLinkButton-secondary"]:hover {
+        background: linear-gradient(135deg, #C4A882 0%, #B8956A 100%) !important;
+        border-color: rgba(166, 123, 91, 0.5) !important;
     }
     </style>
     """, unsafe_allow_html=True)
