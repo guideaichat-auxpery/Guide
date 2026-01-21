@@ -1027,11 +1027,43 @@ def show_reset_password_form(token: str):
 
 def login_page():
     """Display login page for educators and students"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Login to Your Account</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Welcome to Guide</h2>', unsafe_allow_html=True)
     
-    # Clear tabs for educator vs student login
+    # Elegant navigation row with login, signup, terms
     st.markdown("""
     <style>
+    .auth-nav-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin: 1.5rem 0;
+        flex-wrap: wrap;
+    }
+    .auth-nav-btn {
+        background: rgba(215, 195, 170, 0.4);
+        border: 1px solid rgba(166, 123, 91, 0.3);
+        border-radius: 20px;
+        padding: 8px 20px;
+        font-size: 0.85rem;
+        color: #5a5a5a;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .auth-nav-btn:hover {
+        background: rgba(166, 123, 91, 0.25);
+        border-color: rgba(166, 123, 91, 0.5);
+    }
+    .auth-nav-btn.active {
+        background: rgba(166, 123, 91, 0.6);
+        color: #fff;
+        border-color: rgba(166, 123, 91, 0.7);
+    }
+    .auth-nav-divider {
+        color: rgba(166, 123, 91, 0.4);
+        font-size: 0.8rem;
+    }
     /* Style login tabs for clear distinction */
     div[data-testid="stTabs"] [data-baseweb="tab-list"] {
         gap: 8px;
@@ -1044,6 +1076,23 @@ def login_page():
     }
     </style>
     """, unsafe_allow_html=True)
+    
+    # Horizontal navigation buttons
+    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns([1, 1, 1, 1, 1])
+    with nav_col2:
+        if st.button("🔐 Log In", key="nav_login", use_container_width=True, type="primary"):
+            st.session_state.auth_mode = 'login'
+            st.rerun()
+    with nav_col3:
+        if st.button("✨ Sign Up", key="nav_signup", use_container_width=True):
+            st.session_state.auth_mode = 'register'
+            st.rerun()
+    with nav_col4:
+        if st.button("📜 Terms", key="nav_terms", use_container_width=True):
+            st.session_state.auth_mode = 'terms'
+            st.rerun()
+    
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
     
     # Use tabs for clearer separation
     educator_tab, student_tab = st.tabs(["👩‍🏫 Educator Login", "🎒 Student Login"])
