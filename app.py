@@ -462,22 +462,6 @@ else:
             </div>
             """, unsafe_allow_html=True)
             
-            # Quick actions in a clean row
-            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-            acc_col1, acc_col2, acc_col3 = st.columns(3)
-            with acc_col1:
-                if st.button("📊 My Data", key="data_btn", use_container_width=True):
-                    st.session_state.auth_mode = "data_access"
-                    st.rerun()
-            with acc_col2:
-                if st.button("⚙️ Account Settings", key="account_btn", use_container_width=True):
-                    st.session_state.auth_mode = "account_deletion"
-                    st.rerun()
-            with acc_col3:
-                if st.button("👤 Create Student", key="create_student_btn", use_container_width=True):
-                    st.session_state.auth_mode = "create_student"
-                    st.rerun()
-            
             # PD Expert Mode - restricted to authorized emails
             authorized_pd_emails = ["guideaichat@gmail.com", "ben@hmswairoa.net"]
             if st.session_state.get('user_email') in authorized_pd_emails:

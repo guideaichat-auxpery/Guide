@@ -1736,41 +1736,6 @@ def show_user_info():
         st.sidebar.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
         st.sidebar.divider()
         
-        # Subscription management for educators
-        if not st.session_state.get('is_student'):
-            # Subscription management expander
-            with st.sidebar.expander("🔄 Subscription"):
-                st.caption("If you just subscribed, click below to verify:")
-                if st.button("Verify Subscription", key="verify_sub_btn", use_container_width=True):
-                    educator_id = st.session_state.get('user_id')
-                    user_email = st.session_state.get('user_email')
-                    if educator_id and user_email:
-                        with st.spinner("Checking with Stripe..."):
-                            result = sync_subscription_from_stripe(educator_id, user_email)
-                            if result and result.get('isActive'):
-                                st.session_state.subscription_verified = True
-                                st.session_state.subscription_active = True
-                                st.session_state.subscription_plan = result.get('plan')
-                                st.session_state.subscription_status = result.get('status')
-                                st.success("Subscription verified!")
-                                st.rerun()
-                            else:
-                                st.warning("No active subscription found. If you just paid, please wait a moment and try again.")
-                
-                st.markdown("---")
-                st.caption("Manage billing, update payment method, or cancel:")
-                if st.button("💳 Manage Subscription", key="billing_portal_btn", use_container_width=True):
-                    educator_id = st.session_state.get('user_id')
-                    with st.spinner("Opening billing portal..."):
-                        portal_url = create_portal_session(educator_id)
-                        if portal_url:
-                            st.markdown(f'<meta http-equiv="refresh" content="0;url={portal_url}">', unsafe_allow_html=True)
-                            st.info("Redirecting to billing portal...")
-                        else:
-                            st.error("Unable to open billing portal. Please try again or contact support.")
-        
-        st.sidebar.divider()
-        
         if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
             logout()
         
