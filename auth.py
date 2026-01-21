@@ -1563,28 +1563,146 @@ def export_user_data_gdpr():
         db.close()
 
 def show_user_info():
-    """Display current user information with subscription status"""
+    """Display current user information with subscription status and navigation tools"""
     if st.session_state.get('authenticated'):
+        # Inject sidebar tool card styling
+        st.sidebar.markdown("""
+        <style>
+        .sidebar-tool-card {
+            background: linear-gradient(135deg, rgba(245, 240, 232, 0.9), rgba(235, 228, 216, 0.9));
+            border: 1px solid rgba(166, 123, 91, 0.2);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .sidebar-tool-card:hover {
+            background: linear-gradient(135deg, rgba(166, 123, 91, 0.15), rgba(184, 149, 106, 0.15));
+            border-color: rgba(166, 123, 91, 0.4);
+            transform: translateX(2px);
+        }
+        .sidebar-tool-icon {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+        .sidebar-tool-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #4a4a4a;
+            margin-bottom: 2px;
+        }
+        .sidebar-tool-desc {
+            font-size: 0.78rem;
+            color: #6b6b6b;
+            line-height: 1.3;
+        }
+        .sidebar-section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8B7355;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            padding-left: 4px;
+        }
+        .sidebar-user-info {
+            background: rgba(166, 123, 91, 0.08);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+        }
+        .sidebar-user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #4a4a4a;
+        }
+        .sidebar-user-detail {
+            font-size: 0.8rem;
+            color: #6b6b6b;
+            margin-top: 2px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         if st.session_state.get('is_student'):
-            st.sidebar.markdown(f"**Student:** {st.session_state.user_name}")
-            st.sidebar.markdown(f"**Username:** {st.session_state.username}")
-            if st.session_state.get('age_group'):
-                st.sidebar.markdown(f"**Age Group:** {st.session_state.age_group}")
+            # Student user info
+            st.sidebar.markdown(f"""
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">👤 {st.session_state.user_name}</div>
+                <div class="sidebar-user-detail">@{st.session_state.username}</div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.sidebar.markdown(f"**Educator:** {st.session_state.user_name}")
-            st.sidebar.markdown(f"**Email:** {st.session_state.user_email}")
-            
-            # Use session-verified subscription status (failproof)
+            # Educator user info with subscription badge
             sub_status = st.session_state.get('subscription_status', 'none')
+            plan_badge = ""
             if st.session_state.get('subscription_active'):
                 plan = (st.session_state.get('subscription_plan') or 'monthly').capitalize()
                 if sub_status == 'grace':
-                    st.sidebar.markdown(f"**Plan:** {plan} ⏳ *Verifying...*")
+                    plan_badge = f"<span style='font-size: 0.75rem; color: #B8956A;'>⏳ {plan}</span>"
                 else:
-                    st.sidebar.markdown(f"**Plan:** {plan} ✅")
+                    plan_badge = f"<span style='font-size: 0.75rem; color: #5B8A72;'>✓ {plan}</span>"
             else:
-                st.sidebar.markdown("**Plan:** None ❌")
+                plan_badge = "<span style='font-size: 0.75rem; color: #999;'>Free</span>"
             
+            st.sidebar.markdown(f"""
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">👤 {st.session_state.user_name}</div>
+                <div class="sidebar-user-detail">{st.session_state.user_email}</div>
+                <div style="margin-top: 6px;">{plan_badge}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Navigation tools for educators
+            st.sidebar.markdown('<div class="sidebar-section-label">Tools</div>', unsafe_allow_html=True)
+            
+            # Tool cards with beautiful styling
+            tools = [
+                {"icon": "📚", "title": "Lesson Planning", "desc": "Design learning experiences", "mode": "lesson_planning", "key": "sb_lp"},
+                {"icon": "🌱", "title": "Montessori Companion", "desc": "Wisdom and training", "mode": "companion", "key": "sb_comp"},
+                {"icon": "📖", "title": "Great Stories", "desc": "Narrative introductions", "mode": "great_stories", "key": "sb_gs"},
+                {"icon": "✨", "title": "Imaginarium", "desc": "Creative exploration", "mode": "imaginarium", "key": "sb_img"},
+            ]
+            
+            for tool in tools:
+                if st.sidebar.button(
+                    f"{tool['icon']} {tool['title']}", 
+                    key=tool['key'], 
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    st.session_state.auth_mode = tool['mode']
+                    st.rerun()
+            
+            st.sidebar.markdown('<div class="sidebar-section-label">Manage</div>', unsafe_allow_html=True)
+            
+            manage_tools = [
+                {"icon": "👥", "title": "Student Dashboard", "desc": "Track student learning", "mode": "student_dashboard", "key": "sb_sd"},
+                {"icon": "📝", "title": "Planning Notes", "desc": "Save lesson plans", "mode": "planning_notes", "key": "sb_pn"},
+            ]
+            
+            for tool in manage_tools:
+                if st.sidebar.button(
+                    f"{tool['icon']} {tool['title']}", 
+                    key=tool['key'], 
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    st.session_state.auth_mode = tool['mode']
+                    st.rerun()
+            
+            # Home button
+            st.sidebar.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+            if st.sidebar.button("🏠 Dashboard Home", key="sb_home", use_container_width=True):
+                st.session_state.auth_mode = "dashboard_home"
+                st.rerun()
+        
+        st.sidebar.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+        st.sidebar.divider()
+        
+        # Subscription management for educators
+        if not st.session_state.get('is_student'):
             # Subscription management expander
             with st.sidebar.expander("🔄 Subscription"):
                 st.caption("If you just subscribed, click below to verify:")

@@ -452,43 +452,36 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Navigation cards in 3x2 grid
-            col1, col2, col3 = st.columns(3)
+            # Welcome message - tools are now in sidebar for easy access
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(245, 240, 232, 0.6), rgba(235, 228, 216, 0.6)); 
+                        border-radius: 16px; padding: 2rem; margin: 1rem 0 2rem 0; text-align: center;">
+                <p style="font-size: 1.1rem; color: #5a5a5a; margin: 0;">
+                    Use the sidebar to navigate between tools. Select a tool to begin your work.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
             
-            cards = [
-                {"title": "Lesson Planning", "body": "Design age-appropriate learning experiences", "icon": "📚", "mode": "lesson_planning", "key": "lp"},
-                {"title": "Montessori Companion", "body": "Tap into Montessori wisdom and training", "icon": "🌱", "mode": "companion", "key": "comp"},
-                {"title": "Student Dashboard", "body": "Stay connected to your students' learning", "icon": "👥", "mode": "student_dashboard", "key": "sd"},
-                {"title": "Planning Notes", "body": "Record and save your lesson plans", "icon": "📝", "mode": "planning_notes", "key": "pn"},
-                {"title": "Great Stories", "body": "Create narratives to introduce new learning", "icon": "📖", "mode": "great_stories", "key": "gs"},
-                {"title": "Imaginarium", "body": "Explore ideas freely in creative space", "icon": "✨", "mode": "imaginarium", "key": "img"}
-            ]
-            
-            columns = [col1, col2, col3]
-            for idx, card in enumerate(cards):
-                col_idx = idx % 3
-                with columns[col_idx]:
-                    button_label = f"{card['icon']} **{card['title']}**\n\n{card['body']}"
-                    if st.button(button_label, key=f"{card['key']}_card_btn", use_container_width=True, type="secondary"):
-                        st.session_state.auth_mode = card['mode']
-                        st.rerun()
-            
-            # Account buttons
-            st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
-            acc_col1, acc_col2 = st.columns(2)
+            # Quick actions in a clean row
+            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+            acc_col1, acc_col2, acc_col3 = st.columns(3)
             with acc_col1:
-                if st.button("My Data", key="data_btn", use_container_width=True):
+                if st.button("📊 My Data", key="data_btn", use_container_width=True):
                     st.session_state.auth_mode = "data_access"
                     st.rerun()
             with acc_col2:
-                if st.button("Account Settings", key="account_btn", use_container_width=True):
+                if st.button("⚙️ Account Settings", key="account_btn", use_container_width=True):
                     st.session_state.auth_mode = "account_deletion"
+                    st.rerun()
+            with acc_col3:
+                if st.button("👤 Create Student", key="create_student_btn", use_container_width=True):
+                    st.session_state.auth_mode = "create_student"
                     st.rerun()
             
             # PD Expert Mode - restricted to authorized emails
             authorized_pd_emails = ["guideaichat@gmail.com", "ben@hmswairoa.net"]
             if st.session_state.get('user_email') in authorized_pd_emails:
-                st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
                 if st.button("🔬 PD Expert Mode", use_container_width=True, type="primary"):
                     st.session_state.auth_mode = "pd_expert"
                     st.rerun()
