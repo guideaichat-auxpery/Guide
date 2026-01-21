@@ -273,31 +273,9 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
     
-    # Authentication mode selector
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("🔑 Login", use_container_width=True):
-            st.session_state.auth_mode = "login"
-            st.rerun()
-    
-    with col2:
-        if st.button("📝 Sign Up", use_container_width=True):
-            st.session_state.auth_mode = "signup"
-            st.rerun()
-    
-    with col3:
-        if st.button("📋 Terms & Conditions", use_container_width=True):
-            st.session_state.auth_mode = "privacy_policy"
-            st.rerun()
-    
-    # Display appropriate authentication form
-    if st.session_state.auth_mode == "login":
+    # Display login page with tabs (includes Sign Up and Terms)
+    if st.session_state.auth_mode in ["login", "signup", "privacy_policy", None]:
         login_page()
-    elif st.session_state.auth_mode == "signup":
-        signup_page()
-    elif st.session_state.auth_mode == "privacy_policy":
-        show_privacy_policy()
     elif st.session_state.auth_mode == "forgot_password":
         show_forgot_password_form()
     elif st.session_state.auth_mode == "reset_password":
