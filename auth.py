@@ -1654,6 +1654,11 @@ def show_user_info():
             </div>
             """, unsafe_allow_html=True)
             
+            # Dashboard Home button at the top
+            if st.sidebar.button("🏠 Dashboard Home", key="sb_home", use_container_width=True, type="primary"):
+                st.session_state.auth_mode = "dashboard_home"
+                st.rerun()
+            
             # Navigation tools for educators
             st.sidebar.markdown('<div class="sidebar-section-label">Tools</div>', unsafe_allow_html=True)
             
@@ -1691,12 +1696,6 @@ def show_user_info():
                 ):
                     st.session_state.auth_mode = tool['mode']
                     st.rerun()
-            
-            # Home button
-            st.sidebar.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
-            if st.sidebar.button("🏠 Dashboard Home", key="sb_home", use_container_width=True):
-                st.session_state.auth_mode = "dashboard_home"
-                st.rerun()
         
         st.sidebar.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
         st.sidebar.divider()
