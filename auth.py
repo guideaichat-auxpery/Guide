@@ -1653,9 +1653,15 @@ def show_user_info():
             background: rgba(166, 123, 91, 0.85) !important;
         }
         
-        /* Reduce spacing between buttons */
+        /* Reduce spacing between buttons and make them narrower */
         [data-testid="stSidebar"] .stButton {
             margin-bottom: 4px !important;
+            padding: 0 12px !important;
+        }
+        
+        [data-testid="stSidebar"] .stButton > button {
+            max-width: 85% !important;
+            margin: 0 auto !important;
         }
         </style>
         """, unsafe_allow_html=True)
