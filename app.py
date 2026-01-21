@@ -178,7 +178,7 @@ def load_all_css():
 # Load all CSS in a single markdown call (reduces render overhead)
 st.markdown(load_all_css(), unsafe_allow_html=True)
 
-# Additional custom CSS for specific components (combined into single block for faster render)
+# Base CSS for components (safe for all pages)
 st.markdown("""
 <style>
 .main-header {
@@ -189,15 +189,6 @@ st.markdown("""
     margin-bottom: 0.5rem;
     font-size: 4rem;
     font-weight: 500;
-}
-header[data-testid="stHeader"] { display: none !important; }
-[data-testid="stAppViewContainer"] > section > div,
-[data-testid="stVerticalBlock"],
-.stMainBlockContainer,
-div[data-testid="stVerticalBlock"] { padding-top: 0 !important; }
-.stApp [data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"]:first-child {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
 }
 .main-byline {
     text-align: center;
@@ -230,18 +221,35 @@ div[data-testid="stVerticalBlock"] { padding-top: 0 !important; }
     border-left: 3px solid var(--color-leaf);
 }
 </style>
-<script>
-// Layout fix - waits for DOM then uses rAF for smooth execution
-document.addEventListener('DOMContentLoaded', function() {
-    requestAnimationFrame(function() {
-        var containers = document.querySelectorAll('[data-testid="stVerticalBlock"], [class*="stMainBlockContainer"]');
-        containers.forEach(function(el) { el.style.paddingTop = '0'; el.style.marginTop = '0'; });
-        var header = document.querySelector('header[data-testid="stHeader"]');
-        if (header) header.style.display = 'none';
-    });
-});
-</script>
 """, unsafe_allow_html=True)
+
+# Landing page specific CSS - only hide header/reduce padding on unauthenticated pages
+# This was causing the sidebar to not appear after login!
+if not st.session_state.get('authenticated', False):
+    st.markdown("""
+    <style>
+    header[data-testid="stHeader"] { display: none !important; }
+    [data-testid="stAppViewContainer"] > section > div,
+    [data-testid="stVerticalBlock"],
+    .stMainBlockContainer,
+    div[data-testid="stVerticalBlock"] { padding-top: 0 !important; }
+    .stApp [data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"]:first-child {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    </style>
+    <script>
+    // Layout fix for landing page only
+    document.addEventListener('DOMContentLoaded', function() {
+        requestAnimationFrame(function() {
+            var containers = document.querySelectorAll('[data-testid="stVerticalBlock"], [class*="stMainBlockContainer"]');
+            containers.forEach(function(el) { el.style.paddingTop = '0'; el.style.marginTop = '0'; });
+            var header = document.querySelector('header[data-testid="stHeader"]');
+            if (header) header.style.display = 'none';
+        });
+    });
+    </script>
+    """, unsafe_allow_html=True)
 
 # Main Header - wrapped with reduced negative margin to avoid title being cut off
 st.markdown('<div style="margin-top: -4rem;"><h1 class="main-header">Guide</h1></div>', unsafe_allow_html=True)
