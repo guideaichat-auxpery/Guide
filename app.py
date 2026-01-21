@@ -309,7 +309,9 @@ if not st.session_state.authenticated:
     
 
 else:
-    # Authenticated user interface
+    # Authenticated user interface - Force sidebar to render first
+    with st.sidebar:
+        st.empty()  # Ensure sidebar container is created
     show_user_info()
     
     # Navigation menu for authenticated users
