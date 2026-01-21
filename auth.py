@@ -1622,6 +1622,41 @@ def show_user_info():
             color: #6b6b6b;
             margin-top: 2px;
         }
+        
+        /* Smaller, sandy-colored sidebar buttons */
+        [data-testid="stSidebar"] .stButton > button {
+            background: rgba(215, 195, 170, 0.35) !important;
+            border: 1px solid rgba(166, 123, 91, 0.25) !important;
+            border-radius: 8px !important;
+            color: #5a5a5a !important;
+            font-size: 0.82rem !important;
+            padding: 8px 12px !important;
+            min-height: 36px !important;
+            transition: all 0.15s ease !important;
+        }
+        
+        [data-testid="stSidebar"] .stButton > button:hover {
+            background: rgba(195, 165, 130, 0.45) !important;
+            border-color: rgba(166, 123, 91, 0.4) !important;
+            transform: translateX(1px);
+        }
+        
+        /* Primary button styling (Dashboard Home) */
+        [data-testid="stSidebar"] .stButton > button[kind="primary"] {
+            background: rgba(166, 123, 91, 0.7) !important;
+            color: #ffffff !important;
+            border: none !important;
+            font-weight: 500 !important;
+        }
+        
+        [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+            background: rgba(166, 123, 91, 0.85) !important;
+        }
+        
+        /* Reduce spacing between buttons */
+        [data-testid="stSidebar"] .stButton {
+            margin-bottom: 4px !important;
+        }
         </style>
         """, unsafe_allow_html=True)
         
