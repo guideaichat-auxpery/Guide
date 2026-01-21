@@ -153,7 +153,7 @@ def inject_sidebar_toggle_button():
         top: 50%;
         transform: translateY(-50%);
         z-index: 999999;
-        background: #3d5a3d;
+        background: #A67B5B;
         color: white;
         border: none;
         border-radius: 0 8px 8px 0;
@@ -166,7 +166,7 @@ def inject_sidebar_toggle_button():
     }
     
     #sidebar-reopen-btn:hover {
-        background: #4a6b4a;
+        background: #B8956A;
         padding-left: 14px;
     }
     </style>
@@ -558,23 +558,23 @@ def apply_chatgpt_sidebar_style():
     }
     
     [data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(61, 90, 61, 0.1) !important;
+        background: rgba(166, 123, 91, 0.1) !important;
     }
     
     /* Primary buttons (current conversation) */
     [data-testid="stSidebar"] .stButton > button[kind="primary"] {
-        background: #3d5a3d !important;
+        background: #A67B5B !important;
         color: #ffffff !important;
         border: none !important;
     }
     
     [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
-        background: #4a6b4a !important;
+        background: #B8956A !important;
     }
     
     /* New Chat button - prominent styling */
     .new-chat-btn {
-        background: #3d5a3d !important;
+        background: #A67B5B !important;
         color: #ffffff !important;
         border-radius: 8px !important;
         padding: 12px 16px !important;
@@ -595,7 +595,7 @@ def apply_chatgpt_sidebar_style():
     [data-testid="stSidebar"] .stButton > button[data-testid*="edit"]:hover,
     [data-testid="stSidebar"] .stButton > button[data-testid*="del"]:hover {
         opacity: 1 !important;
-        background: rgba(61, 90, 61, 0.15) !important;
+        background: rgba(166, 123, 91, 0.15) !important;
     }
     
     /* Section headers */
@@ -606,8 +606,8 @@ def apply_chatgpt_sidebar_style():
         font-weight: 600 !important;
         padding: 16px 12px 8px 12px !important;
         margin-top: 8px !important;
-        color: #6b7c6b !important;
-        border-top: 1px solid rgba(61, 90, 61, 0.1) !important;
+        color: #8B7355 !important;
+        border-top: 1px solid rgba(166, 123, 91, 0.1) !important;
     }
     
     .sidebar-section-header:first-of-type {
@@ -635,12 +635,12 @@ def apply_chatgpt_sidebar_style():
     
     /* Dividers */
     [data-testid="stSidebar"] hr {
-        border-color: rgba(61, 90, 61, 0.15) !important;
+        border-color: rgba(166, 123, 91, 0.15) !important;
     }
     
     /* Caption text */
     [data-testid="stSidebar"] .stCaption {
-        color: #6b7c6b !important;
+        color: #8B7355 !important;
     }
     
     /* Sidebar toggle button for reopening */
@@ -650,7 +650,7 @@ def apply_chatgpt_sidebar_style():
         top: 50%;
         transform: translateY(-50%);
         z-index: 1000;
-        background: #3d5a3d;
+        background: #A67B5B;
         color: white;
         border: none;
         border-radius: 0 8px 8px 0;
@@ -661,7 +661,7 @@ def apply_chatgpt_sidebar_style():
     }
     
     .sidebar-toggle-btn:hover {
-        background: #4a6b4a;
+        background: #B8956A;
         padding-left: 12px;
     }
     
@@ -675,12 +675,12 @@ def apply_chatgpt_sidebar_style():
     }
     
     [data-testid="stSidebar"]::-webkit-scrollbar-thumb {
-        background: rgba(61, 90, 61, 0.3);
+        background: rgba(166, 123, 91, 0.3);
         border-radius: 3px;
     }
     
     [data-testid="stSidebar"]::-webkit-scrollbar-thumb:hover {
-        background: rgba(61, 90, 61, 0.5);
+        background: rgba(166, 123, 91, 0.5);
     }
     </style>
     """
