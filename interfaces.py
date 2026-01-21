@@ -256,7 +256,7 @@ The unit must follow this five-phase narrative structure:
 **STAGE 3 — DAILY SESSION DESIGN RULE**
 Each learning session must answer:
 - What thinking is being advanced today?
-- What will learners do?
+- Learning invitation (what learners are invited to do)
 - What support or instruction is required?
 - How will progress be visible today?
 Sessions must always move the learning story forward.
