@@ -142,11 +142,12 @@ def inject_sidebar_toggle_button():
     """
     Inject a floating toggle button that appears when the sidebar is collapsed.
     This helps users reopen the sidebar easily.
+    Uses reliable polling to detect sidebar state changes.
     """
     toggle_css_js = """
     <style>
     /* Floating sidebar toggle button - appears when sidebar is collapsed */
-    .sidebar-reopen-btn {
+    #sidebar-reopen-btn {
         position: fixed;
         left: 0;
         top: 50%;
@@ -164,66 +165,64 @@ def inject_sidebar_toggle_button():
         display: none;
     }
     
-    .sidebar-reopen-btn:hover {
+    #sidebar-reopen-btn:hover {
         background: #4a6b4a;
         padding-left: 14px;
-    }
-    
-    /* Show button when sidebar is collapsed */
-    [data-testid="stSidebar"][aria-expanded="false"] ~ .main .sidebar-reopen-btn,
-    [data-testid="collapsedControl"] ~ .sidebar-reopen-btn {
-        display: block !important;
     }
     </style>
     
     <script>
     (function() {
+        var doc = window.parent.document;
+        
         // Check if button already exists
-        if (window.parent.document.getElementById('sidebar-reopen-btn')) return;
+        if (doc.getElementById('sidebar-reopen-btn')) return;
         
         // Create the toggle button
-        var btn = window.parent.document.createElement('button');
+        var btn = doc.createElement('button');
         btn.id = 'sidebar-reopen-btn';
-        btn.className = 'sidebar-reopen-btn';
         btn.innerHTML = '☰';
         btn.title = 'Open sidebar';
         btn.setAttribute('aria-label', 'Open sidebar');
         
         // Add click handler to open sidebar
         btn.onclick = function() {
-            var sidebarBtn = window.parent.document.querySelector('[data-testid="collapsedControl"]');
-            if (sidebarBtn) {
-                sidebarBtn.click();
+            // Try multiple selectors for the expand button
+            var expandBtn = doc.querySelector('[data-testid="collapsedControl"]') ||
+                           doc.querySelector('[data-testid="stSidebarCollapsedControl"]') ||
+                           doc.querySelector('button[kind="headerNoPadding"]');
+            if (expandBtn) {
+                expandBtn.click();
             }
         };
         
         // Append to body
-        window.parent.document.body.appendChild(btn);
+        doc.body.appendChild(btn);
         
-        // Observer to show/hide button based on sidebar state
-        var observer = new MutationObserver(function(mutations) {
-            var sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
-            var collapsedControl = window.parent.document.querySelector('[data-testid="collapsedControl"]');
+        // Function to check sidebar state
+        function checkSidebarState() {
+            var sidebar = doc.querySelector('[data-testid="stSidebar"]');
+            var expandBtn = doc.querySelector('[data-testid="collapsedControl"]') ||
+                           doc.querySelector('[data-testid="stSidebarCollapsedControl"]');
             
-            if (collapsedControl && sidebar) {
-                var isCollapsed = sidebar.getAttribute('aria-expanded') === 'false';
-                btn.style.display = isCollapsed ? 'block' : 'none';
+            // Sidebar is collapsed if: aria-expanded is false OR expand button is visible
+            var isCollapsed = false;
+            if (sidebar) {
+                isCollapsed = sidebar.getAttribute('aria-expanded') === 'false';
             }
-        });
-        
-        observer.observe(window.parent.document.body, {
-            attributes: true,
-            subtree: true,
-            attributeFilter: ['aria-expanded']
-        });
-        
-        // Initial check
-        setTimeout(function() {
-            var sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
-            if (sidebar && sidebar.getAttribute('aria-expanded') === 'false') {
-                btn.style.display = 'block';
+            if (!isCollapsed && expandBtn) {
+                var rect = expandBtn.getBoundingClientRect();
+                isCollapsed = rect.width > 0 && rect.height > 0;
             }
-        }, 500);
+            
+            btn.style.display = isCollapsed ? 'block' : 'none';
+        }
+        
+        // Poll for sidebar state changes (reliable across Streamlit versions)
+        setInterval(checkSidebarState, 300);
+        
+        // Initial check after a short delay
+        setTimeout(checkSidebarState, 500);
     })();
     </script>
     """
