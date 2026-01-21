@@ -1027,7 +1027,6 @@ def show_reset_password_form(token: str):
 
 def login_page():
     """Display login page for educators and students"""
-    st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Welcome to Guide</h2>', unsafe_allow_html=True)
     
     # Style for tabs and sandy buttons
     st.markdown("""
