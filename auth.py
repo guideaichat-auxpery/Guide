@@ -1029,73 +1029,25 @@ def login_page():
     """Display login page for educators and students"""
     st.markdown('<h2 style="text-align: center; color: #2E8B57;">🔐 Welcome to Guide</h2>', unsafe_allow_html=True)
     
-    # Elegant navigation row with login, signup, terms
+    # Style for tabs
     st.markdown("""
     <style>
-    .auth-nav-row {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-        margin: 1.5rem 0;
-        flex-wrap: wrap;
-    }
-    .auth-nav-btn {
-        background: rgba(215, 195, 170, 0.4);
-        border: 1px solid rgba(166, 123, 91, 0.3);
-        border-radius: 20px;
-        padding: 8px 20px;
-        font-size: 0.85rem;
-        color: #5a5a5a;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    .auth-nav-btn:hover {
-        background: rgba(166, 123, 91, 0.25);
-        border-color: rgba(166, 123, 91, 0.5);
-    }
-    .auth-nav-btn.active {
-        background: rgba(166, 123, 91, 0.6);
-        color: #fff;
-        border-color: rgba(166, 123, 91, 0.7);
-    }
-    .auth-nav-divider {
-        color: rgba(166, 123, 91, 0.4);
-        font-size: 0.8rem;
-    }
     /* Style login tabs for clear distinction */
     div[data-testid="stTabs"] [data-baseweb="tab-list"] {
-        gap: 8px;
+        gap: 6px;
         justify-content: center;
     }
     div[data-testid="stTabs"] [data-baseweb="tab"] {
-        padding: 12px 24px;
+        padding: 10px 18px;
         border-radius: 8px;
         font-weight: 500;
+        font-size: 0.9rem;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Horizontal navigation buttons
-    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns([1, 1, 1, 1, 1])
-    with nav_col2:
-        if st.button("🔐 Log In", key="nav_login", use_container_width=True, type="primary"):
-            st.session_state.auth_mode = 'login'
-            st.rerun()
-    with nav_col3:
-        if st.button("✨ Sign Up", key="nav_signup", use_container_width=True):
-            st.session_state.auth_mode = 'register'
-            st.rerun()
-    with nav_col4:
-        if st.button("📜 Terms", key="nav_terms", use_container_width=True):
-            st.session_state.auth_mode = 'terms'
-            st.rerun()
-    
-    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-    
-    # Use tabs for clearer separation
-    educator_tab, student_tab = st.tabs(["👩‍🏫 Educator Login", "🎒 Student Login"])
+    # Use tabs for all options - Educator, Student, Sign Up, Terms
+    educator_tab, student_tab, signup_tab, terms_tab = st.tabs(["👩‍🏫 Educator", "🎒 Student", "✨ Sign Up", "📜 Terms"])
     
     with educator_tab:
         st.markdown("""
@@ -1290,6 +1242,95 @@ def login_page():
             </p>
         </div>
         """, unsafe_allow_html=True)
+    
+    with signup_tab:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
+            <p style="color: #666; font-size: 0.95em;">Create your educator account to get started</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.form("signup_form_inline"):
+            full_name = st.text_input("Full Name", placeholder="Your full name")
+            email = st.text_input("Email", placeholder="your.email@example.com")
+            password = st.text_input("Password", type="password", placeholder="Choose a secure password")
+            confirm_password = st.text_input("Confirm Password", type="password", placeholder="Confirm your password")
+            
+            agree_terms = st.checkbox("I agree to the Terms and Conditions")
+            
+            submit = st.form_submit_button("Create Account", use_container_width=True)
+            
+            if submit:
+                if not all([full_name, email, password, confirm_password]):
+                    st.error("Please fill in all fields")
+                elif not validate_email(email):
+                    st.error("Please enter a valid email address")
+                elif password != confirm_password:
+                    st.error("Passwords do not match")
+                elif len(password) < 8:
+                    st.error("Password must be at least 8 characters")
+                elif not agree_terms:
+                    st.error("Please agree to the Terms and Conditions")
+                else:
+                    db = get_db()
+                    if not db:
+                        st.error("Registration is not available. Database connection required.")
+                    else:
+                        try:
+                            result = register_educator(db, full_name, email, password)
+                            if result.get('success'):
+                                st.success("Account created successfully! Please log in using the Educator tab.")
+                            else:
+                                st.error(result.get('error', 'Registration failed'))
+                        finally:
+                            db.close()
+    
+    with terms_tab:
+        st.markdown("""
+        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
+            <h3 style="color: #2E8B57; margin-bottom: 10px;">Terms and Conditions</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        **Welcome to Guide - Your Cosmic Curriculum Companion**
+        
+        By using this application, you agree to the following terms:
+        
+        **1. Educational Use**
+        Guide is designed for educational purposes, supporting Montessori and Australian Curriculum V9 aligned learning experiences.
+        
+        **2. Data Privacy**
+        - We comply with the Australian Privacy Act 1988
+        - Student data is protected and handled with care
+        - Educator data is used only for service provision
+        - You can export or delete your data at any time
+        
+        **3. Student Accounts**
+        - Educators are responsible for student accounts they create
+        - Guardian consent is required for student accounts
+        - Student data is retained according to Australian education requirements
+        
+        **4. AI-Generated Content**
+        - Lesson plans and content are AI-assisted suggestions
+        - Educators should review and adapt all generated content
+        - Final educational decisions rest with the educator
+        
+        **5. Subscription Terms**
+        - Free trial available for new accounts
+        - Subscriptions can be managed through your account settings
+        - Refunds handled according to Australian Consumer Law
+        
+        **6. Acceptable Use**
+        - Use the platform for legitimate educational purposes
+        - Do not share login credentials
+        - Report any concerning content or behaviour
+        
+        **Contact Us**
+        For questions about these terms, contact: guideaichat@gmail.com
+        
+        *Last updated: January 2026*
+        """)
 
 def signup_page():
     """Display signup page for new educators"""
