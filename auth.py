@@ -1070,11 +1070,6 @@ def login_page():
     educator_tab, student_tab, signup_tab, terms_tab = st.tabs(["👩‍🏫 Educator", "🎒 Student", "✨ Sign Up", "📜 Terms"])
     
     with educator_tab:
-        st.markdown("""
-        <div style="text-align: center; padding: 10px 0; margin-bottom: 15px;">
-            <p style="color: #666; font-size: 0.95em;">Teachers, principals, and homeschool parents</p>
-        </div>
-        """, unsafe_allow_html=True)
         
         # Forgot password link for educators
         if st.button("Forgot your password?", key="forgot_pwd_link", use_container_width=True, type="secondary"):
