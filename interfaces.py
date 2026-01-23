@@ -170,7 +170,7 @@ def show_lesson_planning_interface():
         # Get AI response
         ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
         with st.chat_message("assistant", avatar=ai_avatar):
-            with st.spinner("Planning your lesson..."):
+            with st.spinner("Collaborating with you..."):
                 # Construct system prompt based on planning type and age group
                 if planning_type == "lesson_plan":
                     # Age-specific Montessori system context
