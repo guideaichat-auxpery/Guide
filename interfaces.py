@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, scroll_to_latest_response, render_conversation_sidebar, manage_conversation_history, apply_chatgpt_chat_style, scroll_chat_to_bottom, inject_chat_auto_scroll, validate_file_upload, sanitize_filename
+from utils import call_openai_api, get_max_tokens_for_user_type, scroll_to_top, add_scroll_to_top_button, render_conversation_sidebar, manage_conversation_history, apply_chatgpt_chat_style, scroll_chat_to_bottom, inject_chat_auto_scroll, validate_file_upload, sanitize_filename
 import PyPDF2
 from docx import Document
 from PIL import Image
@@ -349,7 +349,7 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                     st.toast("✓ Response saved", icon="💾")
                 
                 # Scroll to beginning of new response
-                scroll_to_latest_response()
+                scroll_chat_to_bottom()
     
     # Export options
     if st.session_state.planning_messages:
@@ -690,7 +690,7 @@ def show_companion_interface():
                 })
                 
                 # Scroll to beginning of new response
-                scroll_to_latest_response()
+                scroll_chat_to_bottom()
                 
                 # Save assistant response to database
                 assistant_save_success = False
@@ -782,7 +782,7 @@ def show_companion_interface():
                 })
                 
                 # Scroll to beginning of new response
-                scroll_to_latest_response()
+                scroll_chat_to_bottom()
                 
                 # Save assistant response to database
                 assistant_save_success = False
@@ -1258,7 +1258,7 @@ Keep feedback age-appropriate for {age_group} year olds."""
                     })
                     
                     # Scroll to beginning of new response
-                    scroll_to_latest_response()
+                    scroll_chat_to_bottom()
                     
                     # Save assistant response
                     assistant_save_success = False
@@ -2913,7 +2913,7 @@ def show_pd_expert_interface():
                         })
                         
                         # Scroll to beginning of new response
-                        scroll_to_latest_response()
+                        scroll_chat_to_bottom()
                     else:
                         error_msg = result.get('error', 'Unknown error')
                         if 'Access denied' in error_msg:
@@ -3052,7 +3052,7 @@ def show_imaginarium_interface():
                 })
                 
                 # Scroll to beginning of new response
-                scroll_to_latest_response()
+                scroll_chat_to_bottom()
                 
                 # Save assistant response to database with validation
                 assistant_save_success = False

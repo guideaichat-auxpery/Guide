@@ -283,6 +283,8 @@ def scroll_chat_to_bottom():
     """
     Scroll the chat container to the bottom to show the latest message.
     Call this AFTER rendering chat messages in chat interfaces.
+    Uses multiple attempts with delays to ensure scrolling works after content renders.
+    Targets both chat container and main section for compatibility.
     """
     import streamlit.components.v1 as components
     
@@ -290,31 +292,49 @@ def scroll_chat_to_bottom():
         """
         <script>
         (function() {
-            const parentDoc = window.parent.document;
-            
-            // Find Streamlit's chat container (multiple selectors for compatibility)
-            const chatContainers = [
-                parentDoc.querySelector('[data-testid="stChatMessageContainer"]'),
-                parentDoc.querySelector('.stChatMessageContainer'),
-                parentDoc.querySelector('[data-testid="stVerticalBlock"]'),
-                parentDoc.querySelector('section.stMain'),
-                parentDoc.querySelector('section.main')
-            ];
-            
-            // Find the first valid container and scroll it
-            for (const container of chatContainers) {
-                if (container && container.scrollHeight > container.clientHeight) {
-                    container.scrollTop = container.scrollHeight;
-                    break;
+            function scrollToBottom() {
+                const parentDoc = window.parent.document;
+                
+                // First try to scroll the Streamlit chat container
+                const chatContainers = [
+                    parentDoc.querySelector('[data-testid="stChatMessageContainer"]'),
+                    parentDoc.querySelector('.stChatMessageContainer'),
+                    parentDoc.querySelector('[data-testid="stVerticalBlock"]')
+                ];
+                
+                for (const container of chatContainers) {
+                    if (container && container.scrollHeight > container.clientHeight) {
+                        container.scrollTo({
+                            top: container.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }
                 }
+                
+                // Also scroll the main section to bottom
+                const mainSection = parentDoc.querySelector('section.stMain') 
+                                 || parentDoc.querySelector('section.main');
+                if (mainSection) {
+                    mainSection.scrollTo({
+                        top: mainSection.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+                
+                // Also try scrolling the document body
+                parentDoc.body.scrollTo({
+                    top: parentDoc.body.scrollHeight,
+                    behavior: 'smooth'
+                });
             }
             
-            // Also scroll the main section to bottom for chat interfaces
-            const mainSection = parentDoc.querySelector('section.stMain') 
-                             || parentDoc.querySelector('section.main');
-            if (mainSection) {
-                mainSection.scrollTop = mainSection.scrollHeight;
-            }
+            // Scroll immediately
+            scrollToBottom();
+            
+            // Scroll again after short delays to catch late-rendered content
+            setTimeout(scrollToBottom, 100);
+            setTimeout(scrollToBottom, 300);
+            setTimeout(scrollToBottom, 600);
         })();
         </script>
         """,
@@ -1040,24 +1060,6 @@ def apply_chatgpt_chat_style():
     """
     st.markdown(chatgpt_css, unsafe_allow_html=True)
 
-def scroll_chat_to_bottom():
-    """Smoothly scroll chat to bottom after new message"""
-    st.markdown(
-        """
-        <script>
-            setTimeout(function() {
-                var mainSection = window.parent.document.querySelector('section.main');
-                if (mainSection) {
-                    mainSection.scrollTo({
-                        top: mainSection.scrollHeight,
-                        behavior: 'smooth'
-                    });
-                }
-            }, 150);
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
 
 # ---- URL PROCESSING UTILITIES ----
 def extract_urls_from_text(text):
