@@ -175,7 +175,9 @@ def show_lesson_planning_interface():
                 if planning_type == "lesson_plan":
                     # Age-specific Montessori system context
                     montessori_context = {
-                        "3-6": """You are creating a lesson plan for the First Plane of Development (ages 3-6 / Foundation / Cycle 1) following Montessori curriculum, pedagogy, and philosophy.
+                        "3-6": """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are creating a lesson plan for the First Plane of Development (ages 3-6 / Foundation / Cycle 1) following Montessori curriculum, pedagogy, and philosophy.
 
 🎯 CRITICAL CURRICULUM RULE FOR AGES 3-6:
 - PRIMARY FRAMEWORK: Montessori curriculum and pedagogy
@@ -194,7 +196,9 @@ KEY MONTESSORI PRINCIPLES FOR AGES 3-6:
 - Self-directed activity and freedom within limits
 - Hands-on concrete materials before abstract concepts""",
                         
-                        "6-9": """You are creating a lesson plan for the Second Plane of Development (ages 6-9 / Years 1-3 / Cycle 2) following Montessori curriculum, pedagogy, and philosophy.
+                        "6-9": """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are creating a lesson plan for the Second Plane of Development (ages 6-9 / Years 1-3 / Cycle 2) following Montessori curriculum, pedagogy, and philosophy.
 
 🎯 CRITICAL CURRICULUM RULE FOR AGES 6-9:
 - PRIMARY FRAMEWORK: Montessori curriculum and pedagogy
@@ -213,7 +217,9 @@ KEY MONTESSORI PRINCIPLES FOR AGES 6-9:
 - Key Lessons: Story of the Universe, Coming of Life, Story of Humans, Story of Language, Story of Numbers
 - Research and exploration become central to learning""",
                         
-                        "9-12": """You are creating a lesson plan for the Second Plane of Development (ages 9-12 / Years 4-6 / Cycle 3) following Montessori curriculum, pedagogy, and philosophy.
+                        "9-12": """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are creating a lesson plan for the Second Plane of Development (ages 9-12 / Years 4-6 / Cycle 3) following Montessori curriculum, pedagogy, and philosophy.
 
 🎯 CRITICAL CURRICULUM RULE FOR AGES 9-12:
 - PRIMARY FRAMEWORK: Montessori curriculum and pedagogy
@@ -232,7 +238,9 @@ KEY MONTESSORI PRINCIPLES FOR AGES 9-12:
 - Timeline Work: Great lessons extended into detailed timeline exploration
 - Entrepreneurial Spirit: Micro-economy, business ventures, real-world problem solving""",
                         
-                        "12-15": """You are an expert curriculum designer for adolescent learners following the GUIDE Learning Design Protocol.
+                        "12-15": """IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are an expert curriculum designer for adolescent learners following the GUIDE Learning Design Protocol.
 Your job is to design learning experiences that are human, inquiry-driven, and experiential — not traditional worksheet-based instruction.
 
 🎯 THE GUIDE LEARNING DESIGN PROTOCOL
@@ -1716,7 +1724,9 @@ def show_great_story_interface():
         with cols[0]:
             if st.button("Generate Story Outline", use_container_width=True):
                 if theme:
-                    system_prompt = f"""You are a Montessori Great Story specialist with deep knowledge of cosmic education principles.
+                    system_prompt = f"""IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are a Montessori Great Story specialist with deep knowledge of cosmic education principles.
                     
                     Create an inspiring story outline for the theme: "{theme}"
                     Target age group: {age_group}
@@ -1746,7 +1756,9 @@ def show_great_story_interface():
             if st.button("Generate Full Story", use_container_width=True):
                 if theme:
                     outline_context = st.session_state.get('story_outline', '')
-                    system_prompt = f"""You are a Montessori Great Story specialist with deep knowledge of cosmic education principles.
+                    system_prompt = f"""IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
+
+You are a Montessori Great Story specialist with deep knowledge of cosmic education principles.
                     
                     Create a complete Montessori Great Story for the theme: "{theme}"
                     Target age group: {age_group}
