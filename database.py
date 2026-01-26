@@ -88,6 +88,26 @@ def session_scope():
         session.close()
         SessionLocal.remove()  # Remove thread-local session
 
+class School(Base):
+    __tablename__ = "schools"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    invite_code = Column(String(20), unique=True, nullable=False, index=True)
+    license_count = Column(Integer, default=10, nullable=False)
+    stripe_customer_id = Column(String, nullable=True)
+    stripe_subscription_id = Column(String, nullable=True)
+    subscription_status = Column(String, default='active', nullable=False)  # active, past_due, canceled, trialing
+    subscription_start = Column(DateTime, nullable=True)
+    subscription_end = Column(DateTime, nullable=True)
+    contact_email = Column(String, nullable=False)
+    contact_name = Column(String, nullable=True)
+    school_logo_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationship to educators in this school
+    educators = relationship("User", back_populates="school")
+
 class EducatorStudentAccess(Base):
     __tablename__ = "educator_student_access"
     
@@ -113,6 +133,13 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     institution_name = Column(Text, nullable=True)  # For institution-based sharing
     is_admin = Column(Boolean, default=False)  # Admin users bypass subscription checks
+    
+    # School-related fields
+    school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)  # null for individual subscribers
+    role = Column(String, default='individual', nullable=False)  # individual, school_admin, school_educator
+    
+    # Relationship to school
+    school = relationship("School", back_populates="educators")
     
     # Relationship to students they manage (primary educator)
     students = relationship("Student", back_populates="educator")
@@ -434,6 +461,44 @@ def initialize_database_once():
             except Exception as e:
                 logger.info(f"persistent_sessions table migration: {str(e)}")
             
+            # Migration: Create schools table for School Master Account system
+            try:
+                conn = engine.connect()
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS schools (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR NOT NULL,
+                        invite_code VARCHAR(20) UNIQUE NOT NULL,
+                        license_count INTEGER DEFAULT 10 NOT NULL,
+                        stripe_customer_id VARCHAR,
+                        stripe_subscription_id VARCHAR,
+                        subscription_status VARCHAR DEFAULT 'active' NOT NULL,
+                        subscription_start TIMESTAMP,
+                        subscription_end TIMESTAMP,
+                        contact_email VARCHAR NOT NULL,
+                        contact_name VARCHAR,
+                        school_logo_url VARCHAR,
+                        created_at TIMESTAMP DEFAULT NOW()
+                    )
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_schools_invite_code ON schools(invite_code)"))
+                conn.commit()
+                conn.close()
+                logger.info("Created schools table (or already exists)")
+            except Exception as e:
+                logger.info(f"schools table migration: {str(e)}")
+            
+            # Migration: Add school_id and role columns to users table
+            try:
+                conn = engine.connect()
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS school_id INTEGER REFERENCES schools(id)"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR DEFAULT 'individual' NOT NULL"))
+                conn.commit()
+                conn.close()
+                logger.info("Added school_id and role columns to users table (or already exists)")
+            except Exception as e:
+                logger.info(f"school columns migration: {str(e)}")
+            
             # Create admin account if not exists (requires ADMIN_PASSWORD env var)
             from database import User
             admin_email = "admin@auxpery.com.au"
@@ -613,6 +678,123 @@ def get_user_by_email(db, email: str) -> Optional[User]:
 def get_all_educators(db):
     """Get all educators"""
     return db.query(User).filter(User.user_type == 'educator').all()
+
+# ===================== SCHOOL HELPER FUNCTIONS =====================
+
+import secrets
+import string
+
+def generate_invite_code():
+    """Generate a unique 8-character invite code"""
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(8))
+
+def create_school(db, name: str, contact_email: str, contact_name: str = None, license_count: int = 10):
+    """Create a new school with a unique invite code"""
+    invite_code = generate_invite_code()
+    # Ensure unique code
+    while db.query(School).filter(School.invite_code == invite_code).first():
+        invite_code = generate_invite_code()
+    
+    school = School(
+        name=name,
+        invite_code=invite_code,
+        license_count=license_count,
+        contact_email=contact_email,
+        contact_name=contact_name,
+        subscription_status='active',
+        subscription_start=datetime.utcnow()
+    )
+    db.add(school)
+    db.commit()
+    db.refresh(school)
+    return school
+
+def get_school_by_id(db, school_id: int):
+    """Get school by ID"""
+    return db.query(School).filter(School.id == school_id).first()
+
+def get_school_by_invite_code(db, invite_code: str):
+    """Get school by invite code"""
+    return db.query(School).filter(School.invite_code == invite_code).first()
+
+def get_school_educators(db, school_id: int):
+    """Get all educators belonging to a school"""
+    return db.query(User).filter(User.school_id == school_id).all()
+
+def get_school_educator_count(db, school_id: int):
+    """Get count of educators in a school"""
+    return db.query(User).filter(User.school_id == school_id).count()
+
+def school_has_available_licenses(db, school_id: int):
+    """Check if school has available license slots"""
+    school = get_school_by_id(db, school_id)
+    if not school:
+        return False
+    current_count = get_school_educator_count(db, school_id)
+    return current_count < school.license_count
+
+def add_educator_to_school(db, user_id: int, school_id: int, role: str = 'school_educator'):
+    """Add an educator to a school. Returns (success, error_message)"""
+    # Validate role
+    if role not in ('school_admin', 'school_educator'):
+        return (False, "Invalid role. Must be 'school_admin' or 'school_educator'")
+    
+    # Check license availability (skip for school_admin as they're the first member)
+    if role == 'school_educator' and not school_has_available_licenses(db, school_id):
+        return (False, "No available licenses in this school")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        user.school_id = school_id
+        user.role = role
+        db.commit()
+        return (True, None)
+    return (False, "User not found")
+
+def remove_educator_from_school(db, user_id: int):
+    """Remove an educator from their school (sets school_id to null)"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if user and user.school_id:
+        user.school_id = None
+        user.role = 'individual'
+        db.commit()
+        return True
+    return False
+
+def update_school_stripe_info(db, school_id: int, customer_id: str = None, subscription_id: str = None, 
+                               status: str = None, subscription_end = None):
+    """Update school's Stripe subscription information"""
+    school = get_school_by_id(db, school_id)
+    if school:
+        if customer_id:
+            school.stripe_customer_id = customer_id
+        if subscription_id:
+            school.stripe_subscription_id = subscription_id
+        if status:
+            school.subscription_status = status
+        if subscription_end:
+            school.subscription_end = subscription_end
+        db.commit()
+        return True
+    return False
+
+def get_all_schools(db):
+    """Get all schools (for admin)"""
+    return db.query(School).order_by(School.created_at.desc()).all()
+
+def is_school_subscription_active(school):
+    """Check if a school's subscription is active (with 7-day grace period)"""
+    if not school:
+        return False
+    if school.subscription_status == 'active':
+        return True
+    if school.subscription_status == 'past_due':
+        # 7-day grace period
+        if school.subscription_end:
+            grace_end = school.subscription_end + timedelta(days=7)
+            return datetime.utcnow() < grace_end
+    return False
 
 def get_student_by_username(db, username: str) -> Optional[Student]:
     """Get student by username"""
