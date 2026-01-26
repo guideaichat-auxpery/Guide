@@ -15,6 +15,7 @@ stripe.api_key = STRIPE_SECRET_KEY
 
 MONTHLY_PRICE_ID = os.getenv('STRIPE_MONTHLY_PRICE_ID', 'price_1Sd7RX8PGiRAuUvfzibxCNLV')
 ANNUAL_PRICE_ID = os.getenv('STRIPE_ANNUAL_PRICE_ID', 'price_1SeSbY8PGiRAuUvf0xjZmMXK')
+SCHOOL_SEAT_PRICE_ID = os.getenv('STRIPE_SCHOOL_SEAT_PRICE_ID')  # Per-seat annual price for schools
 
 GUIDE_APP_URL = os.getenv('GUIDE_APP_URL', 'https://guide.auxpery.com.au')
 
@@ -391,4 +392,207 @@ def reactivate_subscription(user_id: int) -> Optional[dict]:
         
     except Exception as e:
         print(f"[STRIPE] Error reactivating: {e}")
+        return None
+
+
+# ===================== SCHOOL STRIPE FUNCTIONS =====================
+
+def create_school_checkout_session(school_id: int, school_name: str, contact_email: str, seat_count: int = 10) -> Optional[str]:
+    """Create a Stripe checkout session for a school subscription and return the URL"""
+    if not STRIPE_SECRET_KEY:
+        print("[STRIPE] No API key configured")
+        return None
+    
+    if not SCHOOL_SEAT_PRICE_ID:
+        print("[STRIPE] No school seat price ID configured (STRIPE_SCHOOL_SEAT_PRICE_ID)")
+        return None
+    
+    try:
+        db = get_db()
+        customer_id = None
+        if db:
+            try:
+                result = db.execute(
+                    text("SELECT stripe_customer_id FROM schools WHERE id = :school_id"),
+                    {'school_id': school_id}
+                ).fetchone()
+                customer_id = result[0] if result else None
+            finally:
+                db.close()
+        
+        if not customer_id:
+            customer = stripe.Customer.create(
+                email=contact_email,
+                name=school_name,
+                metadata={'schoolId': str(school_id), 'type': 'school'}
+            )
+            customer_id = customer.id
+            db = get_db()
+            if db:
+                try:
+                    db.execute(
+                        text("UPDATE schools SET stripe_customer_id = :cid WHERE id = :sid"),
+                        {'cid': customer_id, 'sid': school_id}
+                    )
+                    db.commit()
+                finally:
+                    db.close()
+        
+        session = stripe.checkout.Session.create(
+            mode='subscription',
+            customer=customer_id,
+            line_items=[{
+                'price': SCHOOL_SEAT_PRICE_ID,
+                'quantity': seat_count
+            }],
+            success_url=f"{GUIDE_APP_URL}/school/dashboard?subscription=success",
+            cancel_url=f"{GUIDE_APP_URL}/school/dashboard?subscription=cancelled",
+            metadata={'schoolId': str(school_id), 'type': 'school'},
+            allow_promotion_codes=True,
+            subscription_data={
+                'metadata': {'schoolId': str(school_id), 'type': 'school'}
+            }
+        )
+        
+        print(f"[STRIPE] Created school checkout session for school {school_id} ({seat_count} seats)")
+        return session.url
+        
+    except Exception as e:
+        print(f"[STRIPE] Error creating school checkout: {e}")
+        return None
+
+
+def create_school_portal_session(school_id: int) -> Optional[str]:
+    """Create a Stripe billing portal session for a school and return the URL"""
+    if not STRIPE_SECRET_KEY:
+        return None
+    
+    try:
+        db = get_db()
+        customer_id = None
+        if db:
+            try:
+                result = db.execute(
+                    text("SELECT stripe_customer_id FROM schools WHERE id = :school_id"),
+                    {'school_id': school_id}
+                ).fetchone()
+                customer_id = result[0] if result else None
+            finally:
+                db.close()
+        
+        if not customer_id:
+            print(f"[STRIPE] No customer ID for school {school_id}")
+            return None
+        
+        session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=f"{GUIDE_APP_URL}/school/dashboard"
+        )
+        
+        print(f"[STRIPE] Created portal session for school {school_id}")
+        return session.url
+        
+    except Exception as e:
+        print(f"[STRIPE] Error creating school portal: {e}")
+        return None
+
+
+def get_school_subscription_from_stripe(school_id: int) -> dict:
+    """Fetch school subscription status directly from Stripe"""
+    if not STRIPE_SECRET_KEY:
+        return {'isActive': False, 'status': 'error', 'error': 'Stripe not configured'}
+    
+    try:
+        db = get_db()
+        customer_id = None
+        if db:
+            try:
+                result = db.execute(
+                    text("SELECT stripe_customer_id FROM schools WHERE id = :school_id"),
+                    {'school_id': school_id}
+                ).fetchone()
+                customer_id = result[0] if result else None
+            finally:
+                db.close()
+        
+        if not customer_id:
+            return {'isActive': False, 'status': 'none'}
+        
+        subscriptions = stripe.Subscription.list(customer=customer_id, limit=1)
+        
+        if not subscriptions.data:
+            return {'isActive': False, 'status': 'none', 'customerId': customer_id}
+        
+        sub = subscriptions.data[0]
+        is_active = sub.status in ['active', 'trialing', 'past_due']  # Include past_due for grace period
+        
+        # Get seat count from subscription
+        seat_count = sub.items.data[0].quantity if sub.items.data else 1
+        
+        period_end_ts = getattr(sub, 'current_period_end', None)
+        current_period_end = datetime.fromtimestamp(period_end_ts) if period_end_ts else None
+        
+        return {
+            'isActive': is_active,
+            'status': sub.status,
+            'seatCount': seat_count,
+            'customerId': customer_id,
+            'subscriptionId': sub.id,
+            'currentPeriodEnd': current_period_end.isoformat() if current_period_end else None,
+            'cancelAtPeriodEnd': getattr(sub, 'cancel_at_period_end', False)
+        }
+        
+    except Exception as e:
+        print(f"[STRIPE] Error fetching school subscription: {e}")
+        return {'isActive': False, 'status': 'error', 'error': str(e)}
+
+
+def update_school_seats(school_id: int, new_seat_count: int) -> Optional[dict]:
+    """Update the number of seats for a school subscription"""
+    if not STRIPE_SECRET_KEY:
+        return None
+    
+    try:
+        db = get_db()
+        sub_id = None
+        if db:
+            try:
+                result = db.execute(
+                    text("SELECT stripe_subscription_id FROM schools WHERE id = :school_id"),
+                    {'school_id': school_id}
+                ).fetchone()
+                sub_id = result[0] if result else None
+            finally:
+                db.close()
+        
+        if not sub_id:
+            print(f"[STRIPE] No subscription ID for school {school_id}")
+            return None
+        
+        subscription = stripe.Subscription.retrieve(sub_id)
+        item_id = subscription.items.data[0].id
+        
+        updated_sub = stripe.Subscription.modify(
+            sub_id,
+            items=[{'id': item_id, 'quantity': new_seat_count}],
+            proration_behavior='create_prorations'
+        )
+        
+        # Update license count in database
+        db = get_db()
+        if db:
+            try:
+                db.execute(
+                    text("UPDATE schools SET license_count = :seats WHERE id = :school_id"),
+                    {'seats': new_seat_count, 'school_id': school_id}
+                )
+                db.commit()
+            finally:
+                db.close()
+        
+        print(f"[STRIPE] Updated school {school_id} to {new_seat_count} seats")
+        return {'seatCount': new_seat_count, 'success': True}
+        
+    except Exception as e:
+        print(f"[STRIPE] Error updating school seats: {e}")
         return None

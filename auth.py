@@ -1423,6 +1423,132 @@ def signup_page():
                         if db:
                             db.close()
 
+def school_join_page(invite_code: str):
+    """Display page for educators to join a school via invite link"""
+    from database import get_school_by_invite_code, add_educator_to_school, school_has_available_licenses, is_school_subscription_active
+    
+    db = get_db()
+    if not db:
+        st.error("Service temporarily unavailable. Please try again later.")
+        return
+    
+    try:
+        school = get_school_by_invite_code(db, invite_code)
+        
+        if not school:
+            st.error("Invalid invite link. Please check with your school administrator.")
+            st.markdown("---")
+            if st.button("Return to Login", use_container_width=True):
+                st.session_state.auth_mode = 'login'
+                st.query_params.clear()
+                st.rerun()
+            return
+        
+        # Check if school subscription is active
+        if not is_school_subscription_active(school):
+            st.error("This school's subscription is not active. Please contact your school administrator.")
+            if st.button("Return to Login", use_container_width=True):
+                st.session_state.auth_mode = 'login'
+                st.query_params.clear()
+                st.rerun()
+            return
+        
+        # Check if school has available licenses
+        if not school_has_available_licenses(db, school.id):
+            st.warning("This school has reached its license limit. Please contact your school administrator to add more seats.")
+            if st.button("Return to Login", use_container_width=True):
+                st.session_state.auth_mode = 'login'
+                st.query_params.clear()
+                st.rerun()
+            return
+        
+        # Show school name and welcome message
+        st.markdown(f"""
+        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #D7C3AA 0%, #C4A882 100%); border-radius: 12px; margin-bottom: 2rem;">
+            <h2 style="color: #5D4E37; margin-bottom: 0.5rem;">🏫 Join {school.name}</h2>
+            <p style="color: #6B5B4F;">Create your educator account to get started</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.form("school_join_form"):
+            st.markdown("### Create Your Account")
+            full_name = st.text_input("Full Name", placeholder="Your full name")
+            email = st.text_input("Email", placeholder="your.email@school.edu")
+            password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            
+            agree_terms = st.checkbox("I have read and agree to the Terms and Conditions", value=False)
+            
+            submit = st.form_submit_button("Join School", use_container_width=True)
+            
+            if submit:
+                # Validation
+                if not all([full_name, email, password, confirm_password]):
+                    st.error("Please fill in all fields")
+                elif not validate_email(email):
+                    st.error("Please enter a valid email address")
+                elif password != confirm_password:
+                    st.error("Passwords do not match")
+                elif not agree_terms:
+                    st.error("Please agree to the Terms and Conditions to continue")
+                else:
+                    valid_password, password_message = validate_password(password)
+                    if not valid_password:
+                        st.error(password_message)
+                    else:
+                        # Check if user already exists
+                        existing_user = get_user_by_email(db, email)
+                        if existing_user:
+                            # If user exists, try to add them to the school
+                            if existing_user.school_id:
+                                st.error("This account is already associated with a school")
+                            else:
+                                success, error = add_educator_to_school(db, existing_user.id, school.id, 'school_educator')
+                                if success:
+                                    st.success(f"Welcome to {school.name}! You can now log in with your existing account.")
+                                    st.session_state.auth_mode = 'login'
+                                    st.query_params.clear()
+                                    st.rerun()
+                                else:
+                                    st.error(error or "Failed to join school. Please try again.")
+                        else:
+                            # Create new user
+                            user = create_user(db, email, password, full_name, 'educator')
+                            
+                            # Add user to school
+                            success, error = add_educator_to_school(db, user.id, school.id, 'school_educator')
+                            if success:
+                                # Record consent
+                                from database import record_consent
+                                record_consent(db, user_id=user.id, consent_type='data_collection', policy_version="1.0")
+                                record_consent(db, user_id=user.id, consent_type='privacy_policy', policy_version="1.0")
+                                
+                                st.success(f"Welcome to {school.name}, {full_name}!")
+                                
+                                # Log in the user
+                                st.session_state.user_id = user.id
+                                st.session_state.user_type = user.user_type
+                                st.session_state.user_name = user.full_name
+                                st.session_state.user_email = user.email
+                                st.session_state.authenticated = True
+                                st.session_state.is_student = False
+                                st.session_state.school_id = school.id
+                                st.query_params.clear()
+                                st.rerun()
+                            else:
+                                st.error(error or "Failed to join school. Please try again.")
+        
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Already have an account? Log in", use_container_width=True):
+                st.session_state.auth_mode = 'login'
+                st.query_params.clear()
+                st.rerun()
+    finally:
+        if db:
+            db.close()
+
 def create_student_page():
     """Allow educators to create student accounts"""
     if not st.session_state.get('authenticated') or st.session_state.get('is_student'):

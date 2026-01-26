@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
 
@@ -102,6 +102,12 @@ try:
     if reset_token:
         st.session_state.auth_mode = 'reset_password'
         st.session_state.reset_token = reset_token
+    
+    # Handle school invite link (/join/{invite_code})
+    invite_code = query_params.get('join')
+    if invite_code:
+        st.session_state.auth_mode = 'school_join'
+        st.session_state.school_invite_code = invite_code
 except Exception as e:
     logger.warning(f"Error processing query params: {e}")
 
@@ -286,6 +292,15 @@ if not st.session_state.authenticated:
             st.error("Invalid reset link. Please request a new password reset.")
             if st.button("Request New Reset Link"):
                 st.session_state.auth_mode = 'forgot_password'
+                st.rerun()
+    elif st.session_state.auth_mode == "school_join":
+        invite_code = st.session_state.get('school_invite_code')
+        if invite_code:
+            school_join_page(invite_code)
+        else:
+            st.error("Invalid invite link")
+            if st.button("Return to Login"):
+                st.session_state.auth_mode = 'login'
                 st.rerun()
     elif st.session_state.auth_mode == "contact":
         if st.button("← Back to Login", key="back_contact_guest"):

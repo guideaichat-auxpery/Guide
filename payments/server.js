@@ -663,6 +663,29 @@ async function handleCheckoutCompleted(session) {
   const customerId = session.customer;
   const subscriptionId = session.subscription;
   
+  // Handle school checkout
+  const schoolId = session.metadata?.schoolId;
+  const isSchool = session.metadata?.type === 'school';
+  
+  if (isSchool && schoolId && customerId && subscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const seatCount = subscription.items?.data[0]?.quantity || 10;
+    const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+    
+    await db.query(
+      `UPDATE schools SET 
+        stripe_customer_id = $1,
+        stripe_subscription_id = $2,
+        subscription_status = $3,
+        license_count = $4,
+        subscription_end = $5
+       WHERE id = $6`,
+      [customerId, subscriptionId, subscription.status, seatCount, currentPeriodEnd, schoolId]
+    );
+    console.log(`Updated school ${schoolId} with subscription ${subscriptionId} (${seatCount} seats)`);
+    return;
+  }
+  
   if (educatorId && customerId && subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const plan = subscription.items?.data[0]?.price?.recurring?.interval === 'year' ? 'annual' : 'monthly';
@@ -728,11 +751,32 @@ async function handleSubscriptionUpdated(subscription) {
   
   const customerId = subscription.customer;
   const status = subscription.status;
+  const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+  
+  // Check if this is a school subscription (by metadata or checking schools table)
+  const isSchool = subscription.metadata?.type === 'school';
+  const schoolId = subscription.metadata?.schoolId;
+  
+  if (isSchool || schoolId) {
+    const seatCount = subscription.items?.data[0]?.quantity || 10;
+    await db.query(
+      `UPDATE schools SET 
+        stripe_subscription_id = $1,
+        subscription_status = $2,
+        license_count = $3,
+        subscription_end = $4
+       WHERE stripe_customer_id = $5`,
+      [subscription.id, status, seatCount, currentPeriodEnd, customerId]
+    );
+    console.log(`Updated school subscription for customer ${customerId} (${seatCount} seats)`);
+    return;
+  }
+  
+  // Handle individual user subscription
   const plan = subscription.items?.data[0]?.price?.nickname || 
                (subscription.items?.data[0]?.price?.recurring?.interval === 'year' ? 'annual' : 'monthly');
   
   const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
-  const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
   const cancelAtPeriodEnd = subscription.cancel_at_period_end || false;
   
   await db.query(
@@ -754,6 +798,22 @@ async function handleSubscriptionDeleted(subscription) {
   console.log('Subscription deleted:', subscription.id);
   
   const customerId = subscription.customer;
+  
+  // Check if this is a school subscription
+  const isSchool = subscription.metadata?.type === 'school';
+  const schoolId = subscription.metadata?.schoolId;
+  
+  if (isSchool || schoolId) {
+    await db.query(
+      `UPDATE schools SET 
+        subscription_status = 'canceled',
+        subscription_end = NOW()
+       WHERE stripe_customer_id = $1`,
+      [customerId]
+    );
+    console.log(`Cancelled school subscription for customer ${customerId}`);
+    return;
+  }
   
   await db.query(
     `UPDATE users SET 
