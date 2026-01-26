@@ -1643,6 +1643,136 @@ def school_join_page(invite_code: str):
         if db:
             db.close()
 
+def school_setup_page(setup_token: str):
+    """Display page for school admin to set up their account after Stripe checkout"""
+    import requests
+    import os
+    
+    db = get_db()
+    if not db:
+        st.error("Service temporarily unavailable. Please try again later.")
+        return
+    
+    # Use internal service URL - works in both dev and production
+    payments_base = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
+    
+    try:
+        # Validate the setup token via API
+        api_url = f"{payments_base}/api/public/validate-school-token/{setup_token}"
+        try:
+            response = requests.get(api_url, timeout=10)
+            token_data = response.json()
+        except Exception as e:
+            st.error("Unable to validate your setup token. Please try again later.")
+            if st.button("Return to Home", use_container_width=True):
+                st.session_state.auth_mode = 'login'
+                st.query_params.clear()
+                st.rerun()
+            return
+        
+        if not token_data.get('success'):
+            error_msg = token_data.get('error', 'Invalid or expired setup token')
+            st.error(error_msg)
+            if st.button("Return to Home", use_container_width=True):
+                st.session_state.auth_mode = 'login'
+                st.query_params.clear()
+                st.rerun()
+            return
+        
+        pending = token_data.get('data', {})
+        email = pending.get('email', '')
+        school_name = pending.get('school_name', '')
+        seats = pending.get('seats', 5)
+        
+        # Show welcome header
+        st.markdown(f"""
+        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #D7C3AA 0%, #C4A882 100%); border-radius: 12px; margin-bottom: 2rem;">
+            <h2 style="color: #5D4E37; margin-bottom: 0.5rem;">🏫 Complete Your School Setup</h2>
+            <p style="color: #6B5B4F;">Welcome! Let's finish setting up <strong>{school_name}</strong></p>
+            <p style="color: #8B7B6B; font-size: 0.9rem;">{seats} educator seats included</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.form("school_setup_form"):
+            st.markdown("### Create Your Admin Account")
+            st.info(f"Account email: **{email}**")
+            
+            full_name = st.text_input("Your Full Name", placeholder="Enter your full name")
+            password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            
+            agree_terms = st.checkbox("I have read and agree to the Terms and Conditions", value=False)
+            
+            submit = st.form_submit_button("Complete Setup", use_container_width=True, type="primary")
+            
+            if submit:
+                # Validation
+                if not full_name:
+                    st.error("Please enter your full name")
+                elif not password or not confirm_password:
+                    st.error("Please enter and confirm your password")
+                elif password != confirm_password:
+                    st.error("Passwords do not match")
+                elif not agree_terms:
+                    st.error("Please agree to the Terms and Conditions to continue")
+                else:
+                    valid_password, password_message = validate_password(password)
+                    if not valid_password:
+                        st.error(password_message)
+                    else:
+                        # Complete setup via API
+                        try:
+                            complete_response = requests.post(
+                                f"{payments_base}/api/public/complete-school-setup",
+                                json={
+                                    "token": setup_token,
+                                    "fullName": full_name,
+                                    "password": password
+                                },
+                                timeout=30
+                            )
+                            result = complete_response.json()
+                            
+                            if result.get('success'):
+                                user_id = result.get('userId')
+                                school_id = result.get('schoolId')
+                                
+                                # Log in the user
+                                user = get_user_by_email(db, email)
+                                if user:
+                                    st.session_state.user_id = user.id
+                                    st.session_state.user_type = user.user_type
+                                    st.session_state.user_name = user.full_name
+                                    st.session_state.user_email = user.email
+                                    st.session_state.authenticated = True
+                                    st.session_state.is_student = False
+                                    st.session_state.school_id = school_id
+                                    st.session_state.user_role = 'school_admin'
+                                    st.session_state.subscription_active = True
+                                    st.session_state.subscription_verified = True
+                                    st.session_state.subscription_status = 'active'
+                                    st.session_state.subscription_plan = 'school'
+                                    
+                                    st.success(f"Welcome to Guide, {full_name}! Your school is ready.")
+                                    st.query_params.clear()
+                                    time.sleep(1)
+                                    st.rerun()
+                                else:
+                                    st.error("Account created but login failed. Please try logging in manually.")
+                            else:
+                                st.error(result.get('error', 'Failed to complete setup. Please try again.'))
+                        except Exception as e:
+                            st.error(f"Error completing setup: {str(e)}")
+        
+        st.markdown("---")
+        if st.button("Already have an account? Log in", use_container_width=True):
+            st.session_state.auth_mode = 'login'
+            st.query_params.clear()
+            st.rerun()
+    finally:
+        if db:
+            db.close()
+
 def show_school_admin_dashboard():
     """Display school admin dashboard for managing educators and licenses"""
     from database import get_school_by_id, get_school_educators, get_school_educator_count, remove_educator_from_school

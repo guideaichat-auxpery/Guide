@@ -313,6 +313,294 @@ app.post('/api/public/create-checkout-session', async (req, res) => {
   }
 });
 
+app.post('/api/public/create-school-checkout', async (req, res) => {
+  try {
+    const { schoolName, email, seats } = req.body;
+    
+    if (!schoolName || !email || !seats) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'schoolName, email, and seats are required' 
+      });
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+    
+    const seatCount = parseInt(seats, 10);
+    if (isNaN(seatCount) || seatCount < 5) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Minimum 5 seats required for school subscriptions' 
+      });
+    }
+    
+    if (seatCount > 500) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'For subscriptions over 500 seats, please contact us directly' 
+      });
+    }
+    
+    const schoolPriceId = process.env.STRIPE_SCHOOL_SEAT_PRICE_ID;
+    if (!schoolPriceId) {
+      console.error('STRIPE_SCHOOL_SEAT_PRICE_ID not configured');
+      return res.status(500).json({ success: false, error: 'School pricing not configured' });
+    }
+    
+    const schoolSetupToken = generateInviteToken();
+    
+    const customer = await stripe.customers.create({
+      email,
+      metadata: { 
+        schoolSetupToken,
+        schoolName,
+        type: 'school_admin'
+      }
+    });
+    
+    await db.query(
+      `INSERT INTO pending_subscriptions 
+        (invite_token, email, stripe_customer_id, subscription_plan, expires_at)
+       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '7 days')`,
+      [schoolSetupToken, email.toLowerCase(), customer.id, 'school']
+    );
+    
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customer.id,
+      line_items: [{ 
+        price: schoolPriceId, 
+        quantity: seatCount 
+      }],
+      success_url: `${GUIDE_APP_URL}/?school_setup=${schoolSetupToken}`,
+      cancel_url: `${req.headers.referer || 'https://www.auxpery.com.au'}?checkout=cancelled`,
+      metadata: { 
+        schoolSetupToken,
+        schoolName,
+        seats: seatCount.toString(),
+        type: 'school',
+        source: 'marketing_site'
+      },
+      allow_promotion_codes: true,
+      subscription_data: {
+        metadata: {
+          type: 'school',
+          schoolName,
+          seats: seatCount.toString()
+        }
+      }
+    });
+    
+    console.log(`Created school checkout for ${schoolName} (${email}) - ${seatCount} seats, token ${schoolSetupToken.substring(0, 8)}...`);
+    
+    res.json({ success: true, url: session.url });
+  } catch (error) {
+    console.error('Error creating school checkout session:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/public/validate-school-token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    if (!token || token.length !== 64) {
+      return res.status(400).json({ success: false, error: 'Invalid token format' });
+    }
+
+    const result = await db.query(
+      `SELECT id, email, subscription_status, subscription_plan, redeemed, expires_at,
+              stripe_customer_id, stripe_subscription_id
+       FROM pending_subscriptions
+       WHERE invite_token = $1 AND subscription_plan = 'school'`,
+      [token]
+    );
+    
+    if (!result.rows[0]) {
+      return res.status(404).json({ success: false, error: 'Token not found or not a school subscription' });
+    }
+    
+    const pending = result.rows[0];
+    
+    if (pending.redeemed) {
+      return res.status(400).json({ success: false, error: 'This school has already been set up' });
+    }
+    
+    if (new Date(pending.expires_at) < new Date()) {
+      return res.status(400).json({ success: false, error: 'Setup link expired. Please contact support.' });
+    }
+    
+    if (pending.subscription_status !== 'active' && pending.subscription_status !== 'trialing') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Payment not yet completed. Please wait a moment and refresh.',
+        status: pending.subscription_status
+      });
+    }
+    
+    // Get subscription details from Stripe to get school name and seats
+    let schoolName = 'Your School';
+    let seats = 5;
+    
+    if (pending.stripe_subscription_id && stripe) {
+      try {
+        const subscription = await stripe.subscriptions.retrieve(pending.stripe_subscription_id);
+        schoolName = subscription.metadata?.schoolName || 'Your School';
+        seats = parseInt(subscription.metadata?.seats, 10) || subscription.items?.data[0]?.quantity || 5;
+      } catch (e) {
+        console.warn('Could not fetch subscription details:', e.message);
+      }
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        email: pending.email,
+        school_name: schoolName,
+        seats: seats,
+        subscriptionStatus: pending.subscription_status
+      }
+    });
+  } catch (error) {
+    console.error('Error validating school token:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/public/complete-school-setup', async (req, res) => {
+  try {
+    const { token, fullName, password } = req.body;
+    
+    if (!token || !fullName || !password) {
+      return res.status(400).json({ success: false, error: 'token, fullName, and password are required' });
+    }
+    
+    if (token.length !== 64) {
+      return res.status(400).json({ success: false, error: 'Invalid token format' });
+    }
+    
+    // Fetch pending subscription
+    const pendingResult = await db.query(
+      `SELECT id, email, subscription_status, stripe_customer_id, stripe_subscription_id, redeemed, expires_at
+       FROM pending_subscriptions
+       WHERE invite_token = $1 AND subscription_plan = 'school'`,
+      [token]
+    );
+    
+    if (!pendingResult.rows[0]) {
+      return res.status(404).json({ success: false, error: 'Token not found' });
+    }
+    
+    const pending = pendingResult.rows[0];
+    
+    if (pending.redeemed) {
+      return res.status(400).json({ success: false, error: 'This school has already been set up' });
+    }
+    
+    if (new Date(pending.expires_at) < new Date()) {
+      return res.status(400).json({ success: false, error: 'Setup link expired' });
+    }
+    
+    if (pending.subscription_status !== 'active' && pending.subscription_status !== 'trialing') {
+      return res.status(400).json({ success: false, error: 'Payment not completed' });
+    }
+    
+    // Get subscription details from Stripe
+    let schoolName = 'School';
+    let seats = 5;
+    let subscriptionEnd = null;
+    
+    if (pending.stripe_subscription_id && stripe) {
+      const subscription = await stripe.subscriptions.retrieve(pending.stripe_subscription_id);
+      schoolName = subscription.metadata?.schoolName || 'School';
+      seats = parseInt(subscription.metadata?.seats, 10) || subscription.items?.data[0]?.quantity || 5;
+      subscriptionEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+    }
+    
+    // Generate invite code for school
+    const inviteCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+    
+    // Hash password using bcrypt (same as Python app)
+    const bcrypt = require('bcryptjs');
+    const passwordHash = bcrypt.hashSync(password, 12);
+    
+    // Start transaction
+    const client = await db.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Create school
+      const schoolResult = await client.query(
+        `INSERT INTO schools (name, invite_code, license_count, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_end)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id`,
+        [schoolName, inviteCode, seats, pending.stripe_customer_id, pending.stripe_subscription_id, pending.subscription_status, subscriptionEnd]
+      );
+      const schoolId = schoolResult.rows[0].id;
+      
+      // Check if user already exists
+      const existingUser = await client.query(
+        'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+        [pending.email]
+      );
+      
+      let userId;
+      if (existingUser.rows[0]) {
+        // Update existing user to be school admin
+        userId = existingUser.rows[0].id;
+        await client.query(
+          `UPDATE users SET 
+            school_id = $1, 
+            role = 'school_admin',
+            password_hash = $2,
+            full_name = COALESCE(NULLIF($3, ''), full_name)
+           WHERE id = $4`,
+          [schoolId, passwordHash, fullName, userId]
+        );
+      } else {
+        // Create new user
+        const userResult = await client.query(
+          `INSERT INTO users (email, password_hash, full_name, user_type, school_id, role, subscription_status, subscription_plan)
+           VALUES ($1, $2, $3, 'educator', $4, 'school_admin', $5, 'school')
+           RETURNING id`,
+          [pending.email.toLowerCase(), passwordHash, fullName, schoolId, pending.subscription_status]
+        );
+        userId = userResult.rows[0].id;
+      }
+      
+      // Mark pending subscription as redeemed
+      await client.query(
+        `UPDATE pending_subscriptions SET redeemed = true, redeemed_at = NOW(), user_id = $1 WHERE id = $2`,
+        [userId, pending.id]
+      );
+      
+      await client.query('COMMIT');
+      
+      console.log(`School setup completed: ${schoolName} (ID: ${schoolId}) with admin ${pending.email} (ID: ${userId})`);
+      
+      res.json({
+        success: true,
+        userId: userId,
+        schoolId: schoolId,
+        schoolName: schoolName,
+        inviteCode: inviteCode,
+        seats: seats
+      });
+    } catch (txError) {
+      await client.query('ROLLBACK');
+      throw txError;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error completing school setup:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/api/public/validate-token/:token', async (req, res) => {
   try {
     const { token } = req.params;
@@ -663,10 +951,39 @@ async function handleCheckoutCompleted(session) {
   const customerId = session.customer;
   const subscriptionId = session.subscription;
   
-  // Handle school checkout
+  // Handle school checkout (existing school)
   const schoolId = session.metadata?.schoolId;
   const isSchool = session.metadata?.type === 'school';
+  const schoolSetupToken = session.metadata?.schoolSetupToken;
+  const schoolName = session.metadata?.schoolName;
   
+  // Handle self-service school signup from marketing site
+  if (isSchool && schoolSetupToken && !schoolId && customerId && subscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const seatCount = subscription.items?.data[0]?.quantity || 5;
+    const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
+    const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
+    
+    // Update pending_subscription with subscription details
+    await db.query(
+      `UPDATE pending_subscriptions SET 
+        stripe_subscription_id = $1,
+        stripe_checkout_session_id = $2,
+        subscription_status = $3,
+        subscription_plan = 'school',
+        trial_ends_at = $4,
+        current_period_end = $5,
+        updated_at = NOW()
+       WHERE invite_token = $6`,
+      [subscriptionId, session.id, subscription.status, trialEnd, currentPeriodEnd, schoolSetupToken]
+    );
+    
+    console.log(`School checkout completed for ${schoolName} - ${seatCount} seats, token ${schoolSetupToken.substring(0, 8)}...`);
+    console.log(`Admin will complete setup at /school-setup?token=${schoolSetupToken}`);
+    return;
+  }
+  
+  // Handle existing school checkout (from in-app purchase)
   if (isSchool && schoolId && customerId && subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const seatCount = subscription.items?.data[0]?.quantity || 10;

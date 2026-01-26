@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page, show_school_admin_dashboard
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page, show_school_admin_dashboard, school_setup_page
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
 
@@ -108,6 +108,13 @@ try:
     if invite_code:
         st.session_state.auth_mode = 'school_join'
         st.session_state.school_invite_code = invite_code
+    
+    # Handle school setup token from marketing site checkout
+    # URL format: /?school_setup=token_value
+    school_setup_token = query_params.get('school_setup')
+    if school_setup_token:
+        st.session_state.auth_mode = 'school_setup'
+        st.session_state.school_setup_token = school_setup_token
 except Exception as e:
     logger.warning(f"Error processing query params: {e}")
 
@@ -299,6 +306,15 @@ if not st.session_state.authenticated:
             school_join_page(invite_code)
         else:
             st.error("Invalid invite link")
+            if st.button("Return to Login"):
+                st.session_state.auth_mode = 'login'
+                st.rerun()
+    elif st.session_state.auth_mode == "school_setup":
+        setup_token = st.session_state.get('school_setup_token')
+        if setup_token:
+            school_setup_page(setup_token)
+        else:
+            st.error("Invalid setup link")
             if st.button("Return to Login"):
                 st.session_state.auth_mode = 'login'
                 st.rerun()
