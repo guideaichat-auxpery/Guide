@@ -787,7 +787,7 @@ def is_school_subscription_active(school):
     """Check if a school's subscription is active (with 7-day grace period)"""
     if not school:
         return False
-    if school.subscription_status == 'active':
+    if school.subscription_status in ('active', 'trialing'):
         return True
     if school.subscription_status == 'past_due':
         # 7-day grace period

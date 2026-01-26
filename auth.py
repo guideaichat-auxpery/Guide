@@ -90,27 +90,42 @@ def restore_session_from_token(token: str):
                     st.session_state.subscription_status = 'admin'
                     st.session_state.subscription_plan = 'admin'
                 else:
-                    # First check database for subscription status (fast, reliable)
-                    db_result = stripe_client.get_subscription_from_db(user.id)
-                    if db_result.get('isActive'):
-                        # Database confirms active subscription - trust it
-                        st.session_state.subscription_verified = True
-                        st.session_state.subscription_active = True
-                        st.session_state.subscription_plan = db_result.get('plan', 'monthly')
-                        st.session_state.subscription_status = db_result.get('status', 'active')
-                    else:
-                        # Try to sync with Stripe (may fail if Stripe is down)
-                        stripe_result = stripe_client.sync_subscription_to_db(user.id, user.email)
-                        if stripe_result and stripe_result.get('status') != 'error':
+                    # Check if this is a school educator - use school subscription
+                    if st.session_state.get('school_id') and st.session_state.get('user_role') in ('school_admin', 'school_educator'):
+                        from database import get_school_by_id, is_school_subscription_active
+                        school = get_school_by_id(db, st.session_state.school_id)
+                        if school and is_school_subscription_active(school):
                             st.session_state.subscription_verified = True
-                            st.session_state.subscription_active = stripe_result.get('isActive', False)
-                            st.session_state.subscription_plan = stripe_result.get('plan')
-                            st.session_state.subscription_status = stripe_result.get('status', 'none')
-                        else:
-                            # Stripe failed and no active subscription in DB
-                            st.session_state.subscription_verified = False
                             st.session_state.subscription_active = True
-                            st.session_state.subscription_status = 'grace'
+                            st.session_state.subscription_status = school.subscription_status or 'active'
+                            st.session_state.subscription_plan = 'school'
+                        else:
+                            st.session_state.subscription_verified = True
+                            st.session_state.subscription_active = False
+                            st.session_state.subscription_status = 'inactive'
+                            st.session_state.subscription_plan = 'school'
+                    else:
+                        # First check database for subscription status (fast, reliable)
+                        db_result = stripe_client.get_subscription_from_db(user.id)
+                        if db_result.get('isActive'):
+                            # Database confirms active subscription - trust it
+                            st.session_state.subscription_verified = True
+                            st.session_state.subscription_active = True
+                            st.session_state.subscription_plan = db_result.get('plan', 'monthly')
+                            st.session_state.subscription_status = db_result.get('status', 'active')
+                        else:
+                            # Try to sync with Stripe (may fail if Stripe is down)
+                            stripe_result = stripe_client.sync_subscription_to_db(user.id, user.email)
+                            if stripe_result and stripe_result.get('status') != 'error':
+                                st.session_state.subscription_verified = True
+                                st.session_state.subscription_active = stripe_result.get('isActive', False)
+                                st.session_state.subscription_plan = stripe_result.get('plan')
+                                st.session_state.subscription_status = stripe_result.get('status', 'none')
+                            else:
+                                # Stripe failed and no active subscription in DB
+                                st.session_state.subscription_verified = False
+                                st.session_state.subscription_active = True
+                                st.session_state.subscription_status = 'grace'
                 
                 print(f"[SESSION] Restored educator session for {user.email}")
                 return True
@@ -1165,6 +1180,30 @@ def login_page():
                                 st.rerun()
                                 return  # Ensure code doesn't continue after rerun
                             
+                            # School educators use school subscription
+                            if st.session_state.get('school_id') and st.session_state.get('user_role') in ('school_admin', 'school_educator'):
+                                from database import get_school_by_id, is_school_subscription_active
+                                school = get_school_by_id(db, st.session_state.school_id)
+                                if school and is_school_subscription_active(school):
+                                    st.session_state.subscription_verified = True
+                                    st.session_state.subscription_active = True
+                                    st.session_state.subscription_status = school.subscription_status or 'active'
+                                    st.session_state.subscription_plan = 'school'
+                                else:
+                                    st.session_state.subscription_verified = True
+                                    st.session_state.subscription_active = False
+                                    st.session_state.subscription_status = 'inactive'
+                                    st.session_state.subscription_plan = 'school'
+                                user_id = user.id
+                                user_name = st.session_state.user_name
+                                school_name = school.name if school else "your school"
+                                db.close()
+                                db = None
+                                create_login_session(user_id=user_id, user_type='educator')
+                                st.success(f"Welcome back, {user_name}! ({school_name})")
+                                st.rerun()
+                                return
+                            
                             # FAILPROOF: Check Stripe directly at login, with graceful fallback
                             stripe_result = sync_subscription_from_stripe(user.id, user.email)
                             invalidate_subscription_cache(user.id)
@@ -1542,14 +1581,25 @@ def school_join_page(invite_code: str):
                         # Check if user already exists
                         existing_user = get_user_by_email(db, email)
                         if existing_user:
-                            # If user exists, try to add them to the school
-                            if existing_user.school_id:
+                            # User exists - verify their password before adding to school
+                            authenticated_user = authenticate_user(db, email, password)
+                            if not authenticated_user:
+                                st.error("An account with this email already exists. Please enter the correct password to join the school, or log in using the link below.")
+                            elif existing_user.school_id:
                                 st.error("This account is already associated with a school")
                             else:
                                 success, error = add_educator_to_school(db, existing_user.id, school.id, 'school_educator')
                                 if success:
-                                    st.success(f"Welcome to {school.name}! You can now log in with your existing account.")
-                                    st.session_state.auth_mode = 'login'
+                                    # Log them in directly since password was verified
+                                    st.session_state.user_id = existing_user.id
+                                    st.session_state.user_type = existing_user.user_type
+                                    st.session_state.user_name = existing_user.full_name
+                                    st.session_state.user_email = existing_user.email
+                                    st.session_state.authenticated = True
+                                    st.session_state.is_student = False
+                                    st.session_state.school_id = school.id
+                                    st.session_state.user_role = 'school_educator'
+                                    st.success(f"Welcome to {school.name}!")
                                     st.query_params.clear()
                                     st.rerun()
                                 else:
@@ -1645,7 +1695,8 @@ def show_school_admin_dashboard():
         
         # Invite link section
         st.markdown("### 🔗 Invite Educators")
-        invite_url = f"https://guide.auxpery.com.au/join/{school.invite_code}"
+        base_url = os.getenv('GUIDE_APP_URL', 'https://guide.auxpery.com.au')
+        invite_url = f"{base_url}/?join={school.invite_code}"
         
         st.markdown(f"""
         <div style="background: #F5F0E8; padding: 1.5rem; border-radius: 8px; border: 1px solid #D7C3AA;">
@@ -1721,8 +1772,12 @@ def show_school_admin_dashboard():
         
         if school.subscription_status == 'active':
             if st.button("Manage Subscription", use_container_width=True):
-                st.info("Redirecting to Stripe Customer Portal...")
-                # In production, this would redirect to Stripe portal
+                portal_url = stripe_client.create_school_portal_session(school_id)
+                if portal_url:
+                    st.markdown(f'<meta http-equiv="refresh" content="0; url={portal_url}">', unsafe_allow_html=True)
+                    st.info("Redirecting to Stripe Customer Portal...")
+                else:
+                    st.error("Unable to open subscription portal. Please try again later.")
         
     finally:
         if db:
