@@ -1,0 +1,48 @@
+Here's the updated plan with a dedicated UI/Design stage:
+
+School Master Account System - Final Plan
+Stage 1: Foundation (Database & Basic Structure)
+Create schools table
+Create school_invitations table
+Create school_audit_log table
+Modify users table: add school_id and role
+Stage 2: School Admin Registration & Dashboard
+School admin signup flow
+School Dashboard page (license usage, school details, logo upload)
+API routes for school registration and retrieval
+Stage 3: Invitation System
+Invite Educator page with email input
+Bulk invite option (paste email list)
+Email sent via Resend with unique invite link
+Pending invitations list with status
+Stage 4: Educator Accept & Onboarding
+Invite landing page (shows school name, validates code)
+Signup form (email prefilled, no payment required)
+Account linked to school, audit log entry created
+Stage 5: Educator Management
+Educator Management page listing all educators
+Remove educator (frees license)
+Password reset for educators (by school admin)
+Educator self-removal option
+Stage 6: Subscription & Access Control
+License count enforced (can't invite if at limit)
+7-day grace period on subscription expiry
+Read-only mode during grace (can export work)
+Warning notifications before expiry
+Stage 7: Invite Reminders & Polish
+Auto-resend pending invites after 7 days
+Expiry notifications
+Invite cancellation by admin
+Stage 8: UI Refinement & Visual Harmony
+Apply warm earth-tone palette (#D7C3AA, #C4A882) consistently across all school pages
+Ensure generous whitespace and breathing room
+Subtle card layouts with soft shadows
+Gentle transitions and hover states
+Typography aligned with existing Montessori theme
+Mobile responsiveness
+Consistent button styles (sandy secondary buttons)
+Visual polish pass on all school-related interfaces
+Stage 9: Admin Tools (Your Backend)
+Set license count for schools
+Activate/suspend schools
+View all schools and their educators

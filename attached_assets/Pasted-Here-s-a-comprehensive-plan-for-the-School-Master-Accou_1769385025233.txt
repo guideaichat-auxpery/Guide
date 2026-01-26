@@ -1,0 +1,69 @@
+Here's a comprehensive plan for the School Master Account system. This is a significant feature that spans the Guide app (not this landing page), but I'll outline everything needed:
+
+School Master Account System - Detailed Plan
+Phase 1: Database Schema
+New Tables:
+
+schools - Master school records
+
+id, name, abn (optional), contact_email, contact_name
+license_count (total seats purchased)
+subscription_status (active/suspended/expired)
+subscription_start, subscription_end
+created_at
+school_invitations - Pending invites
+
+id, school_id, email, invite_code
+invited_by (master account user id)
+status (pending/accepted/expired)
+created_at, expires_at
+Modify users table - Add school linkage
+
+Add school_id (nullable - null for individual subscribers)
+Add role field: individual, school_admin, school_educator
+Phase 2: Backend API Routes
+School Management:
+
+POST /api/schools/register - School admin signup
+GET /api/schools/:id - Get school details
+GET /api/schools/:id/educators - List all educators in school
+GET /api/schools/:id/licenses - License usage stats
+Invitation System:
+
+POST /api/schools/:id/invitations - Send invite to educator
+GET /api/invitations/:code - Validate invite code
+POST /api/invitations/:code/accept - Accept invite & create account
+DELETE /api/schools/:id/educators/:userId - Remove educator (frees license)
+Admin Routes (for you):
+
+POST /api/admin/schools/:id/licenses - Set license count
+PATCH /api/admin/schools/:id/status - Activate/suspend school
+Phase 3: School Admin Dashboard
+New Pages in Guide App:
+
+School Dashboard (/school/dashboard)
+
+License usage display: "12 of 20 licenses used"
+List of all educators with status
+Quick actions: invite, remove
+Invite Educator (/school/invite)
+
+Email input field
+Optional: bulk invite via CSV
+Sends invitation email
+Educator Management (/school/educators)
+
+Table of all educators
+Status (active/pending)
+Remove button (with confirmation)
+Phase 4: Educator Invite Flow
+Email Sent - Contains unique invite link
+Landing Page - Educator clicks link, sees school name
+Signup Form - Name, email (prefilled), password
+Account Created - Automatically linked to school, no payment required
+Phase 5: Access Control & Validation
+School educators bypass payment flow entirely
+License count enforced: can't invite if at limit
+School admin can't delete themselves
+Subscription expiry blocks all school educator access
+Individual accounts unaffected by school system
