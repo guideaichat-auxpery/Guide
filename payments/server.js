@@ -534,21 +534,31 @@ app.post('/api/public/complete-school-setup', async (req, res) => {
       
       // Create school
       const schoolResult = await client.query(
-        `INSERT INTO schools (name, invite_code, license_count, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_end)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO schools (name, invite_code, license_count, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_end, contact_email, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
          RETURNING id`,
-        [schoolName, inviteCode, seats, pending.stripe_customer_id, pending.stripe_subscription_id, pending.subscription_status, subscriptionEnd]
+        [schoolName, inviteCode, seats, pending.stripe_customer_id, pending.stripe_subscription_id, pending.subscription_status, subscriptionEnd, pending.email]
       );
       const schoolId = schoolResult.rows[0].id;
       
       // Check if user already exists
       const existingUser = await client.query(
-        'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+        'SELECT id, school_id, role FROM users WHERE LOWER(email) = LOWER($1)',
         [pending.email]
       );
       
       let userId;
       if (existingUser.rows[0]) {
+        // Check if user already belongs to another school
+        if (existingUser.rows[0].school_id) {
+          await client.query('ROLLBACK');
+          client.release();
+          return res.status(400).json({ 
+            success: false, 
+            error: 'This email is already associated with a school. Please use a different email or contact support.' 
+          });
+        }
+        
         // Update existing user to be school admin
         userId = existingUser.rows[0].id;
         await client.query(
@@ -573,7 +583,7 @@ app.post('/api/public/complete-school-setup', async (req, res) => {
       
       // Mark pending subscription as redeemed
       await client.query(
-        `UPDATE pending_subscriptions SET redeemed = true, redeemed_at = NOW(), user_id = $1 WHERE id = $2`,
+        `UPDATE pending_subscriptions SET redeemed = true, redeemed_at = NOW(), redeemed_by_user_id = $1 WHERE id = $2`,
         [userId, pending.id]
       );
       
@@ -972,8 +982,7 @@ async function handleCheckoutCompleted(session) {
         subscription_status = $3,
         subscription_plan = 'school',
         trial_ends_at = $4,
-        current_period_end = $5,
-        updated_at = NOW()
+        subscription_ends_at = $5
        WHERE invite_token = $6`,
       [subscriptionId, session.id, subscription.status, trialEnd, currentPeriodEnd, schoolSetupToken]
     );
