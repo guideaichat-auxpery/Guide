@@ -104,7 +104,7 @@ Create a pricing section with:
     <div class="card">
       <span class="badge">Schools</span>
       <h3>School Plan</h3>
-      <div class="price">$10<span>/seat/month</span></div>
+      <div class="price">$150<span>/seat/year</span></div>
       <p>Minimum 5 seats</p>
       <button onclick="showSchoolForm()">Get Started</button>
     </div>
@@ -119,9 +119,9 @@ Create a pricing section with:
       <div class="seat-selector">
         <label>Number of Educator Seats:</label>
         <input type="number" id="seatCount" min="5" max="500" value="10">
-        <p class="hint">Minimum 5 seats. Price: $10/seat/month</p>
+        <p class="hint">Minimum 5 seats. Price: $150/seat/year</p>
       </div>
-      <p id="schoolTotal">Total: $100/month</p>
+      <p id="schoolTotal">Total: $750/year</p>
       <button onclick="startSchoolCheckout()">Proceed to Payment</button>
       <button onclick="closeSchoolModal()">Cancel</button>
     </div>
@@ -137,7 +137,7 @@ const PRICE_IDS = {
   annual: 'price_1Sd7RX8PGiRAuUvfxnQgzmy1'
 };
 
-const SCHOOL_SEAT_PRICE = 10; // $10 per seat per month
+const SCHOOL_SEAT_PRICE = 150; // $150 per seat per year
 
 async function startCheckout(plan) {
   const email = document.getElementById('userEmail').value;
@@ -187,7 +187,7 @@ function closeSchoolModal() {
 function updateSchoolTotal() {
   const seats = parseInt(document.getElementById('seatCount').value) || 5;
   const total = seats * SCHOOL_SEAT_PRICE;
-  document.getElementById('schoolTotal').textContent = `Total: $${total}/month`;
+  document.getElementById('schoolTotal').textContent = `Total: $${total}/year`;
 }
 
 // Add event listener for seat count changes
@@ -305,7 +305,7 @@ Requirements:
 2. Display THREE pricing cards side by side:
    - **Monthly**: $15/month, "14-day free trial included", button: "Start Free Trial"
    - **Annual**: $150/year, badge "2 Months Free", "Best value - save $30/year", button: "Choose Annual"
-   - **Schools**: "$10/seat/month", "Minimum 5 seats", button: "Get Started" (opens modal)
+   - **Schools**: "$150/seat/year", "Minimum 5 seats", button: "Get Started" (opens modal)
 
 3. When user clicks Monthly or Annual button:
    - Validate email is entered
@@ -326,7 +326,7 @@ Requirements:
 
 4. When user clicks Schools button:
    - Show a modal with: School Name input, Admin Email input, Number of Seats selector (min 5)
-   - Calculate and display total price ($10 x seats)
+   - Calculate and display total price ($150 x seats per year)
    - On submit, call:
      ```
      POST https://guide.auxpery.com.au/api/public/create-school-checkout
