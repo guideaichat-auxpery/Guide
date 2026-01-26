@@ -46,3 +46,35 @@ Stage 9: Admin Tools (Your Backend)
 Set license count for schools
 Activate/suspend schools
 View all schools and their educators
+
+
+
+
+Stripe Setup for Schools
+You'll need to create a per-seat price in Stripe:
+
+Product: "Guide School Subscription"
+Price: Per-seat pricing (e.g., $10/seat/month or $100/seat/year)
+Billing: Use Stripe's "quantity" feature - when a school buys 15 seats, you charge quantity: 15
+The minimum 10 seats is enforced in your code, not in Stripe.
+
+Self-Service School Signup Plan
+Here's the flow:
+
+Landing Page (auxpery.com.au) → User enters:
+
+School name
+Admin email
+Number of seats (dropdown: 10, 15, 20, 25, 50, 100+)
+API Call → Creates Stripe Checkout with quantity: seats
+
+After Payment → Webhook creates:
+
+School record with invite code
+Admin user account
+Redirects admin to Guide to set password
+Admin Dashboard → School admin can:
+
+Copy invite link
+See license usage
+Add more seats later
