@@ -80,6 +80,8 @@ def restore_session_from_token(token: str):
                 st.session_state.authenticated = True
                 st.session_state.is_student = False
                 st.session_state.is_admin = getattr(user, 'is_admin', False)
+                st.session_state.user_role = getattr(user, 'role', 'individual')
+                st.session_state.school_id = getattr(user, 'school_id', None)
                 st.session_state.session_token = token
                 
                 if st.session_state.is_admin:
@@ -230,7 +232,10 @@ def get_api_headers():
 
 
 def check_subscription_status(educator_id):
-    """Check if educator has an active subscription (with short cache for responsiveness)"""
+    """Check if educator has an active subscription (with short cache for responsiveness)
+    
+    For school educators, checks the school's subscription instead of individual subscription.
+    """
     cache_key = f'subscription_cache_{educator_id}'
     cache_time_key = f'subscription_cache_time_{educator_id}'
     
@@ -242,10 +247,37 @@ def check_subscription_status(educator_id):
         if age < SUBSCRIPTION_CACHE_TTL:
             return cached_data
     
-    result = stripe_client.get_subscription_from_db(educator_id)
+    # Check if user is part of a school (school admin or educator)
+    school_id = st.session_state.get('school_id')
+    user_role = st.session_state.get('user_role', 'individual')
+    
+    if school_id and user_role in ('school_admin', 'school_educator'):
+        # Check school subscription instead of individual
+        from database import get_school_by_id, is_school_subscription_active
+        db = get_db()
+        if db:
+            try:
+                school = get_school_by_id(db, school_id)
+                if school and is_school_subscription_active(school):
+                    result = {
+                        'isActive': True,
+                        'status': school.subscription_status or 'active',
+                        'plan': 'school',
+                        'school_name': school.name
+                    }
+                else:
+                    result = {'isActive': False, 'status': 'inactive', 'plan': 'school'}
+            finally:
+                db.close()
+        else:
+            result = {'isActive': False, 'status': 'error'}
+    else:
+        # Check individual subscription
+        result = stripe_client.get_subscription_from_db(educator_id)
+    
     st.session_state[cache_key] = result
     st.session_state[cache_time_key] = datetime.now()
-    print(f"[SUB CHECK] educator_id={educator_id}, result={result}")
+    print(f"[SUB CHECK] educator_id={educator_id}, school_id={school_id}, role={user_role}, result={result}")
     return result
 
 def invalidate_subscription_cache(educator_id=None):
@@ -1109,6 +1141,9 @@ def login_page():
                             st.session_state.user_email = user.email
                             st.session_state.authenticated = True
                             st.session_state.is_student = False
+                            # Store school info for school subscriptions
+                            st.session_state.user_role = getattr(user, 'role', 'individual')
+                            st.session_state.school_id = getattr(user, 'school_id', None)
                             # Store admin status for bypassing subscription checks
                             st.session_state.is_admin = getattr(user, 'is_admin', False)
                             # Clear any existing auth_mode to ensure clean state
@@ -1533,6 +1568,7 @@ def school_join_page(invite_code: str):
                                 st.session_state.authenticated = True
                                 st.session_state.is_student = False
                                 st.session_state.school_id = school.id
+                                st.session_state.user_role = 'school_educator'
                                 st.query_params.clear()
                                 st.rerun()
                             else:
@@ -1545,6 +1581,141 @@ def school_join_page(invite_code: str):
                 st.session_state.auth_mode = 'login'
                 st.query_params.clear()
                 st.rerun()
+    finally:
+        if db:
+            db.close()
+
+def show_school_admin_dashboard():
+    """Display school admin dashboard for managing educators and licenses"""
+    from database import get_school_by_id, get_school_educators, get_school_educator_count, remove_educator_from_school
+    
+    if not st.session_state.get('authenticated'):
+        st.error("Access denied. Please log in.")
+        return
+    
+    # Check if user is a school admin
+    user_role = st.session_state.get('user_role', 'individual')
+    school_id = st.session_state.get('school_id')
+    
+    if user_role != 'school_admin' or not school_id:
+        st.error("Access denied. Only school administrators can access this dashboard.")
+        return
+    
+    db = get_db()
+    if not db:
+        st.error("Service temporarily unavailable.")
+        return
+    
+    try:
+        school = get_school_by_id(db, school_id)
+        if not school:
+            st.error("School not found.")
+            return
+        
+        # Header with school info
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #D7C3AA 0%, #C4A882 100%); padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+            <h2 style="color: #5D4E37; margin-bottom: 0.5rem;">🏫 {school.name}</h2>
+            <p style="color: #6B5B4F; margin-bottom: 0;">School Administration Dashboard</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # License usage metrics
+        educator_count = get_school_educator_count(db, school_id)
+        license_count = school.license_count or 0
+        available_seats = max(0, license_count - educator_count)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Seats", license_count)
+        with col2:
+            st.metric("Seats Used", educator_count)
+        with col3:
+            st.metric("Available Seats", available_seats)
+        
+        st.markdown("---")
+        
+        # Invite link section
+        st.markdown("### 🔗 Invite Educators")
+        invite_url = f"https://guide.auxpery.com.au/join/{school.invite_code}"
+        
+        st.markdown(f"""
+        <div style="background: #F5F0E8; padding: 1.5rem; border-radius: 8px; border: 1px solid #D7C3AA;">
+            <p style="margin-bottom: 0.5rem; color: #5D4E37; font-weight: 600;">Share this link with educators to invite them:</p>
+            <code style="background: white; padding: 0.5rem 1rem; border-radius: 4px; display: block; word-break: break-all; font-size: 0.9rem;">{invite_url}</code>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            if st.button("📋 Copy Link", key="copy_invite_link"):
+                st.session_state.invite_link_copied = True
+                st.rerun()
+        
+        if st.session_state.get('invite_link_copied'):
+            st.success("Link copied! Share it with your educators.")
+            st.markdown(f"""
+            <script>
+            navigator.clipboard.writeText("{invite_url}");
+            </script>
+            """, unsafe_allow_html=True)
+            del st.session_state.invite_link_copied
+        
+        st.markdown("---")
+        
+        # Educator list
+        st.markdown("### 👥 Educators")
+        
+        educators = get_school_educators(db, school_id)
+        
+        if not educators:
+            st.info("No educators have joined yet. Share your invite link to get started!")
+        else:
+            for educator in educators:
+                col1, col2, col3 = st.columns([3, 2, 1])
+                with col1:
+                    role_badge = "👑 Admin" if educator.role == 'school_admin' else "👩‍🏫 Educator"
+                    st.markdown(f"**{educator.full_name}** {role_badge}")
+                with col2:
+                    st.markdown(f"<span style='color: #6B5B4F;'>{educator.email}</span>", unsafe_allow_html=True)
+                with col3:
+                    # Don't allow removing the admin themselves
+                    if educator.id != st.session_state.get('user_id') and educator.role != 'school_admin':
+                        if st.button("Remove", key=f"remove_{educator.id}", type="secondary"):
+                            if remove_educator_from_school(db, educator.id):
+                                st.success(f"Removed {educator.full_name} from the school.")
+                                st.rerun()
+                            else:
+                                st.error("Failed to remove educator.")
+                
+                st.markdown("<hr style='margin: 0.5rem 0; border-color: #E8E0D5;'>", unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Subscription status
+        st.markdown("### 💳 Subscription")
+        
+        status_colors = {
+            'active': '#2E8B57',
+            'trialing': '#3498db',
+            'past_due': '#e67e22',
+            'canceled': '#e74c3c',
+            'unpaid': '#e74c3c'
+        }
+        status_color = status_colors.get(school.subscription_status, '#6B5B4F')
+        status_display = (school.subscription_status or 'unknown').replace('_', ' ').title()
+        
+        st.markdown(f"""
+        <div style="background: #F5F0E8; padding: 1.5rem; border-radius: 8px;">
+            <p><strong>Status:</strong> <span style="color: {status_color}; font-weight: 600;">{status_display}</span></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if school.subscription_status == 'active':
+            if st.button("Manage Subscription", use_container_width=True):
+                st.info("Redirecting to Stripe Customer Portal...")
+                # In production, this would redirect to Stripe portal
+        
     finally:
         if db:
             db.close()
@@ -1969,6 +2140,10 @@ def show_user_info():
                 {"icon": "📝", "title": "Planning Notes", "desc": "Save lesson plans", "mode": "planning_notes", "key": "sb_pn"},
                 {"icon": "👤", "title": "Create Student", "desc": "Add new student", "mode": "create_student", "key": "sb_cs"},
             ]
+            
+            # Add School Admin button for school admins
+            if st.session_state.get('user_role') == 'school_admin':
+                manage_tools.insert(0, {"icon": "🏫", "title": "School Admin", "desc": "Manage educators", "mode": "school_admin_dashboard", "key": "sb_school"})
             
             for tool in manage_tools:
                 if st.sidebar.button(

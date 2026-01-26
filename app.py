@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page, show_school_admin_dashboard
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
 
@@ -384,7 +384,7 @@ else:
                 st.stop()
         
         # Default to dashboard home for educators
-        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium']:
+        if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium', 'school_admin_dashboard']:
             st.session_state.auth_mode = 'dashboard_home'
         
         # Show dashboard home or specific interface
@@ -529,6 +529,12 @@ else:
             st.session_state.auth_mode = "dashboard_home"
             st.rerun()
         show_imaginarium_interface()
+    elif st.session_state.auth_mode == "school_admin_dashboard":
+        # Back to dashboard button
+        if st.button("← Back to Dashboard", key="back_school"):
+            st.session_state.auth_mode = "dashboard_home"
+            st.rerun()
+        show_school_admin_dashboard()
     elif st.session_state.auth_mode == "student_companion":
         show_student_interface()
     elif st.session_state.auth_mode == "privacy_policy":
