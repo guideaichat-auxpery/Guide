@@ -1332,18 +1332,26 @@ def login_page():
                 elif not agree_terms:
                     st.error("Please agree to the Terms and Conditions")
                 else:
-                    db = get_db()
-                    if not db:
-                        st.error("Registration is not available. Database connection required.")
+                    valid_password, password_message = validate_password(password)
+                    if not valid_password:
+                        st.error(password_message)
                     else:
-                        try:
-                            result = register_educator(db, full_name, email, password)
-                            if result.get('success'):
-                                st.success("Account created successfully! Please log in using the Educator tab.")
-                            else:
-                                st.error(result.get('error', 'Registration failed'))
-                        finally:
-                            db.close()
+                        db = get_db()
+                        if not db:
+                            st.error("Registration is not available. Database connection required.")
+                        else:
+                            try:
+                                existing_user = get_user_by_email(db, email)
+                                if existing_user:
+                                    st.error("An account with this email already exists")
+                                else:
+                                    user = create_user(db, email, password, full_name, 'educator')
+                                    from database import record_consent
+                                    record_consent(db, user_id=user.id, consent_type='data_collection', policy_version="1.0")
+                                    record_consent(db, user_id=user.id, consent_type='privacy_policy', policy_version="1.0")
+                                    st.success("Account created successfully! Please log in using the Educator tab.")
+                            finally:
+                                db.close()
     
     with terms_tab:
         st.markdown("""
