@@ -539,109 +539,99 @@ def apply_chatgpt_sidebar_style():
         font-weight: 600 !important;
     }
     
-    /* Conversation row container - hover reveals actions */
-    .conversation-row {
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
-        border-radius: 8px;
-        margin: 2px 0;
-        transition: background 0.15s ease;
-        position: relative;
+    /* ===== ULTRA-COMPACT SIDEBAR BUTTONS ===== */
+    
+    /* All sidebar buttons - very small and compact */
+    section[data-testid="stSidebar"] button,
+    [data-testid="stSidebar"] .stButton button,
+    [data-testid="stSidebar"] button[kind="primary"],
+    [data-testid="stSidebar"] button[kind="secondary"] {
+        font-size: 10px !important;
+        padding: 4px 6px !important;
+        min-height: 24px !important;
+        max-height: 28px !important;
+        line-height: 1.2 !important;
+        border-radius: 4px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     
-    .conversation-row:hover {
-        background: rgba(61, 90, 61, 0.08);
+    /* Conversation list buttons - single line, truncated */
+    section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button {
+        font-size: 9px !important;
+        padding: 3px 5px !important;
+        min-height: 22px !important;
+        max-height: 24px !important;
     }
     
-    .conversation-row .action-buttons {
-        opacity: 0;
-        transition: opacity 0.15s ease;
-        display: flex;
-        gap: 4px;
+    /* Icon buttons (edit/delete) - tiny */
+    section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:not(:first-child) button {
+        font-size: 10px !important;
+        padding: 2px 4px !important;
+        min-height: 20px !important;
+        max-height: 22px !important;
+        min-width: 20px !important;
+        max-width: 24px !important;
+        opacity: 0.6 !important;
     }
     
-    .conversation-row:hover .action-buttons {
-        opacity: 1;
+    section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:not(:first-child) button:hover {
+        opacity: 1 !important;
     }
     
-    /* Style all sidebar buttons - compact and elegant */
-    [data-testid="stSidebar"] .stButton > button {
-        background: transparent !important;
-        border: none !important;
-        border-radius: 6px !important;
-        color: #4a4a4a !important;
-        text-align: left !important;
-        padding: 5px 8px !important;
-        font-size: 11px !important;
-        line-height: 1.3 !important;
-        min-height: 26px !important;
-        transition: all 0.15s ease !important;
-    }
-    
-    [data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(166, 123, 91, 0.1) !important;
-    }
-    
-    /* Primary buttons (current conversation) */
-    [data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    /* Primary buttons styling */
+    section[data-testid="stSidebar"] button[kind="primary"] {
         background: #A67B5B !important;
         color: #ffffff !important;
         border: none !important;
     }
     
-    [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+    section[data-testid="stSidebar"] button[kind="primary"]:hover {
         background: #B8956A !important;
     }
     
-    /* New Chat button - compact but prominent */
-    [data-testid="stSidebar"] [data-testid="stButton"][key*="new_chat"] > button,
-    .new-chat-btn {
-        background: #A67B5B !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
-        padding: 6px 10px !important;
-        font-size: 11px !important;
-        font-weight: 500 !important;
-        min-height: 28px !important;
-        margin-bottom: 8px !important;
-    }
-    
-    /* Small icon buttons (edit/delete) - tiny and subtle */
-    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"],
-    [data-testid="stSidebar"] .stButton > button[data-testid*="del"] {
-        padding: 2px 5px !important;
-        font-size: 10px !important;
-        min-height: 22px !important;
-        min-width: 22px !important;
+    /* Secondary buttons styling */
+    section[data-testid="stSidebar"] button[kind="secondary"] {
         background: transparent !important;
-        opacity: 0.5 !important;
+        border: none !important;
+        color: #4a4a4a !important;
     }
     
-    [data-testid="stSidebar"] .stButton > button[data-testid*="edit"]:hover,
-    [data-testid="stSidebar"] .stButton > button[data-testid*="del"]:hover {
-        opacity: 1 !important;
-        background: rgba(166, 123, 91, 0.15) !important;
+    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background: rgba(166, 123, 91, 0.1) !important;
     }
     
-    /* Reduce vertical spacing between buttons */
-    [data-testid="stSidebar"] .stButton {
+    /* Reduce all vertical gaps in sidebar */
+    section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div {
+        margin-bottom: 1px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    section[data-testid="stSidebar"] .stButton {
+        margin-bottom: 1px !important;
+    }
+    
+    /* Compact horizontal blocks (button rows) */
+    section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
+        gap: 2px !important;
         margin-bottom: 2px !important;
     }
     
-    /* Compact horizontal columns for conversation rows */
-    [data-testid="stSidebar"] [data-testid="column"] {
-        padding: 0 2px !important;
+    section[data-testid="stSidebar"] [data-testid="column"] {
+        padding: 0 1px !important;
     }
     
     /* Section headers - compact */
     .sidebar-section-header {
-        font-size: 9px !important;
+        font-size: 8px !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.6px !important;
+        letter-spacing: 0.5px !important;
         font-weight: 600 !important;
-        padding: 10px 8px 4px 8px !important;
-        margin-top: 4px !important;
+        padding: 6px 4px 3px 4px !important;
+        margin-top: 3px !important;
+        margin-bottom: 2px !important;
         color: #8B7355 !important;
         border-top: 1px solid rgba(166, 123, 91, 0.1) !important;
     }
@@ -651,14 +641,14 @@ def apply_chatgpt_sidebar_style():
         margin-top: 0 !important;
     }
     
-    /* Keyboard shortcut hint - smaller */
+    /* Keyboard shortcut hint - tiny */
     .keyboard-hint {
-        font-size: 8px;
+        font-size: 7px;
         color: #8a8a8a;
         background: rgba(0,0,0,0.05);
-        padding: 1px 4px;
-        border-radius: 3px;
-        margin-left: 4px;
+        padding: 1px 3px;
+        border-radius: 2px;
+        margin-left: 3px;
         font-family: monospace;
     }
     
