@@ -1909,6 +1909,64 @@ def show_school_admin_dashboard():
                 else:
                     st.error("Unable to open subscription portal. Please try again later.")
         
+        st.markdown("---")
+        
+        # Account Settings - Email Change
+        st.markdown("### ⚙️ Account Settings")
+        
+        current_email = st.session_state.get('user_email', '')
+        st.markdown(f"""
+        <div style="background: #F5F0E8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <p style="margin: 0; color: #5D4E37;"><strong>Current Email:</strong> {current_email}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        with st.expander("📧 Change Email Address"):
+            st.markdown("Transfer your admin account to a new email address. You'll need to enter your current password to confirm this change.")
+            
+            with st.form("change_email_form"):
+                new_email = st.text_input("New Email Address", placeholder="newemail@school.edu")
+                confirm_password = st.text_input("Current Password", type="password", help="Enter your password to confirm this change")
+                
+                submit_email_change = st.form_submit_button("Update Email", use_container_width=True)
+                
+                if submit_email_change:
+                    if not new_email or not confirm_password:
+                        st.error("Please fill in all fields.")
+                    elif not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', new_email):
+                        st.error("Please enter a valid email address.")
+                    elif new_email.lower().strip() == current_email.lower():
+                        st.warning("The new email is the same as your current email.")
+                    else:
+                        # Additional session validation: verify persistent session is active
+                        from database import update_user_email, validate_persistent_session
+                        user_id = st.session_state.get('user_id')
+                        session_token = st.session_state.get('session_token')
+                        
+                        # Validate session token against database
+                        session_valid = False
+                        if session_token:
+                            validated = validate_persistent_session(db, session_token)
+                            if validated and validated.get('user_id') == user_id:
+                                session_valid = True
+                        
+                        if not session_valid:
+                            st.error("Session expired. Please log in again.")
+                        else:
+                            # Pass session user ID for server-side authorisation (role verified from DB)
+                            success, message = update_user_email(
+                                db, user_id, new_email, confirm_password,
+                                session_user_id=user_id
+                            )
+                            
+                            if success:
+                                st.success(message)
+                                st.session_state.user_email = new_email.lower().strip()
+                                st.balloons()
+                                st.rerun()
+                            else:
+                                st.error(message)
+        
     finally:
         if db:
             db.close()

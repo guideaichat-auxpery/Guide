@@ -628,6 +628,60 @@ def verify_password(password: str, hash: str) -> bool:
     """Verify a password against its hash"""
     return bcrypt.checkpw(password.encode('utf-8'), hash.encode('utf-8'))
 
+def update_user_email(db, user_id: int, new_email: str, current_password: str, 
+                      session_user_id: int = None) -> tuple[bool, str]:
+    """
+    Update a user's email address after verifying their current password.
+    Includes server-side authorisation checks - verifies role from database, not UI.
+    Returns (success, message) tuple.
+    """
+    try:
+        # Server-side authorisation: verify the session user matches the target user
+        if session_user_id is None or session_user_id != user_id:
+            logger.warning(f"Email change rejected: session mismatch (session={session_user_id}, target={user_id})")
+            return False, "Unauthorised: You can only change your own email address."
+        
+        # Fetch user from database - this is the authoritative source
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return False, "User not found."
+        
+        # Verify role from DATABASE (not from UI) - only school_admin and individual can change
+        db_role = user.role or 'individual'
+        if db_role not in ('school_admin', 'individual'):
+            logger.warning(f"Email change rejected: role {db_role} for user {user_id} cannot change email")
+            return False, "Unauthorised: Your account type cannot change email addresses."
+        
+        # Verify user is active
+        if not user.is_active:
+            return False, "Account is not active."
+        
+        # Verify current password
+        if not verify_password(current_password, user.password_hash):
+            logger.warning(f"Email change failed: incorrect password for user {user_id}")
+            return False, "Incorrect password. Please try again."
+        
+        # Check if new email is already in use
+        existing = db.query(User).filter(User.email.ilike(new_email), User.id != user_id).first()
+        if existing:
+            return False, "This email address is already in use by another account."
+        
+        # Store old email for audit log
+        old_email = user.email
+        
+        # Update email
+        user.email = new_email.lower().strip()
+        db.commit()
+        
+        # Audit log
+        logger.info(f"AUDIT: User {user_id} ({user.full_name}) email changed from {old_email} to {new_email}")
+        
+        return True, "Email address updated successfully."
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating user email: {str(e)}")
+        return False, "An error occurred while updating email. Please try again."
+
 def create_user(db, email: str, password: str, full_name: str, user_type: str) -> User:
     """Create a new user (educator)"""
     password_hash = hash_password(password)
