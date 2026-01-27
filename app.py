@@ -372,7 +372,10 @@ else:
                 if admin_db:
                     try:
                         admin_user = admin_db.query(User).filter(User.id == educator_id).first()
-                        if admin_user and getattr(admin_user, 'is_admin', False):
+                        # CRITICAL: Explicit boolean conversion to handle any type issues
+                        raw_admin = admin_user.is_admin if (admin_user and hasattr(admin_user, 'is_admin')) else False
+                        db_is_admin = bool(raw_admin) if raw_admin else False
+                        if admin_user and db_is_admin:
                             print(f"[SUBSCRIPTION CHECK] ADMIN user {educator_id} detected from DB - bypassing Stripe check")
                             st.session_state.is_admin = True
                             st.session_state.subscription_verified = True
@@ -431,7 +434,10 @@ else:
                 if db_check:
                     try:
                         db_user = db_check.query(User).filter(User.id == educator_id).first()
-                        if db_user and getattr(db_user, 'is_admin', False):
+                        # CRITICAL: Explicit boolean conversion to handle any type issues
+                        raw_admin = db_user.is_admin if (db_user and hasattr(db_user, 'is_admin')) else False
+                        db_is_admin = bool(raw_admin) if raw_admin else False
+                        if db_user and db_is_admin:
                             # User IS admin in database - fix session state and continue
                             print(f"[FAILSAFE] Admin user {educator_id} detected via DB check - fixing session state")
                             st.session_state.is_admin = True

@@ -96,7 +96,9 @@ def restore_session_from_token(token: str):
                 st.session_state.user_email = user.email
                 st.session_state.authenticated = True
                 st.session_state.is_student = False
-                st.session_state.is_admin = getattr(user, 'is_admin', False)
+                # CRITICAL: Explicit boolean conversion to handle any type issues
+                raw_is_admin = user.is_admin if hasattr(user, 'is_admin') else False
+                st.session_state.is_admin = bool(raw_is_admin) if raw_is_admin else False
                 st.session_state.user_role = getattr(user, 'role', 'individual')
                 st.session_state.school_id = getattr(user, 'school_id', None)
                 st.session_state.session_token = token
@@ -427,12 +429,6 @@ def show_pricing_page():
     educator_id = st.session_state.get('user_id')
     user_email = st.session_state.get('user_email')
     
-    # DEBUG: Visible debug panel for troubleshooting admin bypass
-    debug_info = []
-    debug_info.append(f"educator_id={educator_id}")
-    debug_info.append(f"user_email={user_email}")
-    debug_info.append(f"session is_admin={st.session_state.get('is_admin')}")
-    
     # ADMIN BYPASS: Check database directly for admin status
     if educator_id:
         from database import get_db, User
@@ -440,13 +436,12 @@ def show_pricing_page():
         if db:
             try:
                 user = db.query(User).filter(User.id == educator_id).first()
-                db_is_admin = getattr(user, 'is_admin', False) if user else None
-                debug_info.append(f"db_user_found={user is not None}")
-                debug_info.append(f"db_is_admin={db_is_admin}")
+                # CRITICAL: Explicit boolean conversion to handle any type issues
+                raw_admin = user.is_admin if (user and hasattr(user, 'is_admin')) else False
+                db_is_admin = bool(raw_admin) if raw_admin else False
                 
                 if user and db_is_admin:
                     # User is admin - grant access and redirect
-                    debug_info.append("ACTION: Granting admin access")
                     st.session_state.is_admin = True
                     st.session_state.subscription_verified = True
                     st.session_state.subscription_active = True
@@ -454,21 +449,10 @@ def show_pricing_page():
                     st.session_state.subscription_plan = 'admin'
                     st.success("Admin access detected. Redirecting...")
                     st.rerun()
-                else:
-                    debug_info.append("ACTION: User is NOT admin in database")
             except Exception as e:
-                debug_info.append(f"ERROR: {e}")
+                pass  # Continue to pricing page on error
             finally:
                 db.close()
-        else:
-            debug_info.append("ERROR: Could not get database connection")
-    else:
-        debug_info.append("WARNING: No educator_id in session")
-    
-    # Show debug info at top of pricing page
-    with st.expander("🔧 Debug Information (Admin Troubleshooting)", expanded=False):
-        for info in debug_info:
-            st.code(info)
     
     if st.button("🔄 Refresh Subscription Status", key="refresh_sub_btn"):
         invalidate_subscription_cache(educator_id)
@@ -1286,9 +1270,10 @@ def login_page():
                             st.session_state.user_role = getattr(user, 'role', 'individual')
                             st.session_state.school_id = getattr(user, 'school_id', None)
                             # Store admin status for bypassing subscription checks
-                            raw_is_admin = getattr(user, 'is_admin', False)
-                            st.session_state.is_admin = raw_is_admin
-                            print(f"[AUTH LOGIN] User {user.email} - raw is_admin from DB: {raw_is_admin}, user.is_admin: {user.is_admin}")
+                            # CRITICAL: Explicit boolean conversion to handle any type issues
+                            raw_is_admin = user.is_admin if hasattr(user, 'is_admin') else False
+                            st.session_state.is_admin = bool(raw_is_admin) if raw_is_admin else False
+                            print(f"[AUTH LOGIN] User {user.email} - raw is_admin: {raw_is_admin}, type: {type(raw_is_admin)}, final: {st.session_state.is_admin}")
                             # Clear any existing auth_mode to ensure clean state
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
