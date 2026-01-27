@@ -1,4 +1,15 @@
 import streamlit as st
+import logging
+import sys
+
+logger = logging.getLogger('auth')
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+if not logger.handlers:
+    logger.addHandler(handler)
+
 from database import (
     get_db, create_user, authenticate_user, authenticate_student, 
     get_user_by_email, get_student_by_username, create_student, 
@@ -55,24 +66,30 @@ def clear_session_cookie():
 
 def restore_session_from_token(token: str):
     """Restore user session from a valid token. Returns True if successful."""
+    logger.info("[SESSION RESTORE] Attempting to restore session from token")
     if not token:
+        logger.info("[SESSION RESTORE] No token provided")
         return False
     
     db = get_db()
     if not db:
+        logger.error("[SESSION RESTORE] Could not get database connection")
         return False
     
     try:
         session_data = validate_persistent_session(db, token)
         if not session_data:
+            logger.info("[SESSION RESTORE] Invalid session token")
             return False
         
         user_type = session_data.get('user_type')
+        logger.info(f"[SESSION RESTORE] Session data found, user_type={user_type}")
         
         if user_type == 'educator' and session_data.get('user_id'):
             from database import User
             user = db.query(User).filter(User.id == session_data['user_id']).first()
             if user and user.is_active:
+                logger.info(f"[SESSION RESTORE] User found: {user.email}, is_admin={user.is_admin}")
                 st.session_state.user_id = user.id
                 st.session_state.user_type = user.user_type
                 st.session_state.user_name = user.full_name
@@ -84,7 +101,10 @@ def restore_session_from_token(token: str):
                 st.session_state.school_id = getattr(user, 'school_id', None)
                 st.session_state.session_token = token
                 
+                logger.info(f"[SESSION RESTORE] Session state is_admin set to: {st.session_state.is_admin}")
+                
                 if st.session_state.is_admin:
+                    logger.info("[SESSION RESTORE] ADMIN PATH - setting admin subscription status")
                     st.session_state.subscription_verified = True
                     st.session_state.subscription_active = True
                     st.session_state.subscription_status = 'admin'
@@ -407,15 +427,20 @@ def show_pricing_page():
     educator_id = st.session_state.get('user_id')
     user_email = st.session_state.get('user_email')
     
+    logger.info(f"[PRICING PAGE] Called with educator_id={educator_id}, user_email={user_email}")
+    
     # ADMIN BYPASS: Check database directly for admin status
     if educator_id:
         from database import get_db, User
+        logger.info(f"[PRICING PAGE] Checking admin status for user {educator_id}")
         db = get_db()
         if db:
             try:
                 user = db.query(User).filter(User.id == educator_id).first()
+                logger.info(f"[PRICING PAGE] User found: {user is not None}, is_admin={getattr(user, 'is_admin', 'N/A') if user else 'N/A'}")
                 if user and getattr(user, 'is_admin', False):
                     # User is admin - grant access and redirect
+                    logger.info("[PRICING PAGE] ADMIN DETECTED - granting access and redirecting")
                     st.session_state.is_admin = True
                     st.session_state.subscription_verified = True
                     st.session_state.subscription_active = True
@@ -423,8 +448,14 @@ def show_pricing_page():
                     st.session_state.subscription_plan = 'admin'
                     st.success("Admin access detected. Redirecting...")
                     st.rerun()
+            except Exception as e:
+                logger.error(f"[PRICING PAGE] ERROR checking admin: {e}")
             finally:
                 db.close()
+        else:
+            logger.error("[PRICING PAGE] ERROR: Could not get database connection")
+    else:
+        logger.warning("[PRICING PAGE] No educator_id in session")
     
     if st.button("🔄 Refresh Subscription Status", key="refresh_sub_btn"):
         invalidate_subscription_cache(educator_id)
@@ -1242,13 +1273,16 @@ def login_page():
                             st.session_state.user_role = getattr(user, 'role', 'individual')
                             st.session_state.school_id = getattr(user, 'school_id', None)
                             # Store admin status for bypassing subscription checks
-                            st.session_state.is_admin = getattr(user, 'is_admin', False)
+                            raw_is_admin = getattr(user, 'is_admin', False)
+                            st.session_state.is_admin = raw_is_admin
+                            print(f"[AUTH LOGIN] User {user.email} - raw is_admin from DB: {raw_is_admin}, user.is_admin: {user.is_admin}")
                             # Clear any existing auth_mode to ensure clean state
                             if 'auth_mode' in st.session_state:
                                 del st.session_state['auth_mode']
                             
                             # Admin users bypass subscription checks entirely
                             if st.session_state.is_admin:
+                                print(f"[AUTH LOGIN] ADMIN PATH TRIGGERED for {user.email}")
                                 st.session_state.subscription_verified = True
                                 st.session_state.subscription_active = True
                                 st.session_state.subscription_status = 'admin'
