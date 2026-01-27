@@ -1,80 +1,27 @@
-Here's the updated plan with a dedicated UI/Design stage:
+One thing I need to think about is that if a School signs up for an anuual subscription with 10 seats and then the next year they only want 8 seats. How can we retain the existing and continuing accounts and remove the non-continuing AND align the payment system to that.
 
-School Master Account System - Final Plan
-Stage 1: Foundation (Database & Basic Structure)
-Create schools table
-Create school_invitations table
-Create school_audit_log table
-Modify users table: add school_id and role
-Stage 2: School Admin Registration & Dashboard
-School admin signup flow
-School Dashboard page (license usage, school details, logo upload)
-API routes for school registration and retrieval
-Stage 3: Invitation System
-Invite Educator page with email input
-Bulk invite option (paste email list)
-Email sent via Resend with unique invite link
-Pending invitations list with status
-Stage 4: Educator Accept & Onboarding
-Invite landing page (shows school name, validates code)
-Signup form (email prefilled, no payment required)
-Account linked to school, audit log entry created
-Stage 5: Educator Management
-Educator Management page listing all educators
-Remove educator (frees license)
-Password reset for educators (by school admin)
-Educator self-removal option
-Stage 6: Subscription & Access Control
-License count enforced (can't invite if at limit)
-7-day grace period on subscription expiry
-Read-only mode during grace (can export work)
-Warning notifications before expiry
-Stage 7: Invite Reminders & Polish
-Auto-resend pending invites after 7 days
-Expiry notifications
-Invite cancellation by admin
-Stage 8: UI Refinement & Visual Harmony
-Apply warm earth-tone palette (#D7C3AA, #C4A882) consistently across all school pages
-Ensure generous whitespace and breathing room
-Subtle card layouts with soft shadows
-Gentle transitions and hover states
-Typography aligned with existing Montessori theme
-Mobile responsiveness
-Consistent button styles (sandy secondary buttons)
-Visual polish pass on all school-related interfaces
-Stage 9: Admin Tools (Your Backend)
-Set license count for schools
-Activate/suspend schools
-View all schools and their educators
+REPLIT RESPONSE:
+This is a great practical question for managing school renewals. There are a few approaches to consider:
 
+Option 1: School Admin Self-Service (Recommended)
+The school admin manages the transition themselves:
 
+Before renewal, the school admin accesses their dashboard and removes educators who won't be continuing
+This reduces the educator count in the system
+When renewing, they can select their new seat count (must be ≥ current educator count)
+Stripe charges based on the new seat quantity
+Option 2: Stripe Quantity Update on Renewal
+School admin contacts you or uses a "Manage Subscription" button
+They're directed to the Stripe Customer Portal where they can adjust their seat quantity
+Removed educators lose access when the new billing period starts
+School admin then removes the non-continuing accounts from their dashboard
+Key Considerations:
+Timing: Should seat reduction happen immediately or at period end?
+Educator removal: Who decides which educators to remove? (Presumably the school admin)
+Grace period: Do removed educators get a warning before losing access?
+Data retention: What happens to removed educators' data? (Keep for records, or offer individual subscription?)
+What's your preference? Would you like:
 
-
-Stripe Setup for Schools
-You'll need to create a per-seat price in Stripe:
-
-Product: "Guide School Subscription"
-Price: Per-seat pricing (e.g., $10/seat/month or $100/seat/year)
-Billing: Use Stripe's "quantity" feature - when a school buys 15 seats, you charge quantity: 15
-The minimum 10 seats is enforced in your code, not in Stripe.
-
-Self-Service School Signup Plan
-Here's the flow:
-
-Landing Page (auxpery.com.au) → User enters:
-
-School name
-Admin email
-Number of seats (dropdown: 10, 15, 20, 25, 50, 100+)
-API Call → Creates Stripe Checkout with quantity: seats
-
-After Payment → Webhook creates:
-
-School record with invite code
-Admin user account
-Redirects admin to Guide to set password
-Admin Dashboard → School admin can:
-
-Copy invite link
-See license usage
-Add more seats later
+The school admin to remove educators first, then adjust payment?
+Or reduce seats first in Stripe, then require the school admin to remove educators to match?
+Also, should removed educators have the option to convert to an individual subscription to keep their account?
