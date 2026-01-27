@@ -429,10 +429,6 @@ def show_pricing_page():
     educator_id = st.session_state.get('user_id')
     user_email = st.session_state.get('user_email')
     
-    # TEMPORARY DEBUG: Show debug info on pricing page for admin users
-    if user_email in ['ben@hmswairoa.net', 'admin@auxpery.com.au']:
-        st.warning(f"DEBUG Pricing Page: educator_id={educator_id}, email={user_email}, session_is_admin={st.session_state.get('is_admin')}")
-    
     # ADMIN BYPASS: Check database directly for admin status
     if educator_id:
         from database import get_db, User

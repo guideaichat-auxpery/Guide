@@ -344,16 +344,7 @@ else:
         educator_id = st.session_state.get('user_id')
         
         # ADMIN BYPASS: Skip all subscription checks for admin users
-        # Get admin status from session and display for debugging
-        session_is_admin = st.session_state.get('is_admin')
-        session_verified = st.session_state.get('subscription_verified')
-        session_active = st.session_state.get('subscription_active')
-        
-        # TEMPORARY DEBUG: Show admin status in UI
-        if st.session_state.get('user_email') in ['ben@hmswairoa.net', 'admin@auxpery.com.au']:
-            st.info(f"Debug: is_admin={session_is_admin}, verified={session_verified}, active={session_active}")
-        
-        if session_is_admin:
+        if st.session_state.get('is_admin'):
             has_active_subscription = True
             subscription_status = 'admin'
             print(f"[SUBSCRIPTION CHECK] ADMIN BYPASS - granting access")
