@@ -427,20 +427,26 @@ def show_pricing_page():
     educator_id = st.session_state.get('user_id')
     user_email = st.session_state.get('user_email')
     
-    logger.info(f"[PRICING PAGE] Called with educator_id={educator_id}, user_email={user_email}")
+    # DEBUG: Visible debug panel for troubleshooting admin bypass
+    debug_info = []
+    debug_info.append(f"educator_id={educator_id}")
+    debug_info.append(f"user_email={user_email}")
+    debug_info.append(f"session is_admin={st.session_state.get('is_admin')}")
     
     # ADMIN BYPASS: Check database directly for admin status
     if educator_id:
         from database import get_db, User
-        logger.info(f"[PRICING PAGE] Checking admin status for user {educator_id}")
         db = get_db()
         if db:
             try:
                 user = db.query(User).filter(User.id == educator_id).first()
-                logger.info(f"[PRICING PAGE] User found: {user is not None}, is_admin={getattr(user, 'is_admin', 'N/A') if user else 'N/A'}")
-                if user and getattr(user, 'is_admin', False):
+                db_is_admin = getattr(user, 'is_admin', False) if user else None
+                debug_info.append(f"db_user_found={user is not None}")
+                debug_info.append(f"db_is_admin={db_is_admin}")
+                
+                if user and db_is_admin:
                     # User is admin - grant access and redirect
-                    logger.info("[PRICING PAGE] ADMIN DETECTED - granting access and redirecting")
+                    debug_info.append("ACTION: Granting admin access")
                     st.session_state.is_admin = True
                     st.session_state.subscription_verified = True
                     st.session_state.subscription_active = True
@@ -448,14 +454,21 @@ def show_pricing_page():
                     st.session_state.subscription_plan = 'admin'
                     st.success("Admin access detected. Redirecting...")
                     st.rerun()
+                else:
+                    debug_info.append("ACTION: User is NOT admin in database")
             except Exception as e:
-                logger.error(f"[PRICING PAGE] ERROR checking admin: {e}")
+                debug_info.append(f"ERROR: {e}")
             finally:
                 db.close()
         else:
-            logger.error("[PRICING PAGE] ERROR: Could not get database connection")
+            debug_info.append("ERROR: Could not get database connection")
     else:
-        logger.warning("[PRICING PAGE] No educator_id in session")
+        debug_info.append("WARNING: No educator_id in session")
+    
+    # Show debug info at top of pricing page
+    with st.expander("🔧 Debug Information (Admin Troubleshooting)", expanded=False):
+        for info in debug_info:
+            st.code(info)
     
     if st.button("🔄 Refresh Subscription Status", key="refresh_sub_btn"):
         invalidate_subscription_cache(educator_id)
