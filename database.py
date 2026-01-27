@@ -712,22 +712,28 @@ def create_student(db, username: str, password: str, full_name: str, educator_id
     return student
 
 def authenticate_user(db, email: str, password: str) -> Optional[User]:
-    """Authenticate a user by email and password"""
-    user = db.query(User).filter(User.email == email, User.is_active == True).first()
+    """Authenticate a user by email and password (case-insensitive email)"""
+    user = db.query(User).filter(
+        func.lower(User.email) == func.lower(email), 
+        User.is_active == True
+    ).first()
     if user and verify_password(password, user.password_hash):
         return user
     return None
 
 def authenticate_student(db, username: str, password: str) -> Optional[Student]:
-    """Authenticate a student by username and password"""
-    student = db.query(Student).filter(Student.username == username, Student.is_active == True).first()
+    """Authenticate a student by username and password (case-insensitive)"""
+    student = db.query(Student).filter(
+        func.lower(Student.username) == func.lower(username), 
+        Student.is_active == True
+    ).first()
     if student and verify_password(password, student.password_hash):
         return student
     return None
 
 def get_user_by_email(db, email: str) -> Optional[User]:
-    """Get user by email"""
-    return db.query(User).filter(User.email == email).first()
+    """Get user by email (case-insensitive)"""
+    return db.query(User).filter(func.lower(User.email) == func.lower(email)).first()
 
 def get_all_educators(db):
     """Get all educators"""
@@ -789,22 +795,45 @@ def school_has_available_licenses(db, school_id: int):
     return current_count < school.license_count
 
 def add_educator_to_school(db, user_id: int, school_id: int, role: str = 'school_educator'):
-    """Add an educator to a school. Returns (success, error_message)"""
+    """Add an educator to a school. Returns (success, error_message)
+    
+    Uses row-level locking to prevent race conditions when checking license limits.
+    """
+    from sqlalchemy import text
+    
     # Validate role
     if role not in ('school_admin', 'school_educator'):
         return (False, "Invalid role. Must be 'school_admin' or 'school_educator'")
     
-    # Check license availability (skip for school_admin as they're the first member)
-    if role == 'school_educator' and not school_has_available_licenses(db, school_id):
-        return (False, "No available licenses in this school")
-    
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        user.school_id = school_id
-        user.role = role
-        db.commit()
-        return (True, None)
-    return (False, "User not found")
+    try:
+        # For school_educator, use row-level lock to prevent race conditions
+        if role == 'school_educator':
+            # Lock the school row to prevent concurrent license checks
+            school = db.execute(
+                text("SELECT id, license_count FROM schools WHERE id = :school_id FOR UPDATE"),
+                {'school_id': school_id}
+            ).fetchone()
+            
+            if not school:
+                return (False, "School not found")
+            
+            # Count current educators while holding the lock
+            current_count = db.query(User).filter(User.school_id == school_id).count()
+            
+            if current_count >= school[1]:  # school[1] is license_count
+                return (False, "No available licenses in this school")
+        
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            user.school_id = school_id
+            user.role = role
+            db.commit()
+            return (True, None)
+        return (False, "User not found")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error adding educator to school: {e}")
+        return (False, "An error occurred while joining the school")
 
 def remove_educator_from_school(db, user_id: int):
     """Remove an educator from their school (sets school_id to null)"""
@@ -855,8 +884,8 @@ def is_school_subscription_active(school):
     return False
 
 def get_student_by_username(db, username: str) -> Optional[Student]:
-    """Get student by username"""
-    return db.query(Student).filter(Student.username == username).first()
+    """Get student by username (case-insensitive)"""
+    return db.query(Student).filter(func.lower(Student.username) == func.lower(username)).first()
 
 def log_student_activity(db, student_id: int, activity_type: str, prompt_text: Optional[str] = None, 
                         response_text: Optional[str] = None, session_id: Optional[str] = None, extra_data: Optional[str] = None):

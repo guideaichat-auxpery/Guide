@@ -1196,11 +1196,27 @@ async function handlePaymentFailed(invoice) {
   
   const customerId = invoice.customer;
   
-  await db.query(
-    `UPDATE users SET subscription_status = 'past_due' WHERE stripe_customer_id = $1`,
+  // Check if this is a school subscription
+  const schoolCheck = await db.query(
+    'SELECT id FROM schools WHERE stripe_customer_id = $1',
     [customerId]
   );
-  console.log(`Marked subscription as past_due for customer ${customerId}`);
+  
+  if (schoolCheck.rows.length > 0) {
+    // Update school subscription status
+    await db.query(
+      `UPDATE schools SET subscription_status = 'past_due' WHERE stripe_customer_id = $1`,
+      [customerId]
+    );
+    console.log(`Marked school subscription as past_due for customer ${customerId}`);
+  } else {
+    // Update individual user subscription status
+    await db.query(
+      `UPDATE users SET subscription_status = 'past_due' WHERE stripe_customer_id = $1`,
+      [customerId]
+    );
+    console.log(`Marked user subscription as past_due for customer ${customerId}`);
+  }
 }
 
 async function initDatabase() {

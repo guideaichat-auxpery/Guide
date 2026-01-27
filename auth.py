@@ -1814,6 +1814,19 @@ def show_school_admin_dashboard():
             st.error("School not found.")
             return
         
+        # Check and display subscription status warning if needed
+        from database import is_school_subscription_active
+        subscription_active = is_school_subscription_active(school)
+        
+        if not subscription_active:
+            status_text = school.subscription_status or 'inactive'
+            if status_text == 'canceled' and school.subscription_end:
+                st.warning(f"⚠️ Your school's subscription has been cancelled. Access ended on {school.subscription_end.strftime('%d %B %Y')}. Please renew to continue using Guide.")
+            elif status_text == 'past_due':
+                st.warning("⚠️ Your school's subscription payment is past due. Please update your payment method to avoid service interruption.")
+            else:
+                st.warning("⚠️ Your school's subscription is not active. Please contact support or renew your subscription.")
+        
         # Header with school info
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, #D7C3AA 0%, #C4A882 100%); padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
