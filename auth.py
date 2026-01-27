@@ -1585,8 +1585,22 @@ def school_join_page(invite_code: str):
                             authenticated_user = authenticate_user(db, email, password)
                             if not authenticated_user:
                                 st.error("An account with this email already exists. Please enter the correct password to join the school, or log in using the link below.")
-                            elif existing_user.school_id:
-                                st.error("This account is already associated with a school")
+                            elif existing_user.school_id and existing_user.school_id != school.id:
+                                # User belongs to a DIFFERENT school
+                                st.error("This account is already associated with another school")
+                            elif existing_user.school_id == school.id:
+                                # User is already in THIS school - just log them in
+                                st.session_state.user_id = existing_user.id
+                                st.session_state.user_type = existing_user.user_type
+                                st.session_state.user_name = existing_user.full_name
+                                st.session_state.user_email = existing_user.email
+                                st.session_state.authenticated = True
+                                st.session_state.is_student = False
+                                st.session_state.school_id = school.id
+                                st.session_state.user_role = existing_user.role or 'school_educator'
+                                st.success(f"Welcome back to {school.name}!")
+                                st.query_params.clear()
+                                st.rerun()
                             else:
                                 success, error = add_educator_to_school(db, existing_user.id, school.id, 'school_educator')
                                 if success:

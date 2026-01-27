@@ -520,8 +520,22 @@ app.post('/api/public/complete-school-setup', async (req, res) => {
       subscriptionEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
     }
     
-    // Generate invite code for school
-    const inviteCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+    // Generate unique invite code for school (with collision check)
+    let inviteCode;
+    let codeExists = true;
+    let attempts = 0;
+    while (codeExists && attempts < 10) {
+      inviteCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+      const existingCode = await db.query(
+        'SELECT id FROM schools WHERE invite_code = $1',
+        [inviteCode]
+      );
+      codeExists = existingCode.rows.length > 0;
+      attempts++;
+    }
+    if (codeExists) {
+      return res.status(500).json({ success: false, error: 'Unable to generate unique school code. Please try again.' });
+    }
     
     // Hash password using bcrypt (same as Python app)
     const bcrypt = require('bcryptjs');
@@ -1079,9 +1093,21 @@ async function handleSubscriptionUpdated(subscription) {
   const status = subscription.status;
   const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null;
   
-  // Check if this is a school subscription (by metadata or checking schools table)
-  const isSchool = subscription.metadata?.type === 'school';
-  const schoolId = subscription.metadata?.schoolId;
+  // Check if this is a school subscription (by metadata OR by checking schools table)
+  let isSchool = subscription.metadata?.type === 'school';
+  let schoolId = subscription.metadata?.schoolId;
+  
+  // Fallback: check schools table by customer_id if metadata is missing
+  if (!isSchool && !schoolId) {
+    const schoolCheck = await db.query(
+      'SELECT id FROM schools WHERE stripe_customer_id = $1',
+      [customerId]
+    );
+    if (schoolCheck.rows.length > 0) {
+      isSchool = true;
+      schoolId = schoolCheck.rows[0].id;
+    }
+  }
   
   if (isSchool || schoolId) {
     const seatCount = subscription.items?.data[0]?.quantity || 10;
@@ -1125,9 +1151,21 @@ async function handleSubscriptionDeleted(subscription) {
   
   const customerId = subscription.customer;
   
-  // Check if this is a school subscription
-  const isSchool = subscription.metadata?.type === 'school';
-  const schoolId = subscription.metadata?.schoolId;
+  // Check if this is a school subscription (by metadata OR by checking schools table)
+  let isSchool = subscription.metadata?.type === 'school';
+  let schoolId = subscription.metadata?.schoolId;
+  
+  // Fallback: check schools table by customer_id if metadata is missing
+  if (!isSchool && !schoolId) {
+    const schoolCheck = await db.query(
+      'SELECT id FROM schools WHERE stripe_customer_id = $1',
+      [customerId]
+    );
+    if (schoolCheck.rows.length > 0) {
+      isSchool = true;
+      schoolId = schoolCheck.rows[0].id;
+    }
+  }
   
   if (isSchool || schoolId) {
     await db.query(

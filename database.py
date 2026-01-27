@@ -838,16 +838,20 @@ def get_all_schools(db):
     return db.query(School).order_by(School.created_at.desc()).all()
 
 def is_school_subscription_active(school):
-    """Check if a school's subscription is active (with 7-day grace period)"""
+    """Check if a school's subscription is active (with grace periods)"""
     if not school:
         return False
     if school.subscription_status in ('active', 'trialing'):
         return True
     if school.subscription_status == 'past_due':
-        # 7-day grace period
+        # 7-day grace period for past due
         if school.subscription_end:
             grace_end = school.subscription_end + timedelta(days=7)
             return datetime.utcnow() < grace_end
+    if school.subscription_status == 'canceled':
+        # Stripe allows access until period end even after cancellation
+        if school.subscription_end:
+            return datetime.utcnow() < school.subscription_end
     return False
 
 def get_student_by_username(db, username: str) -> Optional[Student]:
