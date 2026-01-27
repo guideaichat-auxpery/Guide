@@ -249,8 +249,35 @@ def get_api_headers():
 def check_subscription_status(educator_id):
     """Check if educator has an active subscription (with short cache for responsiveness)
     
-    For school educators, checks the school's subscription instead of individual subscription.
+    PRIORITY ORDER:
+    1. Admin users (is_admin=true in DB) - always get access
+    2. School educators - check school subscription
+    3. Individual users - check individual subscription
     """
+    if not educator_id:
+        print("[SUB CHECK] No educator_id provided")
+        return {'isActive': False, 'status': 'none'}
+    
+    # FIRST: Check if user is admin directly from database (bypass all caching)
+    db = get_db()
+    if db:
+        try:
+            from database import User
+            user = db.query(User).filter(User.id == educator_id).first()
+            if user and getattr(user, 'is_admin', False):
+                print(f"[SUB CHECK] Admin user {educator_id} detected - granting access")
+                st.session_state.is_admin = True
+                return {
+                    'isActive': True,
+                    'status': 'admin',
+                    'plan': 'admin',
+                    'is_admin': True
+                }
+        except Exception as e:
+            print(f"[SUB CHECK] Error checking admin status: {e}")
+        finally:
+            db.close()
+    
     cache_key = f'subscription_cache_{educator_id}'
     cache_time_key = f'subscription_cache_time_{educator_id}'
     

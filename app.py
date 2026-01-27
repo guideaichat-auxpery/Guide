@@ -361,7 +361,33 @@ else:
             import stripe_client
             user_email = st.session_state.get('user_email')
             
-            if user_email and educator_id:
+            # Initialize defaults
+            has_active_subscription = False
+            subscription_status = 'none'
+            
+            # FIRST: Check if user is admin from database before anything else
+            if educator_id:
+                from database import get_db, User
+                admin_db = get_db()
+                if admin_db:
+                    try:
+                        admin_user = admin_db.query(User).filter(User.id == educator_id).first()
+                        if admin_user and getattr(admin_user, 'is_admin', False):
+                            print(f"[SUBSCRIPTION CHECK] ADMIN user {educator_id} detected from DB - bypassing Stripe check")
+                            st.session_state.is_admin = True
+                            st.session_state.subscription_verified = True
+                            st.session_state.subscription_active = True
+                            st.session_state.subscription_status = 'admin'
+                            st.session_state.subscription_plan = 'admin'
+                            has_active_subscription = True
+                            subscription_status = 'admin'
+                    except Exception as e:
+                        print(f"[SUBSCRIPTION CHECK] Error checking admin: {e}")
+                    finally:
+                        admin_db.close()
+            
+            # Only proceed with Stripe check if not already resolved as admin
+            if not st.session_state.get('is_admin') and user_email and educator_id:
                 stripe_result = sync_subscription_from_stripe(educator_id, user_email)
                 stripe_status = stripe_result.get('status', 'none') if stripe_result else 'error'
                 
@@ -390,8 +416,8 @@ else:
                     st.session_state.subscription_active = has_active_subscription
                     st.session_state.subscription_status = subscription_status
                     st.session_state.subscription_plan = plan
-            else:
-                # No email in session - use database as last resort
+            elif not st.session_state.get('is_admin'):
+                # No email in session and not admin - use database as last resort
                 subscription_info = check_subscription_status(educator_id)
                 has_active_subscription = subscription_info.get('isActive', False)
                 subscription_status = subscription_info.get('status', 'none')
