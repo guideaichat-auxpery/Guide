@@ -344,9 +344,13 @@ else:
         educator_id = st.session_state.get('user_id')
         
         # ADMIN BYPASS: Skip all subscription checks for admin users
+        # DEBUG: Log what's in session state for troubleshooting
+        print(f"[SUBSCRIPTION CHECK] educator_id={educator_id}, is_admin={st.session_state.get('is_admin')}, subscription_verified={st.session_state.get('subscription_verified')}, subscription_active={st.session_state.get('subscription_active')}")
+        
         if st.session_state.get('is_admin'):
             has_active_subscription = True
             subscription_status = 'admin'
+            print(f"[SUBSCRIPTION CHECK] ADMIN BYPASS - granting access")
         elif st.session_state.get('subscription_verified'):
             # Session already verified with Stripe - trust it completely
             has_active_subscription = st.session_state.get('subscription_active', False)
@@ -394,8 +398,28 @@ else:
         
         # If no active subscription, show pricing page (unless accessing account settings, admin, or in grace access)
         if not has_active_subscription and subscription_status not in ['trialing', 'active', 'grace', 'admin']:
+            # FAILSAFE: Double-check admin status from database before showing paywall
+            if educator_id:
+                from database import get_db, User
+                db_check = get_db()
+                if db_check:
+                    try:
+                        db_user = db_check.query(User).filter(User.id == educator_id).first()
+                        if db_user and getattr(db_user, 'is_admin', False):
+                            # User IS admin in database - fix session state and continue
+                            print(f"[FAILSAFE] Admin user {educator_id} detected via DB check - fixing session state")
+                            st.session_state.is_admin = True
+                            st.session_state.subscription_verified = True
+                            st.session_state.subscription_active = True
+                            st.session_state.subscription_status = 'admin'
+                            st.session_state.subscription_plan = 'admin'
+                            has_active_subscription = True
+                            subscription_status = 'admin'
+                    finally:
+                        db_check.close()
+            
             # Allow access to account settings and logout even without subscription
-            if st.session_state.get('auth_mode') not in ['account_deletion', 'privacy_policy']:
+            if not has_active_subscription and st.session_state.get('auth_mode') not in ['account_deletion', 'privacy_policy']:
                 show_pricing_page()
                 st.stop()
         
