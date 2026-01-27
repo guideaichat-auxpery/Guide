@@ -1338,9 +1338,20 @@ def get_chat_conversation_by_session(db, session_id: str):
     return db.query(ChatConversation).filter(ChatConversation.session_id == session_id).first()
 
 def rename_chat_conversation(db, conversation_id: int, new_title: str, user_id: int = None, student_id: int = None):
-    """Rename a chat conversation"""
+    """Rename a chat conversation
+    
+    SECURITY: Verifies the caller owns the conversation.
+    """
     conversation = get_chat_conversation_by_id(db, conversation_id)
     if conversation:
+        # AUTHORIZATION CHECK: Verify the caller owns this conversation
+        if user_id is not None and conversation.user_id != user_id:
+            logger.warning(f"Unauthorized chat rename attempt: user {user_id} tried to rename conversation {conversation_id} owned by user {conversation.user_id}")
+            return None
+        if student_id is not None and conversation.student_id != student_id:
+            logger.warning(f"Unauthorized chat rename attempt: student {student_id} tried to rename conversation {conversation_id} owned by student {conversation.student_id}")
+            return None
+        
         conversation.title = new_title
         conversation.updated_at = datetime.utcnow()
         db.commit()
@@ -1353,9 +1364,20 @@ def rename_chat_conversation(db, conversation_id: int, new_title: str, user_id: 
     return None
 
 def delete_chat_conversation(db, conversation_id: int, user_id: int = None, student_id: int = None):
-    """Soft delete a chat conversation (mark as inactive)"""
+    """Soft delete a chat conversation (mark as inactive)
+    
+    SECURITY: Verifies the caller owns the conversation.
+    """
     conversation = get_chat_conversation_by_id(db, conversation_id)
     if conversation:
+        # AUTHORIZATION CHECK: Verify the caller owns this conversation
+        if user_id is not None and conversation.user_id != user_id:
+            logger.warning(f"Unauthorized chat delete attempt: user {user_id} tried to delete conversation {conversation_id} owned by user {conversation.user_id}")
+            return False
+        if student_id is not None and conversation.student_id != student_id:
+            logger.warning(f"Unauthorized chat delete attempt: student {student_id} tried to delete conversation {conversation_id} owned by student {conversation.student_id}")
+            return False
+        
         conversation.is_active = False
         conversation.updated_at = datetime.utcnow()
         db.commit()
@@ -1552,10 +1574,18 @@ def get_pending_safety_alerts(db, educator_id: int) -> list:
         return []
 
 def review_safety_alert(db, alert_id: int, reviewer_id: int, status: str, notes: Optional[str] = None):
-    """Mark a safety alert as reviewed."""
+    """Mark a safety alert as reviewed.
+    
+    SECURITY: Verifies reviewer is the educator who owns the alert.
+    """
     try:
         alert = db.query(SafetyAlert).filter(SafetyAlert.id == alert_id).first()
         if alert:
+            # AUTHORIZATION CHECK: Verify the reviewer is the educator who owns this alert
+            if alert.educator_id != reviewer_id:
+                logger.warning(f"Unauthorized safety alert review attempt: user {reviewer_id} tried to review alert {alert_id} belonging to educator {alert.educator_id}")
+                return None
+            
             alert.status = status
             alert.reviewed_by = reviewer_id
             alert.reviewed_at = datetime.utcnow()
@@ -2810,14 +2840,25 @@ def get_filtered_student_chats(db, educator_id: Optional[int] = None, student_id
         print(f"Error getting filtered student chats: {str(e)}")
         return []
 
-def update_chat_summary(db, conversation_id: int, summary: str):
-    """Update the summary field of a chat conversation"""
+def update_chat_summary(db, conversation_id: int, summary: str, user_id: int = None, student_id: int = None):
+    """Update the summary field of a chat conversation
+    
+    SECURITY: Verifies the caller owns the conversation if user_id or student_id provided.
+    """
     try:
         conversation = db.query(ChatConversation).filter(
             ChatConversation.id == conversation_id
         ).first()
         
         if conversation:
+            # AUTHORIZATION CHECK: If caller identity provided, verify ownership
+            if user_id is not None and conversation.user_id != user_id:
+                logger.warning(f"Unauthorized summary update attempt: user {user_id} for conversation {conversation_id}")
+                return False
+            if student_id is not None and conversation.student_id != student_id:
+                logger.warning(f"Unauthorized summary update attempt: student {student_id} for conversation {conversation_id}")
+                return False
+            
             conversation.summary = summary
             db.commit()
             return True

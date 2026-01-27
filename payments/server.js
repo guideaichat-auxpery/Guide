@@ -1541,6 +1541,27 @@ async function startServer() {
   
   await initDatabase();
   
+  // Schedule cleanup of expired pending subscriptions (runs every 6 hours)
+  async function cleanupExpiredPendingSubscriptions() {
+    try {
+      const result = await db.query(
+        `DELETE FROM pending_subscriptions 
+         WHERE (expires_at < NOW() AND redeemed = FALSE)
+         OR (redeemed = TRUE AND redeemed_at < NOW() - INTERVAL '30 days')
+         RETURNING id`
+      );
+      if (result.rowCount > 0) {
+        console.log(`🧹 Cleaned up ${result.rowCount} expired/old pending subscription records`);
+      }
+    } catch (err) {
+      console.error('Error cleaning up pending subscriptions:', err.message);
+    }
+  }
+  
+  // Run cleanup on startup and every 6 hours
+  cleanupExpiredPendingSubscriptions();
+  setInterval(cleanupExpiredPendingSubscriptions, 6 * 60 * 60 * 1000);
+  
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`💳 Guide Payments Service running on port ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);

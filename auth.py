@@ -616,7 +616,9 @@ def show_account_settings():
                             if not is_valid:
                                 st.error(msg)
                             else:
-                                result = admin_reset_password(lookup_result['user_id'], new_temp_password)
+                                # Pass the admin's user_id for server-side authorization verification
+                                admin_user_id = st.session_state.get('user_id')
+                                result = admin_reset_password(lookup_result['user_id'], new_temp_password, admin_user_id=admin_user_id)
                                 if result['success']:
                                     st.success(f"Password reset for {lookup_result['email']}. Please send them the new password.")
                                     st.session_state['admin_lookup_result'] = None
@@ -757,8 +759,11 @@ def change_user_password(user_id, current_password, new_password):
     finally:
         db.close()
 
-def admin_reset_password(user_id, new_password):
-    """Admin function to reset a user's password"""
+def admin_reset_password(user_id, new_password, admin_user_id=None):
+    """Admin function to reset a user's password.
+    
+    SECURITY: Verifies caller is an admin before allowing password reset.
+    """
     import bcrypt
     db = get_db()
     if not db:
@@ -766,6 +771,18 @@ def admin_reset_password(user_id, new_password):
     
     try:
         from database import User
+        
+        # AUTHORIZATION CHECK: Verify the caller is an admin from database (not session)
+        if admin_user_id:
+            admin_user = db.query(User).filter(User.id == admin_user_id).first()
+            if not admin_user or not getattr(admin_user, 'is_admin', False):
+                return {'success': False, 'error': 'Unauthorized: Admin privileges required'}
+        else:
+            # If no admin_user_id provided, check session (backwards compatible but less secure)
+            import streamlit as st
+            if not st.session_state.get('is_admin'):
+                return {'success': False, 'error': 'Unauthorized: Admin privileges required'}
+        
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return {'success': False, 'error': 'User not found'}
