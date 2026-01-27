@@ -539,41 +539,42 @@ def apply_chatgpt_sidebar_style():
         font-weight: 600 !important;
     }
     
-    /* ===== ULTRA-COMPACT SIDEBAR BUTTONS ===== */
+    /* ===== COMFORTABLE SIDEBAR TOOL BUTTONS ===== */
     
-    /* All sidebar buttons - very small and compact */
+    /* Tool buttons - comfortable and readable */
     section[data-testid="stSidebar"] button,
     [data-testid="stSidebar"] .stButton button,
     [data-testid="stSidebar"] button[kind="primary"],
     [data-testid="stSidebar"] button[kind="secondary"] {
-        font-size: 10px !important;
-        padding: 4px 6px !important;
-        min-height: 24px !important;
-        max-height: 28px !important;
-        line-height: 1.2 !important;
-        border-radius: 4px !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        font-size: 13px !important;
+        padding: 10px 14px !important;
+        min-height: 40px !important;
+        line-height: 1.4 !important;
+        border-radius: 8px !important;
+        white-space: normal !important;
+        overflow: visible !important;
     }
     
-    /* Conversation list buttons - single line, truncated */
+    /* Saved chat conversation buttons - taller with text wrapping */
     section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] button {
-        font-size: 9px !important;
-        padding: 3px 5px !important;
-        min-height: 22px !important;
-        max-height: 24px !important;
+        font-size: 12px !important;
+        padding: 10px 12px !important;
+        min-height: 52px !important;
+        line-height: 1.5 !important;
+        white-space: normal !important;
+        text-align: left !important;
+        word-wrap: break-word !important;
     }
     
-    /* Icon buttons (edit/delete) - tiny */
+    /* Icon buttons (edit/delete) - compact but visible */
     section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:not(:first-child) button {
-        font-size: 10px !important;
-        padding: 2px 4px !important;
-        min-height: 20px !important;
-        max-height: 22px !important;
-        min-width: 20px !important;
-        max-width: 24px !important;
-        opacity: 0.6 !important;
+        font-size: 12px !important;
+        padding: 6px 8px !important;
+        min-height: 32px !important;
+        max-height: 36px !important;
+        min-width: 32px !important;
+        max-width: 36px !important;
+        opacity: 0.7 !important;
     }
     
     section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] [data-testid="column"]:not(:first-child) button:hover {
@@ -602,38 +603,38 @@ def apply_chatgpt_sidebar_style():
         background: rgba(166, 123, 91, 0.1) !important;
     }
     
-    /* Reduce all vertical gaps in sidebar */
+    /* Comfortable vertical spacing in sidebar */
     section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] > div {
-        margin-bottom: 1px !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+        margin-bottom: 4px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
     }
     
     section[data-testid="stSidebar"] .stButton {
-        margin-bottom: 1px !important;
+        margin-bottom: 6px !important;
     }
     
-    /* Compact horizontal blocks (button rows) */
+    /* Comfortable horizontal blocks (button rows) */
     section[data-testid="stSidebar"] [data-testid="stHorizontalBlock"] {
-        gap: 2px !important;
-        margin-bottom: 2px !important;
+        gap: 6px !important;
+        margin-bottom: 8px !important;
     }
     
     section[data-testid="stSidebar"] [data-testid="column"] {
-        padding: 0 1px !important;
+        padding: 0 2px !important;
     }
     
-    /* Section headers - compact */
+    /* Section headers - readable */
     .sidebar-section-header {
-        font-size: 8px !important;
+        font-size: 11px !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 0.8px !important;
         font-weight: 600 !important;
-        padding: 6px 4px 3px 4px !important;
-        margin-top: 3px !important;
-        margin-bottom: 2px !important;
+        padding: 12px 6px 6px 6px !important;
+        margin-top: 8px !important;
+        margin-bottom: 6px !important;
         color: #8B7355 !important;
-        border-top: 1px solid rgba(166, 123, 91, 0.1) !important;
+        border-top: 1px solid rgba(166, 123, 91, 0.15) !important;
     }
     
     .sidebar-section-header:first-of-type {
