@@ -380,8 +380,46 @@ def show_pricing_page():
     educator_id = st.session_state.get('user_id')
     user_email = st.session_state.get('user_email')
     
+    # ADMIN BYPASS: Check database directly for admin status
+    if educator_id:
+        from database import get_db, User
+        db = get_db()
+        if db:
+            try:
+                user = db.query(User).filter(User.id == educator_id).first()
+                if user and getattr(user, 'is_admin', False):
+                    # User is admin - grant access and redirect
+                    st.session_state.is_admin = True
+                    st.session_state.subscription_verified = True
+                    st.session_state.subscription_active = True
+                    st.session_state.subscription_status = 'admin'
+                    st.session_state.subscription_plan = 'admin'
+                    st.success("Admin access detected. Redirecting...")
+                    st.rerun()
+            finally:
+                db.close()
+    
     if st.button("🔄 Refresh Subscription Status", key="refresh_sub_btn"):
         invalidate_subscription_cache(educator_id)
+        
+        # First check if user is admin in database
+        if educator_id:
+            from database import get_db, User
+            db = get_db()
+            if db:
+                try:
+                    user = db.query(User).filter(User.id == educator_id).first()
+                    if user and getattr(user, 'is_admin', False):
+                        st.session_state.is_admin = True
+                        st.session_state.subscription_verified = True
+                        st.session_state.subscription_active = True
+                        st.session_state.subscription_status = 'admin'
+                        st.session_state.subscription_plan = 'admin'
+                        st.success("Admin access confirmed! Redirecting...")
+                        st.rerun()
+                finally:
+                    db.close()
+        
         if user_email and educator_id:
             sync_result = sync_subscription_from_stripe(educator_id, user_email)
             if sync_result and sync_result.get('isActive'):
