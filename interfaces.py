@@ -1699,23 +1699,25 @@ def show_great_story_interface():
     
     with tab1:
         st.markdown("### Theme or Topic")
-        st.caption("Enter a theme or topic to develop a Montessori Great Story")
+        st.caption("Enter a theme or topic to develop an immersive historical narrative Great Story")
         
         # Theme/topic input
-        theme = st.text_input("Story Theme or Topic:", placeholder="e.g., The Story of Water, The Coming of Life, Ancient Civilizations")
+        theme = st.text_input("Story Theme or Topic:", placeholder="e.g., Life in Medieval Europe, The Magna Carta, Ancient Trade Routes")
         
-        # Age group selector
-        age_group = st.selectbox(
-            "Target Age Group:",
-            ["All Ages", "12-15", "9-12", "6-9", "3-6"],
-            format_func=lambda x: {
-                "3-6": "Early Years (3-6)",
-                "6-9": "Lower Primary (6-9)", 
-                "9-12": "Upper Primary (9-12)",
-                "12-15": "Adolescent (12-15)",
-                "All Ages": "All Ages"
-            }[x]
+        # Year level selector for historical narratives (Years 7-9)
+        year_level = st.selectbox(
+            "Target Year Level:",
+            ["Year 7", "Year 8", "Year 9"],
+            index=1,
+            help="Select the year level to adjust narrative complexity, vocabulary, and reflection prompts"
         )
+        
+        # Map year level to age group for database storage
+        age_group_map = {"Year 7": "12-15", "Year 8": "12-15", "Year 9": "12-15"}
+        age_group = age_group_map.get(year_level, "12-15")
+        
+        # Story style info
+        st.info("📚 **Historical Narrative Style**: Stories follow our immersive, observational approach with quiet warmth, concrete sensory detail, ADHD-friendly paragraphs, and subtle reflection prompts embedded throughout. Every story includes a Historical Note for factual verification.")
         
         # Story development prompts
         st.markdown("### Story Development Assistance")
@@ -1724,22 +1726,27 @@ def show_great_story_interface():
         with cols[0]:
             if st.button("Generate Story Outline", use_container_width=True):
                 if theme:
+                    from utils import get_great_story_system_prompt
                     system_prompt = f"""IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
 
-You are a Montessori Great Story specialist with deep knowledge of cosmic education principles.
-                    
-                    Create an inspiring story outline for the theme: "{theme}"
-                    Target age group: {age_group}
-                    
-                    The outline should:
-                    - Begin with wonder and capture imagination
-                    - Connect to the cosmic story and the child's place in the universe
-                    - Include sensory details and vivid imagery
-                    - Build toward questions for further exploration
-                    - Follow Montessori Great Story principles
-                    - Be developmentally appropriate for {age_group}
-                    
-                    Provide a detailed outline with key story beats and suggested narrative elements."""
+You are an AI historian and storyteller specialising in immersive historical narratives for {year_level} students (ages 12-15).
+
+Create a detailed story outline for the theme: "{theme}"
+
+The outline should:
+- Ground the reader in time and place through sensory observation
+- Identify key historical figures AND ordinary people to feature
+- Plan 3-5 subtle reflection prompts to embed throughout
+- Note specific historical details to verify for accuracy
+- Structure: Opening (sensory grounding) → Development (human-scale narrative) → Agency moments → Closing reflection
+- Follow our historical narrative style: quiet, observational, warm but unsentimental
+
+Provide a structured outline with:
+1. Opening scene (sensory details)
+2. Key story beats with historical context
+3. Suggested reflection prompts
+4. Closing that links past to present
+5. Historical details to verify"""
                     
                     with st.spinner("Creating story outline..."):
                         outline = call_openai_api(
@@ -1755,37 +1762,29 @@ You are a Montessori Great Story specialist with deep knowledge of cosmic educat
         with cols[1]:
             if st.button("Generate Full Story", use_container_width=True):
                 if theme:
+                    from utils import get_great_story_system_prompt
                     outline_context = st.session_state.get('story_outline', '')
-                    system_prompt = f"""IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, etc.) in all responses.
-
-You are a Montessori Great Story specialist with deep knowledge of cosmic education principles.
                     
-                    Create a complete Montessori Great Story for the theme: "{theme}"
-                    Target age group: {age_group}
-                    
-                    {f'Based on this outline: {outline_context}' if outline_context else ''}
-                    
-                    The story should:
-                    - Begin with a captivating opening that creates wonder
-                    - Weave in cosmic education principles
-                    - Use rich, sensory language appropriate for {age_group}
-                    - Connect the child to the greater universe story
-                    - End with questions or invitations for further exploration
-                    - Be approximately 800-1200 words
-                    - Follow the Montessori tradition of great stories
-                    
-                    Write the complete story now."""
+                    # Use the comprehensive training pack system prompt
+                    system_prompt = get_great_story_system_prompt(
+                        year_level=year_level,
+                        theme=theme,
+                        outline_context=outline_context
+                    )
                     
                     with st.spinner("Crafting your Great Story..."):
                         story = call_openai_api(
                             [{"role": "user", "content": system_prompt}],
                             curriculum_type="Montessori",
-                            max_tokens=3000,
+                            max_tokens=3500,
                             interface_type="great_stories"
                         )
                         st.session_state.generated_story = story
                         st.markdown("### 📖 Your Great Story")
                         st.markdown(story)
+                        
+                        # Factual accuracy reminder
+                        st.caption("💡 **Tip**: Check the Historical Note section at the end for key facts to verify. The AI has been instructed to prioritise accuracy, but we recommend cross-checking specific dates, names, and events.")
                         
                         # Save story option
                         if database_available and educator_id:
