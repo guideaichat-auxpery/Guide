@@ -86,7 +86,7 @@ def generate_smart_title(first_message: str) -> str:
         client = OpenAI(timeout=5.0)  # 5 second timeout to avoid blocking
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {
                     "role": "system",
@@ -2323,7 +2323,7 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
         @retry_with_exponential_backoff(max_retries=3, initial_delay=1.0)
         def make_api_call():
             return client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=api_messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
@@ -2340,11 +2340,11 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
 def get_max_tokens_for_user_type(user_type):
     """Get appropriate token limit based on user type"""
     if user_type in ["educator"]:
-        return 6000  # Enhanced for comprehensive responses and detailed planning
+        return 8000  # Enhanced for comprehensive, sophisticated responses with GPT-4o
     elif user_type == "student":
-        return 1200   # Sufficient for structured 3-part responses with examples
+        return 2500   # Richer responses for student research and learning support
     else:
-        return 1500  # Default
+        return 3000  # Default
 
 # ---- CONVERSATION HISTORY MANAGEMENT ----
 def manage_conversation_history(messages, max_history=10):
@@ -4649,7 +4649,7 @@ def call_pd_expert(user_email: str, prompt: str, openai_client) -> dict:
         memory_summary = ""
         if previous_prompts:
             summary_response = openai_client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[
                     {
                         "role": "system",
@@ -4786,7 +4786,7 @@ REQUIRED STRUCTURE (Use all sections with extensive detail):
         
         # Generate expert response with extended token limit
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {
