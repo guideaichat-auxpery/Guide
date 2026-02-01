@@ -1133,179 +1133,179 @@ Keep feedback age-appropriate for {age_group} year olds."""
                         # Show save confirmation if successful
                         if feedback_save_success:
                             st.toast("✓ Feedback saved", icon="💾")
+    
+    st.markdown("---")
+    
+    # Chat input - always visible regardless of file upload
+    uploaded_file = uploaded_work if 'uploaded_work' in dir() else None  # Keep backward compatibility
+    if prompt := st.chat_input("Ask me anything about your learning..."):
+        st.session_state.student_messages.append({
+            "role": "user",
+            "content": prompt
+        })
         
-        st.markdown("---")
+        with st.chat_message("user"):
+            st.markdown(prompt)
         
-        # Chat input
-        uploaded_file = uploaded_work  # Keep backward compatibility
-        if prompt := st.chat_input("Ask me anything about your learning..."):
-            st.session_state.student_messages.append({
-                "role": "user",
-                "content": prompt
-            })
-            
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            
-            # Process uploaded file if present
-            file_context = ""
-            if uploaded_file:
-                with st.spinner("Reading your file..."):
-                    if uploaded_file.type == "application/pdf":
-                        pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_file.read()))
-                        file_context = "\n".join([page.extract_text() for page in pdf_reader.pages])
-                    elif uploaded_file.type in ["image/jpeg", "image/png"]:
-                        try:
-                            image = Image.open(uploaded_file)
-                            file_context = f"[Student uploaded an image: {uploaded_file.name}]"
-                        except:
-                            file_context = "[Image could not be processed]"
-                    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                        doc = Document(io.BytesIO(uploaded_file.read()))
-                        file_context = "\n".join([para.text for para in doc.paragraphs])
-                    else:
-                        file_context = uploaded_file.read().decode("utf-8")
-                    
-                    if file_context:
-                        prompt = f"{prompt}\n\n[Student's uploaded content: {file_context[:1000]}]"
-            
-            # Save conversation and detect curriculum keywords
-            save_success = False
-            detected_keywords = []  # Initialize to avoid unbound variable
-            if database_available and student_id:
-                db = get_db()
-                if db:
+        # Process uploaded file if present
+        file_context = ""
+        if uploaded_file:
+            with st.spinner("Reading your file..."):
+                if uploaded_file.type == "application/pdf":
+                    pdf_reader = PyPDF2.PdfReader(io.BytesIO(uploaded_file.read()))
+                    file_context = "\n".join([page.extract_text() for page in pdf_reader.pages])
+                elif uploaded_file.type in ["image/jpeg", "image/png"]:
                     try:
-                        # Save user message
-                        save_conversation_message(
-                            db,
-                            session_id=st.session_state.student_session_id,
-                            interface_type='student',
-                            role='user',
-                            content=prompt,
-                            user_id=None,
-                            student_id=student_id
-                        )
-                        
-                        # Detect and track curriculum keywords
-                        from utils import detect_trending_keywords, update_trending_keywords
-                        detected_keywords = detect_trending_keywords(prompt)
-                        
-                        # Create extra_data with detected keywords for anonymized tracking
-                        extra_data = {
-                            'detected_keywords': [
-                                {'subject': kw['subject'], 'keyword': kw['keyword']} 
-                                for kw in detected_keywords
-                            ],
-                            'query_id': st.session_state.student_session_id[:8]  # Anonymous query ID
-                        }
-                        
-                        # Log student activity with keyword data
-                        log_student_activity(
-                            db, 
-                            student_id, 
-                            'learning_question', 
-                            prompt_text=prompt,
-                            session_id=st.session_state.student_session_id,
-                            extra_data=json.dumps(extra_data)
-                        )
-                        
-                        # Update trending keywords
-                        update_trending_keywords(
-                            db, 
-                            detected_keywords, 
-                            st.session_state.student_session_id
-                        )
-                        save_success = True
-                    except Exception as e:
-                        print(f"Error saving conversation/logging prompt: {str(e)}")
-                        st.warning("⚠️ Unable to save message. Please check your connection.")
-                    finally:
-                        db.close()
-            
-            # Show save confirmation if successful
-            if save_success:
-                st.toast("✓ Message saved", icon="💾")
-            
-            # Get selected subjects and year level
-            selected_subjects = st.session_state.get('student_subjects', [])
-            selected_year_level = st.session_state.get('student_year_selector', 'Year 6')
-            
-            # Get AI response with enhanced features and curriculum alignment
-            ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🤖"
-            with st.chat_message("assistant", avatar=ai_avatar):
-                with st.spinner("Thinking..."):
-                    response = call_openai_api(
-                        st.session_state.student_messages,
-                        is_student=True,
-                        year_level=selected_year_level,
-                        subjects=selected_subjects if selected_subjects else None,
-                        curriculum_type="Blended",
-                        use_conversation_history=True
+                        image = Image.open(uploaded_file)
+                        file_context = f"[Student uploaded an image: {uploaded_file.name}]"
+                    except:
+                        file_context = "[Image could not be processed]"
+                elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    doc = Document(io.BytesIO(uploaded_file.read()))
+                    file_context = "\n".join([para.text for para in doc.paragraphs])
+                else:
+                    file_context = uploaded_file.read().decode("utf-8")
+                
+                if file_context:
+                    prompt = f"{prompt}\n\n[Student's uploaded content: {file_context[:1000]}]"
+        
+        # Save conversation and detect curriculum keywords
+        save_success = False
+        detected_keywords = []  # Initialize to avoid unbound variable
+        if database_available and student_id:
+            db = get_db()
+            if db:
+                try:
+                    # Save user message
+                    save_conversation_message(
+                        db,
+                        session_id=st.session_state.student_session_id,
+                        interface_type='student',
+                        role='user',
+                        content=prompt,
+                        user_id=None,
+                        student_id=student_id
                     )
                     
-                    # Highlight detected keywords in response
-                    highlighted_response = response
-                    if detected_keywords:
-                        for kw in detected_keywords:
-                            keyword = kw['keyword']
-                            # Use markdown bold to highlight keywords
-                            import re
-                            pattern = r'\b' + re.escape(keyword) + r'\b'
-                            highlighted_response = re.sub(
-                                pattern, 
-                                f"**{keyword}**", 
-                                highlighted_response, 
-                                flags=re.IGNORECASE
-                            )
+                    # Detect and track curriculum keywords
+                    from utils import detect_trending_keywords, update_trending_keywords
+                    detected_keywords = detect_trending_keywords(prompt)
                     
-                    st.markdown(highlighted_response)
-                    st.session_state.student_messages.append({
-                        "role": "assistant",
-                        "content": response
-                    })
+                    # Create extra_data with detected keywords for anonymized tracking
+                    extra_data = {
+                        'detected_keywords': [
+                            {'subject': kw['subject'], 'keyword': kw['keyword']} 
+                            for kw in detected_keywords
+                        ],
+                        'query_id': st.session_state.student_session_id[:8]  # Anonymous query ID
+                    }
                     
-                    # Scroll to beginning of new response
-                    scroll_chat_to_bottom()
+                    # Log student activity with keyword data
+                    log_student_activity(
+                        db, 
+                        student_id, 
+                        'learning_question', 
+                        prompt_text=prompt,
+                        session_id=st.session_state.student_session_id,
+                        extra_data=json.dumps(extra_data)
+                    )
                     
-                    # Save assistant response
-                    assistant_save_success = False
-                    if database_available and student_id:
-                        db = get_db()
-                        if db:
-                            try:
-                                save_conversation_message(
-                                    db,
-                                    session_id=st.session_state.student_session_id,
-                                    interface_type='student',
-                                    role='assistant',
-                                    content=response,
-                                    user_id=None,
-                                    student_id=student_id
-                                )
-                                
-                                # Log response activity
-                                log_student_activity(
-                                    db, 
-                                    student_id, 
-                                    'ai_response', 
-                                    prompt_text=prompt,
-                                    response_text=response,
-                                    session_id=st.session_state.student_session_id
-                                )
-                                assistant_save_success = True
-                            except Exception as e:
-                                print(f"Error saving conversation/logging response: {str(e)}")
-                                st.warning("⚠️ Unable to save response. Please check your connection.")
-                            finally:
-                                db.close()
-                    
-                    # Show save confirmation if successful
-                    if assistant_save_success:
-                        st.toast("✓ Response saved", icon="💾")
+                    # Update trending keywords
+                    update_trending_keywords(
+                        db, 
+                        detected_keywords, 
+                        st.session_state.student_session_id
+                    )
+                    save_success = True
+                except Exception as e:
+                    print(f"Error saving conversation/logging prompt: {str(e)}")
+                    st.warning("⚠️ Unable to save message. Please check your connection.")
+                finally:
+                    db.close()
         
-        # Add scroll to top button
-        add_scroll_to_top_button()
+        # Show save confirmation if successful
+        if save_success:
+            st.toast("✓ Message saved", icon="💾")
+        
+        # Get selected subjects and year level
+        selected_subjects = st.session_state.get('student_subjects', [])
+        selected_year_level = st.session_state.get('student_year_selector', 'Year 6')
+        
+        # Get AI response with enhanced features and curriculum alignment
+        ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🤖"
+        with st.chat_message("assistant", avatar=ai_avatar):
+            with st.spinner("Thinking..."):
+                response = call_openai_api(
+                    st.session_state.student_messages,
+                    is_student=True,
+                    year_level=selected_year_level,
+                    subjects=selected_subjects if selected_subjects else None,
+                    curriculum_type="Blended",
+                    use_conversation_history=True
+                )
+                
+                # Highlight detected keywords in response
+                highlighted_response = response
+                if detected_keywords:
+                    for kw in detected_keywords:
+                        keyword = kw['keyword']
+                        # Use markdown bold to highlight keywords
+                        import re
+                        pattern = r'\b' + re.escape(keyword) + r'\b'
+                        highlighted_response = re.sub(
+                            pattern, 
+                            f"**{keyword}**", 
+                            highlighted_response, 
+                            flags=re.IGNORECASE
+                        )
+                
+                st.markdown(highlighted_response)
+                st.session_state.student_messages.append({
+                    "role": "assistant",
+                    "content": response
+                })
+                
+                # Scroll to beginning of new response
+                scroll_chat_to_bottom()
+                
+                # Save assistant response
+                assistant_save_success = False
+                if database_available and student_id:
+                    db = get_db()
+                    if db:
+                        try:
+                            save_conversation_message(
+                                db,
+                                session_id=st.session_state.student_session_id,
+                                interface_type='student',
+                                role='assistant',
+                                content=response,
+                                user_id=None,
+                                student_id=student_id
+                            )
+                            
+                            # Log response activity
+                            log_student_activity(
+                                db, 
+                                student_id, 
+                                'ai_response', 
+                                prompt_text=prompt,
+                                response_text=response,
+                                session_id=st.session_state.student_session_id
+                            )
+                            assistant_save_success = True
+                        except Exception as e:
+                            print(f"Error saving conversation/logging response: {str(e)}")
+                            st.warning("⚠️ Unable to save response. Please check your connection.")
+                        finally:
+                            db.close()
+                
+                # Show save confirmation if successful
+                if assistant_save_success:
+                    st.toast("✓ Response saved", icon="💾")
+    
+    # Add scroll to top button
+    add_scroll_to_top_button()
     
 def show_student_dashboard_interface():
     """Student observation dashboard for educators"""
