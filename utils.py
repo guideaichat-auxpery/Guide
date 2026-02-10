@@ -355,13 +355,16 @@ def inject_chat_auto_scroll():
         scroll-behavior: smooth;
     }
     
-    /* Keep chat input sticky at bottom */
+    /* Keep chat input fixed at bottom of viewport */
     [data-testid="stChatInput"] {
-        position: sticky;
-        bottom: 0;
-        background: white;
-        padding-top: 10px;
-        z-index: 100;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: #ffffff !important;
+        padding: 12px 16px !important;
+        z-index: 9999 !important;
+        border-top: 1px solid #e5e5e5 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -963,9 +966,9 @@ def apply_chatgpt_chat_style():
     <style>
     /* ChatGPT-style continuous chat layout */
     
-    /* Main page container - full height layout */
+    /* Main page container - full height layout with space for fixed chat input */
     section.main .block-container {
-        padding-bottom: 80px !important;
+        padding-bottom: 140px !important;
         max-width: 900px !important;
     }
     
@@ -1016,15 +1019,16 @@ def apply_chatgpt_chat_style():
         display: none !important;
     }
     
-    /* Chat input - sticky at bottom */
+    /* Chat input - fixed at bottom of viewport */
     .stChatInput {
-        position: sticky !important;
+        position: fixed !important;
         bottom: 0 !important;
-        background: white !important;
-        padding: 16px 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: #ffffff !important;
+        padding: 12px 16px !important;
         border-top: 1px solid #e5e5e5 !important;
-        z-index: 100 !important;
-        margin-top: 20px !important;
+        z-index: 9999 !important;
     }
     
     .stChatInput textarea {
