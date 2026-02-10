@@ -1342,10 +1342,20 @@ def show_student_dashboard_interface():
             st.info("No students found. Create student accounts to get started.")
             return
         
-        # Student selector
+        search_query = st.text_input("🔍 Search students by name", placeholder="Type a name to filter...", key="student_search")
+        
+        if search_query and search_query.strip():
+            filtered_students = [s for s in students if search_query.strip().lower() in s.full_name.lower()]
+        else:
+            filtered_students = students
+        
+        if not filtered_students:
+            st.info(f"No students matching '{search_query}'. Try a different name.")
+            return
+        
         selected_student = st.selectbox(
-            "Select Student:",
-            students,
+            f"Select Student ({len(filtered_students)} of {len(students)}):",
+            filtered_students,
             format_func=lambda s: f"{s.full_name} ({s.age_group})"
         )
         
