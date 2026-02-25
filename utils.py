@@ -355,18 +355,32 @@ def inject_chat_auto_scroll():
         scroll-behavior: smooth;
     }
     
-    /* Keep chat input fixed at bottom of viewport */
+    /* Keep chat input fixed at bottom of viewport, respecting sidebar */
     [data-testid="stChatInput"] {
         position: fixed !important;
         bottom: 0 !important;
-        left: 0 !important;
+        left: var(--chat-bar-left, 0px) !important;
         right: 0 !important;
         background: #ffffff !important;
         padding: 12px 16px !important;
         z-index: 9999 !important;
         border-top: 1px solid #e5e5e5 !important;
+        transition: left 0.3s ease !important;
     }
     </style>
+    <script>
+    (function() {
+        function adjustChatBarLeft() {
+            var sidebar = document.querySelector('[data-testid="stSidebar"]');
+            var width = sidebar ? sidebar.getBoundingClientRect().width : 0;
+            document.documentElement.style.setProperty('--chat-bar-left', width + 'px');
+        }
+        adjustChatBarLeft();
+        var observer = new MutationObserver(adjustChatBarLeft);
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+        window.addEventListener('resize', adjustChatBarLeft);
+    })();
+    </script>
     """, unsafe_allow_html=True)
 
 def inject_navigation_scroll_handler():
@@ -1019,16 +1033,17 @@ def apply_chatgpt_chat_style():
         display: none !important;
     }
     
-    /* Chat input - fixed at bottom of viewport */
-    .stChatInput {
+    /* Chat input - fixed at bottom of viewport, respecting sidebar */
+    .stChatInput, [data-testid="stChatInput"] {
         position: fixed !important;
         bottom: 0 !important;
-        left: 0 !important;
+        left: var(--chat-bar-left, 0px) !important;
         right: 0 !important;
         background: #ffffff !important;
         padding: 12px 16px !important;
         border-top: 1px solid #e5e5e5 !important;
         z-index: 9999 !important;
+        transition: left 0.3s ease !important;
     }
     
     .stChatInput textarea {
@@ -1068,6 +1083,19 @@ def apply_chatgpt_chat_style():
         gap: 8px !important;
     }
     </style>
+    <script>
+    (function() {
+        function adjustChatBarLeft() {
+            var sidebar = document.querySelector('[data-testid="stSidebar"]');
+            var width = sidebar ? sidebar.getBoundingClientRect().width : 0;
+            document.documentElement.style.setProperty('--chat-bar-left', width + 'px');
+        }
+        adjustChatBarLeft();
+        var observer = new MutationObserver(adjustChatBarLeft);
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+        window.addEventListener('resize', adjustChatBarLeft);
+    })();
+    </script>
     """
     st.markdown(chatgpt_css, unsafe_allow_html=True)
 
