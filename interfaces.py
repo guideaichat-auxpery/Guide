@@ -117,11 +117,34 @@ def show_lesson_planning_interface():
     # ---- ALIGN MY PLAN MODE ----
     if planning_mode == "📄 Align My Plan":
         st.markdown("#### Upload Your Lesson Plan or Task Sheet")
-        st.markdown(
-            "*Upload a document you've already created and the AI will identify the Montessori connections "
-            "and Australian Curriculum V9 alignment within it — affirming what you've done well and suggesting "
-            "practical enhancements.*"
-        )
+
+        align_descriptions = {
+            "3-6": (
+                "*Upload a document you've already created and the AI will identify the Montessori connections "
+                "and Australian Curriculum V9 (Foundation) alignment within it — affirming what you've done well, "
+                "highlighting Sensitive Periods and Prepared Environment connections, and suggesting practical "
+                "Montessori enhancements for the Early Years.*"
+            ),
+            "6-9": (
+                "*Upload a document you've already created and the AI will identify the Montessori connections "
+                "and Australian Curriculum V9 (Years 1–3) alignment within it — affirming what you've done well, "
+                "highlighting Cosmic Education and Great Stories connections, and suggesting concrete-to-abstract "
+                "Montessori enhancements for the Second Plane.*"
+            ),
+            "9-12": (
+                "*Upload a document you've already created and the AI will identify the Montessori connections "
+                "and Australian Curriculum V9 (Years 4–6) alignment within it — affirming what you've done well, "
+                "highlighting opportunities for inquiry, Going Out, and real-world purpose, and suggesting "
+                "Montessori enhancements suited to the upper Second Plane.*"
+            ),
+            "12-15": (
+                "*Upload a document you've already created and the AI will identify the Montessori connections "
+                "and Australian Curriculum V9 (Years 7–9) alignment within it — affirming what you've done well, "
+                "suggesting Montessori enhancements, and mapping your plan to the four stages of the "
+                "GUIDE Learning Design Protocol.*"
+            ),
+        }
+        st.markdown(align_descriptions.get(age_group, align_descriptions["9-12"]))
 
         uploaded_plan = st.file_uploader(
             "Upload your plan (PDF or Word document):",
