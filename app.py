@@ -70,6 +70,21 @@ else:
     # Run one-time initialization (tables, migrations) - process-level, not per-session
     initialize_database_once()
 
+    # Index any new RAG documents (skips already-indexed files — safe to call every startup)
+    if not st.session_state.get('_rag_new_docs_checked'):
+        try:
+            from database import get_db
+            from rag_system import ingest_single_document
+            _rag_db = get_db()
+            if _rag_db:
+                try:
+                    ingest_single_document(_rag_db, "guide_learning_design_protocol.txt")
+                finally:
+                    _rag_db.close()
+        except Exception as _rag_err:
+            logger.warning(f"RAG startup indexing skipped: {_rag_err}")
+        st.session_state['_rag_new_docs_checked'] = True
+
 # Initialize session state
 if 'messages' not in st.session_state:
     st.session_state.messages = []

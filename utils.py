@@ -2343,6 +2343,8 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
             temperature = 0.7  # High - Warm, exploratory philosophical guidance
         elif interface_type == "pd_expert":
             temperature = 0.7  # High - Creative professional development coaching
+        elif interface_type == "align_plan":
+            temperature = 0.3  # Low - Precise curriculum codes and accurate alignment
         elif interface_type == "lesson_planning":
             if planning_type == "Assessment Rubric":
                 temperature = 0.3  # Low - Precise curriculum codes and consistent descriptions

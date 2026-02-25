@@ -59,6 +59,12 @@ DOCUMENT_SOURCES = {
         "type": "philosophy",
         "subject": "montessori",
         "source": "The Montessori Method"
+    },
+    "guide_learning_design_protocol.txt": {
+        "framework": "Montessori",
+        "type": "pedagogy",
+        "subject": "guide_protocol",
+        "source": "GUIDE Learning Design Protocol"
     }
 }
 
@@ -577,6 +583,89 @@ def format_retrieved_context(chunks: List[Dict]) -> str:
     context += "Example: 'The Absorbent Mind [1] describes how children...'\n\n"
     
     return context
+
+
+def ingest_single_document(db_session, filename: str) -> int:
+    """
+    Ingest a single document into the RAG system, skipping if already indexed.
+    Safe to call on every app startup — no-op if the document is already present.
+
+    Args:
+        db_session: SQLAlchemy database session
+        filename: Key from DOCUMENT_SOURCES (e.g. "guide_learning_design_protocol.txt")
+
+    Returns:
+        Number of new chunks created, or 0 if already indexed / error
+    """
+    from sqlalchemy import text
+
+    if filename not in DOCUMENT_SOURCES:
+        logger.warning(f"ingest_single_document: '{filename}' not in DOCUMENT_SOURCES, skipping.")
+        return 0
+
+    # Check if document is already indexed
+    try:
+        result = db_session.execute(
+            text("SELECT COUNT(*) FROM document_chunks WHERE source_file = :src"),
+            {"src": filename}
+        ).scalar()
+        if result and result > 0:
+            logger.info(f"'{filename}' already indexed ({result} chunks), skipping.")
+            return 0
+    except Exception as e:
+        logger.warning(f"Could not check existing chunks for '{filename}': {e}")
+
+    filepath = filename
+    if not os.path.exists(filepath):
+        logger.warning(f"File not found: {filepath}, skipping.")
+        return 0
+
+    metadata = DOCUMENT_SOURCES[filename]
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception as e:
+        logger.error(f"Error reading {filename}: {e}")
+        return 0
+
+    chunks = chunk_text_with_metadata(content, chunk_size=1000, overlap=200)
+    logger.info(f"Ingesting '{filename}': {len(chunks)} chunks")
+
+    chunk_count = 0
+    for idx, chunk_data in enumerate(chunks):
+        chunk_text = chunk_data['text']
+        embedding = generate_embedding(chunk_text)
+        if embedding is None:
+            continue
+        try:
+            import json
+            embedding_str = '[' + ','.join(map(str, embedding)) + ']'
+            enhanced_metadata = metadata.copy()
+            enhanced_metadata['year_levels'] = chunk_data.get('year_levels', [])
+            enhanced_metadata['subjects'] = chunk_data.get('subjects', [])
+            metadata_str = json.dumps(enhanced_metadata)
+
+            connection = db_session.connection().connection
+            cursor = connection.cursor()
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO document_chunks (source_file, chunk_text, chunk_index, embedding, metadata)
+                    VALUES (%s, %s, %s, %s::vector, %s::jsonb)
+                    """,
+                    (filename, chunk_text, idx, embedding_str, metadata_str)
+                )
+                chunk_count += 1
+            finally:
+                cursor.close()
+        except Exception as e:
+            logger.error(f"Error storing chunk {idx} from '{filename}': {e}")
+            continue
+
+    db_session.commit()
+    logger.info(f"✓ Indexed '{filename}': {chunk_count} chunks stored.")
+    return chunk_count
 
 
 def clear_document_chunks(db_session):

@@ -188,8 +188,29 @@ def show_lesson_planning_interface():
                             doc = DocxDocument(_io.BytesIO(uploaded_plan.read()))
                             document_content = "\n".join([para.text for para in doc.paragraphs])
 
+                    MAX_DOC_CHARS = 8000
+                    was_truncated = len(document_content) > MAX_DOC_CHARS
+                    document_content = document_content[:MAX_DOC_CHARS]
+                    if was_truncated:
+                        st.info("Your document was quite long — the first 8,000 characters were analysed. For best results, consider uploading a shorter excerpt or summary.")
+
+                    from utils import extract_year_level_from_query, extract_subject_from_query
+                    search_text = document_content + " " + (extra_context or "")
+                    detected_year_level = extract_year_level_from_query(search_text)
+                    detected_subject = extract_subject_from_query(search_text)
+
+                    st.session_state.align_plan_document = document_content
+                    st.session_state.align_plan_extra_context = extra_context
+
+                    detection_header_parts = []
+                    if detected_year_level:
+                        detection_header_parts.append(f"Detected Year Level: {detected_year_level}")
+                    if detected_subject:
+                        detection_header_parts.append(f"Detected Subject: {detected_subject}")
+                    detection_header = (", ".join(detection_header_parts) + "\n\n") if detection_header_parts else ""
+
                     user_message_parts = [
-                        f"I'd like you to analyse and align the following lesson plan or task sheet to the Montessori curriculum and Australian Curriculum V9.\n\n**File:** {uploaded_plan.name}\n\n**Document Content:**\n{document_content}"
+                        f"{detection_header}I'd like you to analyse and align the following lesson plan or task sheet to the Montessori curriculum and Australian Curriculum V9.\n\n**File:** {uploaded_plan.name}\n\n**Document Content:**\n{document_content}"
                     ]
                     if extra_context and extra_context.strip():
                         user_message_parts.append(f"\n\n**Additional Context from Educator:**\n{extra_context.strip()}")
@@ -205,6 +226,10 @@ def show_lesson_planning_interface():
                             system_prompt=system_prompt,
                             is_student=False,
                             age_group=age_group,
+                            interface_type="align_plan",
+                            curriculum_type="Blended",
+                            year_level=detected_year_level,
+                            subject=detected_subject,
                             use_conversation_history=False
                         )
 
@@ -221,6 +246,48 @@ def show_lesson_planning_interface():
 
             st.markdown("---")
             st.markdown(f"#### Alignment Analysis — *{source_name}*")
+
+            required_sections = [
+                "What Your Plan Already Does Well",
+                "Australian Curriculum V9 Alignment",
+                "Montessori Connections"
+            ]
+            missing_sections = [s for s in required_sections if s.lower() not in result_text.lower()]
+            if missing_sections:
+                st.warning(
+                    "The analysis may be incomplete — some sections could not be generated. "
+                    "The response is shown below. You can try again if a section is missing."
+                )
+                if st.button("🔄 Try Again", key="align_retry_btn"):
+                    stored_doc = st.session_state.get("align_plan_document", "")
+                    stored_context = st.session_state.get("align_plan_extra_context", "")
+                    if stored_doc:
+                        from utils import get_alignment_system_prompt, call_openai_api, extract_year_level_from_query, extract_subject_from_query
+                        search_text = stored_doc + " " + (stored_context or "")
+                        retry_year_level = extract_year_level_from_query(search_text)
+                        retry_subject = extract_subject_from_query(search_text)
+                        retry_msg = f"I'd like you to analyse and align the following lesson plan or task sheet to the Montessori curriculum and Australian Curriculum V9.\n\n**Document Content:**\n{stored_doc}"
+                        if stored_context:
+                            retry_msg += f"\n\n**Additional Context from Educator:**\n{stored_context}"
+                        with st.spinner("Trying again..."):
+                            retry_result = call_openai_api(
+                                messages=[{"role": "user", "content": retry_msg}],
+                                max_tokens=8000,
+                                system_prompt=get_alignment_system_prompt(age_group),
+                                is_student=False,
+                                age_group=age_group,
+                                interface_type="align_plan",
+                                curriculum_type="Blended",
+                                year_level=retry_year_level,
+                                subject=retry_subject,
+                                use_conversation_history=False
+                            )
+                        if retry_result:
+                            st.session_state.align_plan_result = retry_result
+                            st.rerun()
+                    else:
+                        st.info("Please re-upload your document to try again.")
+
             st.markdown(result_text)
 
             st.markdown("---")
