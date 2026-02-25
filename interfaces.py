@@ -103,7 +103,148 @@ def show_lesson_planning_interface():
             "assessment_rubric": "Assessment Rubric"
         }[x]
     )
-    
+
+    # Mode toggle — Generate New Plan vs Align My Plan
+    planning_mode = st.radio(
+        "Mode:",
+        ["✨ Generate New Plan", "📄 Align My Plan"],
+        horizontal=True,
+        key="planning_mode_toggle"
+    )
+
+    st.markdown("---")
+
+    # ---- ALIGN MY PLAN MODE ----
+    if planning_mode == "📄 Align My Plan":
+        st.markdown("#### Upload Your Lesson Plan or Task Sheet")
+        st.markdown(
+            "*Upload a document you've already created and the AI will identify the Montessori connections "
+            "and Australian Curriculum V9 alignment within it — affirming what you've done well and suggesting "
+            "practical enhancements.*"
+        )
+
+        uploaded_plan = st.file_uploader(
+            "Upload your plan (PDF or Word document):",
+            type=["pdf", "docx"],
+            key="align_plan_upload",
+            help="Accepts PDF (.pdf) and Word documents (.docx)"
+        )
+
+        extra_context = st.text_area(
+            "Any extra context? (optional)",
+            placeholder="e.g. This is for a Year 5 class focused on sustainability. We have 3 sessions of 90 minutes.",
+            key="align_plan_context",
+            height=90
+        )
+
+        analyse_clicked = st.button("🔍 Analyse & Align", type="primary", use_container_width=True)
+
+        if analyse_clicked:
+            if not uploaded_plan:
+                st.warning("Please upload a PDF or Word document first.")
+            else:
+                from utils import validate_file_upload, get_alignment_system_prompt, call_openai_api
+                import PyPDF2
+                import io as _io
+
+                is_valid, error_msg = validate_file_upload(uploaded_plan)
+                if not is_valid:
+                    st.error(f"File validation failed: {error_msg}")
+                else:
+                    document_content = ""
+                    with st.spinner("Reading your document..."):
+                        if uploaded_plan.type == "application/pdf":
+                            pdf_reader = PyPDF2.PdfReader(_io.BytesIO(uploaded_plan.read()))
+                            extracted_pages = [page.extract_text() or "" for page in pdf_reader.pages]
+                            document_content = "\n".join(extracted_pages)
+                            if not document_content.strip():
+                                st.error("This PDF appears to be image-based and the text could not be extracted. Please try a Word document or a text-based PDF.")
+                                st.stop()
+                        elif uploaded_plan.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                            from docx import Document as DocxDocument
+                            doc = DocxDocument(_io.BytesIO(uploaded_plan.read()))
+                            document_content = "\n".join([para.text for para in doc.paragraphs])
+
+                    user_message_parts = [
+                        f"I'd like you to analyse and align the following lesson plan or task sheet to the Montessori curriculum and Australian Curriculum V9.\n\n**File:** {uploaded_plan.name}\n\n**Document Content:**\n{document_content}"
+                    ]
+                    if extra_context and extra_context.strip():
+                        user_message_parts.append(f"\n\n**Additional Context from Educator:**\n{extra_context.strip()}")
+                    user_message = "".join(user_message_parts)
+
+                    system_prompt = get_alignment_system_prompt(age_group)
+
+                    with st.spinner("Reading your plan and finding the curriculum connections..."):
+                        messages = [{"role": "user", "content": user_message}]
+                        result = call_openai_api(
+                            messages=messages,
+                            max_tokens=8000,
+                            system_prompt=system_prompt,
+                            is_student=False,
+                            age_group=age_group,
+                            use_conversation_history=False
+                        )
+
+                    if result:
+                        st.session_state.align_plan_result = result
+                        st.session_state.align_plan_filename = uploaded_plan.name
+                    else:
+                        st.error("Something went wrong. Please try again.")
+
+        # Display stored result
+        if st.session_state.get("align_plan_result"):
+            result_text = st.session_state.align_plan_result
+            source_name = st.session_state.get("align_plan_filename", "your plan")
+
+            st.markdown("---")
+            st.markdown(f"#### Alignment Analysis — *{source_name}*")
+            st.markdown(result_text)
+
+            st.markdown("---")
+            st.markdown("**Export this alignment:**")
+            col_pdf, col_docx = st.columns(2)
+
+            from utils import export_lesson_plan_to_pdf, export_lesson_plan_to_docx
+
+            with col_pdf:
+                pdf_bytes = export_lesson_plan_to_pdf(
+                    result_text,
+                    title=f"Curriculum Alignment — {source_name}",
+                    filename="curriculum_alignment.pdf"
+                )
+                if pdf_bytes:
+                    st.download_button(
+                        "⬇ Download PDF",
+                        data=pdf_bytes,
+                        file_name="curriculum_alignment.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+
+            with col_docx:
+                docx_bytes = export_lesson_plan_to_docx(
+                    result_text,
+                    title=f"Curriculum Alignment — {source_name}",
+                    filename="curriculum_alignment.docx"
+                )
+                if docx_bytes:
+                    st.download_button(
+                        "⬇ Download Word Doc",
+                        data=docx_bytes,
+                        file_name="curriculum_alignment.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True
+                    )
+
+            if st.button("Clear & Start Again", key="align_clear_btn"):
+                st.session_state.pop("align_plan_result", None)
+                st.session_state.pop("align_plan_filename", None)
+                st.rerun()
+
+        return
+
+    # ---- GENERATE NEW PLAN MODE (unchanged) ----
+
     # Display chat history
     ai_avatar = "assets/montessori-avatar.png" if os.path.exists("assets/montessori-avatar.png") else "🌟"
     for message in st.session_state.planning_messages:
