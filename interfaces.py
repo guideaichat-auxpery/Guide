@@ -104,10 +104,10 @@ def show_lesson_planning_interface():
         }[x]
     )
 
-    # Mode toggle — Generate New Plan vs Align My Plan
+    # Mode toggle — Generate New Plan / Align My Plan / Differentiate My Plan
     planning_mode = st.radio(
         "Mode:",
-        ["✨ Generate New Plan", "📄 Align My Plan"],
+        ["✨ Generate New Plan", "📄 Align My Plan", "🎯 Differentiate My Plan"],
         horizontal=True,
         key="planning_mode_toggle"
     )
@@ -236,6 +236,40 @@ def show_lesson_planning_interface():
                     if result:
                         st.session_state.align_plan_result = result
                         st.session_state.align_plan_filename = uploaded_plan.name
+
+                        # Save alignment to planning conversation sidebar
+                        if database_available and user_id:
+                            from database import save_conversation_message, create_chat_conversation
+                            from utils import update_conversation_title_if_needed
+                            _db = get_db()
+                            if _db:
+                                try:
+                                    save_conversation_message(
+                                        _db,
+                                        session_id=st.session_state.planning_session_id,
+                                        interface_type='planning',
+                                        role='user',
+                                        content=user_message,
+                                        user_id=user_id,
+                                        student_id=None
+                                    )
+                                    save_conversation_message(
+                                        _db,
+                                        session_id=st.session_state.planning_session_id,
+                                        interface_type='planning',
+                                        role='assistant',
+                                        content=result,
+                                        user_id=user_id,
+                                        student_id=None
+                                    )
+                                    conv_id = st.session_state.get('planning_current_conversation_id')
+                                    if conv_id:
+                                        auto_title = f"Alignment — {uploaded_plan.name}"
+                                        update_conversation_title_if_needed(_db, conv_id, 'planning', auto_title)
+                                except Exception as _e:
+                                    print(f"Error saving alignment to sidebar: {_e}")
+                                finally:
+                                    _db.close()
                     else:
                         st.error("Something went wrong. Please try again.")
 
@@ -333,6 +367,225 @@ def show_lesson_planning_interface():
 
         return
 
+    # ---- DIFFERENTIATE MY PLAN MODE ----
+    if planning_mode == "🎯 Differentiate My Plan":
+        st.markdown("#### Differentiation Strategies for Your Plan")
+
+        diff_descriptions = {
+            "3-6": (
+                "*Upload your plan or describe your activity, share your class composition, and the AI will generate "
+                "Montessori-aligned differentiation strategies — tiered task versions, sensorial material adaptations, "
+                "and practical tips for meeting every child in the Early Years.*"
+            ),
+            "6-9": (
+                "*Upload your plan or describe your activity, share your class composition, and the AI will generate "
+                "differentiation strategies rooted in the Reasoning Mind — tiered investigations, scaffolded research, "
+                "and collaborative grouping ideas for Years 1–3.*"
+            ),
+            "9-12": (
+                "*Upload your plan or describe your activity, share your class composition, and the AI will generate "
+                "differentiation strategies for the upper Second Plane — tiered inquiry tasks, Going Out adaptations, "
+                "and extension opportunities for Years 4–6.*"
+            ),
+            "12-15": (
+                "*Upload your plan or describe your activity, share your class composition, and the AI will generate "
+                "differentiation strategies aligned to the GUIDE Protocol — tiered tasks, adolescent-appropriate "
+                "accommodations, and stage-by-stage differentiation notes for Years 7–9.*"
+            ),
+        }
+        st.markdown(diff_descriptions.get(age_group, diff_descriptions["9-12"]))
+
+        uploaded_diff = st.file_uploader(
+            "Upload your plan (optional — PDF or Word document):",
+            type=["pdf", "docx"],
+            key="diff_plan_upload",
+            help="If you have a written plan, upload it here. Otherwise describe your activity below."
+        )
+
+        diff_description = st.text_area(
+            "Describe your lesson or activity:",
+            placeholder="e.g. Students will investigate water cycles through observation journals and outdoor exploration over 3 sessions.",
+            key="diff_lesson_description",
+            height=100
+        )
+
+        class_composition = st.text_area(
+            "Describe your class composition:",
+            placeholder="e.g. 3 students with dyslexia, 2 EAL/D learners, 1 gifted student needing extension, 20 on-track students. Mixed Year 4/5 class.",
+            key="diff_class_composition",
+            height=90
+        )
+
+        diff_focus = st.selectbox(
+            "Differentiation focus:",
+            [
+                "All learners (full differentiation)",
+                "Learning support (struggling students)",
+                "Extension (gifted & talented)",
+                "EAL/D language support",
+                "Neurodiversity (autism, ADHD, dyslexia)",
+            ],
+            key="diff_focus_select"
+        )
+
+        diff_clicked = st.button("🎯 Generate Differentiation Strategies", type="primary", use_container_width=True)
+
+        if diff_clicked:
+            if not diff_description.strip() and not uploaded_diff:
+                st.warning("Please upload your plan or describe your lesson activity.")
+            elif not class_composition.strip():
+                st.warning("Please describe your class composition so the AI can tailor its suggestions.")
+            else:
+                from utils import validate_file_upload, get_differentiation_system_prompt, call_openai_api
+                import PyPDF2
+                import io as _io
+
+                plan_content = ""
+
+                if uploaded_diff:
+                    is_valid, error_msg = validate_file_upload(uploaded_diff)
+                    if not is_valid:
+                        st.error(f"File validation failed: {error_msg}")
+                        st.stop()
+                    with st.spinner("Reading your document..."):
+                        if uploaded_diff.type == "application/pdf":
+                            pdf_reader = PyPDF2.PdfReader(_io.BytesIO(uploaded_diff.read()))
+                            extracted = "\n".join([p.extract_text() or "" for p in pdf_reader.pages])
+                            if not extracted.strip():
+                                st.error("This PDF appears to be image-based. Please try a Word document or text-based PDF.")
+                                st.stop()
+                            plan_content = extracted[:8000]
+                        elif uploaded_diff.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                            from docx import Document as DocxDocument
+                            doc = DocxDocument(_io.BytesIO(uploaded_diff.read()))
+                            plan_content = "\n".join([para.text for para in doc.paragraphs])[:8000]
+
+                from utils import extract_year_level_from_query, extract_subject_from_query
+                search_text = plan_content + " " + diff_description + " " + class_composition
+                detected_year_level = extract_year_level_from_query(search_text)
+                detected_subject = extract_subject_from_query(search_text)
+
+                parts = ["I need differentiation strategies for the following learning experience.\n\n"]
+                if plan_content:
+                    parts.append(f"**Uploaded Plan Content:**\n{plan_content}\n\n")
+                if diff_description.strip():
+                    parts.append(f"**Lesson/Activity Description:**\n{diff_description.strip()}\n\n")
+                parts.append(f"**Class Composition:**\n{class_composition.strip()}\n\n")
+                parts.append(f"**Differentiation Focus:**\n{diff_focus}")
+                user_message = "".join(parts)
+
+                st.session_state.diff_plan_document = plan_content
+                st.session_state.diff_plan_description = diff_description
+                st.session_state.diff_plan_composition = class_composition
+
+                system_prompt = get_differentiation_system_prompt(age_group)
+
+                with st.spinner("Thinking through your learners and building differentiation strategies..."):
+                    diff_result = call_openai_api(
+                        messages=[{"role": "user", "content": user_message}],
+                        max_tokens=8000,
+                        system_prompt=system_prompt,
+                        is_student=False,
+                        age_group=age_group,
+                        interface_type="differentiate",
+                        curriculum_type="Blended",
+                        year_level=detected_year_level,
+                        subject=detected_subject,
+                        use_conversation_history=False
+                    )
+
+                if diff_result:
+                    st.session_state.diff_plan_result = diff_result
+                    st.session_state.diff_plan_source = uploaded_diff.name if uploaded_diff else "described activity"
+
+                    # Save to planning conversation sidebar
+                    if database_available and user_id:
+                        from database import save_conversation_message
+                        from utils import update_conversation_title_if_needed
+                        _db = get_db()
+                        if _db:
+                            try:
+                                save_conversation_message(
+                                    _db,
+                                    session_id=st.session_state.planning_session_id,
+                                    interface_type='planning',
+                                    role='user',
+                                    content=user_message,
+                                    user_id=user_id,
+                                    student_id=None
+                                )
+                                save_conversation_message(
+                                    _db,
+                                    session_id=st.session_state.planning_session_id,
+                                    interface_type='planning',
+                                    role='assistant',
+                                    content=diff_result,
+                                    user_id=user_id,
+                                    student_id=None
+                                )
+                                conv_id = st.session_state.get('planning_current_conversation_id')
+                                if conv_id:
+                                    src = uploaded_diff.name if uploaded_diff else diff_focus
+                                    update_conversation_title_if_needed(_db, conv_id, 'planning', f"Differentiation — {src}")
+                            except Exception as _e:
+                                print(f"Error saving differentiation to sidebar: {_e}")
+                            finally:
+                                _db.close()
+                else:
+                    st.error("Something went wrong. Please try again.")
+
+        # Display stored result
+        if st.session_state.get("diff_plan_result"):
+            diff_text = st.session_state.diff_plan_result
+            diff_source = st.session_state.get("diff_plan_source", "your plan")
+
+            st.markdown("---")
+            st.markdown(f"#### Differentiation Strategies — *{diff_source}*")
+            st.markdown(diff_text)
+
+            st.markdown("---")
+            st.markdown("**Export these strategies:**")
+            col_pdf, col_docx = st.columns(2)
+
+            from utils import export_lesson_plan_to_pdf, export_lesson_plan_to_docx
+
+            with col_pdf:
+                pdf_data, pdf_filename = export_lesson_plan_to_pdf(
+                    diff_text,
+                    title=f"Differentiation Strategies — {diff_source}",
+                    filename="differentiation_strategies.pdf"
+                )
+                if pdf_data:
+                    st.download_button(
+                        "⬇ Download PDF",
+                        data=pdf_data,
+                        file_name=pdf_filename,
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+
+            with col_docx:
+                docx_data, docx_filename = export_lesson_plan_to_docx(
+                    diff_text,
+                    title=f"Differentiation Strategies — {diff_source}",
+                    filename="differentiation_strategies.docx"
+                )
+                if docx_data:
+                    st.download_button(
+                        "⬇ Download Word Doc",
+                        data=docx_data,
+                        file_name=docx_filename,
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True
+                    )
+
+            if st.button("Clear & Start Again", key="diff_clear_btn"):
+                st.session_state.pop("diff_plan_result", None)
+                st.session_state.pop("diff_plan_source", None)
+                st.rerun()
+
+        return
+
     # ---- GENERATE NEW PLAN MODE (unchanged) ----
 
     # Display chat history
@@ -391,9 +644,6 @@ def show_lesson_planning_interface():
                 finally:
                     db.close()
         
-        # Show save confirmation if successful
-        if save_success:
-            st.toast("✓ Message saved", icon="💾")
         
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -583,9 +833,6 @@ IMPORTANT RUBRIC FORMAT REQUIREMENTS:
                         finally:
                             db.close()
                 
-                # Show save confirmation if successful
-                if assistant_save_success:
-                    st.toast("✓ Response saved", icon="💾")
                 
                 # Scroll to beginning of new response
                 scroll_chat_to_bottom()
@@ -953,9 +1200,6 @@ def show_companion_interface():
                         finally:
                             db.close()
                 
-                # Show save confirmation if successful
-                if assistant_save_success:
-                    st.toast("✓ Response saved", icon="💾")
     
     # Chat input
     if prompt := st.chat_input("Ask your Montessori question..."):
@@ -998,9 +1242,6 @@ def show_companion_interface():
                 finally:
                     db.close()
         
-        # Show save confirmation if successful
-        if save_success:
-            st.toast("✓ Message saved", icon="💾")
         
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -1045,9 +1286,6 @@ def show_companion_interface():
                         finally:
                             db.close()
                 
-                # Show save confirmation if successful
-                if assistant_save_success:
-                    st.toast("✓ Response saved", icon="💾")
     
     # Add scroll to top button
     add_scroll_to_top_button()
@@ -1454,9 +1692,6 @@ Keep feedback age-appropriate for {age_group} year olds."""
                 finally:
                     db.close()
         
-        # Show save confirmation if successful
-        if save_success:
-            st.toast("✓ Message saved", icon="💾")
         
         # Get selected subjects and year level
         selected_subjects = st.session_state.get('student_subjects', [])
@@ -1531,9 +1766,6 @@ Keep feedback age-appropriate for {age_group} year olds."""
                         finally:
                             db.close()
                 
-                # Show save confirmation if successful
-                if assistant_save_success:
-                    st.toast("✓ Response saved", icon="💾")
     
     # Add scroll to top button
     add_scroll_to_top_button()
@@ -3332,9 +3564,6 @@ def show_imaginarium_interface():
                             finally:
                                 db.close()
                 
-                # Show save confirmation if successful
-                if assistant_save_success:
-                    st.toast("✓ Response saved", icon="💾")
     
     # Chat input
     if prompt := st.chat_input("Share your ideas, questions, or creative thoughts..."):
@@ -3383,8 +3612,6 @@ def show_imaginarium_interface():
                             user_id=user_id,
                             student_id=None
                         )
-                        st.toast("✓ Message saved", icon="💾")
-                        
                         # Auto-title on first message
                         conv_id = st.session_state.get('imaginarium_current_conversation_id')
                         if conv_id and len(st.session_state.imaginarium_messages) == 1:

@@ -341,10 +341,38 @@ def scroll_chat_to_bottom():
         height=0
     )
 
+def inject_sidebar_aware_chat_bar():
+    """
+    Inject a persistent components.html iframe that continuously syncs
+    the CSS variable --chat-bar-left to the current sidebar width.
+    This approach survives Streamlit reruns because the iframe persists.
+    """
+    import streamlit.components.v1 as components
+    components.html(
+        """
+        <script>
+        (function() {
+            function adjust() {
+                try {
+                    var sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+                    var width = sidebar ? sidebar.getBoundingClientRect().width : 0;
+                    window.parent.document.documentElement.style.setProperty('--chat-bar-left', width + 'px');
+                } catch(e) {}
+            }
+            adjust();
+            setInterval(adjust, 150);
+            window.parent.addEventListener('resize', adjust);
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
 def inject_chat_auto_scroll():
     """
-    Inject CSS and JS to make chat container scrollable with auto-scroll to bottom.
-    Call this ONCE at the start of a chat interface.
+    Inject CSS to make chat container scrollable with fixed input bar that
+    respects the sidebar width. Pairs with inject_sidebar_aware_chat_bar().
     """
     st.markdown("""
     <style>
@@ -368,20 +396,8 @@ def inject_chat_auto_scroll():
         transition: left 0.3s ease !important;
     }
     </style>
-    <script>
-    (function() {
-        function adjustChatBarLeft() {
-            var sidebar = document.querySelector('[data-testid="stSidebar"]');
-            var width = sidebar ? sidebar.getBoundingClientRect().width : 0;
-            document.documentElement.style.setProperty('--chat-bar-left', width + 'px');
-        }
-        adjustChatBarLeft();
-        var observer = new MutationObserver(adjustChatBarLeft);
-        observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-        window.addEventListener('resize', adjustChatBarLeft);
-    })();
-    </script>
     """, unsafe_allow_html=True)
+    inject_sidebar_aware_chat_bar()
 
 def inject_navigation_scroll_handler():
     """
@@ -1083,21 +1099,9 @@ def apply_chatgpt_chat_style():
         gap: 8px !important;
     }
     </style>
-    <script>
-    (function() {
-        function adjustChatBarLeft() {
-            var sidebar = document.querySelector('[data-testid="stSidebar"]');
-            var width = sidebar ? sidebar.getBoundingClientRect().width : 0;
-            document.documentElement.style.setProperty('--chat-bar-left', width + 'px');
-        }
-        adjustChatBarLeft();
-        var observer = new MutationObserver(adjustChatBarLeft);
-        observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-        window.addEventListener('resize', adjustChatBarLeft);
-    })();
-    </script>
     """
     st.markdown(chatgpt_css, unsafe_allow_html=True)
+    inject_sidebar_aware_chat_bar()
 
 
 # ---- URL PROCESSING UTILITIES ----
@@ -2345,6 +2349,8 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
             temperature = 0.7  # High - Creative professional development coaching
         elif interface_type == "align_plan":
             temperature = 0.3  # Low - Precise curriculum codes and accurate alignment
+        elif interface_type == "differentiate":
+            temperature = 0.4  # Low-medium - Practical accuracy with some creative flexibility
         elif interface_type == "lesson_planning":
             if planning_type == "Assessment Rubric":
                 temperature = 0.3  # Low - Precise curriculum codes and consistent descriptions
@@ -2408,6 +2414,80 @@ def get_conversation_context(messages, max_messages=10):
     return [{"role": msg["role"], "content": msg["content"]} for msg in managed_messages]
 
 # ---- AGE TO YEAR LEVEL MAPPING ----
+def get_differentiation_system_prompt(age_group):
+    """Return the system prompt for generating differentiation strategies for an uploaded/described lesson plan."""
+
+    british_english_note = "IMPORTANT: Always use British English spelling and conventions (colour, organisation, analyse, centre, programme, behaviour, etc.) in all responses.\n\n"
+
+    base_instructions = """You are an expert Montessori educator and Universal Design for Learning (UDL) specialist. An educator has shared a lesson plan or task sheet and information about their class composition. Your role is to be a warm, practical colleague who helps them confidently reach every learner in the room.
+
+Your response MUST follow this exact structured format with these five headings:
+
+---
+
+## What This Plan Already Does Well for All Learners
+Write 2-4 sentences warmly affirming the inclusive learning strengths already embedded in the educator's design. Be specific — name actual elements from their plan or description.
+
+## Tiered Task Versions
+Provide three clear tiers for the core learning task:
+
+**Support Tier** (students needing scaffolding):
+- Describe the adapted version of the task with concrete scaffolds, modified materials, or reduced complexity
+- Include 2-3 specific strategies or resource suggestions
+
+**On-Track Tier** (most students):
+- Describe the standard task as designed — affirm what's already there
+- Note any minor enhancements for engagement or clarity
+
+**Extension Tier** (students ready to go deeper):
+- Describe a richer, more complex version of the task
+- Include genuine intellectual stretch, not just "more of the same"
+
+## Specific Accommodations
+Based on the class composition provided, give targeted, practical accommodations grouped by learner need (e.g., EAL/D, dyslexia, ADHD, autism, giftedness). For each group:
+- 2-3 specific, actionable strategies
+- Any recommended tools, formats, or environmental adjustments
+
+## Montessori Differentiation Approach
+Explain how Montessori principles naturally support differentiation for this specific plan:
+- Which Montessori materials or presentations could be used at different levels
+- How "follow the child" applies to this particular learning experience
+- A concrete-to-abstract scaffold for students who need more hands-on grounding
+- How the prepared environment could be adjusted to support varied learners
+
+## Classroom Management Tips
+Provide 3-5 practical tips for the educator to manage simultaneous differentiated work in the classroom, keeping the tone realistic and encouraging.
+"""
+
+    age_specific = {
+        "3-6": """
+You are differentiating for the First Plane of Development (ages 3-6 / Foundation).
+Focus on Sensitive Periods, individual work cycles, Practical Life variations, and sensorial material adaptations. Keep language and suggestions concrete and developmentally grounded. Scaffolding at this level is primarily through material choice, adult support, and environment design — not task complexity.
+""",
+        "6-9": """
+You are differentiating for the Second Plane of Development (ages 6-9 / Years 1-3).
+Focus on the child's reasoning mind — offer different levels of investigation depth, research scaffolding, and collaborative grouping strategies. Suggestions should honour the child's growing moral and social development. Include Great Story connections where relevant.
+""",
+        "9-12": """
+You are differentiating for the upper Second Plane (ages 9-12 / Years 4-6).
+Focus on depth of research, intellectual independence, and real-world application. Extension should involve genuine complexity — ethical dilemmas, Going Out opportunities, entrepreneurial applications. Support students may benefit from structured research frameworks and graphic organisers.
+""",
+        "12-15": """
+You are differentiating for adolescent learners (ages 12-15 / Years 7-9) using GUIDE Protocol principles.
+After the five standard sections, add:
+
+## GUIDE Protocol Differentiation Notes
+For each stage of the GUIDE Protocol, briefly note how differentiation applies:
+- **Stage 1 (Anchor in Meaning)**: How might different learners connect differently to the Human Theme and Driving Question? Suggest varied entry points.
+- **Stage 2 (Learning Story)**: Which phases (Hook, Investigation, Construction, Public Thinking, Reflection) need the most differentiation support for your class composition?
+- **Stage 3 (Daily Sessions)**: How can session support structures be varied for different learners while keeping the learning story intact?
+- **Stage 4 (System Alignment)**: Note any assessment differentiation — modified success criteria, alternative demonstration modes, varied scaffolds for reporting requirements.
+"""
+    }
+
+    return british_english_note + base_instructions + age_specific.get(age_group, age_specific["9-12"])
+
+
 def get_alignment_system_prompt(age_group):
     """Return the system prompt for aligning an uploaded lesson plan/task sheet to Montessori and Australian Curriculum V9."""
 
