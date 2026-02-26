@@ -297,31 +297,31 @@ def show_lesson_planning_interface():
             from utils import export_lesson_plan_to_pdf, export_lesson_plan_to_docx
 
             with col_pdf:
-                pdf_bytes = export_lesson_plan_to_pdf(
+                pdf_data, pdf_filename = export_lesson_plan_to_pdf(
                     result_text,
                     title=f"Curriculum Alignment — {source_name}",
                     filename="curriculum_alignment.pdf"
                 )
-                if pdf_bytes:
+                if pdf_data:
                     st.download_button(
                         "⬇ Download PDF",
-                        data=pdf_bytes,
-                        file_name="curriculum_alignment.pdf",
+                        data=pdf_data,
+                        file_name=pdf_filename,
                         mime="application/pdf",
                         use_container_width=True
                     )
 
             with col_docx:
-                docx_bytes = export_lesson_plan_to_docx(
+                docx_data, docx_filename = export_lesson_plan_to_docx(
                     result_text,
                     title=f"Curriculum Alignment — {source_name}",
                     filename="curriculum_alignment.docx"
                 )
-                if docx_bytes:
+                if docx_data:
                     st.download_button(
                         "⬇ Download Word Doc",
-                        data=docx_bytes,
-                        file_name="curriculum_alignment.docx",
+                        data=docx_data,
+                        file_name=docx_filename,
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         use_container_width=True
                     )
