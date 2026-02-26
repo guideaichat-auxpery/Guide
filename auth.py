@@ -2467,6 +2467,31 @@ def show_user_info():
             max-width: 85% !important;
             margin: 0 auto !important;
         }
+
+        /* ---- Sticky footer: make sidebar a full-height flex column ---- */
+        [data-testid="stSidebarContent"] {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100vh !important;
+            overflow-y: auto !important;
+        }
+        [data-testid="stSidebarContent"] > div:first-child {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+            min-height: 100%;
+        }
+        .sidebar-flex-spacer {
+            flex: 1 !important;
+        }
+        .sidebar-footer-section {
+            position: sticky !important;
+            bottom: 0 !important;
+            padding-top: 10px !important;
+            padding-bottom: 12px !important;
+            border-top: 1px solid rgba(166, 123, 91, 0.2) !important;
+            background: linear-gradient(180deg, rgba(250, 247, 242, 0.95) 0%, rgba(245, 240, 232, 0.98) 100%) !important;
+        }
         </style>
         """, unsafe_allow_html=True)
         
@@ -2547,9 +2572,12 @@ def show_user_info():
                     st.session_state.auth_mode = tool['mode']
                     st.rerun()
         
-        st.sidebar.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-        st.sidebar.divider()
-        
+        st.sidebar.markdown("<div class='sidebar-flex-spacer'></div>", unsafe_allow_html=True)
+        st.sidebar.markdown(
+            "<div style='border-top: 1px solid rgba(166,123,91,0.2); margin: 4px 12px 8px 12px;'></div>",
+            unsafe_allow_html=True
+        )
+
         if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
             logout()
         
