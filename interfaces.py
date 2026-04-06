@@ -3630,9 +3630,7 @@ def show_imaginarium_interface():
 
 def show_contact_form():
     """Contact form with automatic email reply"""
-    import requests
     from database import save_contact_submission, mark_contact_autoreply_sent, session_scope
-    from auth import get_api_headers
     
     st.markdown("### 📬 Contact Us")
     st.markdown("*Have a question, feedback, or need assistance? We'd love to hear from you!*")
@@ -3687,27 +3685,34 @@ def show_contact_form():
                         if submission_id:
                             email_sent = False
                             try:
-                                response = requests.post(
-                                    'http://localhost:3001/api/email/send-contact-autoreply',
-                                    json={
-                                        'email': email.strip(),
-                                        'userName': name.strip(),
-                                        'subject': subject.strip() if subject else None
-                                    },
-                                    headers=get_api_headers(),
-                                    timeout=10
-                                )
-                                
-                                if response.status_code == 200:
+                                import resend as _resend
+                                import os as _os
+                                _resend.api_key = _os.environ.get("RESEND_API_KEY", "")
+                                if _resend.api_key:
+                                    _display_subject = subject.strip() if subject else "your enquiry"
+                                    _html = f"""
+                                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                                        <h2 style="color: #2E8B57;">Thanks for getting in touch, {name.strip()}!</h2>
+                                        <p>We've received your message about <em>{_display_subject}</em> and will get back to you within 3 business days.</p>
+                                        <hr style="border: none; border-top: 1px solid #eee; margin: 2rem 0;">
+                                        <p style="color: #999; font-size: 0.8rem;">Guide — Montessori Curriculum Companion</p>
+                                    </div>
+                                    """
+                                    _resend.Emails.send({
+                                        "from": "Guide <guide@auxpery.com.au>",
+                                        "to": [email.strip()],
+                                        "subject": "We received your message — Guide",
+                                        "html": _html,
+                                    })
                                     mark_contact_autoreply_sent(db, submission_id)
                                     email_sent = True
                             except Exception as e:
                                 print(f"Error sending auto-reply email: {str(e)}")
-                            
+
                             if email_sent:
                                 st.success("Thank you for your message! We've sent you a confirmation email and will respond within 3 business days.")
                             else:
-                                st.success("Thank you for your message! We've received it and will respond within 3 business days. (If you don't receive a confirmation email, please check your spam folder.)")
+                                st.success("Thank you for your message! We've received it and will respond within 3 business days.")
                         else:
                             st.error("Sorry, there was an issue submitting your message. Please try again.")
                             

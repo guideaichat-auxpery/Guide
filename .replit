@@ -26,10 +26,6 @@ args = "Adaptive Learning Server"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Payments Service"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Reverse Proxy"
 
 [[workflows.workflow]]
@@ -55,18 +51,6 @@ waitForPort = 3000
 
 [workflows.workflow.metadata]
 outputType = "console"
-
-[[workflows.workflow]]
-name = "Payments Service"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node payments/server.js"
-waitForPort = 3001
 
 [[workflows.workflow]]
 name = "Reverse Proxy"

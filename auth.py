@@ -25,8 +25,6 @@ import json
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 
-import stripe_client
-
 SESSION_COOKIE_NAME = "guide_session"
 EDUCATOR_SESSION_HOURS = 24
 STUDENT_SESSION_HOURS = 8
@@ -36,9 +34,6 @@ def get_cookie_manager():
     if 'cookie_manager' not in st.session_state:
         st.session_state.cookie_manager = stx.CookieManager()
     return st.session_state.cookie_manager
-
-PAYMENTS_SERVICE_URL = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
-PAYMENTS_API_SECRET = os.getenv('PAYMENTS_API_SECRET', '')
 
 SUBSCRIPTION_CACHE_TTL = timedelta(seconds=30)
 
@@ -232,11 +227,6 @@ def logout_with_session_cleanup():
         del st.session_state[key]
 
 
-def get_api_headers():
-    """Get headers for authenticated API calls to payments service (for webhook/token operations)"""
-    return {'X-API-Secret': PAYMENTS_API_SECRET, 'Content-Type': 'application/json'}
-
-
 def check_subscription_status(educator_id):
     """Check if educator has an active subscription (with short cache for responsiveness)
     
@@ -295,278 +285,6 @@ def invalidate_subscription_cache(educator_id=None):
             del st.session_state[cache_key]
         if cache_time_key in st.session_state:
             del st.session_state[cache_time_key]
-
-def sync_subscription_from_stripe(user_id, email):
-    """Sync subscription directly from Stripe to database"""
-    result = stripe_client.sync_subscription_to_db(user_id, email)
-    if result.get('isActive'):
-        invalidate_subscription_cache(user_id)
-    return result
-
-
-def create_checkout_url(educator_id, email, plan='monthly'):
-    """Create a Stripe checkout session and return URL"""
-    return stripe_client.create_checkout_session(educator_id, email, plan)
-
-
-def create_portal_session(educator_id):
-    """Create a Stripe billing portal session"""
-    return stripe_client.create_portal_session(educator_id)
-
-
-def cancel_subscription(educator_id):
-    """Cancel subscription at the end of the billing period"""
-    result = stripe_client.cancel_subscription(educator_id)
-    if result:
-        invalidate_subscription_cache(educator_id)
-    return result
-
-
-def reactivate_subscription(educator_id):
-    """Reactivate a subscription that was set to cancel"""
-    result = stripe_client.reactivate_subscription(educator_id)
-    if result:
-        invalidate_subscription_cache(educator_id)
-    return result
-
-def validate_signup_token(token):
-    """Validate a signup token from the marketing site payment flow"""
-    try:
-        response = requests.get(
-            f"{PAYMENTS_SERVICE_URL}/api/public/validate-token/{token}",
-            timeout=5
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                return data.get('data', {})
-        return None
-    except Exception as e:
-        print(f"Error validating signup token: {e}")
-        return None
-
-def redeem_signup_token(token, user_id, email):
-    """Redeem a signup token after user account creation"""
-    try:
-        response = requests.post(
-            f"{PAYMENTS_SERVICE_URL}/api/redeem-token",
-            json={'token': token, 'userId': user_id, 'email': email},
-            headers=get_api_headers(),
-            timeout=10
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('success'):
-                return data.get('data', {})
-        elif response.status_code == 403:
-            print(f"Email mismatch when redeeming token: {response.json().get('error')}")
-        return None
-    except Exception as e:
-        print(f"Error redeeming signup token: {e}")
-        return None
-
-def show_pricing_page():
-    """Display the subscription pricing page"""
-    
-    educator_id = st.session_state.get('user_id')
-    user_email = st.session_state.get('user_email')
-    
-    # ADMIN BYPASS: Check database directly for admin status
-    if educator_id:
-        from database import get_db, User
-        db = get_db()
-        if db:
-            try:
-                user = db.query(User).filter(User.id == educator_id).first()
-                # CRITICAL: Explicit boolean conversion to handle any type issues
-                raw_admin = user.is_admin if (user and hasattr(user, 'is_admin')) else False
-                db_is_admin = bool(raw_admin) if raw_admin else False
-                
-                if user and db_is_admin:
-                    # User is admin - grant access and redirect
-                    st.session_state.is_admin = True
-                    st.session_state.subscription_verified = True
-                    st.session_state.subscription_active = True
-                    st.session_state.subscription_status = 'admin'
-                    st.session_state.subscription_plan = 'admin'
-                    st.success("Admin access detected. Redirecting...")
-                    st.rerun()
-            except Exception as e:
-                pass  # Continue to pricing page on error
-            finally:
-                db.close()
-    
-    if st.button("🔄 Refresh Subscription Status", key="refresh_sub_btn"):
-        invalidate_subscription_cache(educator_id)
-        
-        # First check if user is admin in database
-        if educator_id:
-            from database import get_db, User
-            db = get_db()
-            if db:
-                try:
-                    user = db.query(User).filter(User.id == educator_id).first()
-                    if user and getattr(user, 'is_admin', False):
-                        st.session_state.is_admin = True
-                        st.session_state.subscription_verified = True
-                        st.session_state.subscription_active = True
-                        st.session_state.subscription_status = 'admin'
-                        st.session_state.subscription_plan = 'admin'
-                        st.success("Admin access confirmed! Redirecting...")
-                        st.rerun()
-                finally:
-                    db.close()
-        
-        if user_email and educator_id:
-            sync_result = sync_subscription_from_stripe(educator_id, user_email)
-            if sync_result and sync_result.get('isActive'):
-                st.success("Subscription found! Refreshing...")
-                st.rerun()
-            else:
-                st.warning("No active subscription found in Stripe. Please complete payment below.")
-        st.rerun()
-    
-    st.markdown("""
-    <style>
-    .pricing-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 2rem 0;
-    }
-    .pricing-header {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .pricing-card {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-radius: 12px;
-        padding: 2rem;
-        text-align: center;
-        border: 2px solid #dee2e6;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .pricing-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-    .pricing-card.recommended {
-        border-color: #789A76;
-        background: linear-gradient(135deg, #f0f7ef 0%, #e8f5e8 100%);
-    }
-    .price-amount {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #2E8B57;
-    }
-    .price-period {
-        color: #666;
-        font-size: 1rem;
-    }
-    .feature-list {
-        text-align: left;
-        margin: 1.5rem 0;
-    }
-    .feature-item {
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
-    }
-    .savings-badge {
-        background: #789A76;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        display: inline-block;
-        margin-bottom: 1rem;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="pricing-header">
-        <h1>🌱 Start Your Guide Journey</h1>
-        <p style="font-size: 1.1rem; color: #666; max-width: 600px; margin: 0 auto;">
-            AI-powered Montessori curriculum companion with Australian Curriculum V9 integration. 
-            Start your 14-day free trial today.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    educator_id = st.session_state.get('user_id')
-    email = st.session_state.get('user_email')
-    
-    with col1:
-        st.markdown("""
-        <div class="pricing-card">
-            <h3>Monthly</h3>
-            <div class="price-amount">$15<span class="price-period">/month</span></div>
-            <p style="color: #2E8B57; font-weight: 500;">14-day free trial included</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("Start Free Trial", key="monthly_btn", use_container_width=True, type="primary"):
-            with st.spinner("Preparing checkout..."):
-                checkout_url = create_checkout_url(educator_id, email, 'monthly')
-                if checkout_url:
-                    st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
-                    st.info("Redirecting to secure checkout...")
-                else:
-                    st.error("Unable to create checkout session. Please try again.")
-    
-    with col2:
-        st.markdown("""
-        <div class="pricing-card recommended">
-            <span class="savings-badge">💰 2 Months Free</span>
-            <h3>Annual</h3>
-            <div class="price-amount">$150<span class="price-period">/year</span></div>
-            <p style="color: #2E8B57; font-weight: 500;">Best value - save $30/year</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("Choose Annual", key="annual_btn", use_container_width=True, type="secondary"):
-            with st.spinner("Preparing checkout..."):
-                checkout_url = create_checkout_url(educator_id, email, 'annual')
-                if checkout_url:
-                    st.markdown(f'<meta http-equiv="refresh" content="0;url={checkout_url}">', unsafe_allow_html=True)
-                    st.info("Redirecting to secure checkout...")
-                else:
-                    st.error("Unable to create checkout session. Please try again.")
-    
-    with col3:
-        st.markdown("""
-        <div class="pricing-card" style="border-color: #4A90A4; background: linear-gradient(135deg, #f0f7fa 0%, #e8f4f8 100%);">
-            <span class="savings-badge" style="background: #4A90A4;">🏫 Schools</span>
-            <h3>School Plan</h3>
-            <div class="price-amount" style="font-size: 1.8rem;">15+ Teachers</div>
-            <p style="color: #4A90A4; font-weight: 500;">Custom pricing & bulk discount codes</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.link_button("📧 Contact Us", "mailto:guide@auxpery.com.au?subject=School%20Subscription%20Enquiry&body=Hi%2C%0A%0AI%27m%20interested%20in%20a%20school%20subscription%20for%20Guide.%0A%0ASchool%20Name%3A%20%0ANumber%20of%20Teachers%3A%20%0A%0AThank%20you!", use_container_width=True)
-    
-    st.markdown("---")
-    
-    st.markdown("""
-    ### What's Included
-    
-    ✅ **AI-Powered Lesson Planning** - Create detailed, age-appropriate lessons in minutes  
-    ✅ **Australian Curriculum V9 Integration** - Aligned content descriptors and cross-curricular priorities  
-    ✅ **Montessori Philosophy** - Grounded in Cosmic Education principles  
-    ✅ **Student Dashboard** - Track student progress and activities  
-    ✅ **Great Stories Creator** - Generate engaging narratives for new concepts  
-    ✅ **Planning Notes** - Save and organize your lesson plans  
-    ✅ **Child Safety Features** - Content monitoring and safety alerts  
-    ✅ **Australian Privacy Act Compliant** - Your data is protected  
-    """)
-    
-    st.markdown("""
-    ---
-    <p style="text-align: center; color: #666; font-size: 0.9rem;">
-        Questions? Contact us at <a href="mailto:support@auxpery.com.au">support@auxpery.com.au</a>
-    </p>
-    """, unsafe_allow_html=True)
 
 def show_account_settings():
     """Display account settings including subscription management and deactivation"""
@@ -903,19 +621,37 @@ def reset_password_with_token(token: str, new_password: str) -> dict:
         db.close()
 
 def send_password_reset_email(email: str, reset_url: str, user_name: str = None) -> bool:
-    """Send password reset email via Resend (through payments service)."""
+    """Send password reset email via Resend."""
     try:
-        response = requests.post(
-            f"{PAYMENTS_SERVICE_URL}/api/email/send-password-reset",
-            json={'email': email, 'resetUrl': reset_url, 'userName': user_name},
-            headers=get_api_headers(),
-            timeout=15
-        )
-        if response.status_code == 200:
-            return True
-        else:
-            print(f"Email send failed: {response.status_code} - {response.text}")
+        import resend
+        import os
+        resend.api_key = os.environ.get("RESEND_API_KEY", "")
+        if not resend.api_key:
+            print("[EMAIL] RESEND_API_KEY not set — skipping password reset email")
             return False
+        greeting = f"Hi {user_name}," if user_name else "Hi,"
+        html_body = f"""
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2E8B57;">Reset Your Password</h2>
+            <p>{greeting}</p>
+            <p>We received a request to reset your Guide password. Click the button below to choose a new password.</p>
+            <p style="text-align: center; margin: 2rem 0;">
+                <a href="{reset_url}" style="background: #2E8B57; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Reset Password</a>
+            </p>
+            <p style="color: #666; font-size: 0.9rem;">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 2rem 0;">
+            <p style="color: #999; font-size: 0.8rem;">Guide — Montessori Curriculum Companion</p>
+        </div>
+        """
+        params = {
+            "from": "Guide <guide@auxpery.com.au>",
+            "to": [email],
+            "subject": "Reset your Guide password",
+            "html": html_body,
+        }
+        resend.Emails.send(params)
+        print(f"[EMAIL] Password reset email sent to {email}")
+        return True
     except Exception as e:
         print(f"Error sending password reset email: {e}")
         return False
@@ -1580,134 +1316,13 @@ def school_join_page(invite_code: str):
             db.close()
 
 def school_setup_page(setup_token: str):
-    """Display page for school admin to set up their account after Stripe checkout"""
-    import requests
-    import os
-    
-    db = get_db()
-    if not db:
-        st.error("Service temporarily unavailable. Please try again later.")
-        return
-    
-    # Use internal service URL - works in both dev and production
-    payments_base = os.getenv('PAYMENTS_SERVICE_URL', 'http://localhost:3001')
-    
-    try:
-        # Validate the setup token via API
-        api_url = f"{payments_base}/api/public/validate-school-token/{setup_token}"
-        try:
-            response = requests.get(api_url, timeout=10)
-            token_data = response.json()
-        except Exception as e:
-            st.error("Unable to validate your setup token. Please try again later.")
-            if st.button("Return to Home", use_container_width=True):
-                st.session_state.auth_mode = 'login'
-                st.query_params.clear()
-                st.rerun()
-            return
-        
-        if not token_data.get('success'):
-            error_msg = token_data.get('error', 'Invalid or expired setup token')
-            st.error(error_msg)
-            if st.button("Return to Home", use_container_width=True):
-                st.session_state.auth_mode = 'login'
-                st.query_params.clear()
-                st.rerun()
-            return
-        
-        pending = token_data.get('data', {})
-        email = pending.get('email', '')
-        school_name = pending.get('school_name', '')
-        seats = pending.get('seats', 5)
-        
-        # Show welcome header
-        st.markdown(f"""
-        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #D7C3AA 0%, #C4A882 100%); border-radius: 12px; margin-bottom: 2rem;">
-            <h2 style="color: #5D4E37; margin-bottom: 0.5rem;">🏫 Complete Your School Setup</h2>
-            <p style="color: #6B5B4F;">Welcome! Let's finish setting up <strong>{school_name}</strong></p>
-            <p style="color: #8B7B6B; font-size: 0.9rem;">{seats} educator seats included</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        with st.form("school_setup_form"):
-            st.markdown("### Create Your Admin Account")
-            st.info(f"Account email: **{email}**")
-            
-            full_name = st.text_input("Your Full Name", placeholder="Enter your full name")
-            password = st.text_input("Password", type="password", help="Minimum 12 characters with uppercase, lowercase, and number")
-            confirm_password = st.text_input("Confirm Password", type="password")
-            
-            agree_terms = st.checkbox("I have read and agree to the Terms and Conditions", value=False)
-            
-            submit = st.form_submit_button("Complete Setup", use_container_width=True, type="primary")
-            
-            if submit:
-                # Validation
-                if not full_name:
-                    st.error("Please enter your full name")
-                elif not password or not confirm_password:
-                    st.error("Please enter and confirm your password")
-                elif password != confirm_password:
-                    st.error("Passwords do not match")
-                elif not agree_terms:
-                    st.error("Please agree to the Terms and Conditions to continue")
-                else:
-                    valid_password, password_message = validate_password(password)
-                    if not valid_password:
-                        st.error(password_message)
-                    else:
-                        # Complete setup via API
-                        try:
-                            complete_response = requests.post(
-                                f"{payments_base}/api/public/complete-school-setup",
-                                json={
-                                    "token": setup_token,
-                                    "fullName": full_name,
-                                    "password": password
-                                },
-                                timeout=30
-                            )
-                            result = complete_response.json()
-                            
-                            if result.get('success'):
-                                user_id = result.get('userId')
-                                school_id = result.get('schoolId')
-                                
-                                # Log in the user
-                                user = get_user_by_email(db, email)
-                                if user:
-                                    st.session_state.user_id = user.id
-                                    st.session_state.user_type = user.user_type
-                                    st.session_state.user_name = user.full_name
-                                    st.session_state.user_email = user.email
-                                    st.session_state.authenticated = True
-                                    st.session_state.is_student = False
-                                    st.session_state.school_id = school_id
-                                    st.session_state.user_role = 'school_admin'
-                                    st.session_state.subscription_active = True
-                                    st.session_state.subscription_verified = True
-                                    st.session_state.subscription_status = 'active'
-                                    st.session_state.subscription_plan = 'school'
-                                    
-                                    st.success(f"Welcome to Guide, {full_name}! Your school is ready.")
-                                    st.query_params.clear()
-                                    time.sleep(1)
-                                    st.rerun()
-                                else:
-                                    st.error("Account created but login failed. Please try logging in manually.")
-                            else:
-                                st.error(result.get('error', 'Failed to complete setup. Please try again.'))
-                        except Exception as e:
-                            st.error(f"Error completing setup: {str(e)}")
-        
-        st.markdown("---")
-        if st.button("Already have an account? Log in", use_container_width=True):
-            st.session_state.auth_mode = 'login'
-            st.query_params.clear()
-            st.rerun()
-    finally:
-        if db:
-            db.close()
+    """Display page for school admin to complete their account setup"""
+    st.markdown("### 🏫 School Setup")
+    st.info("School setup links are no longer used. Please sign up directly using the standard registration form.")
+    if st.button("Go to Sign Up", use_container_width=True):
+        st.session_state.auth_mode = 'signup'
+        st.query_params.clear()
+        st.rerun()
 
 def show_school_admin_dashboard():
     """Display school admin dashboard for managing educators and licenses"""
@@ -1848,15 +1463,6 @@ def show_school_admin_dashboard():
             <p><strong>Status:</strong> <span style="color: {status_color}; font-weight: 600;">{status_display}</span></p>
         </div>
         """, unsafe_allow_html=True)
-        
-        if school.subscription_status == 'active':
-            if st.button("Manage Subscription", use_container_width=True):
-                portal_url = stripe_client.create_school_portal_session(school_id)
-                if portal_url:
-                    st.markdown(f'<meta http-equiv="refresh" content="0; url={portal_url}">', unsafe_allow_html=True)
-                    st.info("Redirecting to Stripe Customer Portal...")
-                else:
-                    st.error("Unable to open subscription portal. Please try again later.")
         
         st.markdown("---")
         

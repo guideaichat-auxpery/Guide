@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, invalidate_subscription_cache, show_account_settings, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page, show_school_admin_dashboard, school_setup_page
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_account_settings, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page, show_school_admin_dashboard, school_setup_page
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
 
@@ -341,9 +341,6 @@ else:
     if is_student is False:
         # Educator interface
         
-        # FAILPROOF SUBSCRIPTION CHECK
-        # Trust session state verified at login (Stripe was checked directly)
-        # This eliminates webhook dependency and DB sync issues
         educator_id = st.session_state.get('user_id')
         
         # Platform is free — all authenticated educators have full access
