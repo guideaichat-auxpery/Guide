@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 import sys
-from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, show_pricing_page, invalidate_subscription_cache, show_account_settings, sync_subscription_from_stripe, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page, show_school_admin_dashboard, school_setup_page
+from auth import login_page, signup_page, create_student_page, show_user_info, check_subscription_status, invalidate_subscription_cache, show_account_settings, check_and_restore_session, show_forgot_password_form, show_reset_password_form, school_join_page, show_school_admin_dashboard, school_setup_page
 from database import create_tables, database_status_message, database_available
 from interfaces import show_lesson_planning_interface, show_companion_interface, show_student_interface, show_student_dashboard_interface, show_great_story_interface, show_planning_notes_interface, show_privacy_policy, show_data_access_interface, show_account_deletion_interface, show_pd_expert_interface, show_imaginarium_interface, show_contact_form
 
@@ -97,21 +97,9 @@ if 'auth_mode' not in st.session_state:
 if database_available and not st.session_state.get('authenticated'):
     check_and_restore_session()
 
-# Handle return from Stripe checkout - sync subscription and invalidate cache
 try:
     query_params = st.query_params
-    if query_params.get('subscription') == 'success':
-        educator_id = st.session_state.get('user_id')
-        user_email = st.session_state.get('user_email')
-        if educator_id and user_email:
-            invalidate_subscription_cache(educator_id)
-            sync_result = sync_subscription_from_stripe(educator_id, user_email)
-            if sync_result and sync_result.get('isActive'):
-                st.success("Payment successful! Your subscription is now active.")
-            else:
-                st.success("Payment received! Your subscription should be active shortly.")
-        st.query_params.clear()
-    
+
     # Handle password reset token from email link
     reset_token = query_params.get('reset_token')
     if reset_token:
@@ -358,114 +346,12 @@ else:
         # This eliminates webhook dependency and DB sync issues
         educator_id = st.session_state.get('user_id')
         
-        # ADMIN BYPASS: Skip all subscription checks for admin users
-        if st.session_state.get('is_admin'):
-            has_active_subscription = True
-            subscription_status = 'admin'
-            print(f"[SUBSCRIPTION CHECK] ADMIN BYPASS - granting access")
-        elif st.session_state.get('subscription_verified'):
-            # Session already verified with Stripe - trust it completely
-            has_active_subscription = st.session_state.get('subscription_active', False)
-            subscription_status = st.session_state.get('subscription_status', 'none')
-        else:
-            # Not verified yet or Stripe was unavailable - try Stripe again
-            from auth import sync_subscription_from_stripe
-            import stripe_client
-            user_email = st.session_state.get('user_email')
-            
-            # Initialize defaults
-            has_active_subscription = False
-            subscription_status = 'none'
-            
-            # FIRST: Check if user is admin from database before anything else
-            if educator_id:
-                from database import get_db, User
-                admin_db = get_db()
-                if admin_db:
-                    try:
-                        admin_user = admin_db.query(User).filter(User.id == educator_id).first()
-                        # CRITICAL: Explicit boolean conversion to handle any type issues
-                        raw_admin = admin_user.is_admin if (admin_user and hasattr(admin_user, 'is_admin')) else False
-                        db_is_admin = bool(raw_admin) if raw_admin else False
-                        if admin_user and db_is_admin:
-                            print(f"[SUBSCRIPTION CHECK] ADMIN user {educator_id} detected from DB - bypassing Stripe check")
-                            st.session_state.is_admin = True
-                            st.session_state.subscription_verified = True
-                            st.session_state.subscription_active = True
-                            st.session_state.subscription_status = 'admin'
-                            st.session_state.subscription_plan = 'admin'
-                            has_active_subscription = True
-                            subscription_status = 'admin'
-                    except Exception as e:
-                        print(f"[SUBSCRIPTION CHECK] Error checking admin: {e}")
-                    finally:
-                        admin_db.close()
-            
-            # Only proceed with Stripe check if not already resolved as admin
-            if not st.session_state.get('is_admin') and user_email and educator_id:
-                stripe_result = sync_subscription_from_stripe(educator_id, user_email)
-                stripe_status = stripe_result.get('status', 'none') if stripe_result else 'error'
-                
-                if stripe_status == 'error':
-                    # Stripe failed - ALWAYS grant grace access (benefit of the doubt)
-                    print(f"[PAYWALL] Stripe check failed, granting GRACE ACCESS for educator {educator_id}")
-                    db_result = stripe_client.get_subscription_from_db(educator_id)
-                    plan = db_result.get('plan')
-                    
-                    # CRITICAL: On Stripe error, ALWAYS grant access temporarily
-                    # Better to let a non-subscriber in briefly than lock out a paying user
-                    has_active_subscription = True  # GRACE ACCESS
-                    subscription_status = 'grace'
-                    st.session_state.subscription_active = True
-                    st.session_state.subscription_status = 'grace'
-                    st.session_state.subscription_plan = plan or 'grace'
-                    # subscription_verified stays False - will retry on next navigation
-                else:
-                    # Successful Stripe response - authoritative
-                    has_active_subscription = stripe_result.get('isActive', False)
-                    subscription_status = stripe_status
-                    plan = stripe_result.get('plan')
-                    
-                    # Mark as verified - won't retry unless logged out
-                    st.session_state.subscription_verified = True
-                    st.session_state.subscription_active = has_active_subscription
-                    st.session_state.subscription_status = subscription_status
-                    st.session_state.subscription_plan = plan
-            elif not st.session_state.get('is_admin'):
-                # No email in session and not admin - use database as last resort
-                subscription_info = check_subscription_status(educator_id)
-                has_active_subscription = subscription_info.get('isActive', False)
-                subscription_status = subscription_info.get('status', 'none')
-        
-        # If no active subscription, show pricing page (unless accessing account settings, admin, or in grace access)
-        if not has_active_subscription and subscription_status not in ['trialing', 'active', 'grace', 'admin']:
-            # FAILSAFE: Double-check admin status from database before showing paywall
-            if educator_id:
-                from database import get_db, User
-                db_check = get_db()
-                if db_check:
-                    try:
-                        db_user = db_check.query(User).filter(User.id == educator_id).first()
-                        # CRITICAL: Explicit boolean conversion to handle any type issues
-                        raw_admin = db_user.is_admin if (db_user and hasattr(db_user, 'is_admin')) else False
-                        db_is_admin = bool(raw_admin) if raw_admin else False
-                        if db_user and db_is_admin:
-                            # User IS admin in database - fix session state and continue
-                            print(f"[FAILSAFE] Admin user {educator_id} detected via DB check - fixing session state")
-                            st.session_state.is_admin = True
-                            st.session_state.subscription_verified = True
-                            st.session_state.subscription_active = True
-                            st.session_state.subscription_status = 'admin'
-                            st.session_state.subscription_plan = 'admin'
-                            has_active_subscription = True
-                            subscription_status = 'admin'
-                    finally:
-                        db_check.close()
-            
-            # Allow access to account settings and logout even without subscription
-            if not has_active_subscription and st.session_state.get('auth_mode') not in ['account_deletion', 'privacy_policy']:
-                show_pricing_page()
-                st.stop()
+        # Platform is free — all authenticated educators have full access
+        has_active_subscription = True
+        subscription_status = 'free'
+        st.session_state.subscription_active = True
+        st.session_state.subscription_verified = True
+        st.session_state.subscription_status = 'free'
         
         # Default to dashboard home for educators
         if 'auth_mode' not in st.session_state or st.session_state.auth_mode not in ['dashboard_home', 'lesson_planning', 'create_student', 'companion', 'student_dashboard', 'great_stories', 'planning_notes', 'privacy_policy', 'data_access', 'account_deletion', 'pd_expert', 'imaginarium', 'school_admin_dashboard']:

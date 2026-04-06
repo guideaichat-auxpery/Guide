@@ -112,42 +112,11 @@ def restore_session_from_token(token: str):
                     st.session_state.subscription_status = 'admin'
                     st.session_state.subscription_plan = 'admin'
                 else:
-                    # Check if this is a school educator - use school subscription
-                    if st.session_state.get('school_id') and st.session_state.get('user_role') in ('school_admin', 'school_educator'):
-                        from database import get_school_by_id, is_school_subscription_active
-                        school = get_school_by_id(db, st.session_state.school_id)
-                        if school and is_school_subscription_active(school):
-                            st.session_state.subscription_verified = True
-                            st.session_state.subscription_active = True
-                            st.session_state.subscription_status = school.subscription_status or 'active'
-                            st.session_state.subscription_plan = 'school'
-                        else:
-                            st.session_state.subscription_verified = True
-                            st.session_state.subscription_active = False
-                            st.session_state.subscription_status = 'inactive'
-                            st.session_state.subscription_plan = 'school'
-                    else:
-                        # First check database for subscription status (fast, reliable)
-                        db_result = stripe_client.get_subscription_from_db(user.id)
-                        if db_result.get('isActive'):
-                            # Database confirms active subscription - trust it
-                            st.session_state.subscription_verified = True
-                            st.session_state.subscription_active = True
-                            st.session_state.subscription_plan = db_result.get('plan', 'monthly')
-                            st.session_state.subscription_status = db_result.get('status', 'active')
-                        else:
-                            # Try to sync with Stripe (may fail if Stripe is down)
-                            stripe_result = stripe_client.sync_subscription_to_db(user.id, user.email)
-                            if stripe_result and stripe_result.get('status') != 'error':
-                                st.session_state.subscription_verified = True
-                                st.session_state.subscription_active = stripe_result.get('isActive', False)
-                                st.session_state.subscription_plan = stripe_result.get('plan')
-                                st.session_state.subscription_status = stripe_result.get('status', 'none')
-                            else:
-                                # Stripe failed and no active subscription in DB
-                                st.session_state.subscription_verified = False
-                                st.session_state.subscription_active = True
-                                st.session_state.subscription_status = 'grace'
+                    # Platform is free — all educators get full access
+                    st.session_state.subscription_verified = True
+                    st.session_state.subscription_active = True
+                    st.session_state.subscription_status = 'free'
+                    st.session_state.subscription_plan = 'free'
                 
                 print(f"[SESSION] Restored educator session for {user.email}")
                 return True
@@ -311,37 +280,10 @@ def check_subscription_status(educator_id):
         if age < SUBSCRIPTION_CACHE_TTL:
             return cached_data
     
-    # Check if user is part of a school (school admin or educator)
-    school_id = st.session_state.get('school_id')
-    user_role = st.session_state.get('user_role', 'individual')
-    
-    if school_id and user_role in ('school_admin', 'school_educator'):
-        # Check school subscription instead of individual
-        from database import get_school_by_id, is_school_subscription_active
-        db = get_db()
-        if db:
-            try:
-                school = get_school_by_id(db, school_id)
-                if school and is_school_subscription_active(school):
-                    result = {
-                        'isActive': True,
-                        'status': school.subscription_status or 'active',
-                        'plan': 'school',
-                        'school_name': school.name
-                    }
-                else:
-                    result = {'isActive': False, 'status': 'inactive', 'plan': 'school'}
-            finally:
-                db.close()
-        else:
-            result = {'isActive': False, 'status': 'error'}
-    else:
-        # Check individual subscription
-        result = stripe_client.get_subscription_from_db(educator_id)
-    
+    # Platform is free — grant access to everyone
+    result = {'isActive': True, 'status': 'free', 'plan': 'free'}
     st.session_state[cache_key] = result
     st.session_state[cache_time_key] = datetime.now()
-    print(f"[SUB CHECK] educator_id={educator_id}, school_id={school_id}, role={user_role}, result={result}")
     return result
 
 def invalidate_subscription_cache(educator_id=None):
@@ -729,95 +671,15 @@ def show_account_settings():
         
         st.markdown("---")
     
-    sub_status = check_subscription_status(educator_id)
-    
-    # Admin users don't need subscription display
+    # Admin users
     if st.session_state.get('is_admin'):
         st.info("👑 Admin account - Full access enabled")
         return
-    
-    st.markdown("### Subscription")
-    
-    if sub_status.get('isActive'):
-        plan = sub_status.get('plan', 'monthly').capitalize()
-        status = sub_status.get('status', 'active').capitalize()
-        
-        if sub_status.get('cancelAtPeriodEnd'):
-            period_end = sub_status.get('currentPeriodEnd')
-            if period_end:
-                try:
-                    end_date = datetime.fromisoformat(period_end.replace('Z', '+00:00'))
-                    formatted_date = end_date.strftime('%B %d, %Y')
-                except:
-                    formatted_date = str(period_end)[:10]
-            else:
-                formatted_date = "the end of your billing period"
-            
-            st.warning(f"Your subscription is set to cancel on **{formatted_date}**. You'll have access until then.")
-            
-            if st.button("Undo Cancellation", key="reactivate_btn", type="primary"):
-                with st.spinner("Reactivating subscription..."):
-                    result = reactivate_subscription(educator_id)
-                    if result:
-                        st.success("Your subscription has been reactivated!")
-                        st.rerun()
-                    else:
-                        st.error("Unable to reactivate. Please try again or contact support.")
-        else:
-            st.success(f"**{plan}** plan - {status}")
-            
-            if st.button("💳 Manage Billing", key="manage_billing_btn"):
-                with st.spinner("Opening billing portal..."):
-                    portal_url = create_portal_session(educator_id)
-                    if portal_url:
-                        st.markdown(f'<meta http-equiv="refresh" content="0;url={portal_url}">', unsafe_allow_html=True)
-                        st.info("Redirecting to billing portal...")
-                    else:
-                        st.error("Unable to open billing portal. Please try again.")
-    
+
+    st.markdown("### Access")
+    st.success("**Free** — Full access to all Guide features.")
+
     st.markdown("---")
-    
-    with st.expander("Account Actions", expanded=False):
-        st.markdown("#### Deactivate Account")
-        
-        if sub_status.get('cancelAtPeriodEnd'):
-            st.info("Your account is already set to deactivate at the end of your billing period.")
-        elif sub_status.get('isActive'):
-            st.markdown("""
-            If you deactivate your account:
-            - Your subscription will be cancelled at the end of your current billing period
-            - You'll keep full access until then
-            - Your data will be preserved and you can reactivate anytime
-            """)
-            
-            confirm_text = st.text_input(
-                "Type 'DEACTIVATE' to confirm",
-                key="deactivate_confirm",
-                placeholder="Type DEACTIVATE"
-            )
-            
-            if st.button("Deactivate Account", key="deactivate_btn", type="secondary"):
-                if confirm_text == "DEACTIVATE":
-                    with st.spinner("Processing deactivation..."):
-                        result = cancel_subscription(educator_id)
-                        if result:
-                            period_end = result.get('currentPeriodEnd')
-                            if period_end:
-                                try:
-                                    end_date = datetime.fromisoformat(str(period_end).replace('Z', '+00:00'))
-                                    formatted_date = end_date.strftime('%B %d, %Y')
-                                except:
-                                    formatted_date = "the end of your billing period"
-                            else:
-                                formatted_date = "the end of your billing period"
-                            st.success(f"Your account is set to deactivate on {formatted_date}. You can undo this anytime before then.")
-                            st.rerun()
-                        else:
-                            st.error("Unable to process deactivation. Please try again or contact support.")
-                else:
-                    st.error("Please type 'DEACTIVATE' exactly to confirm.")
-        else:
-            st.info("No active subscription to cancel.")
 
 def validate_email(email):
     """Validate email format"""
@@ -1294,66 +1156,12 @@ def login_page():
                                 st.rerun()
                                 return  # Ensure code doesn't continue after rerun
                             
-                            # School educators use school subscription
-                            if st.session_state.get('school_id') and st.session_state.get('user_role') in ('school_admin', 'school_educator'):
-                                from database import get_school_by_id, is_school_subscription_active
-                                school = get_school_by_id(db, st.session_state.school_id)
-                                if school and is_school_subscription_active(school):
-                                    st.session_state.subscription_verified = True
-                                    st.session_state.subscription_active = True
-                                    st.session_state.subscription_status = school.subscription_status or 'active'
-                                    st.session_state.subscription_plan = 'school'
-                                else:
-                                    st.session_state.subscription_verified = True
-                                    st.session_state.subscription_active = False
-                                    st.session_state.subscription_status = 'inactive'
-                                    st.session_state.subscription_plan = 'school'
-                                user_id = user.id
-                                user_name = st.session_state.user_name
-                                school_name = school.name if school else "your school"
-                                db.close()
-                                db = None
-                                create_login_session(user_id=user_id, user_type='educator')
-                                st.success(f"Welcome back, {user_name}! ({school_name})")
-                                st.rerun()
-                                return
-                            
-                            # FAILPROOF: Check Stripe directly at login, with graceful fallback
-                            stripe_result = sync_subscription_from_stripe(user.id, user.email)
-                            invalidate_subscription_cache(user.id)
-                            
-                            # Handle Stripe errors gracefully - NEVER block on transient failures
-                            stripe_status = stripe_result.get('status', 'none') if stripe_result else 'error'
-                            
-                            if stripe_status == 'error':
-                                # Stripe failed - check database for existing subscription
-                                print(f"[AUTH] Stripe check failed for {user.email}, checking database...")
-                                db_result = stripe_client.get_subscription_from_db(int(user.id))
-                                
-                                if db_result.get('isActive'):
-                                    # Database has confirmed active subscription - trust it!
-                                    print(f"[AUTH] Database confirms active subscription for {user.email}")
-                                    st.session_state.subscription_verified = True
-                                    st.session_state.subscription_active = True
-                                    st.session_state.subscription_status = db_result.get('status', 'active')
-                                    st.session_state.subscription_plan = db_result.get('plan', 'monthly')
-                                else:
-                                    # No active subscription in DB, grant grace access
-                                    print(f"[AUTH] No active subscription in DB, granting GRACE ACCESS")
-                                    st.session_state.subscription_verified = False
-                                    st.session_state.subscription_active = True  # GRACE ACCESS
-                                    st.session_state.subscription_status = 'grace'
-                                    st.session_state.subscription_plan = db_result.get('plan') or 'grace'
-                            else:
-                                # Successful Stripe response - this is authoritative
-                                is_active = stripe_result.get('isActive', False)
-                                plan = stripe_result.get('plan')
-                                
-                                st.session_state.subscription_verified = True  # Confirmed with Stripe
-                                st.session_state.subscription_active = is_active
-                                st.session_state.subscription_plan = plan
-                                st.session_state.subscription_status = stripe_status
-                            
+                            # Platform is free — grant access to all authenticated educators
+                            st.session_state.subscription_verified = True
+                            st.session_state.subscription_active = True
+                            st.session_state.subscription_status = 'free'
+                            st.session_state.subscription_plan = 'free'
+
                             user_id = user.id
                             user_name = st.session_state.user_name
                             db.close()  # Close db before calling create_login_session
