@@ -125,10 +125,15 @@ export default function Login() {
           )}
         </div>
 
-        <div className="text-center mt-6">
-          <Link to="/join-school" className="text-sm text-eco-accent hover:text-eco-hover transition-colors">
+        <div className="text-center mt-6 space-y-2">
+          <Link to="/join-school" className="block text-sm text-eco-accent hover:text-eco-hover transition-colors">
             Join a school with invite code
           </Link>
+          <div className="flex items-center justify-center gap-4 text-xs text-eco-text/40">
+            <Link to="/contact" className="hover:text-eco-accent transition-colors">Contact Us</Link>
+            <span>·</span>
+            <Link to="/privacy" className="hover:text-eco-accent transition-colors">Privacy Policy</Link>
+          </div>
         </div>
       </div>
     </div>

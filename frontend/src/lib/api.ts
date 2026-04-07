@@ -166,6 +166,8 @@ export const studentsMgmt = {
   safetyAlerts: (id: string) => api.get<{ alerts: SafetyAlert[] }>(`/students/${id}/safety-alerts`),
   revokeAccess: (studentId: string, educatorId: string) =>
     api.delete<{ message: string }>(`/students/${studentId}/revoke-access/${educatorId}`),
+  chatHistory: (id: string) =>
+    api.get<{ sessions: Array<{ id: string; subject?: string; created_at?: string; message_count?: number; last_message?: string }> }>(`/students/${id}/chat-history`),
 };
 
 export const notes = {

@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
 import { studentsMgmt, dataApi } from '../lib/api';
 import type { Student, Activity, SafetyAlert } from '../lib/types';
-import { Loader2, Plus, Search, Users, ChevronRight, X, AlertTriangle, Clock, Shield, Share2 } from 'lucide-react';
+import { Loader2, Plus, Search, Users, ChevronRight, X, AlertTriangle, Clock, Shield, Share2, MessageSquare } from 'lucide-react';
+
+interface ChatHistoryEntry {
+  id: string;
+  subject?: string;
+  created_at?: string;
+  message_count?: number;
+  last_message?: string;
+}
 
 export default function Students() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -9,9 +17,10 @@ export default function Students() {
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [detailTab, setDetailTab] = useState<'overview' | 'activities' | 'safety' | 'sharing'>('overview');
+  const [detailTab, setDetailTab] = useState<'overview' | 'activities' | 'safety' | 'sharing' | 'chat-history'>('overview');
   const [activities, setActivities] = useState<Activity[]>([]);
   const [alerts, setAlerts] = useState<SafetyAlert[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatHistoryEntry[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [formData, setFormData] = useState({ name: '', username: '', password: '', age_group: '6-9', consent_given: false });
   const [saving, setSaving] = useState(false);
@@ -42,6 +51,13 @@ export default function Students() {
       } else if (tab === 'safety') {
         const res = await studentsMgmt.safetyAlerts(student.id);
         setAlerts(res.alerts);
+      } else if (tab === 'chat-history') {
+        try {
+          const res = await studentsMgmt.chatHistory(student.id);
+          setChatHistory(res.sessions);
+        } catch {
+          setChatHistory([]);
+        }
       }
     } catch {
       // failed to load detail
@@ -55,9 +71,9 @@ export default function Students() {
     setDetailTab('overview');
   };
 
-  const handleTabChange = (tab: 'overview' | 'activities' | 'safety' | 'sharing') => {
+  const handleTabChange = (tab: 'overview' | 'activities' | 'safety' | 'sharing' | 'chat-history') => {
     setDetailTab(tab);
-    if (selectedStudent && (tab === 'activities' || tab === 'safety')) {
+    if (selectedStudent && (tab === 'activities' || tab === 'safety' || tab === 'chat-history')) {
       loadStudentDetail(selectedStudent, tab);
     }
   };
@@ -125,12 +141,12 @@ export default function Students() {
           </div>
 
           <div className="flex gap-2 mb-6 flex-wrap">
-            {(['overview', 'activities', 'safety', 'sharing'] as const).map(tab => (
+            {(['overview', 'activities', 'chat-history', 'safety', 'sharing'] as const).map(tab => (
               <button key={tab} onClick={() => handleTabChange(tab)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors capitalize ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   detailTab === tab ? 'bg-leaf/15 text-leaf-dark border border-leaf/30' : 'bg-sand/30 border border-eco-border text-eco-text/70 hover:bg-sand/50'
                 }`}>
-                {tab === 'safety' ? 'Safety Alerts' : tab}
+                {tab === 'safety' ? 'Safety Alerts' : tab === 'chat-history' ? 'Chat History' : tab === 'overview' ? 'Overview' : tab === 'activities' ? 'Activities' : 'Sharing'}
               </button>
             ))}
           </div>
@@ -193,6 +209,40 @@ export default function Students() {
                         {alert.created_at && <span className="text-xs text-eco-text/40 ml-auto">{new Date(alert.created_at).toLocaleString()}</span>}
                       </div>
                       <p className="text-sm text-ink">{alert.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {detailTab === 'chat-history' && (
+            <div>
+              {loadingDetail ? (
+                <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
+              ) : chatHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageSquare className="mx-auto text-eco-text/30 mb-2" size={32} />
+                  <p className="text-sm text-eco-text/50">No chat sessions yet</p>
+                  <p className="text-xs text-eco-text/40 mt-1">Chat history will appear when the student uses the tutor</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {chatHistory.map(session => (
+                    <div key={session.id} className="p-4 bg-sand/20 rounded-xl">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MessageSquare size={14} className="text-eco-accent shrink-0" />
+                        <span className="text-sm font-medium text-ink">{session.subject || 'General'}</span>
+                        {session.message_count !== undefined && (
+                          <span className="text-xs text-eco-text/40 ml-auto">{session.message_count} messages</span>
+                        )}
+                      </div>
+                      {session.last_message && (
+                        <p className="text-sm text-eco-text/60 mt-1 line-clamp-2">{session.last_message}</p>
+                      )}
+                      {session.created_at && (
+                        <p className="text-xs text-eco-text/30 mt-2">{new Date(session.created_at).toLocaleString()}</p>
+                      )}
                     </div>
                   ))}
                 </div>

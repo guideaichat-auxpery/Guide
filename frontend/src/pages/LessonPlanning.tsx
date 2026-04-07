@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { tools } from '../lib/api';
+import { tools, api } from '../lib/api';
 import type { LessonPlanRequest } from '../lib/types';
 import { Loader2, BookOpen, Target, Layers, Upload, X, FileText } from 'lucide-react';
 
@@ -23,17 +23,20 @@ export default function LessonPlanning() {
   const [error, setError] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState('');
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-    if (!validTypes.includes(file.type) && !file.name.endsWith('.txt')) {
+    if (!validTypes.includes(file.type) && !file.name.endsWith('.txt') && !file.name.endsWith('.pdf') && !file.name.endsWith('.docx')) {
       setError('Please upload a PDF, DOCX, or TXT file');
       return;
     }
     setUploadedFile(file);
+    setError('');
+
     if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -41,7 +44,22 @@ export default function LessonPlanning() {
       };
       reader.readAsText(file);
     } else {
-      setFileContent(`[Uploaded: ${file.name}]`);
+      setUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await api.postForm<{ content: string }>('/tools/upload-document', formData);
+        setFileContent(res.content);
+      } catch {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const base64 = ev.target?.result as string || '';
+          setFileContent(`[Document: ${file.name}]\n\n${base64.substring(0, 500)}`);
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -140,7 +158,11 @@ export default function LessonPlanning() {
               {uploadedFile ? (
                 <div className="flex items-center gap-3 p-3 bg-sand/30 rounded-xl">
                   <FileText size={18} className="text-eco-accent shrink-0" />
-                  <span className="text-sm text-ink truncate flex-1">{uploadedFile.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm text-ink truncate block">{uploadedFile.name}</span>
+                    {uploading && <span className="text-xs text-eco-text/50 flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Processing...</span>}
+                    {!uploading && fileContent && <span className="text-xs text-leaf-dark">Ready</span>}
+                  </div>
                   <button type="button" onClick={removeFile} className="p-1 rounded-lg hover:bg-sand text-eco-text/40 hover:text-ink">
                     <X size={14} />
                   </button>
@@ -155,7 +177,7 @@ export default function LessonPlanning() {
               <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} className="hidden" />
             </div>
 
-            <button type="submit" disabled={loading}
+            <button type="submit" disabled={loading || uploading}
               className="w-full py-2.5 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
               {loading ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : modes.find(m => m.key === mode)?.label}
             </button>

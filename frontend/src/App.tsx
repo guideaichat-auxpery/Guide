@@ -7,6 +7,8 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import JoinSchool from './pages/JoinSchool';
+import Contact from './pages/Contact';
+import Privacy from './pages/Privacy';
 import Dashboard from './pages/Dashboard';
 import LessonPlanning from './pages/LessonPlanning';
 import Companion from './pages/Companion';
@@ -36,6 +38,8 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/join-school" element={<JoinSchool />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
 
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<ProtectedRoute requireRole="educator"><Dashboard /></ProtectedRoute>} />

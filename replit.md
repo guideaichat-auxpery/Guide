@@ -12,9 +12,9 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **Framework**: Vite + React + TypeScript + Tailwind CSS v4 in `/frontend`
 - **Dev server**: Port 5173 (Vite), proxied through reverse proxy on port 5000
 - **Design System**: Montessori earth-tone palette (sand, clay, sky, leaf, ink, paper) with Danish Eco-Design accents. Fonts: Inter (sans), Cormorant Garamond (serif headers). WCAG 2.1 AA accessible.
-- **Routing**: React Router v7 with protected routes. Educators see sidebar with Dashboard, Lesson Planning, Companion, Great Stories, Imaginarium, PD Expert, Students, Planning Notes, Settings. Students see Learn + Settings.
+- **Routing**: React Router v7 with protected routes. Educators see sidebar with Dashboard, Lesson Planning, Companion, Great Stories, Imaginarium, PD Expert, Students, Planning Notes, Settings. Students see Learn + Settings. Public pages: Login, Signup, Forgot/Reset Password, Join School, Contact, Privacy Policy.
 - **Auth**: AuthContext with JWT token in localStorage, session validation via `/api/auth/session`.
-- **API client**: `/frontend/src/lib/api.ts` — typed client for all 79 FastAPI endpoints.
+- **API client**: `/frontend/src/lib/api.ts` — typed client for all FastAPI endpoints including FormData upload support.
 - **Key directories**:
   - `frontend/src/pages/` — All page components (Login, Dashboard, LessonPlanning, Companion, etc.)
   - `frontend/src/components/` — Layout, ProtectedRoute, ChatInterface (reusable chat UI)
