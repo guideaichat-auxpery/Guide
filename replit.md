@@ -24,8 +24,19 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 - **School Master Account System**: Multi-seat school subscriptions with shareable invite links (Slack/Notion-style). Schools table with invite_code (8-char unique), license_count, and Stripe subscription fields. User roles: individual, school_admin, school_educator. School admins access dedicated dashboard showing license usage, educator list, and invite link. Educators join via /join/{invite_code} URL without individual payment - school subscription covers all seats. License validation prevents exceeding seat count. 7-day grace period on subscription expiry. **Self-service signup from marketing site**: Schools can sign up directly via POST /api/public/create-school-checkout with school name, email, and seat count (minimum 5 seats). After Stripe payment, admin completes setup at /?school_setup=token to create password and school account. See MARKETING_SITE_INTEGRATION.md for landing page integration guide.
 - **Email Integration**: Automated transactional emails via Resend for welcome, password reset, and contact form auto-reply.
 - **Child Safety Measures**: Content monitoring for concerning student messages with alerts to educators, confidential student reporting, and complete data deletion functionality.
-- **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and accessibility wizard.
+- **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and accessibility wizard. (Migration to React SPA in progress — Task #2.)
 - **Backend**: Single-file Python application integrating OpenAI API.
+- **FastAPI REST API** (`api/` directory): Stateless REST layer wrapping existing business logic for the future React SPA frontend. Runs on port 8000 via uvicorn. Key modules:
+  - `api/main.py` — FastAPI app with CORS, router wiring, health check.
+  - `api/db.py` — Standalone SQLAlchemy engine/session (imports model classes from `database.py`).
+  - `api/deps.py` — Auth dependencies: `get_current_user`, `get_current_student`, `get_current_user_or_student`, `require_admin` (token-based via `persistent_sessions` table).
+  - `api/routes/auth.py` — Login (educator/student), signup, logout, session check, forgot/reset password, change password, school join, admin password reset.
+  - `api/routes/users.py` — User profile, email change, institution update, account deletion.
+  - `api/routes/students.py` — CRUD students, activities, learning journey, grant/revoke educator access.
+  - `api/routes/schools.py` — School info, educator management for school admins.
+  - `api/routes/tools.py` — AI chat, lesson plan generation, great story generation, conversation management.
+  - `api/routes/notes.py` — Planning notes and great stories CRUD.
+  - `api/routes/data.py` — Data export, retention status, audit logs, safety alerts.
 - **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts for various features: Student Research Assistant, Age-Appropriate Lesson Planning, Professional Development Expert, and Imaginarium.
 - **GUIDE Learning Design Protocol (January 2026)**: For adolescent learners (12-15), lesson planning follows the GUIDE Protocol:
   - Stage 1: Anchor in Meaning (Human Theme, Driving Question, Purpose Statement)

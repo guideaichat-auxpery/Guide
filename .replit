@@ -28,6 +28,10 @@ args = "Adaptive Learning Server"
 task = "workflow.run"
 args = "Reverse Proxy"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Guide API Server"
+
 [[workflows.workflow]]
 name = "Guide AI Assistant"
 author = "agent"
@@ -64,6 +68,18 @@ waitForPort = 5000
 [workflows.workflow.metadata]
 outputType = "webview"
 
+[[workflows.workflow]]
+name = "Guide API Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
+waitForPort = 8000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3000
 externalPort = 4200
@@ -79,6 +95,10 @@ externalPort = 3002
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
 
 [[ports]]
 localPort = 8080
