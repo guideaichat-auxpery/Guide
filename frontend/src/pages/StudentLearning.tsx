@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import ChatInterface from '../components/ChatInterface';
-import { tools, studentsMgmt, type ChatMessage } from '../lib/api';
+import { tools, type ChatMessage } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { BookOpen, Beaker, Globe, Calculator, Palette, AlertTriangle, X, Loader2, CheckCircle } from 'lucide-react';
+import { BookOpen, Beaker, Globe, Calculator, Palette, AlertTriangle, X, Loader2, CheckCircle, Shield } from 'lucide-react';
 
 const subjects = [
   { id: 'mathematics', label: 'Mathematics', icon: Calculator, color: 'bg-sky/30' },
@@ -53,6 +53,13 @@ export default function StudentLearning() {
           <button onClick={() => setShowSafety(true)} className="ml-auto p-2 rounded-xl text-warning hover:bg-warning/10 transition-colors" title="Report a concern">
             <AlertTriangle size={16} />
           </button>
+        </div>
+
+        <div className="mb-3 p-3 bg-sky/10 border border-sky/20 rounded-xl flex items-start gap-2">
+          <Shield size={14} className="text-ink mt-0.5 shrink-0" />
+          <p className="text-xs text-eco-text/60">
+            Your conversations are private but monitored for safety. A trusted adult can see if something concerning comes up. You can always report a concern using the warning icon above.
+          </p>
         </div>
 
         {showSafety && (
@@ -108,9 +115,17 @@ export default function StudentLearning() {
 
   return (
     <div className="animate-fade-in">
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h2 className="text-3xl font-serif text-ink">Hello, {displayName}!</h2>
         <p className="text-eco-text/60 mt-2">What would you like to learn about today?</p>
+      </div>
+
+      <div className="max-w-2xl mx-auto mb-4 p-3 bg-sky/10 border border-sky/20 rounded-xl flex items-start gap-2">
+        <Shield size={14} className="text-ink mt-0.5 shrink-0" />
+        <p className="text-xs text-eco-text/60">
+          Your learning sessions are private and safe. Your teacher can see your progress to help you learn better.
+          If you ever feel uncomfortable, use the warning icon during a session to tell a trusted adult.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-2xl mx-auto">

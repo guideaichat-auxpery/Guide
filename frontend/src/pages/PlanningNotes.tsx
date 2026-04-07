@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { notes as notesApi, api } from '../lib/api';
+import { useState, useEffect } from 'react';
+import { notes as notesApi } from '../lib/api';
 import type { PlanningNote } from '../lib/types';
-import { Loader2, Plus, Trash2, Edit3, Save, X, StickyNote, Bold, Italic, List, Heading2, Link2, Code, Image, Quote } from 'lucide-react';
+import RichTextEditor from '../components/RichTextEditor';
+import { Loader2, Plus, Trash2, Edit3, Save, X, StickyNote } from 'lucide-react';
 
 export default function PlanningNotes() {
   const [notesList, setNotesList] = useState<PlanningNote[]>([]);
@@ -13,8 +14,6 @@ export default function PlanningNotes() {
   const [formCategory, setFormCategory] = useState('');
   const [saving, setSaving] = useState(false);
   const [expandedNote, setExpandedNote] = useState<string | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const loadNotes = async () => {
     setLoading(true);
@@ -51,53 +50,6 @@ export default function PlanningNotes() {
     setEditing(null);
   };
 
-  const insertFormatting = (prefix: string, suffix: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = formContent.substring(start, end);
-    const newContent = formContent.substring(0, start) + prefix + selected + suffix + formContent.substring(end);
-    setFormContent(newContent);
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
-    }, 0);
-  };
-
-  const insertAtCursor = (text: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const newContent = formContent.substring(0, start) + text + formContent.substring(start);
-    setFormContent(newContent);
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + text.length, start + text.length);
-    }, 0);
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.postForm<{ url: string }>('/tools/upload-image', formData);
-      insertAtCursor(`\n![${file.name}](${res.url})\n`);
-    } catch {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        insertAtCursor(`\n![${file.name}](${dataUrl})\n`);
-      };
-      reader.readAsDataURL(file);
-    }
-    if (imageInputRef.current) imageInputRef.current.value = '';
-  };
-
   const handleSave = async () => {
     if (!formTitle.trim()) return;
     setSaving(true);
@@ -126,22 +78,18 @@ export default function PlanningNotes() {
     }
   };
 
-  const toolbarButtons = [
-    { icon: Bold, action: () => insertFormatting('**', '**'), title: 'Bold' },
-    { icon: Italic, action: () => insertFormatting('*', '*'), title: 'Italic' },
-    { icon: Heading2, action: () => insertFormatting('\n## ', ''), title: 'Heading' },
-    { icon: List, action: () => insertFormatting('\n- ', ''), title: 'List' },
-    { icon: Quote, action: () => insertFormatting('\n> ', ''), title: 'Quote' },
-    { icon: Code, action: () => insertFormatting('`', '`'), title: 'Code' },
-    { icon: Link2, action: () => insertFormatting('[', '](url)'), title: 'Link' },
-  ];
+  const stripHtml = (html: string): string => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  };
 
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-serif text-ink">Planning Notes</h2>
-          <p className="text-sm text-eco-text/60 mt-1">Your workspace for lesson planning notes</p>
+          <p className="text-sm text-eco-text/60 mt-1">Your rich-text workspace for lesson planning</p>
         </div>
         <button onClick={startCreate}
           className="flex items-center gap-2 px-4 py-2 bg-leaf hover:bg-leaf-dark text-white text-sm font-medium rounded-xl transition-colors">
@@ -161,31 +109,11 @@ export default function PlanningNotes() {
             <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Category (optional)"
               className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
 
-            <div className="border border-eco-border rounded-xl overflow-hidden">
-              <div className="flex items-center gap-0.5 px-3 py-2 bg-sand/30 border-b border-eco-border flex-wrap">
-                {toolbarButtons.map(btn => (
-                  <button key={btn.title} type="button" onClick={btn.action}
-                    className="p-1.5 rounded hover:bg-eco-card transition-colors" title={btn.title}>
-                    <btn.icon size={14} className="text-eco-text/60" />
-                  </button>
-                ))}
-                <div className="w-px h-4 bg-eco-border mx-1" />
-                <button type="button" onClick={() => imageInputRef.current?.click()}
-                  className="p-1.5 rounded hover:bg-eco-card transition-colors" title="Insert image">
-                  <Image size={14} className="text-eco-text/60" />
-                </button>
-                <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                <span className="text-xs text-eco-text/30 ml-auto">Rich markdown supported</span>
-              </div>
-              <textarea
-                ref={textareaRef}
-                value={formContent}
-                onChange={e => setFormContent(e.target.value)}
-                rows={12}
-                placeholder="Write your notes... Use **bold**, *italic*, ## headings, - lists, > quotes, and insert images"
-                className="w-full px-4 py-3 text-sm text-ink focus:outline-none resize-none font-mono leading-relaxed"
-              />
-            </div>
+            <RichTextEditor
+              content={formContent}
+              onChange={setFormContent}
+              placeholder="Write your notes with rich formatting, lists, images, and more..."
+            />
 
             <div className="flex justify-end gap-2">
               <button onClick={cancel} className="px-4 py-2 text-sm text-eco-text/60 hover:text-ink rounded-xl transition-colors">Cancel</button>
@@ -228,7 +156,11 @@ export default function PlanningNotes() {
                   </button>
                 </div>
               </div>
-              <p className={`text-sm text-eco-text/60 whitespace-pre-wrap ${expandedNote === note.id ? '' : 'line-clamp-3'}`}>{note.content}</p>
+              {expandedNote === note.id ? (
+                <div className="text-sm text-eco-text/60 tiptap-editor" dangerouslySetInnerHTML={{ __html: note.content }} />
+              ) : (
+                <p className="text-sm text-eco-text/60 line-clamp-3">{stripHtml(note.content)}</p>
+              )}
               {note.updated_at && (
                 <p className="text-xs text-eco-text/30 mt-3">{new Date(note.updated_at).toLocaleDateString()}</p>
               )}

@@ -18,6 +18,7 @@ import PdExpert from './pages/PdExpert';
 import Students from './pages/Students';
 import PlanningNotes from './pages/PlanningNotes';
 import StudentLearning from './pages/StudentLearning';
+import SchoolAdmin from './pages/SchoolAdmin';
 import Settings from './pages/Settings';
 
 function RootRedirect() {
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="/pd-expert" element={<ProtectedRoute requireRole="educator"><PdExpert /></ProtectedRoute>} />
             <Route path="/students" element={<ProtectedRoute requireRole="educator"><Students /></ProtectedRoute>} />
             <Route path="/planning-notes" element={<ProtectedRoute requireRole="educator"><PlanningNotes /></ProtectedRoute>} />
+            <Route path="/school-admin" element={<ProtectedRoute requireRole="admin"><SchoolAdmin /></ProtectedRoute>} />
             <Route path="/learn" element={<ProtectedRoute requireRole="student"><StudentLearning /></ProtectedRoute>} />
             <Route path="/settings" element={<Settings />} />
           </Route>

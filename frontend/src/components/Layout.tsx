@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Home, BookOpen, Users, MessageCircle, Sparkles, GraduationCap,
-  StickyNote, Settings, LogOut, Menu, X, BookMarked, Lightbulb, ChevronDown
+  StickyNote, Settings, LogOut, Menu, X, BookMarked, Lightbulb, ChevronDown, Building2
 } from 'lucide-react';
 
 const educatorNav = [
@@ -18,17 +18,22 @@ const educatorNav = [
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
+const adminNav = { to: '/school-admin', icon: Building2, label: 'School Admin' };
+
 const studentNav = [
   { to: '/learn', icon: Lightbulb, label: 'Learn' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Layout() {
-  const { user, logout, isStudent } = useAuth();
+  const { user, logout, isStudent, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const navigate = useNavigate();
-  const navItems = isStudent ? studentNav : educatorNav;
+  const baseNav = isStudent ? studentNav : educatorNav;
+  const navItems = !isStudent && isAdmin
+    ? [...baseNav.slice(0, -1), adminNav, baseNav[baseNav.length - 1]]
+    : baseNav;
 
   const handleLogout = async () => {
     await logout();
