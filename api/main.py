@@ -93,9 +93,10 @@ if SERVE_STATIC:
 
     @app.get("/{full_path:path}")
     async def serve_spa(request: Request, full_path: str):
-        file_path = os.path.join(STATIC_DIR, full_path)
-        if full_path and os.path.isfile(file_path):
-            return FileResponse(file_path)
+        if full_path:
+            file_path = os.path.realpath(os.path.join(STATIC_DIR, full_path))
+            if file_path.startswith(os.path.realpath(STATIC_DIR) + os.sep) and os.path.isfile(file_path):
+                return FileResponse(file_path)
         return FileResponse(INDEX_HTML)
 
     logger.info(f"Static frontend configured from {STATIC_DIR}")
