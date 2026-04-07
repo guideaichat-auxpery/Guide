@@ -55,6 +55,7 @@ export interface SchoolInfo {
   id: string;
   name?: string;
   school_name?: string;
+  school_type?: string;
   code?: string;
   school_code?: string;
   license_count?: number;

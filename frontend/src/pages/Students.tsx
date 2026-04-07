@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { studentsMgmt, dataApi } from '../lib/api';
+import { studentsMgmt, tools } from '../lib/api';
 import type { Student, Activity, SafetyAlert } from '../lib/types';
 import { Loader2, Plus, Search, Users, ChevronRight, X, AlertTriangle, Clock, Shield, Share2, MessageSquare } from 'lucide-react';
 
@@ -21,6 +21,9 @@ export default function Students() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [alerts, setAlerts] = useState<SafetyAlert[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatHistoryEntry[]>([]);
+  const [viewingSession, setViewingSession] = useState<string | null>(null);
+  const [sessionMessages, setSessionMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [formData, setFormData] = useState({ name: '', username: '', password: '', age_group: '6-9', consent_given: false });
   const [saving, setSaving] = useState(false);
@@ -218,7 +221,33 @@ export default function Students() {
 
           {detailTab === 'chat-history' && (
             <div>
-              {loadingDetail ? (
+              {viewingSession ? (
+                <div>
+                  <button onClick={() => { setViewingSession(null); setSessionMessages([]); }}
+                    className="mb-3 text-sm text-eco-accent hover:text-eco-hover transition-colors">
+                    ← Back to sessions
+                  </button>
+                  {loadingMessages ? (
+                    <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
+                  ) : sessionMessages.length === 0 ? (
+                    <p className="text-sm text-eco-text/50 text-center py-6">No messages in this session</p>
+                  ) : (
+                    <div className="space-y-3 max-h-[50vh] overflow-y-auto p-2">
+                      {sessionMessages.map((msg, i) => (
+                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                            msg.role === 'user'
+                              ? 'bg-leaf/15 text-ink'
+                              : 'bg-sand/40 text-eco-text'
+                          }`}>
+                            {msg.content}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : loadingDetail ? (
                 <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
               ) : chatHistory.length === 0 ? (
                 <div className="text-center py-8">
@@ -229,7 +258,18 @@ export default function Students() {
               ) : (
                 <div className="space-y-2">
                   {chatHistory.map(session => (
-                    <div key={session.id} className="p-4 bg-sand/20 rounded-xl">
+                    <button key={session.id} onClick={async () => {
+                      setViewingSession(session.id);
+                      setLoadingMessages(true);
+                      try {
+                        const res = await tools.getMessages(session.id);
+                        setSessionMessages(res.messages);
+                      } catch {
+                        setSessionMessages([]);
+                      } finally {
+                        setLoadingMessages(false);
+                      }
+                    }} className="w-full text-left p-4 bg-sand/20 rounded-xl hover:bg-sand/40 transition-colors">
                       <div className="flex items-center gap-2 mb-1">
                         <MessageSquare size={14} className="text-eco-accent shrink-0" />
                         <span className="text-sm font-medium text-ink">{session.subject || 'General'}</span>
@@ -243,7 +283,7 @@ export default function Students() {
                       {session.created_at && (
                         <p className="text-xs text-eco-text/30 mt-2">{new Date(session.created_at).toLocaleString()}</p>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

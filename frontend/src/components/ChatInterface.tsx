@@ -10,12 +10,15 @@ interface Props {
   welcomeMessage?: string;
   accentColor?: string;
   quickPrompts?: string[];
+  initialMessages?: ChatMessage[];
 }
 
-export default function ChatInterface({ title, subtitle, placeholder, onSend, welcomeMessage, quickPrompts }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    welcomeMessage ? [{ role: 'assistant', content: welcomeMessage }] : []
-  );
+export default function ChatInterface({ title, subtitle, placeholder, onSend, welcomeMessage, quickPrompts, initialMessages }: Props) {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (initialMessages && initialMessages.length > 0) return initialMessages;
+    if (welcomeMessage) return [{ role: 'assistant', content: welcomeMessage }];
+    return [];
+  });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEnd = useRef<HTMLDivElement>(null);

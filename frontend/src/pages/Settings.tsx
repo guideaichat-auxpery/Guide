@@ -23,7 +23,9 @@ export default function Settings() {
   useEffect(() => {
     if (user && 'name' in user) {
       setName(user.name || '');
-      setInstitution(user.institution || '');
+      if ('institution' in user) {
+        setInstitution((user as { institution?: string }).institution || '');
+      }
     }
   }, [user]);
 

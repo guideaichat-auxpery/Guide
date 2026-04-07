@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ChatInterface from '../components/ChatInterface';
 import { tools, type ChatMessage } from '../lib/api';
 
@@ -28,27 +28,88 @@ const defaultCards: CompanionCard[] = [
   { id: 'independence', title: 'Independence', description: 'Fostering self-directed learning', icon: '🌟', category: 'Philosophy' },
 ];
 
+interface PersistedSession {
+  sessionId: string;
+  messages: ChatMessage[];
+  lastUpdated: string;
+}
+
+function getPersistedSessions(): Record<string, PersistedSession> {
+  try {
+    const stored = localStorage.getItem('companion_sessions');
+    if (stored) return JSON.parse(stored) as Record<string, PersistedSession>;
+  } catch {
+    // ignore parse errors
+  }
+  return {};
+}
+
+function persistSession(cardId: string, sessionId: string, messages: ChatMessage[]) {
+  const sessions = getPersistedSessions();
+  sessions[cardId] = { sessionId, messages, lastUpdated: new Date().toISOString() };
+  localStorage.setItem('companion_sessions', JSON.stringify(sessions));
+}
+
+function getSessionForCard(cardId: string): PersistedSession | null {
+  const sessions = getPersistedSessions();
+  return sessions[cardId] || null;
+}
+
 export default function Companion() {
   const [selectedCard, setSelectedCard] = useState<CompanionCard | null>(null);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+  const [restoredMessages, setRestoredMessages] = useState<ChatMessage[]>([]);
+  const [activeCards, setActiveCards] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const sessions = getPersistedSessions();
+    setActiveCards(new Set(Object.keys(sessions)));
+  }, []);
+
+  const handleSelectCard = useCallback((card: CompanionCard) => {
+    const existing = getSessionForCard(card.id);
+    if (existing) {
+      setSessionId(existing.sessionId);
+      setRestoredMessages(existing.messages);
+    } else {
+      setSessionId(undefined);
+      setRestoredMessages([]);
+    }
+    setSelectedCard(card);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setSelectedCard(null);
+    setSessionId(undefined);
+    setRestoredMessages([]);
+    const sessions = getPersistedSessions();
+    setActiveCards(new Set(Object.keys(sessions)));
+  }, []);
 
   if (selectedCard) {
     return (
       <div className="animate-fade-in">
         <button
-          onClick={() => { setSelectedCard(null); setSessionId(undefined); }}
+          onClick={handleBack}
           className="mb-4 text-sm text-eco-accent hover:text-eco-hover transition-colors"
         >
           ← Back to topics
         </button>
         <ChatInterface
+          key={selectedCard.id}
           title={`${selectedCard.icon} ${selectedCard.title}`}
           subtitle={selectedCard.description}
           placeholder={`Ask about ${selectedCard.title.toLowerCase()}...`}
           welcomeMessage={`Welcome to the ${selectedCard.title} area. I'm here to help you explore ${selectedCard.description.toLowerCase()}. What would you like to discuss?`}
+          initialMessages={restoredMessages}
           onSend={async (message: string, history: ChatMessage[]) => {
             const res = await tools.companionChat({ message, history, card_id: selectedCard.id, session_id: sessionId });
-            if (res.session_id) setSessionId(res.session_id);
+            const newSessionId = res.session_id || sessionId;
+            if (newSessionId) setSessionId(newSessionId);
+            const updatedHistory = [...history, { role: 'user' as const, content: message }, { role: 'assistant' as const, content: res.response }];
+            if (newSessionId) {
+              persistSession(selectedCard.id, newSessionId, updatedHistory);
+            }
             return res.response;
           }}
         />
@@ -70,12 +131,15 @@ export default function Companion() {
             {defaultCards.filter(c => c.category === category).map(card => (
               <button
                 key={card.id}
-                onClick={() => setSelectedCard(card)}
-                className="text-left bg-eco-card rounded-2xl border border-eco-border p-4 hover:border-leaf/40 hover:shadow-sm transition-all duration-200"
+                onClick={() => handleSelectCard(card)}
+                className="text-left bg-eco-card rounded-2xl border border-eco-border p-4 hover:border-leaf/40 hover:shadow-sm transition-all duration-200 relative"
               >
                 <div className="text-2xl mb-2">{card.icon}</div>
                 <h4 className="font-sans text-sm font-semibold text-ink">{card.title}</h4>
                 <p className="text-xs text-eco-text/60 mt-1">{card.description}</p>
+                {activeCards.has(card.id) && (
+                  <span className="absolute top-3 right-3 w-2 h-2 rounded-full bg-leaf" title="Active conversation" />
+                )}
               </button>
             ))}
           </div>
