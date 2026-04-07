@@ -7,6 +7,7 @@ packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimageq
 [deployment]
 deploymentTarget = "autoscale"
 run = ["bash", "start_all.sh"]
+build = ["bash", "-c", "cd frontend && npm install && npm run build"]
 
 [workflows]
 runButton = "Project"
@@ -18,15 +19,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Guide AI Assistant"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Adaptive Learning Server"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Reverse Proxy"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
@@ -35,18 +28,6 @@ args = "Guide API Server"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Frontend Dev Server"
-
-[[workflows.workflow]]
-name = "Guide AI Assistant"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run app.py --server.port 8080"
-waitForPort = 8080
 
 [[workflows.workflow]]
 name = "Adaptive Learning Server"
@@ -59,18 +40,6 @@ waitForPort = 3000
 
 [workflows.workflow.metadata]
 outputType = "console"
-
-[[workflows.workflow]]
-name = "Reverse Proxy"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node proxy_server.js"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[workflows.workflow]]
 name = "Guide API Server"
@@ -88,9 +57,13 @@ outputType = "console"
 name = "Frontend Dev Server"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npx vite --host 0.0.0.0 --port 5173"
+args = "cd frontend && npx vite --host 0.0.0.0 --port 5000"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3000

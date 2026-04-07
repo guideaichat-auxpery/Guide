@@ -1,13 +1,17 @@
 import os
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+SERVE_STATIC = os.path.isdir(STATIC_DIR)
 
 app = FastAPI(
     title="Guide API",
@@ -17,6 +21,17 @@ app = FastAPI(
 
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 ALLOWED_ORIGINS = [o.strip() for o in ALLOWED_ORIGINS if o.strip()]
+
+REPLIT_DEV_DOMAIN = os.getenv("REPLIT_DEV_DOMAIN", "")
+REPLIT_DOMAINS = os.getenv("REPLIT_DOMAINS", "")
+REPLIT_DEPLOYMENT_URL = os.getenv("REPLIT_DEPLOYMENT_URL", "")
+
+for domain in [REPLIT_DEV_DOMAIN, REPLIT_DOMAINS, REPLIT_DEPLOYMENT_URL]:
+    if domain:
+        origin = f"https://{domain}" if not domain.startswith("http") else domain
+        if origin not in ALLOWED_ORIGINS:
+            ALLOWED_ORIGINS.append(origin)
+
 if not ALLOWED_ORIGINS:
     ALLOWED_ORIGINS = ["*"]
 
@@ -65,6 +80,25 @@ def health_check():
         "service": "Guide API",
         "database": db_status,
     }
+
+
+if SERVE_STATIC:
+    from fastapi.staticfiles import StaticFiles
+
+    INDEX_HTML = os.path.join(STATIC_DIR, "index.html")
+
+    assets_dir = os.path.join(STATIC_DIR, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="static-assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str):
+        file_path = os.path.join(STATIC_DIR, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(INDEX_HTML)
+
+    logger.info(f"Static frontend configured from {STATIC_DIR}")
 
 
 @app.on_event("startup")
