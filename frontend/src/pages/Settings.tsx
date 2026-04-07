@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { users, auth as authApi, schools, data as dataApi } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { users, auth as authApi, schools, dataApi } from '../lib/api';
+import type { SchoolInfo, Educator } from '../lib/types';
 import { Loader2, Save, Shield, Download, Users, AlertTriangle } from 'lucide-react';
 
 export default function Settings() {
   const { user, isAdmin, isStudent, logout } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [institution, setInstitution] = useState('');
   const [currentPw, setCurrentPw] = useState('');
@@ -13,22 +16,24 @@ export default function Settings() {
   const [pwSaving, setPwSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [pwMessage, setPwMessage] = useState('');
-  const [schoolInfo, setSchoolInfo] = useState<any>(null);
-  const [educators, setEducators] = useState<any[]>([]);
+  const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
+  const [educatorsList, setEducatorsList] = useState<Educator[]>([]);
   const [tab, setTab] = useState<'profile' | 'security' | 'school' | 'data'>('profile');
 
   useEffect(() => {
     if (user && 'name' in user) {
       setName(user.name || '');
-      setInstitution((user as any).institution || '');
+      setInstitution(user.institution || '');
     }
   }, [user]);
 
   useEffect(() => {
     if (isAdmin && tab === 'school') {
-      schools.mine().then((info: any) => {
+      schools.mine().then(info => {
         setSchoolInfo(info);
-        if (info?.id) schools.educators(info.id).then((r: any) => setEducators(r.educators || [])).catch(() => {});
+        if (info?.id) {
+          schools.educators(info.id).then(r => setEducatorsList(r.educators)).catch(() => {});
+        }
       }).catch(() => {});
     }
   }, [isAdmin, tab]);
@@ -39,9 +44,11 @@ export default function Settings() {
     try {
       await users.updateMe({ name, institution });
       setMessage('Profile updated');
-    } catch (e: any) {
-      setMessage(e.message || 'Failed to update');
-    } finally { setSaving(false); }
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Failed to update');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -54,30 +61,49 @@ export default function Settings() {
       setPwMessage('Password changed successfully');
       setCurrentPw('');
       setNewPw('');
-    } catch (e: any) {
-      setPwMessage(e.message || 'Failed to change password');
-    } finally { setPwSaving(false); }
+    } catch (e) {
+      setPwMessage(e instanceof Error ? e.message : 'Failed to change password');
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   const handleExportData = async () => {
     try {
-      const data = await dataApi.export();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const exportData = await dataApi.export();
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'guide-data-export.json';
       a.click();
       URL.revokeObjectURL(url);
-    } catch {}
+    } catch {
+      // failed to export
+    }
   };
 
   const handleDeleteAccount = async () => {
     if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+    if (!confirm('This will permanently delete all your data, students, notes, and conversations. Proceed?')) return;
     try {
       await users.deleteAccount();
       await logout();
-    } catch {}
+      navigate('/login');
+    } catch {
+      // failed to delete
+    }
+  };
+
+  const handleRemoveEducator = async (educatorId: string) => {
+    if (!schoolInfo?.id) return;
+    if (!confirm('Remove this educator from the school?')) return;
+    try {
+      await schools.removeEducator(schoolInfo.id, educatorId);
+      setEducatorsList(prev => prev.filter(e => e.id !== educatorId));
+    } catch {
+      // failed to remove
+    }
   };
 
   const tabs = [
@@ -196,26 +222,35 @@ export default function Settings() {
               {schoolInfo ? (
                 <div className="p-4 bg-sand/20 rounded-xl text-sm text-ink space-y-1">
                   <p><span className="font-medium">Name:</span> {schoolInfo.name || schoolInfo.school_name || 'N/A'}</p>
-                  <p><span className="font-medium">Code:</span> <code className="px-2 py-0.5 bg-eco-card rounded text-xs">{schoolInfo.code || schoolInfo.school_code || 'N/A'}</code></p>
+                  <p><span className="font-medium">Invite Code:</span> <code className="px-2 py-0.5 bg-eco-card rounded text-xs font-mono">{schoolInfo.code || schoolInfo.school_code || 'N/A'}</code></p>
+                  {schoolInfo.license_count !== undefined && (
+                    <p><span className="font-medium">Seats:</span> {schoolInfo.educator_count || educatorsList.length} / {schoolInfo.license_count} used</p>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-eco-text/50">No school configured</p>
               )}
             </div>
-            {educators.length > 0 && (
+            {educatorsList.length > 0 && (
               <div>
-                <h3 className="font-sans text-sm font-semibold text-ink mb-3">Educators ({educators.length})</h3>
+                <h3 className="font-sans text-sm font-semibold text-ink mb-3">Educators ({educatorsList.length})</h3>
                 <div className="space-y-2">
-                  {educators.map((ed: any) => (
-                    <div key={ed.id || ed.email} className="flex items-center gap-3 p-3 bg-sand/20 rounded-xl">
+                  {educatorsList.map(ed => (
+                    <div key={ed.id} className="flex items-center gap-3 p-3 bg-sand/20 rounded-xl">
                       <div className="w-8 h-8 rounded-full bg-leaf/20 flex items-center justify-center text-leaf-dark font-semibold text-xs">
-                        {(ed.name || '?').charAt(0).toUpperCase()}
+                        {ed.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm text-ink truncate">{ed.name}</div>
                         <div className="text-xs text-eco-text/50">{ed.email}</div>
                       </div>
-                      <span className="text-xs px-2 py-0.5 bg-eco-card rounded-lg border border-eco-border">{ed.role || 'educator'}</span>
+                      <span className="text-xs px-2 py-0.5 bg-eco-card rounded-lg border border-eco-border">{ed.role}</span>
+                      <button
+                        onClick={() => handleRemoveEducator(ed.id)}
+                        className="text-xs text-danger/60 hover:text-danger transition-colors"
+                      >
+                        Remove
+                      </button>
                     </div>
                   ))}
                 </div>

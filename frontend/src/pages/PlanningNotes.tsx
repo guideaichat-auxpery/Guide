@@ -1,32 +1,29 @@
 import { useState, useEffect } from 'react';
 import { notes as notesApi } from '../lib/api';
-import { Loader2, Plus, Trash2, Edit3, Save, X, StickyNote } from 'lucide-react';
-
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  category?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+import type { PlanningNote } from '../lib/types';
+import { Loader2, Plus, Trash2, Edit3, Save, X, StickyNote, Bold, Italic, List } from 'lucide-react';
 
 export default function PlanningNotes() {
-  const [notesList, setNotesList] = useState<Note[]>([]);
+  const [notesList, setNotesList] = useState<PlanningNote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Note | null>(null);
+  const [editing, setEditing] = useState<PlanningNote | null>(null);
   const [creating, setCreating] = useState(false);
   const [formTitle, setFormTitle] = useState('');
   const [formContent, setFormContent] = useState('');
   const [formCategory, setFormCategory] = useState('');
   const [saving, setSaving] = useState(false);
+  const [expandedNote, setExpandedNote] = useState<string | null>(null);
 
   const loadNotes = async () => {
     setLoading(true);
     try {
       const res = await notesApi.list();
-      setNotesList((res.notes || []) as Note[]);
-    } catch {} finally { setLoading(false); }
+      setNotesList(res.notes);
+    } catch {
+      // failed to load
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadNotes(); }, []);
@@ -39,7 +36,7 @@ export default function PlanningNotes() {
     setFormCategory('');
   };
 
-  const startEdit = (note: Note) => {
+  const startEdit = (note: PlanningNote) => {
     setEditing(note);
     setCreating(false);
     setFormTitle(note.title);
@@ -52,18 +49,36 @@ export default function PlanningNotes() {
     setEditing(null);
   };
 
+  const insertFormatting = (prefix: string, suffix: string) => {
+    const textarea = document.getElementById('note-content') as HTMLTextAreaElement | null;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = formContent.substring(start, end);
+    const newContent = formContent.substring(0, start) + prefix + selected + suffix + formContent.substring(end);
+    setFormContent(newContent);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
+
   const handleSave = async () => {
     if (!formTitle.trim()) return;
     setSaving(true);
     try {
       if (editing) {
-        await notesApi.update(editing.id, { title: formTitle, content: formContent, category: formCategory });
+        await notesApi.update(editing.id, { title: formTitle, content: formContent, category: formCategory || undefined });
       } else {
-        await notesApi.create({ title: formTitle, content: formContent, category: formCategory });
+        await notesApi.create({ title: formTitle, content: formContent, category: formCategory || undefined });
       }
       cancel();
       loadNotes();
-    } catch {} finally { setSaving(false); }
+    } catch {
+      // failed to save
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -71,7 +86,9 @@ export default function PlanningNotes() {
     try {
       await notesApi.delete(id);
       setNotesList(n => n.filter(note => note.id !== id));
-    } catch {}
+    } catch {
+      // failed to delete
+    }
   };
 
   return (
@@ -98,8 +115,30 @@ export default function PlanningNotes() {
               className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink font-medium focus:border-leaf" />
             <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Category (optional)"
               className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
-            <textarea value={formContent} onChange={e => setFormContent(e.target.value)} rows={8} placeholder="Write your notes..."
-              className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf resize-none" />
+
+            <div className="border border-eco-border rounded-xl overflow-hidden">
+              <div className="flex items-center gap-1 px-3 py-2 bg-sand/30 border-b border-eco-border">
+                <button type="button" onClick={() => insertFormatting('**', '**')} className="p-1.5 rounded hover:bg-eco-card transition-colors" title="Bold">
+                  <Bold size={14} className="text-eco-text/60" />
+                </button>
+                <button type="button" onClick={() => insertFormatting('*', '*')} className="p-1.5 rounded hover:bg-eco-card transition-colors" title="Italic">
+                  <Italic size={14} className="text-eco-text/60" />
+                </button>
+                <button type="button" onClick={() => insertFormatting('\n- ', '')} className="p-1.5 rounded hover:bg-eco-card transition-colors" title="List">
+                  <List size={14} className="text-eco-text/60" />
+                </button>
+                <span className="text-xs text-eco-text/30 ml-2">Markdown supported</span>
+              </div>
+              <textarea
+                id="note-content"
+                value={formContent}
+                onChange={e => setFormContent(e.target.value)}
+                rows={10}
+                placeholder="Write your notes... Use **bold**, *italic*, and - lists"
+                className="w-full px-4 py-3 text-sm text-ink focus:outline-none resize-none font-mono leading-relaxed"
+              />
+            </div>
+
             <div className="flex justify-end gap-2">
               <button onClick={cancel} className="px-4 py-2 text-sm text-eco-text/60 hover:text-ink rounded-xl transition-colors">Cancel</button>
               <button onClick={handleSave} disabled={saving || !formTitle.trim()}
@@ -123,13 +162,16 @@ export default function PlanningNotes() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {notesList.map(note => (
-            <div key={note.id} className="bg-eco-card rounded-2xl border border-eco-border p-5 hover:border-leaf/30 transition-colors">
+            <div key={note.id}
+              className="bg-eco-card rounded-2xl border border-eco-border p-5 hover:border-leaf/30 transition-colors cursor-pointer"
+              onClick={() => setExpandedNote(expandedNote === note.id ? null : note.id)}
+            >
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h4 className="font-sans text-sm font-semibold text-ink">{note.title}</h4>
                   {note.category && <span className="text-xs text-eco-accent">{note.category}</span>}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   <button onClick={() => startEdit(note)} className="p-1.5 rounded-lg text-eco-text/40 hover:text-ink hover:bg-sand/50 transition-colors">
                     <Edit3 size={14} />
                   </button>
@@ -138,7 +180,7 @@ export default function PlanningNotes() {
                   </button>
                 </div>
               </div>
-              <p className="text-sm text-eco-text/60 line-clamp-3 whitespace-pre-wrap">{note.content}</p>
+              <p className={`text-sm text-eco-text/60 whitespace-pre-wrap ${expandedNote === note.id ? '' : 'line-clamp-3'}`}>{note.content}</p>
               {note.updated_at && (
                 <p className="text-xs text-eco-text/30 mt-3">{new Date(note.updated_at).toLocaleDateString()}</p>
               )}

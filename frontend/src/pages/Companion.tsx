@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ChatInterface from '../components/ChatInterface';
 import { tools, type ChatMessage } from '../lib/api';
-import { Loader2 } from 'lucide-react';
 
 interface CompanionCard {
   id: string;
@@ -31,13 +30,13 @@ const defaultCards: CompanionCard[] = [
 
 export default function Companion() {
   const [selectedCard, setSelectedCard] = useState<CompanionCard | null>(null);
-  const [cards] = useState<CompanionCard[]>(defaultCards);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
 
   if (selectedCard) {
     return (
       <div className="animate-fade-in">
         <button
-          onClick={() => setSelectedCard(null)}
+          onClick={() => { setSelectedCard(null); setSessionId(undefined); }}
           className="mb-4 text-sm text-eco-accent hover:text-eco-hover transition-colors"
         >
           ← Back to topics
@@ -47,8 +46,9 @@ export default function Companion() {
           subtitle={selectedCard.description}
           placeholder={`Ask about ${selectedCard.title.toLowerCase()}...`}
           welcomeMessage={`Welcome to the ${selectedCard.title} area. I'm here to help you explore ${selectedCard.description.toLowerCase()}. What would you like to discuss?`}
-          onSend={async (message, history) => {
-            const res = await tools.companionChat({ message, history, card_id: selectedCard.id });
+          onSend={async (message: string, history: ChatMessage[]) => {
+            const res = await tools.companionChat({ message, history, card_id: selectedCard.id, session_id: sessionId });
+            if (res.session_id) setSessionId(res.session_id);
             return res.response;
           }}
         />
@@ -56,7 +56,7 @@ export default function Companion() {
     );
   }
 
-  const categories = [...new Set(cards.map(c => c.category))];
+  const categories = [...new Set(defaultCards.map(c => c.category))];
 
   return (
     <div className="animate-fade-in">
@@ -67,7 +67,7 @@ export default function Companion() {
         <div key={category} className="mb-6">
           <h3 className="font-sans text-xs font-semibold text-eco-text/50 uppercase tracking-wider mb-3">{category}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {cards.filter(c => c.category === category).map(card => (
+            {defaultCards.filter(c => c.category === category).map(card => (
               <button
                 key={card.id}
                 onClick={() => setSelectedCard(card)}

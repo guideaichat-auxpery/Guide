@@ -18,8 +18,8 @@ export default function JoinSchool() {
       await auth.joinSchool(code);
       setSuccess(true);
       setTimeout(() => navigate('/dashboard'), 2000);
-    } catch (e: any) {
-      setError(e.message || 'Invalid invite code');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Invalid invite code');
     } finally {
       setLoading(false);
     }

@@ -1,26 +1,66 @@
 import { useState, useEffect } from 'react';
-import { studentsMgmt } from '../lib/api';
-import { Loader2, Plus, Search, Users, ChevronRight, X, AlertTriangle } from 'lucide-react';
+import { studentsMgmt, dataApi } from '../lib/api';
+import type { Student, Activity, SafetyAlert } from '../lib/types';
+import { Loader2, Plus, Search, Users, ChevronRight, X, AlertTriangle, Clock, Shield, Share2 } from 'lucide-react';
 
 export default function Students() {
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [detailTab, setDetailTab] = useState<'overview' | 'activities' | 'safety' | 'sharing'>('overview');
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [alerts, setAlerts] = useState<SafetyAlert[]>([]);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [formData, setFormData] = useState({ name: '', username: '', password: '', age_group: '6-9', consent_given: false });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [shareEmail, setShareEmail] = useState('');
+  const [shareMsg, setShareMsg] = useState('');
 
   const loadStudents = async () => {
     setLoading(true);
     try {
       const res = await studentsMgmt.list();
-      setStudents(res.students || []);
-    } catch {} finally { setLoading(false); }
+      setStudents(res.students);
+    } catch {
+      // failed to load
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadStudents(); }, []);
+
+  const loadStudentDetail = async (student: Student, tab: string) => {
+    setLoadingDetail(true);
+    try {
+      if (tab === 'activities') {
+        const res = await studentsMgmt.activities(student.id);
+        setActivities(res.activities);
+      } else if (tab === 'safety') {
+        const res = await studentsMgmt.safetyAlerts(student.id);
+        setAlerts(res.alerts);
+      }
+    } catch {
+      // failed to load detail
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const selectStudent = (student: Student) => {
+    setSelectedStudent(student);
+    setDetailTab('overview');
+  };
+
+  const handleTabChange = (tab: 'overview' | 'activities' | 'safety' | 'sharing') => {
+    setDetailTab(tab);
+    if (selectedStudent && (tab === 'activities' || tab === 'safety')) {
+      loadStudentDetail(selectedStudent, tab);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,23 +72,38 @@ export default function Students() {
       setShowCreate(false);
       setFormData({ name: '', username: '', password: '', age_group: '6-9', consent_given: false });
       loadStudents();
-    } catch (e: any) {
-      setError(e.message || 'Failed to create student');
-    } finally { setSaving(false); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to create student');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure? This action cannot be undone.')) return;
+    if (!confirm('Are you sure? This will permanently delete this student and all their data.')) return;
     try {
       await studentsMgmt.delete(id);
       setStudents(s => s.filter(st => st.id !== id));
       if (selectedStudent?.id === id) setSelectedStudent(null);
-    } catch {}
+    } catch {
+      // failed to delete
+    }
+  };
+
+  const handleGrantAccess = async () => {
+    if (!shareEmail.trim() || !selectedStudent) return;
+    try {
+      await studentsMgmt.grantAccess(selectedStudent.id, { educator_email: shareEmail });
+      setShareMsg('Access granted successfully');
+      setShareEmail('');
+    } catch (e) {
+      setShareMsg(e instanceof Error ? e.message : 'Failed to grant access');
+    }
   };
 
   const filtered = students.filter(s =>
-    (s.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (s.username || '').toLowerCase().includes(search.toLowerCase())
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.username.toLowerCase().includes(search.toLowerCase())
   );
 
   if (selectedStudent) {
@@ -68,17 +123,105 @@ export default function Students() {
               Delete student
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-sand/20 rounded-xl">
-              <h4 className="font-sans text-xs font-semibold text-eco-text/50 uppercase tracking-wider mb-2">Details</h4>
-              <p className="text-sm text-ink">Age Group: {selectedStudent.age_group || 'Not set'}</p>
-              <p className="text-sm text-ink mt-1">Created: {selectedStudent.created_at ? new Date(selectedStudent.created_at).toLocaleDateString() : 'N/A'}</p>
-            </div>
-            <div className="p-4 bg-sky/20 rounded-xl">
-              <h4 className="font-sans text-xs font-semibold text-eco-text/50 uppercase tracking-wider mb-2">Learning</h4>
-              <p className="text-sm text-eco-text/60 italic">Learning journey data will appear here</p>
-            </div>
+
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {(['overview', 'activities', 'safety', 'sharing'] as const).map(tab => (
+              <button key={tab} onClick={() => handleTabChange(tab)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors capitalize ${
+                  detailTab === tab ? 'bg-leaf/15 text-leaf-dark border border-leaf/30' : 'bg-sand/30 border border-eco-border text-eco-text/70 hover:bg-sand/50'
+                }`}>
+                {tab === 'safety' ? 'Safety Alerts' : tab}
+              </button>
+            ))}
           </div>
+
+          {detailTab === 'overview' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-sand/20 rounded-xl">
+                <h4 className="font-sans text-xs font-semibold text-eco-text/50 uppercase tracking-wider mb-2">Details</h4>
+                <p className="text-sm text-ink">Age Group: {selectedStudent.age_group || 'Not set'}</p>
+                <p className="text-sm text-ink mt-1">Created: {selectedStudent.created_at ? new Date(selectedStudent.created_at).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div className="p-4 bg-sky/20 rounded-xl">
+                <h4 className="font-sans text-xs font-semibold text-eco-text/50 uppercase tracking-wider mb-2">Learning Journey</h4>
+                <p className="text-sm text-eco-text/60 italic">Track student progress across subjects</p>
+              </div>
+            </div>
+          )}
+
+          {detailTab === 'activities' && (
+            <div>
+              {loadingDetail ? (
+                <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="mx-auto text-eco-text/30 mb-2" size={32} />
+                  <p className="text-sm text-eco-text/50">No recent activities</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {activities.map(act => (
+                    <div key={act.id} className="p-3 bg-sand/20 rounded-xl flex items-center gap-3">
+                      <Clock size={14} className="text-eco-text/40 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-ink">{act.type}{act.subject ? ` — ${act.subject}` : ''}</p>
+                        {act.created_at && <p className="text-xs text-eco-text/40">{new Date(act.created_at).toLocaleString()}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {detailTab === 'safety' && (
+            <div>
+              {loadingDetail ? (
+                <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
+              ) : alerts.length === 0 ? (
+                <div className="text-center py-8">
+                  <Shield className="mx-auto text-leaf/40 mb-2" size={32} />
+                  <p className="text-sm text-eco-text/50">No safety alerts</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {alerts.map(alert => (
+                    <div key={alert.id} className="p-3 bg-soft-rose/20 border border-danger/10 rounded-xl">
+                      <div className="flex items-center gap-2 mb-1">
+                        <AlertTriangle size={14} className="text-danger" />
+                        <span className="text-xs font-medium text-danger uppercase">{alert.status}</span>
+                        {alert.created_at && <span className="text-xs text-eco-text/40 ml-auto">{new Date(alert.created_at).toLocaleString()}</span>}
+                      </div>
+                      <p className="text-sm text-ink">{alert.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {detailTab === 'sharing' && (
+            <div className="max-w-md">
+              <div className="flex items-center gap-2 mb-4">
+                <Share2 size={18} className="text-leaf" />
+                <h3 className="font-sans text-sm font-semibold text-ink">Share Access</h3>
+              </div>
+              <p className="text-sm text-eco-text/60 mb-4">Grant another educator access to this student's data.</p>
+              <div className="flex gap-2">
+                <input
+                  value={shareEmail}
+                  onChange={e => { setShareEmail(e.target.value); setShareMsg(''); }}
+                  placeholder="educator@school.edu"
+                  className="flex-1 px-4 py-2 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf"
+                />
+                <button onClick={handleGrantAccess} disabled={!shareEmail.trim()}
+                  className="px-4 py-2 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                  Grant
+                </button>
+              </div>
+              {shareMsg && <p className={`mt-2 text-sm ${shareMsg.includes('Failed') ? 'text-danger' : 'text-leaf-dark'}`}>{shareMsg}</p>}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -163,11 +306,11 @@ export default function Students() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((s: any) => (
-            <button key={s.id} onClick={() => setSelectedStudent(s)}
+          {filtered.map(s => (
+            <button key={s.id} onClick={() => selectStudent(s)}
               className="w-full flex items-center gap-3 p-4 bg-eco-card rounded-xl border border-eco-border hover:border-leaf/40 transition-colors text-left">
               <div className="w-9 h-9 rounded-full bg-sky/30 flex items-center justify-center text-ink font-semibold text-sm">
-                {(s.name || '?').charAt(0).toUpperCase()}
+                {s.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm text-ink truncate">{s.name}</div>

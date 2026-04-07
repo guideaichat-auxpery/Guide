@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { tools } from '../lib/api';
-import { Loader2, BookOpen, Target, Layers } from 'lucide-react';
+import type { LessonPlanRequest } from '../lib/types';
+import { Loader2, BookOpen, Target, Layers, Upload, X, FileText } from 'lucide-react';
 
 type Mode = 'generate' | 'align' | 'differentiate';
 
@@ -20,6 +21,35 @@ export default function LessonPlanning() {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileContent, setFileContent] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    if (!validTypes.includes(file.type) && !file.name.endsWith('.txt')) {
+      setError('Please upload a PDF, DOCX, or TXT file');
+      return;
+    }
+    setUploadedFile(file);
+    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setFileContent(ev.target?.result as string || '');
+      };
+      reader.readAsText(file);
+    } else {
+      setFileContent(`[Uploaded: ${file.name}]`);
+    }
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    setFileContent('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,14 +57,20 @@ export default function LessonPlanning() {
     setError('');
     setResult('');
     try {
-      const payload = { topic, age_group: ageGroup, subject, duration, additional_context: additional };
-      let res;
+      const payload: LessonPlanRequest = {
+        topic,
+        age_group: ageGroup,
+        subject: subject || undefined,
+        duration: duration || undefined,
+        additional_context: [additional, fileContent].filter(Boolean).join('\n\n') || undefined,
+      };
+      let res: { content: string };
       if (mode === 'generate') res = await tools.lessonPlan(payload);
       else if (mode === 'align') res = await tools.align(payload);
       else res = await tools.differentiate(payload);
       setResult(res.content);
-    } catch (e: any) {
-      setError(e.message || 'Failed to generate. Please try again.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to generate. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -45,7 +81,7 @@ export default function LessonPlanning() {
       <h2 className="text-2xl font-serif text-ink mb-1">Lesson Planning</h2>
       <p className="text-sm text-eco-text/60 mb-6">AI-powered tools for Montessori lesson preparation</p>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap">
         {modes.map(m => (
           <button
             key={m.key}
@@ -98,9 +134,30 @@ export default function LessonPlanning() {
                 className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf resize-none"
                 placeholder="Any specific requirements, materials, or student needs..." />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1.5">Upload document (optional)</label>
+              {uploadedFile ? (
+                <div className="flex items-center gap-3 p-3 bg-sand/30 rounded-xl">
+                  <FileText size={18} className="text-eco-accent shrink-0" />
+                  <span className="text-sm text-ink truncate flex-1">{uploadedFile.name}</span>
+                  <button type="button" onClick={removeFile} className="p-1 rounded-lg hover:bg-sand text-eco-text/40 hover:text-ink">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-eco-border rounded-xl text-sm text-eco-text/50 hover:border-leaf/40 hover:text-ink transition-colors">
+                  <Upload size={16} />
+                  Upload PDF, DOCX, or TXT
+                </button>
+              )}
+              <input ref={fileInputRef} type="file" accept=".pdf,.docx,.txt" onChange={handleFileUpload} className="hidden" />
+            </div>
+
             <button type="submit" disabled={loading}
               className="w-full py-2.5 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
-              {loading ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : `${modes.find(m => m.key === mode)?.label}`}
+              {loading ? <><Loader2 size={16} className="animate-spin" /> Generating...</> : modes.find(m => m.key === mode)?.label}
             </button>
           </form>
         </div>

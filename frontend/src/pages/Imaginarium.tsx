@@ -14,7 +14,7 @@ export default function Imaginarium() {
         "Cross-curricular connections",
         "Classroom environment ideas",
       ]}
-      onSend={async (message, history) => {
+      onSend={async (message: string, history: ChatMessage[]) => {
         const res = await tools.imaginariumChat({ message, history });
         return res.response;
       }}

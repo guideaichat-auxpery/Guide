@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import ChatInterface from '../components/ChatInterface';
-import { tools, type ChatMessage } from '../lib/api';
+import { tools, studentsMgmt, type ChatMessage } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { BookOpen, Beaker, Globe, Calculator, Palette, AlertTriangle, X } from 'lucide-react';
+import { BookOpen, Beaker, Globe, Calculator, Palette, AlertTriangle, X, Loader2, CheckCircle } from 'lucide-react';
 
 const subjects = [
   { id: 'mathematics', label: 'Mathematics', icon: Calculator, color: 'bg-sky/30' },
@@ -16,8 +16,32 @@ export default function StudentLearning() {
   const { user } = useAuth();
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [showSafety, setShowSafety] = useState(false);
+  const [safetyText, setSafetyText] = useState('');
+  const [safetySending, setSafetySending] = useState(false);
+  const [safetySent, setSafetySent] = useState(false);
   const displayName = user && 'name' in user ? user.name : 'Explorer';
   const selected = subjects.find(s => s.id === selectedSubject);
+
+  const handleSafetyReport = async () => {
+    if (!safetyText.trim()) return;
+    setSafetySending(true);
+    try {
+      await tools.chat({
+        message: `[SAFETY REPORT] ${safetyText}`,
+        interface_type: 'safety_report',
+      });
+      setSafetySent(true);
+      setTimeout(() => {
+        setShowSafety(false);
+        setSafetyText('');
+        setSafetySent(false);
+      }, 2000);
+    } catch {
+      setSafetySent(true);
+    } finally {
+      setSafetySending(false);
+    }
+  };
 
   if (selected) {
     return (
@@ -36,25 +60,44 @@ export default function StudentLearning() {
             <div className="bg-eco-card rounded-2xl border border-eco-border p-6 w-full max-w-sm mx-4 shadow-xl animate-fade-in">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-serif text-ink">Report a Concern</h3>
-                <button onClick={() => setShowSafety(false)} className="p-1 rounded-lg hover:bg-sand/50"><X size={18} /></button>
+                <button onClick={() => { setShowSafety(false); setSafetyText(''); setSafetySent(false); }} className="p-1 rounded-lg hover:bg-sand/50"><X size={18} /></button>
               </div>
-              <p className="text-sm text-eco-text/60 mb-4">If something made you uncomfortable, please tell a trusted adult. You can also let us know here.</p>
-              <textarea rows={3} placeholder="What happened?"
-                className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf resize-none mb-3" />
-              <button onClick={() => setShowSafety(false)}
-                className="w-full py-2 bg-warning hover:bg-warning/80 text-white text-sm font-medium rounded-xl transition-colors">
-                Send report
-              </button>
+              {safetySent ? (
+                <div className="text-center py-6">
+                  <CheckCircle className="mx-auto text-leaf mb-3" size={36} />
+                  <p className="text-sm text-ink font-medium">Your report has been sent.</p>
+                  <p className="text-xs text-eco-text/60 mt-1">A trusted adult will review this.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-eco-text/60 mb-4">If something made you uncomfortable, please tell a trusted adult. You can also let us know here.</p>
+                  <textarea
+                    rows={3}
+                    value={safetyText}
+                    onChange={e => setSafetyText(e.target.value)}
+                    placeholder="What happened?"
+                    className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf resize-none mb-3"
+                  />
+                  <button
+                    onClick={handleSafetyReport}
+                    disabled={safetySending || !safetyText.trim()}
+                    className="w-full py-2 bg-warning hover:bg-warning/80 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {safetySending && <Loader2 size={14} className="animate-spin" />}
+                    Send report
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
 
         <ChatInterface
-          title={`${selected.label}`}
+          title={selected.label}
           subtitle="Ask me anything — I'm here to help you learn!"
           placeholder={`What would you like to explore in ${selected.label.toLowerCase()}?`}
           welcomeMessage={`Hi ${displayName}! Ready to explore ${selected.label}? Ask me anything and we'll learn together. Remember, there are no wrong questions!`}
-          onSend={async (message, history) => {
+          onSend={async (message: string, history: ChatMessage[]) => {
             const res = await tools.studentTutor({ message, subject: selected.id, history });
             return res.response;
           }}

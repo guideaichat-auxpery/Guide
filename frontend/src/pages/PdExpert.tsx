@@ -1,7 +1,25 @@
+import { useAuth } from '../contexts/AuthContext';
 import ChatInterface from '../components/ChatInterface';
-import { tools, type ChatMessage } from '../lib/api';
+import { tools, PD_EXPERT_ALLOWED_EMAILS, type ChatMessage } from '../lib/api';
+import { ShieldAlert } from 'lucide-react';
 
 export default function PdExpert() {
+  const { user } = useAuth();
+  const userEmail = user && 'email' in user ? user.email : '';
+  const hasAccess = PD_EXPERT_ALLOWED_EMAILS.includes(userEmail);
+
+  if (!hasAccess) {
+    return (
+      <div className="animate-fade-in text-center py-16">
+        <ShieldAlert className="mx-auto text-eco-text/30 mb-4" size={48} />
+        <h2 className="text-2xl font-serif text-ink mb-2">Access Restricted</h2>
+        <p className="text-eco-text/60 max-w-md mx-auto">
+          The PD Expert is currently available by invitation only. Contact your administrator for access.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ChatInterface
       title="PD Expert"
@@ -14,7 +32,7 @@ export default function PdExpert() {
         "Observation skills development",
         "Building a professional portfolio",
       ]}
-      onSend={async (message, history) => {
+      onSend={async (message: string, history: ChatMessage[]) => {
         const res = await tools.pdExpertChat({ message, history });
         return res.response;
       }}
