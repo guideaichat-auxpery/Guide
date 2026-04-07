@@ -2,6 +2,7 @@ import os
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.responses import FileResponse
 
 logging.basicConfig(
@@ -22,15 +23,18 @@ app = FastAPI(
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
 ALLOWED_ORIGINS = [o.strip() for o in ALLOWED_ORIGINS if o.strip()]
 
-REPLIT_DEV_DOMAIN = os.getenv("REPLIT_DEV_DOMAIN", "")
-REPLIT_DOMAINS = os.getenv("REPLIT_DOMAINS", "")
-REPLIT_DEPLOYMENT_URL = os.getenv("REPLIT_DEPLOYMENT_URL", "")
-
-for domain in [REPLIT_DEV_DOMAIN, REPLIT_DOMAINS, REPLIT_DEPLOYMENT_URL]:
-    if domain:
-        origin = f"https://{domain}" if not domain.startswith("http") else domain
-        if origin not in ALLOWED_ORIGINS:
-            ALLOWED_ORIGINS.append(origin)
+_replit_domain_vars = [
+    os.getenv("REPLIT_DEV_DOMAIN", ""),
+    os.getenv("REPLIT_DOMAINS", ""),
+    os.getenv("REPLIT_DEPLOYMENT_URL", ""),
+]
+for raw in _replit_domain_vars:
+    for part in raw.split(","):
+        domain = part.strip()
+        if domain:
+            origin = f"https://{domain}" if not domain.startswith("http") else domain
+            if origin not in ALLOWED_ORIGINS:
+                ALLOWED_ORIGINS.append(origin)
 
 if not ALLOWED_ORIGINS:
     ALLOWED_ORIGINS = ["*"]
@@ -93,6 +97,8 @@ if SERVE_STATIC:
 
     @app.get("/{full_path:path}")
     async def serve_spa(request: Request, full_path: str):
+        if full_path.startswith("api/") or full_path == "api":
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
         if full_path:
             file_path = os.path.realpath(os.path.join(STATIC_DIR, full_path))
             if file_path.startswith(os.path.realpath(STATIC_DIR) + os.sep) and os.path.isfile(file_path):
