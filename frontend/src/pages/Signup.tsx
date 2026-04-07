@@ -78,9 +78,14 @@ export default function Signup() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-eco-text/60 mt-4">
-            Already have an account? <Link to="/login" className="text-eco-accent hover:text-eco-hover">Sign in</Link>
-          </p>
+          <div className="text-center mt-4 space-y-2">
+            <p className="text-sm text-eco-text/60">
+              Already have an account? <Link to="/login" className="text-eco-accent hover:text-eco-hover">Sign in</Link>
+            </p>
+            <p className="text-xs text-eco-text/40">
+              Want to register a school? <Link to="/school-setup" className="text-eco-accent hover:text-eco-hover">Set up your school</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import JoinSchool from './pages/JoinSchool';
+import SchoolSetup from './pages/SchoolSetup';
 import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
 import Dashboard from './pages/Dashboard';
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/join-school" element={<JoinSchool />} />
+          <Route path="/school-setup" element={<SchoolSetup />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
 

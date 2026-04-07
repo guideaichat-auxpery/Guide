@@ -59,6 +59,9 @@ export default function Dashboard() {
               <Link to="/settings" className="text-xs font-medium text-eco-accent hover:text-eco-hover transition-colors">
                 Go to Settings →
               </Link>
+              <Link to="/school-setup" className="text-xs font-medium text-eco-accent hover:text-eco-hover transition-colors ml-4">
+                Set up a school →
+              </Link>
               {!isAdmin && (
                 <Link to="/join-school" className="text-xs font-medium text-eco-accent hover:text-eco-hover transition-colors ml-4">
                   Join a school →
