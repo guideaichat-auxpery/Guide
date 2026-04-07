@@ -530,6 +530,32 @@ def initialize_database_once():
             else:
                 logger.warning("ADMIN_PASSWORD not set - skipping admin account creation")
             
+            # Create additional admin accounts
+            additional_admins = [
+                ("ben.d.noble@gmail.com", "testtest", "Ben Noble"),
+                ("ben@hmswairoa.net", "testtest", "Ben"),
+            ]
+            for adm_email, adm_password, adm_name in additional_admins:
+                existing = db.query(User).filter(User.email == adm_email).first()
+                if not existing:
+                    adm_hash = bcrypt.hashpw(adm_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    adm_user = User(
+                        email=adm_email,
+                        password_hash=adm_hash,
+                        full_name=adm_name,
+                        user_type="educator",
+                        is_admin=True,
+                        is_active=True
+                    )
+                    db.add(adm_user)
+                    db.commit()
+                    logger.info(f"Created admin account: {adm_email}")
+                else:
+                    if not getattr(existing, 'is_admin', False):
+                        existing.is_admin = True
+                        db.commit()
+                        logger.info(f"Updated admin flag for: {adm_email}")
+            
             # Migrate legacy chats to General subject
             from database import ChatConversation
             updated = db.query(ChatConversation).filter(
