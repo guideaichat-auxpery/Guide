@@ -29,16 +29,19 @@ def get_database_engine():
         return None, "Database not configured. Running in limited mode without persistent storage."
     
     try:
+        # Build connect_args — use 'prefer' so SSL is used when available
+        # (Replit dev databases may not have SSL; production ones do)
+        connect_args = {"connect_timeout": 10}
+        if "sslmode" not in DATABASE_URL:
+            connect_args["sslmode"] = "prefer"
+
         engine = create_engine(
             DATABASE_URL,
             pool_pre_ping=True,  # Test connections before using them
             pool_recycle=3600,   # Recycle connections after 1 hour
             pool_size=5,         # Limit pool size
             max_overflow=10,     # Allow overflow connections
-            connect_args={
-                "sslmode": "require",  # Require SSL but don't verify certificate
-                "connect_timeout": 10
-            }
+            connect_args=connect_args
         )
         logger.info("Database engine created successfully")
         return engine, "Database connected successfully."

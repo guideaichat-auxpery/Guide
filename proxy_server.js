@@ -2,7 +2,6 @@ const http = require('http');
 const httpProxy = require('http-proxy');
 
 const STREAMLIT_PORT = 8080;
-const PAYMENTS_PORT = 3001;
 const PROXY_PORT = 5000;
 
 const proxy = httpProxy.createProxyServer({
@@ -43,7 +42,7 @@ proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Secret, X-Xsrftoken');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Xsrftoken');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
@@ -52,12 +51,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url.startsWith('/api/')) {
-    console.log(`[Proxy] Routing ${req.method} ${req.url} -> Payments Service`);
-    proxy.web(req, res, { target: `http://localhost:${PAYMENTS_PORT}` });
-  } else {
-    proxy.web(req, res, { target: `http://localhost:${STREAMLIT_PORT}` });
-  }
+  proxy.web(req, res, { target: `http://localhost:${STREAMLIT_PORT}` });
 });
 
 server.on('upgrade', (req, socket, head) => {
@@ -78,7 +72,6 @@ server.on('upgrade', (req, socket, head) => {
 
 server.listen(PROXY_PORT, '0.0.0.0', () => {
   console.log(`🔀 Reverse Proxy running on port ${PROXY_PORT}`);
-  console.log(`   → /api/* routes to Payments Service (port ${PAYMENTS_PORT})`);
-  console.log(`   → All other routes to Streamlit (port ${STREAMLIT_PORT})`);
+  console.log(`   → All routes to Streamlit (port ${STREAMLIT_PORT})`);
   console.log(`   → WebSocket connections forwarded to Streamlit`);
 });
