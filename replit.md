@@ -1,5 +1,5 @@
 # Overview
-Guide is a Streamlit-based cosmic curriculum companion that bridges Montessori's Cosmic Education with modern curriculum frameworks like the Australian Curriculum V9. It provides AI-powered guidance for creating interconnected learning experiences, emphasizing systems thinking and a child's place in the universe. The application aims to foster holistic learning and development by offering tailored resources and insights to educators and students, promoting a vision of integrated learning and global citizenship.
+Guide is a Montessori educational platform that bridges Cosmic Education with modern curriculum frameworks like the Australian Curriculum V9. It provides AI-powered guidance for creating interconnected learning experiences, emphasizing systems thinking and a child's place in the universe. The application aims to foster holistic learning and development by offering tailored resources and insights to educators and students.
 
 # User Preferences
 Preferred communication style: Simple, everyday language.
@@ -8,61 +8,68 @@ Tone: Warm, humble, practical, avoiding jargon while honoring developmental stag
 
 # System Architecture
 
-## UI/UX Decisions
-- **Framework**: Streamlit with a wide layout and dual-mode interface (educator and student).
-- **Design System**: Montessori-themed interface with warm earth tones and a Danish Eco-Design theme for the educator dashboard, emphasizing clean modern aesthetics, accessibility (WCAG 2.1 AA), and responsive design. Includes dark mode and enhanced mobile responsiveness.
-- **Login Experience**: Clear tab-based separation for Educator and Student login.
-- **Sidebar UX**: Redesigned conversation sidebar with warm earth-tone gradient background, new chat button, hover-to-reveal edit/delete actions, floating toggle button, date grouping for conversation history, and AI auto-titling.
-- **Streamlit Rerun Architecture**: Static UI elements render before chat history for consistent display.
+## Frontend (React SPA)
+- **Framework**: Vite + React + TypeScript + Tailwind CSS v4 in `/frontend`
+- **Dev server**: Port 5173 (Vite), proxied through reverse proxy on port 5000
+- **Design System**: Montessori earth-tone palette (sand, clay, sky, leaf, ink, paper) with Danish Eco-Design accents. Fonts: Inter (sans), Cormorant Garamond (serif headers). WCAG 2.1 AA accessible.
+- **Routing**: React Router v7 with protected routes. Educators see sidebar with Dashboard, Lesson Planning, Companion, Great Stories, Imaginarium, PD Expert, Students, Planning Notes, Settings. Students see Learn + Settings.
+- **Auth**: AuthContext with JWT token in localStorage, session validation via `/api/auth/session`.
+- **API client**: `/frontend/src/lib/api.ts` — typed client for all 79 FastAPI endpoints.
+- **Key directories**:
+  - `frontend/src/pages/` — All page components (Login, Dashboard, LessonPlanning, Companion, etc.)
+  - `frontend/src/components/` — Layout, ProtectedRoute, ChatInterface (reusable chat UI)
+  - `frontend/src/contexts/` — AuthContext
+  - `frontend/src/lib/` — API client
 
-## Technical Implementations
-- **Authentication**: Email/password for educators and username/password for students, with bcrypt hashing, session management, and compliance with Australian Privacy Act 1988. Features password security, login rate limiting, guardian consent for student accounts, and comprehensive password management.
-- **Admin System**: `is_admin` column on users table, bypassing subscription checks for admin users, and admin tools for user lookup and password reset.
-- **Data Privacy & Security**: PII sanitization for OpenAI API calls, server-side file upload security, audit logging for educator actions on student data, and data retention compliance (7 years for student records, 25 years for child safety records).
-- **Session Management**: Inactivity timeouts (2 hours for students, 30 minutes for educators), automatic conversation restoration, and persistent login via cookie-based session tokens.
-- **Access Model**: Platform is free — all authenticated educators have full access to all features. No paywall or subscription required. Email is collected at signup (stored in the users table) for future communication. Stripe integration code remains in place but is not enforced. Admin users retain their bypass flag for internal purposes.
-- **School Master Account System**: Multi-seat school subscriptions with shareable invite links (Slack/Notion-style). Schools table with invite_code (8-char unique), license_count, and Stripe subscription fields. User roles: individual, school_admin, school_educator. School admins access dedicated dashboard showing license usage, educator list, and invite link. Educators join via /join/{invite_code} URL without individual payment - school subscription covers all seats. License validation prevents exceeding seat count. 7-day grace period on subscription expiry. **Self-service signup from marketing site**: Schools can sign up directly via POST /api/public/create-school-checkout with school name, email, and seat count (minimum 5 seats). After Stripe payment, admin completes setup at /?school_setup=token to create password and school account. See MARKETING_SITE_INTEGRATION.md for landing page integration guide.
-- **Email Integration**: Automated transactional emails via Resend for welcome, password reset, and contact form auto-reply.
-- **Child Safety Measures**: Content monitoring for concerning student messages with alerts to educators, confidential student reporting, and complete data deletion functionality.
-- **Frontend**: Streamlit-based with chat, curriculum selector, file upload, and accessibility wizard. (Migration to React SPA in progress — Task #2.)
-- **Backend**: Single-file Python application integrating OpenAI API.
-- **FastAPI REST API** (`api/` directory): Stateless REST layer wrapping existing business logic for the future React SPA frontend. Runs on port 8000 via uvicorn. Key modules:
-  - `api/main.py` — FastAPI app with CORS, router wiring, health check.
-  - `api/db.py` — Standalone SQLAlchemy engine/session (imports model classes from `database.py`).
-  - `api/deps.py` — Auth dependencies: `get_current_user`, `get_current_student`, `get_current_user_or_student`, `require_admin` (token-based via `persistent_sessions` table).
-  - `api/routes/auth.py` — Login (educator/student), signup, logout, session check, forgot/reset password, change password, school join, admin password reset.
-  - `api/routes/users.py` — User profile, email change, institution update, account deletion.
-  - `api/routes/students.py` — CRUD students, activities, learning journey, grant/revoke educator access.
-  - `api/routes/schools.py` — School info, educator management for school admins.
-  - `api/routes/tools.py` — AI chat, lesson plan generation, great story generation, conversation management.
-  - `api/routes/notes.py` — Planning notes and great stories CRUD.
-  - `api/routes/data.py` — Data export, retention status, audit logs, safety alerts.
-- **AI Integration**: Uses OpenAI API (GPT-4o-mini) with dynamic system prompts for various features: Student Research Assistant, Age-Appropriate Lesson Planning, Professional Development Expert, and Imaginarium.
-- **GUIDE Learning Design Protocol (January 2026)**: For adolescent learners (12-15), lesson planning follows the GUIDE Protocol:
-  - Stage 1: Anchor in Meaning (Human Theme, Driving Question, Purpose Statement)
-  - Stage 2: Build the Learning Story (Hook & Tension, Investigation, Construction, Public Thinking, Reflection)
-  - Stage 3: Daily Session Design (What thinking, What learners do, Support required, Visible progress)
-  - Stage 4: System Alignment (Curriculum outcomes applied LAST, not first)
-  - Non-negotiable: No starting from outcomes, no worksheet-driven lessons, prioritize inquiry and construction
-  - Follow-up buttons: "Design a Rubric", "Student Templates", "Differentiation Strategies"
-- **RAG System**: Hybrid semantic and keyword document retrieval using PostgreSQL pgvector and OpenAI embeddings, with metadata filtering.
-- **Data Management**: PostgreSQL for persistence of conversation history, analytics, planning notes, and RAG document chunks. Supports professional PDF and DOCX export, and GDPR data export in JSON format.
-- **Student Learning Journey Map**: Visual learning progress tracker showing explored curriculum topics, summary metrics, interactive nodes, and subject exploration sections.
-- **Core Features**: Dual Teacher/Student Interface, Chat Conversation Management, Curriculum Integration (Australian Curriculum V9, Montessori National Curriculum), AI-Powered Tools (Great Story Creator, Lesson Planning Assistant, etc.), Document Upload & Analysis, and Universal Design for Learning.
+## Backend (FastAPI REST API)
+- **Framework**: FastAPI on port 8000 via uvicorn
+- **Modules**:
+  - `api/main.py` — App with CORS, router wiring, health check
+  - `api/db.py` — SQLAlchemy engine/session
+  - `api/deps.py` — Auth dependencies (token-based via persistent_sessions table)
+  - `api/routes/auth.py` — Login, signup, logout, session, password management, school join
+  - `api/routes/users.py` — Profile CRUD, email change, account deletion
+  - `api/routes/students.py` — Student CRUD, activities, learning journey, access management
+  - `api/routes/schools.py` — School info, educator management
+  - `api/routes/tools.py` — AI chat, lesson plan, great story, conversation management
+  - `api/routes/notes.py` — Planning notes and stories CRUD
+  - `api/routes/data.py` — Data export, audit logs, safety alerts
+  - `api/routes/adaptive.py` — Adaptive learning proxy
+
+## Infrastructure
+- **Reverse Proxy** (`proxy_server.js`): Port 5000, routes `/api/*` to FastAPI (8000), everything else to Vite (5173)
+- **Adaptive Learning Server** (`adaptive/server.js`): Port 3000
+- **Legacy Streamlit** (`app.py`): Port 8080 (being replaced by React SPA)
+- **Database**: PostgreSQL with pgvector
+
+## Authentication
+- Email/password for educators, username/password for students
+- bcrypt hashing, session tokens in persistent_sessions table
+- Admin accounts: ben.d.noble@gmail.com, ben@hmswairoa.net
+- PD Expert restricted to specific email addresses
+- School invite system with shareable codes
+
+## AI Integration
+- OpenAI GPT-4o-mini with dynamic system prompts
+- Features: Montessori Companion (15 topic cards), Lesson Planning (generate/align/differentiate), Great Stories, Imaginarium, PD Expert, Student Tutor
+- Adaptive learning system with prompt weighting
 
 # External Dependencies
 
 ## AI Services
-- **OpenAI API**: GPT-4o-mini model.
+- **OpenAI API**: GPT-4o-mini model
+
+## Frontend (npm)
+- react, react-dom, react-router-dom
+- lucide-react (icons)
+- tailwindcss, @tailwindcss/vite
 
 ## Python Libraries
-- **streamlit**
-- **pandas**
-- **plotly.express & plotly.graph_objects**
-- **openai**
-- **datetime**
-- **reportlab & python-docx**
+- streamlit, fastapi, uvicorn
+- openai, bcrypt, resend
+- sqlalchemy, psycopg2
+- pandas, reportlab, python-docx
 
 ## Curriculum Frameworks
-- **Australian Curriculum V9**
-- **Montessori National Curriculum (2011)**
+- Australian Curriculum V9
+- Montessori National Curriculum (2011)

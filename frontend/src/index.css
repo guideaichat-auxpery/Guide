@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-sand: #f5f1e6;
+  --color-clay: #d9c2a3;
+  --color-sky: #cce3de;
+  --color-leaf: #9bbf9b;
+  --color-leaf-dark: #6A8A68;
+  --color-ink: #2f3e46;
+  --color-soft-rose: #f0dada;
+  --color-paper: #fffdf8;
+  --color-eco-bg: #FAF9F6;
+  --color-eco-accent: #789A76;
+  --color-eco-text: #2E2E2B;
+  --color-eco-border: #E4E1DC;
+  --color-eco-card: #FFFFFF;
+  --color-eco-hover: #6A8A68;
+  --color-danger: #c0392b;
+  --color-warning: #e67e22;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-leaf);
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: var(--color-sky);
+  color: var(--color-ink);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
