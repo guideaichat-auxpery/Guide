@@ -19,6 +19,12 @@ class CreateStudentRequest(BaseModel):
     consent_method: Optional[str] = "educator_confirmed"
 
 
+class UpdateStudentRequest(BaseModel):
+    full_name: Optional[str] = None
+    age_group: Optional[str] = None
+    password: Optional[str] = None
+
+
 class GrantAccessRequest(BaseModel):
     educator_email: str
 
@@ -90,6 +96,30 @@ def get_student(
         if s.id == student_id:
             return student_to_dict(s, include_educator=True)
     raise HTTPException(status_code=404, detail="Student not found or access denied")
+
+
+@router.put("/{student_id}")
+@router.patch("/{student_id}")
+def update_student(
+    student_id: int,
+    req: UpdateStudentRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    student = db.query(Student).filter(Student.id == student_id, Student.educator_id == user.id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found or not your student")
+
+    if req.full_name is not None:
+        student.full_name = req.full_name
+    if req.age_group is not None:
+        student.age_group = req.age_group
+    if req.password is not None:
+        import bcrypt
+        student.password_hash = bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    db.commit()
+    db.refresh(student)
+    return student_to_dict(student)
 
 
 @router.delete("/{student_id}")

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import re
 import os
 
-from api.db import get_db, User, Student, PersistentSession
+from api.db import get_db, User, Student, PersistentSession, School
 from api.deps import get_current_session, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -58,9 +58,21 @@ class SchoolJoinRequest(BaseModel):
     agree_terms: bool = False
 
 
+class SchoolSetupRequest(BaseModel):
+    setup_token: str
+    admin_email: str
+    admin_password: str
+    admin_name: str
+    confirm_password: str
+
+
 class AdminResetPasswordRequest(BaseModel):
     user_email: str
     new_password: str
+
+
+class AdminLookupRequest(BaseModel):
+    email: str
 
 
 def validate_email_format(email: str) -> bool:
@@ -78,6 +90,45 @@ def validate_password_strength(password: str):
     if not any(c.isdigit() for c in password):
         return False, "Password must contain at least one number"
     return True, "Password is valid"
+
+
+@router.post("/login")
+def login_unified(req: LoginRequest, db: Session = Depends(get_db)):
+    from database import authenticate_user, check_login_rate_limit, record_login_attempt, clear_login_attempts, create_persistent_session
+
+    if not validate_email_format(req.email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+
+    is_locked, remaining_seconds, failed_count = check_login_rate_limit(db, req.email)
+    if is_locked:
+        minutes = remaining_seconds // 60 + 1
+        raise HTTPException(status_code=429, detail=f"Account locked. Try again in {minutes} minute(s).")
+
+    user = authenticate_user(db, req.email, req.password)
+    if not user:
+        record_login_attempt(db, req.email, attempt_type="educator", success=False)
+        remaining = 5 - failed_count - 1
+        raise HTTPException(status_code=401, detail=f"Invalid email or password. {max(remaining,0)} attempt(s) remaining.")
+
+    clear_login_attempts(db, req.email)
+
+    token = create_persistent_session(db, user_id=user.id, user_type="educator", duration_hours=EDUCATOR_SESSION_HOURS)
+    if not token:
+        raise HTTPException(status_code=500, detail="Failed to create session")
+
+    return {
+        "token": token,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "user_type": user.user_type,
+            "is_admin": bool(getattr(user, "is_admin", False)),
+            "role": getattr(user, "role", "individual"),
+            "school_id": getattr(user, "school_id", None),
+            "institution_name": getattr(user, "institution_name", None),
+        },
+    }
 
 
 @router.post("/login/educator")
@@ -437,3 +488,90 @@ def admin_reset_password(
     db.commit()
 
     return {"success": True, "message": f"Password reset for {target.email}"}
+
+
+@router.post("/admin/lookup")
+def admin_lookup_user(
+    req: AdminLookupRequest,
+    admin: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not getattr(admin, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
+    from database import get_user_by_email
+    target = get_user_by_email(db, req.email)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "id": target.id,
+        "email": target.email,
+        "full_name": target.full_name,
+        "user_type": target.user_type,
+        "is_admin": bool(getattr(target, "is_admin", False)),
+        "role": getattr(target, "role", "individual"),
+        "school_id": getattr(target, "school_id", None),
+        "is_active": target.is_active,
+        "created_at": target.created_at.isoformat() if target.created_at else None,
+    }
+
+
+@router.post("/school-setup")
+def school_setup(req: SchoolSetupRequest, db: Session = Depends(get_db)):
+    from database import create_persistent_session
+    import hashlib
+    from sqlalchemy import text as sa_text
+
+    if not validate_email_format(req.admin_email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    if req.admin_password != req.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+
+    valid, msg = validate_password_strength(req.admin_password)
+    if not valid:
+        raise HTTPException(status_code=400, detail=msg)
+
+    token_hash = hashlib.sha256(req.setup_token.encode()).hexdigest()
+    result = db.execute(
+        sa_text("""SELECT id FROM school_setup_tokens
+                   WHERE token_hash = :th AND is_valid = TRUE AND expires_at > NOW()"""),
+        {"th": token_hash},
+    ).fetchone()
+
+    if not result:
+        raise HTTPException(status_code=400, detail="Invalid or expired setup token")
+
+    school_id = result[0]
+
+    db.execute(
+        sa_text("UPDATE school_setup_tokens SET is_valid = FALSE, used_at = NOW() WHERE token_hash = :th"),
+        {"th": token_hash},
+    )
+
+    from database import get_user_by_email, create_user, add_educator_to_school, record_consent
+
+    existing = get_user_by_email(db, req.admin_email)
+    if existing:
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+
+    user = create_user(db, req.admin_email, req.admin_password, req.admin_name, "educator")
+    add_educator_to_school(db, user.id, school_id, "school_admin")
+    record_consent(db, user_id=user.id, consent_type="data_collection", policy_version="1.0")
+    record_consent(db, user_id=user.id, consent_type="privacy_policy", policy_version="1.0")
+
+    token = create_persistent_session(db, user_id=user.id, user_type="educator", duration_hours=EDUCATOR_SESSION_HOURS)
+
+    school = db.query(School).filter(School.id == school_id).first()
+
+    return {
+        "token": token,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": "school_admin",
+            "school_id": school_id,
+            "school_name": school.name if school else None,
+        },
+    }

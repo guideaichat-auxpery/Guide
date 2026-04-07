@@ -78,6 +78,7 @@ def create_planning_note(
 
 
 @router.put("/planning/{note_id}")
+@router.patch("/planning/{note_id}")
 def update_planning_note(
     note_id: int,
     req: UpdateNoteRequest,

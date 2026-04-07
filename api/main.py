@@ -35,6 +35,7 @@ from api.routes.schools import router as schools_router
 from api.routes.tools import router as tools_router
 from api.routes.notes import router as notes_router
 from api.routes.data import router as data_router
+from api.routes.adaptive import router as adaptive_router
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
@@ -43,16 +44,26 @@ app.include_router(schools_router, prefix="/api")
 app.include_router(tools_router, prefix="/api")
 app.include_router(notes_router, prefix="/api")
 app.include_router(data_router, prefix="/api")
+app.include_router(adaptive_router, prefix="/api")
 
 
 @app.get("/api/health")
 def health_check():
     from api.db import get_engine
     engine = get_engine()
+    db_status = "unavailable"
+    if engine:
+        try:
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            db_status = "connected"
+        except Exception:
+            db_status = "error"
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "connected" else "degraded",
         "service": "Guide API",
-        "database": "connected" if engine else "unavailable",
+        "database": db_status,
     }
 
 
