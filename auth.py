@@ -1882,24 +1882,37 @@ def show_user_info():
             margin: 0 auto !important;
         }
 
-        /* ---- Remove top padding + sticky footer flex layout ---- */
+        /* ---- Collapse the sidebar header strip so content sits at the top ---- */
+        /* stSidebarHeader has a hardcoded height:3.75rem + marginBottom that
+           pushes all content down ~5rem. Override both to near-zero. */
+        [data-testid="stSidebarHeader"] {
+            height: auto !important;
+            min-height: 0 !important;
+            padding: 4px 0 2px 0 !important;
+            margin-bottom: 4px !important;
+        }
+        /* Keep collapse button compact and right-aligned */
+        [data-testid="stSidebarCollapseButton"] {
+            padding: 2px !important;
+        }
+        [data-testid="stSidebarCollapseButton"] button {
+            padding: 4px !important;
+            min-height: unset !important;
+        }
+
+        /* ---- Sticky footer: make sidebar a full-height flex column ---- */
         [data-testid="stSidebarContent"] {
-            padding-top: 0rem !important;
-            padding-bottom: 0rem !important;
             display: flex !important;
             flex-direction: column !important;
             height: 100vh !important;
             overflow-y: auto !important;
-        }
-        section[data-testid="stSidebar"] > div:first-child {
-            padding-top: 0rem !important;
+            padding-top: 0 !important;
         }
         [data-testid="stSidebarContent"] > div:first-child {
             display: flex !important;
             flex-direction: column !important;
             flex: 1 !important;
             min-height: 100%;
-            padding-top: 0.5rem !important;
         }
         .sidebar-flex-spacer {
             flex: 1 !important;
