@@ -40,6 +40,7 @@ class UpdateStoryRequest(BaseModel):
     keywords: Optional[str] = None
 
 
+@router.get("/")
 @router.get("/planning")
 def list_planning_notes(
     user: User = Depends(get_current_user),
@@ -62,6 +63,7 @@ def list_planning_notes(
     ]
 
 
+@router.post("/")
 @router.post("/planning")
 def create_planning_note(
     req: CreateNoteRequest,
@@ -79,6 +81,8 @@ def create_planning_note(
 
 @router.put("/planning/{note_id}")
 @router.patch("/planning/{note_id}")
+@router.put("/{note_id}")
+@router.patch("/{note_id}")
 def update_planning_note(
     note_id: int,
     req: UpdateNoteRequest,
@@ -95,6 +99,7 @@ def update_planning_note(
 
 
 @router.delete("/planning/{note_id}")
+@router.delete("/{note_id}")
 def delete_planning_note(
     note_id: int,
     user: User = Depends(get_current_user),

@@ -87,4 +87,5 @@ from database import (
     ContactSubmission,
     PersistentSession,
     ConsentRecord,
+    ParentalConsentRecord,
 )

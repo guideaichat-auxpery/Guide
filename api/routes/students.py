@@ -205,6 +205,64 @@ def grant_access(
     return {"success": True}
 
 
+@router.get("/{student_id}/consent")
+def get_student_consent(
+    student_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_educator_accessible_students
+    students = get_educator_accessible_students(db, user.id)
+    if not any(s.id == student_id for s in students):
+        raise HTTPException(status_code=404, detail="Student not found or access denied")
+
+    from api.db import ParentalConsentRecord
+    consents = db.query(ParentalConsentRecord).filter(
+        ParentalConsentRecord.student_id == student_id,
+    ).order_by(ParentalConsentRecord.consent_date.desc()).all()
+    return [
+        {
+            "id": c.id,
+            "parent_name": c.parent_name,
+            "parent_email": c.parent_email,
+            "consent_obtained": c.consent_obtained,
+            "consent_date": c.consent_date.isoformat() if c.consent_date else None,
+            "consent_method": c.consent_method,
+            "withdrawn_at": c.withdrawn_at.isoformat() if c.withdrawn_at else None,
+        }
+        for c in consents
+    ]
+
+
+@router.get("/{student_id}/safety-alerts")
+def get_student_safety_alerts(
+    student_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_educator_accessible_students
+    students = get_educator_accessible_students(db, user.id)
+    if not any(s.id == student_id for s in students):
+        raise HTTPException(status_code=404, detail="Student not found or access denied")
+
+    from api.db import SafetyAlert
+    alerts = db.query(SafetyAlert).filter(
+        SafetyAlert.student_id == student_id,
+    ).order_by(SafetyAlert.created_at.desc()).all()
+    return [
+        {
+            "id": a.id,
+            "alert_type": a.alert_type,
+            "content_snippet": a.content_snippet,
+            "severity": getattr(a, "severity", None),
+            "is_reviewed": a.is_reviewed,
+            "reviewed_by": a.reviewed_by,
+            "created_at": a.created_at.isoformat() if a.created_at else None,
+        }
+        for a in alerts
+    ]
+
+
 @router.delete("/{student_id}/revoke-access/{educator_id}")
 def revoke_access(
     student_id: int,

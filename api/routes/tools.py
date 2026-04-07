@@ -366,6 +366,7 @@ def differentiate_lesson_plan(
 
 
 @router.post("/great-story")
+@router.post("/great-story/generate")
 def generate_great_story(
     req: GreatStoryRequest,
     user: User = Depends(get_current_user),
@@ -387,6 +388,66 @@ def generate_great_story(
         raise HTTPException(status_code=500, detail="Failed to generate story")
 
     return {"content": result}
+
+
+@router.get("/great-story")
+def list_great_stories(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_educator_great_stories
+    stories = get_educator_great_stories(db, user.id)
+    return [
+        {
+            "id": s.id,
+            "title": s.title,
+            "theme": s.theme,
+            "content": s.content,
+            "age_group": s.age_group,
+            "keywords": s.keywords,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+            "updated_at": s.updated_at.isoformat() if s.updated_at else None,
+        }
+        for s in stories
+    ]
+
+
+@router.get("/great-story/{story_id}")
+def get_great_story(
+    story_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_great_story as db_get
+    from api.db import GreatStory
+    story = db_get(db, story_id)
+    if not story or story.educator_id != user.id:
+        raise HTTPException(status_code=404, detail="Story not found")
+    return {
+        "id": story.id,
+        "title": story.title,
+        "theme": story.theme,
+        "content": story.content,
+        "age_group": story.age_group,
+        "keywords": story.keywords,
+        "created_at": story.created_at.isoformat() if story.created_at else None,
+        "updated_at": story.updated_at.isoformat() if story.updated_at else None,
+    }
+
+
+@router.delete("/great-story/{story_id}")
+def delete_great_story_tool(
+    story_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from api.db import GreatStory
+    story = db.query(GreatStory).filter(GreatStory.id == story_id, GreatStory.educator_id == user.id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    from database import delete_great_story
+    delete_great_story(db, story_id)
+    return {"success": True}
 
 
 @router.get("/conversations")

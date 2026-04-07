@@ -9,6 +9,11 @@ from api.deps import get_current_user, require_admin
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+class UpdateProfileRequest(BaseModel):
+    full_name: Optional[str] = None
+    institution_name: Optional[str] = None
+
+
 class UpdateEmailRequest(BaseModel):
     new_email: str
     current_password: str
@@ -30,6 +35,29 @@ def get_me(user: User = Depends(get_current_user)):
         "school_id": getattr(user, "school_id", None),
         "institution_name": getattr(user, "institution_name", None),
         "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+
+@router.patch("/me")
+def update_profile(
+    req: UpdateProfileRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if req.full_name is not None:
+        user.full_name = req.full_name
+    if req.institution_name is not None:
+        from database import update_educator_institution, invalidate_educator_profile_cache
+        success, auto_enabled = update_educator_institution(db, user.id, req.institution_name)
+        if not success:
+            raise HTTPException(status_code=400, detail="Failed to update institution")
+        invalidate_educator_profile_cache(user.id)
+    db.commit()
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "institution_name": getattr(user, "institution_name", None),
     }
 
 

@@ -93,3 +93,27 @@ def remove_educator(
     if not success:
         raise HTTPException(status_code=400, detail="Failed to remove educator")
     return {"success": True}
+
+
+@router.post("/join")
+def school_join_alias(
+    db: Session = Depends(get_db),
+):
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=308,
+        content={"detail": "Use POST /api/auth/school-join"},
+        headers={"Location": "/api/auth/school-join"},
+    )
+
+
+@router.post("/setup")
+def school_setup_alias(
+    db: Session = Depends(get_db),
+):
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=308,
+        content={"detail": "Use POST /api/auth/school-setup"},
+        headers={"Location": "/api/auth/school-setup"},
+    )
