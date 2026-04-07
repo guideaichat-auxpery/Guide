@@ -1882,6 +1882,17 @@ def show_user_info():
             margin: 0 auto !important;
         }
 
+        /* ---- Remove top padding so content sits at the top ---- */
+        [data-testid="stSidebarContent"] {
+            padding-top: 0rem !important;
+        }
+        [data-testid="stSidebar"] > div:first-child {
+            padding-top: 0rem !important;
+        }
+        section[data-testid="stSidebar"] > div {
+            padding-top: 0.5rem !important;
+        }
+
         /* ---- Sticky footer: make sidebar a full-height flex column ---- */
         [data-testid="stSidebarContent"] {
             display: flex !important;
