@@ -1,21 +1,16 @@
 #!/bin/bash
 
 # Unified startup script for Guide application
-# Runs all services together: Reverse Proxy, Streamlit, Payments Service, Adaptive Learning
+# Runs all services: Reverse Proxy, Streamlit, Adaptive Learning
 
 echo "🚀 Starting Guide Application..."
-
-# Start Payments Service in background
-echo "💳 Starting Payments Service..."
-node payments/server.js &
-PAYMENTS_PID=$!
 
 # Start Adaptive Learning Server in background
 echo "📊 Starting Adaptive Learning Server..."
 node adaptive/server.js &
 ADAPTIVE_PID=$!
 
-# Wait for services to start
+# Wait for service to start
 sleep 2
 
 # Start Streamlit in background
@@ -34,13 +29,12 @@ PROXY_PID=$!
 echo "✅ All services started!"
 echo "   - Reverse Proxy (port 5000 - exposed)"
 echo "   - Streamlit (port 8080)"
-echo "   - Payments Service (port 3001)"
 echo "   - Adaptive Learning (port 3000)"
 
 # Handle shutdown
 cleanup() {
     echo "🛑 Shutting down services..."
-    kill $PROXY_PID $STREAMLIT_PID $PAYMENTS_PID $ADAPTIVE_PID 2>/dev/null
+    kill $PROXY_PID $STREAMLIT_PID $ADAPTIVE_PID 2>/dev/null
     exit 0
 }
 
