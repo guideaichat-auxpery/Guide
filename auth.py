@@ -1882,29 +1882,24 @@ def show_user_info():
             margin: 0 auto !important;
         }
 
-        /* ---- Remove top padding so content sits at the top ---- */
+        /* ---- Remove top padding + sticky footer flex layout ---- */
         [data-testid="stSidebarContent"] {
             padding-top: 0rem !important;
-        }
-        [data-testid="stSidebar"] > div:first-child {
-            padding-top: 0rem !important;
-        }
-        section[data-testid="stSidebar"] > div {
-            padding-top: 0.5rem !important;
-        }
-
-        /* ---- Sticky footer: make sidebar a full-height flex column ---- */
-        [data-testid="stSidebarContent"] {
+            padding-bottom: 0rem !important;
             display: flex !important;
             flex-direction: column !important;
             height: 100vh !important;
             overflow-y: auto !important;
+        }
+        section[data-testid="stSidebar"] > div:first-child {
+            padding-top: 0rem !important;
         }
         [data-testid="stSidebarContent"] > div:first-child {
             display: flex !important;
             flex-direction: column !important;
             flex: 1 !important;
             min-height: 100%;
+            padding-top: 0.5rem !important;
         }
         .sidebar-flex-spacer {
             flex: 1 !important;
