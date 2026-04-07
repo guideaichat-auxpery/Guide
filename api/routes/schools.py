@@ -96,24 +96,14 @@ def remove_educator(
 
 
 @router.post("/join")
-def school_join_alias(
-    db: Session = Depends(get_db),
-):
-    from fastapi.responses import JSONResponse
-    return JSONResponse(
-        status_code=308,
-        content={"detail": "Use POST /api/auth/school-join"},
-        headers={"Location": "/api/auth/school-join"},
-    )
+def school_join(req: dict, db: Session = Depends(get_db)):
+    from api.routes.auth import school_join as auth_school_join, SchoolJoinRequest
+    join_req = SchoolJoinRequest(**req)
+    return auth_school_join(join_req, db)
 
 
 @router.post("/setup")
-def school_setup_alias(
-    db: Session = Depends(get_db),
-):
-    from fastapi.responses import JSONResponse
-    return JSONResponse(
-        status_code=308,
-        content={"detail": "Use POST /api/auth/school-setup"},
-        headers={"Location": "/api/auth/school-setup"},
-    )
+def school_setup(req: dict, db: Session = Depends(get_db)):
+    from api.routes.auth import school_setup as auth_school_setup, SchoolSetupRequest
+    setup_req = SchoolSetupRequest(**req)
+    return auth_school_setup(setup_req, db)
