@@ -42,8 +42,8 @@ class TrendingKeywords {
       for (const key of keys) {
         try {
           const kvResult = await this.kvStore.get(key);
-          if (!kvResult || !kvResult.value) continue;
-          const data = kvResult.value;
+          const data = kvResult?.value;
+          if (!data) continue;
 
           const existingResult = await this.db.query(`
             SELECT id, count FROM trending_keywords

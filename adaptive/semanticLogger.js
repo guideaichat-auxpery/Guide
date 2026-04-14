@@ -51,8 +51,8 @@ class SemanticLogger {
       for (const key of keys) {
         try {
           const kvResult = await this.kvStore.get(key);
-          if (!kvResult || !kvResult.value) continue;
-          const data = kvResult.value;
+          const data = kvResult?.value;
+          if (!data) continue;
 
           await this.db.query(`
             INSERT INTO adaptive_interactions (

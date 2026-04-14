@@ -46,8 +46,8 @@ class FeedbackSystem {
       for (const key of keys) {
         try {
           const kvResult = await this.kvStore.get(key);
-          if (!kvResult || !kvResult.value) continue;
-          const data = kvResult.value;
+          const data = kvResult?.value;
+          if (!data) continue;
 
           const result = await this.db.query(`
             SELECT id FROM adaptive_interactions 

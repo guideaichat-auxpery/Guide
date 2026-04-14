@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: guide-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: ADAPTIVE_PORT
+        value: "3000"

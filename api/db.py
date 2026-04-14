@@ -12,20 +12,32 @@ _engine = None
 _SessionFactory = None
 
 
+def _normalize_database_url(url):
+    if not url:
+        return url
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
 def get_engine():
     global _engine
     if _engine is not None:
         return _engine
-    if not DATABASE_URL:
+    db_url = _normalize_database_url(DATABASE_URL)
+    if not db_url:
         logger.warning("DATABASE_URL not configured")
         return None
 
     connect_args = {"connect_timeout": 10}
-    if "sslmode" not in DATABASE_URL:
-        connect_args["sslmode"] = "prefer"
+    if "sslmode" not in db_url:
+        if "neon.tech" in db_url:
+            connect_args["sslmode"] = "require"
+        else:
+            connect_args["sslmode"] = "prefer"
 
     _engine = create_engine(
-        DATABASE_URL,
+        db_url,
         pool_pre_ping=True,
         pool_recycle=3600,
         pool_size=5,

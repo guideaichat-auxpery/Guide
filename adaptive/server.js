@@ -1,12 +1,12 @@
 const express = require('express');
 const cors = require('cors');
-const Client = require('@replit/database');
 const OpenAI = require('openai');
 const { Pool } = require('pg');
 require('dotenv').config();
 
 const AdaptiveCore = require('./adaptiveCore');
 const createAnalyticsRouter = require('./analyticsRoute');
+const PgKvStore = require('./pgKvStore');
 
 const app = express();
 const PORT = process.env.ADAPTIVE_PORT || 3000;
@@ -14,10 +14,13 @@ const PORT = process.env.ADAPTIVE_PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Centralized database and service instances
-const kvDatabase = new Client();
+const poolConfig = { connectionString: process.env.DATABASE_URL };
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech')) {
+  poolConfig.ssl = { rejectUnauthorized: false };
+}
+const db = new Pool(poolConfig);
+const kvDatabase = new PgKvStore(db);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const db = new Pool({ connectionString: process.env.DATABASE_URL });
 
 // Initialize adaptive core with shared instances
 const adaptiveCore = new AdaptiveCore(db, openai, kvDatabase);
@@ -685,11 +688,10 @@ app.post("/api/pd-expert", async (req, res) => {
     // Self-learning memory logic - retrieve recent prompts
     let previousPrompts = [];
     try {
-      const { value: allKeys } = await kvDatabase.list();
-      const pdKeys = allKeys.filter(k => k.startsWith("pdprompts:"));
+      const { value: allKeys } = await kvDatabase.list('pdprompts:');
       
-      for (const key of pdKeys) {
-        const record = await kvDatabase.get(key);
+      for (const key of allKeys) {
+        const { value: record } = await kvDatabase.get(key);
         if (record?.userEmail === userEmail) {
           previousPrompts.push(record.prompt);
         }
@@ -879,20 +881,23 @@ REQUIRED STRUCTURE (Use all sections with extensive detail):
 app.get("/analytics", async (req, res) => {
   try {
     const { value: keys } = await kvDatabase.list();
+    const feedbackKeys = keys.filter(k => k.startsWith("feedback_"));
+    const embeddingKeys = keys.filter(k => k.startsWith("embedding_"));
+    const trendingKeys = keys.filter(k => k.startsWith("trending_"));
     const feedback = await Promise.all(
-      keys.filter(k => k.startsWith("feedback_")).map(k => kvDatabase.get(k))
+      feedbackKeys.map(async k => { const r = await kvDatabase.get(k); return r.value; })
     );
     const embeddings = await Promise.all(
-      keys.filter(k => k.startsWith("embedding_")).map(k => kvDatabase.get(k))
+      embeddingKeys.map(async k => { const r = await kvDatabase.get(k); return r.value; })
     );
     const trending = await Promise.all(
-      keys.filter(k => k.startsWith("trending_")).map(k => kvDatabase.get(k))
+      trendingKeys.map(async k => { const r = await kvDatabase.get(k); return r.value; })
     );
     res.json({ 
       success: true, 
-      feedback, 
-      embeddings,
-      trending,
+      feedback: feedback.filter(Boolean), 
+      embeddings: embeddings.filter(Boolean),
+      trending: trending.filter(Boolean),
       totalKeys: keys.length
     });
   } catch (error) {

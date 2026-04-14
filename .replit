@@ -5,9 +5,10 @@ channel = "stable-25_05"
 packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "rustc", "tcl", "tesseract", "tk", "zlib"]
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "static"
 run = ["bash", "start_all.sh"]
 build = ["bash", "-c", "cd frontend && npm install && npm run build"]
+publicDir = "frontend/dist"
 
 [workflows]
 runButton = "Project"

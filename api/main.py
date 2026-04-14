@@ -1,18 +1,13 @@
 import os
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.responses import FileResponse
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
-SERVE_STATIC = os.path.isdir(STATIC_DIR)
 
 app = FastAPI(
     title="Guide API",
@@ -35,6 +30,13 @@ for raw in _replit_domain_vars:
             origin = f"https://{domain}" if not domain.startswith("http") else domain
             if origin not in ALLOWED_ORIGINS:
                 ALLOWED_ORIGINS.append(origin)
+
+_replit_slug = os.getenv("REPL_SLUG", "")
+_replit_owner = os.getenv("REPL_OWNER", "")
+if _replit_slug and _replit_owner:
+    static_origin = f"https://{_replit_slug}-{_replit_owner}.replit.app"
+    if static_origin not in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.append(static_origin)
 
 if not ALLOWED_ORIGINS:
     ALLOWED_ORIGINS = ["*"]
@@ -68,6 +70,7 @@ app.include_router(adaptive_router, prefix="/api")
 
 @app.get("/api/health")
 def health_check():
+    import httpx
     from api.db import get_engine
     engine = get_engine()
     db_status = "unavailable"
@@ -79,33 +82,27 @@ def health_check():
             db_status = "connected"
         except Exception:
             db_status = "error"
+
+    adaptive_status = "unavailable"
+    adaptive_port = os.getenv("ADAPTIVE_PORT", "3000")
+    try:
+        resp = httpx.get(f"http://127.0.0.1:{adaptive_port}/health", timeout=3)
+        if resp.status_code == 200:
+            adaptive_status = "healthy"
+        else:
+            adaptive_status = "error"
+    except Exception:
+        adaptive_status = "unreachable"
+
+    all_healthy = db_status == "connected" and adaptive_status == "healthy"
     return {
-        "status": "healthy" if db_status == "connected" else "degraded",
+        "status": "healthy" if all_healthy else "degraded",
         "service": "Guide API",
         "database": db_status,
+        "adaptive": adaptive_status,
     }
 
 
-if SERVE_STATIC:
-    from fastapi.staticfiles import StaticFiles
-
-    INDEX_HTML = os.path.join(STATIC_DIR, "index.html")
-
-    assets_dir = os.path.join(STATIC_DIR, "assets")
-    if os.path.isdir(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="static-assets")
-
-    @app.get("/{full_path:path}")
-    async def serve_spa(request: Request, full_path: str):
-        if full_path.startswith("api/") or full_path == "api":
-            return JSONResponse({"detail": "Not Found"}, status_code=404)
-        if full_path:
-            file_path = os.path.realpath(os.path.join(STATIC_DIR, full_path))
-            if file_path.startswith(os.path.realpath(STATIC_DIR) + os.sep) and os.path.isfile(file_path):
-                return FileResponse(file_path)
-        return FileResponse(INDEX_HTML)
-
-    logger.info(f"Static frontend configured from {STATIC_DIR}")
 
 
 @app.on_event("startup")

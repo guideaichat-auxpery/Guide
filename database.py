@@ -6,45 +6,55 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime, timedelta
 from typing import Optional
-import streamlit as st
 import logging
 
-# Logger for database module
 logger = logging.getLogger(__name__)
 
-# Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
 Base = declarative_base()
 
-# Backend optimization: Cache database engine and session factory using st.cache_resource
-# This prevents creating new engine/session factory on every page load
-@st.cache_resource
+_cached_engine = None
+_cached_message = None
+
+
+def _normalize_database_url(url):
+    if not url:
+        return url
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
 def get_database_engine():
-    """
-    Create and cache database engine using Streamlit's cache_resource.
-    This ensures we reuse the same engine across reruns, improving performance.
-    """
-    if not DATABASE_URL:
+    global _cached_engine, _cached_message
+    if _cached_engine is not None:
+        return _cached_engine, _cached_message
+
+    db_url = _normalize_database_url(DATABASE_URL)
+    if not db_url:
         logger.warning("DATABASE_URL not configured")
         return None, "Database not configured. Running in limited mode without persistent storage."
-    
+
     try:
-        # Build connect_args — use 'prefer' so SSL is used when available
-        # (Replit dev databases may not have SSL; production ones do)
         connect_args = {"connect_timeout": 10}
-        if "sslmode" not in DATABASE_URL:
-            connect_args["sslmode"] = "prefer"
+        if "sslmode" not in db_url:
+            if "neon.tech" in db_url:
+                connect_args["sslmode"] = "require"
+            else:
+                connect_args["sslmode"] = "prefer"
 
         engine = create_engine(
-            DATABASE_URL,
-            pool_pre_ping=True,  # Test connections before using them
-            pool_recycle=3600,   # Recycle connections after 1 hour
-            pool_size=5,         # Limit pool size
-            max_overflow=10,     # Allow overflow connections
+            db_url,
+            pool_pre_ping=True,
+            pool_recycle=3600,
+            pool_size=5,
+            max_overflow=10,
             connect_args=connect_args
         )
         logger.info("Database engine created successfully")
-        return engine, "Database connected successfully."
+        _cached_engine = engine
+        _cached_message = "Database connected successfully."
+        return engine, _cached_message
     except Exception as e:
         logger.error(f"Database connection failed: {str(e)}")
         return None, "Database connection failed. Running in limited mode."
@@ -623,15 +633,20 @@ def get_db():
     
     return db
 
-# Backend optimization: Cache reference data that doesn't change often
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+def _streamlit_cache(func):
+    try:
+        import streamlit as st
+        return st.cache_data(ttl=3600)(func)
+    except Exception:
+        return func
+
+
+@_streamlit_cache
 def get_subject_list():
-    """Get list of available subjects for student chats (cached)"""
     return ["Mathematics", "Science", "Language", "Humanities", "Arts", "Technology", "General"]
 
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+@_streamlit_cache
 def get_age_group_list():
-    """Get list of age groups (cached)"""
     return [
         "3-6 years (Early Childhood)",
         "6-9 years (Lower Elementary)",
@@ -639,9 +654,8 @@ def get_age_group_list():
         "12-15 years (Adolescent)"
     ]
 
-@st.cache_data(ttl=3600)  # Cache for 1 hour
+@_streamlit_cache
 def get_curriculum_frameworks():
-    """Get list of curriculum frameworks (cached)"""
     return [
         "Australian Curriculum V9",
         "Montessori National Curriculum (2011)",
@@ -2628,32 +2642,37 @@ def get_cached_educator_profile(educator_id):
     Combines institution info and enforcement status in a single cached call.
     Cache TTL: 60 seconds
     """
-    import streamlit as st
     from datetime import datetime, timedelta
-    
+
+    try:
+        import streamlit as st
+        _session = st.session_state
+    except Exception:
+        _session = {}
+
     cache_key = f'educator_profile_{educator_id}'
     cache_time_key = f'educator_profile_time_{educator_id}'
     CACHE_TTL = timedelta(seconds=60)
-    
-    cached_data = st.session_state.get(cache_key)
-    cached_time = st.session_state.get(cache_time_key)
-    
+
+    cached_data = _session.get(cache_key)
+    cached_time = _session.get(cache_time_key)
+
     if cached_data and cached_time:
         if datetime.now() - cached_time < CACHE_TTL:
             return cached_data
-    
+
     db = get_db()
     if not db:
         return None
-    
+
     try:
         educator = db.query(User).filter(User.id == educator_id).first()
         if not educator:
             db.close()
             return None
-        
+
         enforcement_on = is_institution_enforcement_on(db)
-        
+
         result = {
             'id': educator.id,
             'email': educator.email,
@@ -2662,11 +2681,11 @@ def get_cached_educator_profile(educator_id):
             'institution_needs_setup': not educator.institution_name or educator.institution_name.strip() == '',
             'enforcement_on': enforcement_on
         }
-        
+
         db.close()
-        
-        st.session_state[cache_key] = result
-        st.session_state[cache_time_key] = datetime.now()
+
+        _session[cache_key] = result
+        _session[cache_time_key] = datetime.now()
         return result
     except Exception as e:
         print(f"Error getting educator profile: {str(e)}")
@@ -2675,14 +2694,17 @@ def get_cached_educator_profile(educator_id):
         return None
 
 def invalidate_educator_profile_cache(educator_id):
-    """Invalidate educator profile cache after updates"""
-    import streamlit as st
+    try:
+        import streamlit as st
+        _session = st.session_state
+    except Exception:
+        return
     cache_key = f'educator_profile_{educator_id}'
     cache_time_key = f'educator_profile_time_{educator_id}'
-    if cache_key in st.session_state:
-        del st.session_state[cache_key]
-    if cache_time_key in st.session_state:
-        del st.session_state[cache_time_key]
+    if cache_key in _session:
+        del _session[cache_key]
+    if cache_time_key in _session:
+        del _session[cache_time_key]
 
 def is_institution_enforcement_on(db):
     """Check if institution enforcement is currently active"""
