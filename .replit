@@ -6,7 +6,6 @@ packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libiconv", "libimageq
 
 [deployment]
 deploymentTarget = "static"
-run = ["bash", "start_all.sh"]
 build = ["bash", "-c", "cd frontend && npm install && VITE_API_URL=https://guide-2pwx.onrender.com/api npm run build"]
 publicDir = "frontend/dist"
 
