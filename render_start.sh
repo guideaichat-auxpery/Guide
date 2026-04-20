@@ -5,6 +5,11 @@ echo "Starting Guide Application on Render..."
 
 ADAPTIVE_PORT="${ADAPTIVE_PORT:-3000}"
 
+if [ ! -d "adaptive/node_modules" ]; then
+  echo "Installing Adaptive Learning Server Node dependencies..."
+  (cd adaptive && npm install --omit=dev)
+fi
+
 echo "Starting Adaptive Learning Server on port ${ADAPTIVE_PORT}..."
 node adaptive/server.js &
 ADAPTIVE_PID=$!
