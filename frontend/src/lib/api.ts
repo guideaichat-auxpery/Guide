@@ -70,9 +70,14 @@ export interface User {
   email: string;
   name: string;
   role: string;
+  user_type?: string;
+  is_admin?: boolean;
+  id?: string;
+  full_name?: string;
   school_id?: string;
   school_name?: string;
   institution?: string;
+  institution_name?: string;
 }
 
 export interface StudentUser {

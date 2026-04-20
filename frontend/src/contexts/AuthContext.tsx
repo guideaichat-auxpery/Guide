@@ -93,7 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = () => setState(s => ({ ...s, error: null }));
 
-  const role = state.user && 'role' in state.user ? state.user.role : '';
+  const u = state.user as (User & Partial<StudentUser>) | null;
+  const role: string = u && 'role' in u && u.role ? String(u.role) : '';
+  const userType: string = u && 'user_type' in u && u.user_type ? String(u.user_type) : '';
+  const isAdminFlag = u && 'is_admin' in u ? Boolean(u.is_admin) : false;
+
+  const isEducator =
+    userType === 'teacher' ||
+    role === 'educator' ||
+    role === 'admin' ||
+    role === 'school_admin' ||
+    role === 'school_educator';
+  const isStudent = userType === 'student' || role === 'student';
+  const isAdmin = isAdminFlag || role === 'admin' || role === 'school_admin';
 
   return (
     <AuthContext.Provider value={{
@@ -103,9 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signup,
       logout,
       clearError,
-      isEducator: role === 'educator' || role === 'admin' || role === 'school_admin' || role === 'school_educator',
-      isStudent: role === 'student',
-      isAdmin: role === 'admin' || role === 'school_admin',
+      isEducator,
+      isStudent,
+      isAdmin,
     }}>
       {children}
     </AuthContext.Provider>
