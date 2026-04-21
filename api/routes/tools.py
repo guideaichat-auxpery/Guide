@@ -51,20 +51,29 @@ class LessonPlanRequest(BaseModel):
     curriculum_type: str = "Blended"
     year_level: Optional[str] = None
     subject: Optional[str] = None
+    duration: Optional[str] = None
+    additional_context: Optional[str] = None
 
 
 class AlignRequest(BaseModel):
-    content: str
+    topic: Optional[str] = None
+    content: Optional[str] = None
     age_group: str = "9-12"
     year_level: Optional[str] = None
     subject: Optional[str] = None
+    duration: Optional[str] = None
+    additional_context: Optional[str] = None
 
 
 class DifferentiateRequest(BaseModel):
-    lesson_description: str
+    topic: Optional[str] = None
+    lesson_description: Optional[str] = None
     class_composition: Optional[str] = None
     focus_area: Optional[str] = None
     age_group: str = "9-12"
+    subject: Optional[str] = None
+    duration: Optional[str] = None
+    additional_context: Optional[str] = None
 
 
 class GreatStoryRequest(BaseModel):
@@ -279,7 +288,14 @@ def generate_lesson_plan(
     year_levels = map_age_to_year_levels(req.age_group)
     year_level = req.year_level or year_levels
 
-    messages = [{"role": "user", "content": req.topic}]
+    prompt_parts = [f"Topic: {req.topic}"]
+    if req.subject:
+        prompt_parts.append(f"Subject area: {req.subject}")
+    if req.duration:
+        prompt_parts.append(f"Duration: {req.duration} minutes")
+    if req.additional_context:
+        prompt_parts.append(f"Additional context:\n{req.additional_context}")
+    messages = [{"role": "user", "content": "\n".join(prompt_parts)}]
 
     system_prompt = get_lesson_system_prompt(req.age_group, req.planning_type)
 
@@ -311,7 +327,22 @@ def align_lesson_plan(
     from utils import call_openai_api, get_alignment_system_prompt
 
     system_prompt = get_alignment_system_prompt(req.age_group)
-    messages = [{"role": "user", "content": req.content}]
+    if req.content:
+        user_content = req.content
+    else:
+        parts = []
+        if req.topic:
+            parts.append(f"Topic: {req.topic}")
+        if req.subject:
+            parts.append(f"Subject area: {req.subject}")
+        if req.duration:
+            parts.append(f"Duration: {req.duration} minutes")
+        if req.additional_context:
+            parts.append(f"Additional context:\n{req.additional_context}")
+        if not parts:
+            raise HTTPException(status_code=422, detail="Provide a topic or content to align")
+        user_content = "\n".join(parts)
+    messages = [{"role": "user", "content": user_content}]
 
     result = call_openai_api(
         messages=messages,
@@ -341,7 +372,20 @@ def differentiate_lesson_plan(
 
     system_prompt = get_differentiation_system_prompt(req.age_group)
 
-    prompt_parts = [req.lesson_description]
+    prompt_parts: List[str] = []
+    if req.lesson_description:
+        prompt_parts.append(req.lesson_description)
+    else:
+        if req.topic:
+            prompt_parts.append(f"Topic: {req.topic}")
+        if req.subject:
+            prompt_parts.append(f"Subject area: {req.subject}")
+        if req.duration:
+            prompt_parts.append(f"Duration: {req.duration} minutes")
+        if req.additional_context:
+            prompt_parts.append(f"Additional context:\n{req.additional_context}")
+    if not prompt_parts:
+        raise HTTPException(status_code=422, detail="Provide a topic or lesson description to differentiate")
     if req.class_composition:
         prompt_parts.append(f"\nClass Composition: {req.class_composition}")
     if req.focus_area:

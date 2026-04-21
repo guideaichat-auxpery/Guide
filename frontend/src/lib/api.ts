@@ -42,8 +42,22 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     let msg = `Request failed (${res.status})`;
     try {
-      const errData: { detail?: string; message?: string } = await res.json();
-      msg = errData.detail || errData.message || msg;
+      const errData: { detail?: unknown; message?: unknown } = await res.json();
+      const raw = errData.detail ?? errData.message;
+      if (typeof raw === 'string') {
+        msg = raw;
+      } else if (Array.isArray(raw)) {
+        msg = raw
+          .map((d: unknown) => {
+            if (d && typeof d === 'object' && 'msg' in d) {
+              return String((d as { msg: unknown }).msg);
+            }
+            return typeof d === 'string' ? d : JSON.stringify(d);
+          })
+          .join('; ');
+      } else if (raw != null) {
+        msg = JSON.stringify(raw);
+      }
     } catch {
       // response body not JSON
     }
