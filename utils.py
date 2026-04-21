@@ -1,4 +1,48 @@
-import streamlit as st
+try:
+    import streamlit as st  # type: ignore
+except ModuleNotFoundError:
+    class _StShim:
+        """No-op shim used when running without Streamlit (e.g., FastAPI server).
+        Provides identity decorators for cache_resource/cache_data and silently
+        absorbs any other attribute access so legacy UI helpers never crash."""
+
+        class _SessionState(dict):
+            def __getattr__(self, item):
+                return self.get(item)
+
+            def __setattr__(self, key, value):
+                self[key] = value
+
+        def __init__(self):
+            self.session_state = self._SessionState()
+            self.sidebar = self
+            self.components = type("C", (), {"v1": self})()
+
+        @staticmethod
+        def cache_resource(func=None, **_kwargs):
+            if func is None:
+                return lambda f: f
+            return func
+
+        @staticmethod
+        def cache_data(func=None, **_kwargs):
+            if func is None:
+                return lambda f: f
+            return func
+
+        @staticmethod
+        def stop():
+            raise RuntimeError("OpenAI client could not be initialised (no API key).")
+
+        def __getattr__(self, name):
+            def _noop(*_args, **_kwargs):
+                return None
+            return _noop
+
+        def __call__(self, *_args, **_kwargs):
+            return None
+
+    st = _StShim()  # type: ignore
 import os
 from openai import OpenAI
 from datetime import datetime
@@ -2374,7 +2418,11 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
         response = make_api_call()
         return response.choices[0].message.content
     except Exception as e:
-        st.error(f"Error calling OpenAI API: {str(e)}")
+        logger.exception("Error calling OpenAI API: %s", e)
+        try:
+            st.error(f"Error calling OpenAI API: {str(e)}")
+        except Exception:
+            pass
         return None
 
 def get_max_tokens_for_user_type(user_type):

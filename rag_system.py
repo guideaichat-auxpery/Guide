@@ -395,8 +395,10 @@ def retrieve_relevant_chunks(
             code_patterns = [f'%{code}%' for code in curriculum_codes] if curriculum_codes else ['%___%']
             
             # Build WHERE clause with optional filters using psycopg2.sql for safe composition
+            # base_query has 1 placeholder (similarity), each where_condition adds 1,
+            # order_clause adds 4 (embedding, code_patterns, embedding, limit).
             where_conditions = []
-            params = [embedding_str, code_patterns]
+            params = [embedding_str]
             
             if framework_filter:
                 where_conditions.append(psql.SQL("metadata->>'framework' = %s"))

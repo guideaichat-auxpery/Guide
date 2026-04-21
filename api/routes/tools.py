@@ -283,10 +283,13 @@ def generate_lesson_plan(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from utils import call_openai_api, get_lesson_system_prompt, map_age_to_year_levels
+    from utils import call_openai_api, get_age_appropriate_lesson_planning_prompt, map_age_to_year_levels
 
     year_levels = map_age_to_year_levels(req.age_group)
-    year_level = req.year_level or year_levels
+    # year_levels is a list (e.g. ["Year 4", "Year 5", "Year 6"]); the downstream
+    # curriculum lookup expects a single hashable string.
+    default_year_level = year_levels[0] if year_levels else None
+    year_level = req.year_level or default_year_level
 
     prompt_parts = [f"Topic: {req.topic}"]
     if req.subject:
@@ -297,7 +300,7 @@ def generate_lesson_plan(
         prompt_parts.append(f"Additional context:\n{req.additional_context}")
     messages = [{"role": "user", "content": "\n".join(prompt_parts)}]
 
-    system_prompt = get_lesson_system_prompt(req.age_group, req.planning_type)
+    system_prompt = get_age_appropriate_lesson_planning_prompt(req.age_group)
 
     result = call_openai_api(
         messages=messages,
@@ -305,7 +308,8 @@ def generate_lesson_plan(
         system_prompt=system_prompt,
         is_student=False,
         age_group=req.age_group,
-        interface_type="planning",
+        interface_type="lesson_planning",
+        planning_type=req.planning_type,
         curriculum_type=req.curriculum_type,
         year_level=year_level,
         subject=req.subject,
