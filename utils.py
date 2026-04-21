@@ -2314,26 +2314,54 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
         subject_list = subjects if subjects else ([subject] if subject else [])
         
         if subject_list:
-            # Get year level (from parameter or auto-map from age with keyword inference)
-            target_year_level = year_level
-            if not target_year_level and age_group:
-                # Pass detected keywords to intelligently infer year level
-                target_year_level = get_primary_year_level(age_group, detected_keywords=all_keywords if all_keywords else None)
-                
-                # Add year level inference info to keyword context if keywords were used
-                if all_keywords and target_year_level:
-                    inferred = infer_year_level_from_keywords(all_keywords, age_group)
-                    if inferred:
-                        keyword_context += f"🎓 Inferred Year Level: **{target_year_level}** (based on detected curriculum topics)\n\n"
-            
-            # Fetch context for each subject and combine
-            if target_year_level:
+            # Decide which year level(s) to pull curriculum context for.
+            # Priority:
+            #   1. Explicit year_level argument (user-selected) → just that year.
+            #   2. Year inferred from curriculum keywords → just that specific year.
+            #   3. Otherwise, fall back to the full age-group range (typically 3
+            #      year levels, e.g. Year 4–6 for ages 9–12) so the model sees
+            #      developmentally-appropriate context across the whole band.
+            year_levels_for_context = []
+            primary_year_level = None
+            if year_level:
+                year_levels_for_context = [year_level]
+                primary_year_level = year_level
+            elif age_group:
+                inferred_specific = (
+                    infer_year_level_from_keywords(all_keywords, age_group)
+                    if all_keywords else None
+                )
+                if inferred_specific:
+                    year_levels_for_context = [inferred_specific]
+                    primary_year_level = inferred_specific
+                    keyword_context += (
+                        f"🎓 Inferred Year Level: **{inferred_specific}** "
+                        f"(based on detected curriculum topics)\n\n"
+                    )
+                else:
+                    age_group_year_levels = map_age_to_year_levels(age_group)
+                    if age_group_year_levels:
+                        year_levels_for_context = age_group_year_levels
+                        primary_year_level = get_primary_year_level(age_group)
+
+            # Fetch context for each subject across the selected year levels.
+            if year_levels_for_context:
                 contexts = []
                 for subj in subject_list:
-                    context = fetch_curriculum_context(subj, target_year_level, curriculum_type)
+                    context = fetch_curriculum_context(
+                        subj, year_levels_for_context, curriculum_type
+                    )
                     if context:
-                        contexts.append(f"--- {subj} ---\n{context}")
-                
+                        header = f"--- {subj}"
+                        if len(year_levels_for_context) > 1:
+                            header += (
+                                f" (age-group span: "
+                                f"{', '.join(year_levels_for_context)}; "
+                                f"primary focus: {primary_year_level})"
+                            )
+                        header += " ---"
+                        contexts.append(f"{header}\n{context}")
+
                 if contexts:
                     curriculum_context = "\n\n".join(contexts)
         
@@ -2716,16 +2744,41 @@ def get_primary_year_level(age_group, detected_keywords=None):
 @st.cache_data
 def fetch_curriculum_context(subject=None, year_level=None, curriculum_type="AC_V9"):
     """
-    Fetch curriculum context for a specific subject and year level
+    Fetch curriculum context for a specific subject and year level.
+
     Args:
         subject: Subject area (e.g., "Science", "Mathematics", "English")
-        year_level: Year level (e.g., "Year 3", "Year 5")
+        year_level: Year level — either a single string ("Year 3") or a list/tuple
+            of year levels (["Year 4", "Year 5", "Year 6"]). When a list is
+            provided, contexts for every matching year are concatenated so the
+            model sees the full age-group range.
         curriculum_type: Type of curriculum ("AC_V9", "Montessori", "Blended")
     Returns:
         Formatted curriculum context string
     """
     if not subject or not year_level:
         return ""
+
+    # Normalise to a tuple of year strings so we can aggregate cleanly.
+    if isinstance(year_level, (list, tuple, set)):
+        year_levels_to_fetch = [yl for yl in year_level if yl]
+    else:
+        year_levels_to_fetch = [year_level]
+
+    if not year_levels_to_fetch:
+        return ""
+
+    # If multiple year levels were requested, recurse for each and join.
+    if len(year_levels_to_fetch) > 1:
+        sections = []
+        for yl in year_levels_to_fetch:
+            section = fetch_curriculum_context(subject, yl, curriculum_type)
+            if section:
+                sections.append(section)
+        return "\n\n".join(sections)
+
+    # Single year level path — fall through to the existing lookup logic.
+    year_level = year_levels_to_fetch[0]
     
     # Australian Curriculum V9 contexts
     ac_v9_contexts = {
