@@ -2347,9 +2347,11 @@ This is a space for free thinking, brainstorming, and creative exploration. Help
             # Fetch context for each subject across the selected year levels.
             if year_levels_for_context:
                 contexts = []
+                # Use a tuple so the value is hashable for cache decorators.
+                year_levels_key = tuple(year_levels_for_context)
                 for subj in subject_list:
                     context = fetch_curriculum_context(
-                        subj, year_levels_for_context, curriculum_type
+                        subj, year_levels_key, curriculum_type
                     )
                     if context:
                         header = f"--- {subj}"
