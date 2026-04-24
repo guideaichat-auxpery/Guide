@@ -3,8 +3,82 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Guide - Your prepared digital environment</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
+    <script>
+      (function () {
+        var RELOAD_KEY = 'spa-reload';
+        var BANNER_ID = 'spa-stale-banner';
+
+        function isAssetLoadError(target) {
+          if (!target || !target.tagName) return false;
+          var tag = target.tagName.toUpperCase();
+          if (tag === 'SCRIPT' && target.type === 'module' && target.src) return true;
+          if (tag === 'LINK' && target.rel === 'stylesheet' && target.href) return true;
+          return false;
+        }
+
+        function isChunkErrorMessage(msg) {
+          if (!msg) return false;
+          var text = typeof msg === 'string' ? msg : (msg.message || String(msg));
+          return /Failed to load module|Loading chunk [\w-]+ failed|Importing a module script failed|error loading dynamically imported module|Failed to fetch dynamically imported module|Unexpected token '<'|Expected a JavaScript|MIME type/i.test(text);
+        }
+
+        function showBanner() {
+          if (document.getElementById(BANNER_ID)) return;
+          var banner = document.createElement('div');
+          banner.id = BANNER_ID;
+          banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#b91c1c;color:#fff;padding:12px 16px;font:14px/1.4 system-ui,-apple-system,sans-serif;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+          banner.innerHTML = 'A new version of Guide is available but failed to load. <button id="spa-stale-banner-btn" style="margin-left:8px;background:#fff;color:#b91c1c;border:0;border-radius:6px;padding:6px 12px;font-weight:600;cursor:pointer;">Refresh now</button>';
+          document.body && document.body.appendChild(banner);
+          var btn = document.getElementById('spa-stale-banner-btn');
+          if (btn) {
+            btn.addEventListener('click', function () {
+              try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) {}
+              location.reload();
+            });
+          }
+        }
+
+        function recover() {
+          var alreadyReloaded = false;
+          try { alreadyReloaded = sessionStorage.getItem(RELOAD_KEY) === '1'; } catch (e) {}
+          if (alreadyReloaded) {
+            showBanner();
+            return;
+          }
+          try { sessionStorage.setItem(RELOAD_KEY, '1'); } catch (e) {}
+          location.reload();
+        }
+
+        window.addEventListener('error', function (event) {
+          if (isAssetLoadError(event.target)) {
+            recover();
+            return;
+          }
+          if (event && isChunkErrorMessage(event.message || (event.error && event.error.message))) {
+            recover();
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event && event.reason;
+          var msg = reason && (reason.message || reason);
+          if (isChunkErrorMessage(msg)) {
+            recover();
+          }
+        });
+
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) {}
+          }, 5000);
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

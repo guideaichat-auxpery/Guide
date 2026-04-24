@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
@@ -35,14 +36,14 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<RootRedirect />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/join-school" element={<JoinSchool />} />
-          <Route path="/school-setup" element={<SchoolSetup />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+          <Route path="/signup" element={<ErrorBoundary><Signup /></ErrorBoundary>} />
+          <Route path="/forgot-password" element={<ErrorBoundary><ForgotPassword /></ErrorBoundary>} />
+          <Route path="/reset-password" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
+          <Route path="/join-school" element={<ErrorBoundary><JoinSchool /></ErrorBoundary>} />
+          <Route path="/school-setup" element={<ErrorBoundary><SchoolSetup /></ErrorBoundary>} />
+          <Route path="/contact" element={<ErrorBoundary><Contact /></ErrorBoundary>} />
+          <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
 
           <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<ProtectedRoute requireRole="educator"><Dashboard /></ProtectedRoute>} />

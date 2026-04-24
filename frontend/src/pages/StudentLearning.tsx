@@ -19,7 +19,8 @@ export default function StudentLearning() {
   const [safetyText, setSafetyText] = useState('');
   const [safetySending, setSafetySending] = useState(false);
   const [safetySent, setSafetySent] = useState(false);
-  const displayName = user && 'name' in user ? user.name : 'Explorer';
+  const rawDisplayName = user && 'name' in user ? user.name : '';
+  const displayName = (rawDisplayName && rawDisplayName.trim()) || 'Explorer';
   const selected = subjects.find(s => s.id === selectedSubject);
 
   const handleSafetyReport = async () => {

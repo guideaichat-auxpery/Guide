@@ -120,10 +120,18 @@ export default function Students() {
     }
   };
 
-  const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.username.toLowerCase().includes(search.toLowerCase())
-  );
+  const safeName = (s: Student) => (s.name || '').toString();
+  const safeUsername = (s: Student) => (s.username || '').toString();
+  const initial = (s: Student) => {
+    const n = safeName(s).trim();
+    return n.length > 0 ? n.charAt(0).toUpperCase() : '?';
+  };
+
+  const filtered = students.filter(s => {
+    const q = search.toLowerCase();
+    return safeName(s).toLowerCase().includes(q) ||
+      safeUsername(s).toLowerCase().includes(q);
+  });
 
   if (selectedStudent) {
     return (
@@ -134,8 +142,8 @@ export default function Students() {
         <div className="bg-eco-card rounded-2xl border border-eco-border p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-serif text-ink">{selectedStudent.name}</h2>
-              <p className="text-sm text-eco-text/60">@{selectedStudent.username} · {selectedStudent.age_group || 'No age group'}</p>
+              <h2 className="text-2xl font-serif text-ink">{safeName(selectedStudent) || 'Unnamed student'}</h2>
+              <p className="text-sm text-eco-text/60">@{safeUsername(selectedStudent) || 'unknown'} · {selectedStudent.age_group || 'No age group'}</p>
             </div>
             <button onClick={() => handleDelete(selectedStudent.id)}
               className="px-3 py-1.5 text-sm text-danger hover:bg-soft-rose/30 rounded-xl transition-colors">
@@ -172,18 +180,18 @@ export default function Students() {
             <div>
               {loadingDetail ? (
                 <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
-              ) : activities.length === 0 ? (
+              ) : !Array.isArray(activities) || activities.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="mx-auto text-eco-text/30 mb-2" size={32} />
                   <p className="text-sm text-eco-text/50">No recent activities</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {activities.map(act => (
-                    <div key={act.id} className="p-3 bg-sand/20 rounded-xl flex items-center gap-3">
+                  {activities.map((act, idx) => (
+                    <div key={act.id ?? `activity-${idx}`} className="p-3 bg-sand/20 rounded-xl flex items-center gap-3">
                       <Clock size={14} className="text-eco-text/40 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-ink">{act.type}{act.subject ? ` — ${act.subject}` : ''}</p>
+                        <p className="text-sm text-ink">{act.type || 'Activity'}{act.subject ? ` — ${act.subject}` : ''}</p>
                         {act.created_at && <p className="text-xs text-eco-text/40">{new Date(act.created_at).toLocaleString()}</p>}
                       </div>
                     </div>
@@ -197,21 +205,21 @@ export default function Students() {
             <div>
               {loadingDetail ? (
                 <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
-              ) : alerts.length === 0 ? (
+              ) : !Array.isArray(alerts) || alerts.length === 0 ? (
                 <div className="text-center py-8">
                   <Shield className="mx-auto text-leaf/40 mb-2" size={32} />
                   <p className="text-sm text-eco-text/50">No safety alerts</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {alerts.map(alert => (
-                    <div key={alert.id} className="p-3 bg-soft-rose/20 border border-danger/10 rounded-xl">
+                  {alerts.map((alert, idx) => (
+                    <div key={alert.id ?? `alert-${idx}`} className="p-3 bg-soft-rose/20 border border-danger/10 rounded-xl">
                       <div className="flex items-center gap-2 mb-1">
                         <AlertTriangle size={14} className="text-danger" />
-                        <span className="text-xs font-medium text-danger uppercase">{alert.status}</span>
+                        <span className="text-xs font-medium text-danger uppercase">{alert.status || 'unknown'}</span>
                         {alert.created_at && <span className="text-xs text-eco-text/40 ml-auto">{new Date(alert.created_at).toLocaleString()}</span>}
                       </div>
-                      <p className="text-sm text-ink">{alert.content}</p>
+                      <p className="text-sm text-ink">{alert.content || ''}</p>
                     </div>
                   ))}
                 </div>
@@ -234,13 +242,13 @@ export default function Students() {
                   ) : (
                     <div className="space-y-3 max-h-[50vh] overflow-y-auto p-2">
                       {sessionMessages.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div key={i} className={`flex ${msg?.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                            msg.role === 'user'
+                            msg?.role === 'user'
                               ? 'bg-leaf/15 text-ink'
                               : 'bg-sand/40 text-eco-text'
                           }`}>
-                            {msg.content}
+                            {msg?.content || ''}
                           </div>
                         </div>
                       ))}
@@ -249,7 +257,7 @@ export default function Students() {
                 </div>
               ) : loadingDetail ? (
                 <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
-              ) : chatHistory.length === 0 ? (
+              ) : !Array.isArray(chatHistory) || chatHistory.length === 0 ? (
                 <div className="text-center py-8">
                   <MessageSquare className="mx-auto text-eco-text/30 mb-2" size={32} />
                   <p className="text-sm text-eco-text/50">No chat sessions yet</p>
@@ -257,13 +265,14 @@ export default function Students() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {chatHistory.map(session => (
-                    <button key={session.id} onClick={async () => {
+                  {chatHistory.map((session, idx) => (
+                    <button key={session.id ?? `session-${idx}`} onClick={async () => {
+                      if (!session.id) return;
                       setViewingSession(session.id);
                       setLoadingMessages(true);
                       try {
                         const res = await tools.getMessages(session.id);
-                        setSessionMessages(res.messages);
+                        setSessionMessages(Array.isArray(res?.messages) ? res.messages : []);
                       } catch {
                         setSessionMessages([]);
                       } finally {
@@ -273,7 +282,7 @@ export default function Students() {
                       <div className="flex items-center gap-2 mb-1">
                         <MessageSquare size={14} className="text-eco-accent shrink-0" />
                         <span className="text-sm font-medium text-ink">{session.subject || 'General'}</span>
-                        {session.message_count !== undefined && (
+                        {typeof session.message_count === 'number' && (
                           <span className="text-xs text-eco-text/40 ml-auto">{session.message_count} messages</span>
                         )}
                       </div>
@@ -396,15 +405,15 @@ export default function Students() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map(s => (
-            <button key={s.id} onClick={() => selectStudent(s)}
+          {filtered.map((s, idx) => (
+            <button key={s.id ?? `student-${idx}`} onClick={() => selectStudent(s)}
               className="w-full flex items-center gap-3 p-4 bg-eco-card rounded-xl border border-eco-border hover:border-leaf/40 transition-colors text-left">
               <div className="w-9 h-9 rounded-full bg-sky/30 flex items-center justify-center text-ink font-semibold text-sm">
-                {s.name.charAt(0).toUpperCase()}
+                {initial(s)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm text-ink truncate">{s.name}</div>
-                <div className="text-xs text-eco-text/50">@{s.username} · {s.age_group || ''}</div>
+                <div className="font-medium text-sm text-ink truncate">{safeName(s) || 'Unnamed student'}</div>
+                <div className="text-xs text-eco-text/50">@{safeUsername(s) || 'unknown'} · {s.age_group || ''}</div>
               </div>
               <ChevronRight size={16} className="text-eco-text/30" />
             </button>

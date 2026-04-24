@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ErrorBoundary from './ErrorBoundary';
 import {
   Home, BookOpen, Users, MessageCircle, Sparkles, GraduationCap,
   StickyNote, Settings, LogOut, Menu, X, BookMarked, Lightbulb, ChevronDown, Building2
@@ -30,6 +31,7 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const baseNav = isStudent ? studentNav : educatorNav;
   const navItems = !isStudent && isAdmin
     ? [...baseNav.slice(0, -1), adminNav, baseNav[baseNav.length - 1]]
@@ -40,7 +42,9 @@ export default function Layout() {
     navigate('/login');
   };
 
-  const displayName = user && 'name' in user ? user.name : 'User';
+  const rawName = user && 'name' in user ? user.name : '';
+  const displayName = (rawName && rawName.trim()) || 'User';
+  const initial = (displayName.charAt(0) || 'U').toUpperCase();
 
   return (
     <div className="flex h-screen bg-eco-bg">
@@ -83,7 +87,7 @@ export default function Layout() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm hover:bg-sand/50 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-leaf/20 flex items-center justify-center text-leaf-dark font-semibold text-xs">
-                  {displayName.charAt(0).toUpperCase()}
+                  {initial}
                 </div>
                 <div className="flex-1 text-left min-w-0">
                   <div className="truncate font-medium text-ink">{displayName}</div>
@@ -123,7 +127,9 @@ export default function Layout() {
 
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <Outlet />
+            <ErrorBoundary key={location.pathname} fallbackHomeHref={isStudent ? '/learn' : '/dashboard'}>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>
