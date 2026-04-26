@@ -42,7 +42,7 @@ export default function Layout() {
     navigate('/login');
   };
 
-  const rawName = user && 'name' in user ? user.name : '';
+  const rawName = user && 'full_name' in user ? (user.full_name || '') : '';
   const displayName = (rawName && rawName.trim()) || 'User';
   const initial = (displayName.charAt(0) || 'U').toUpperCase();
 

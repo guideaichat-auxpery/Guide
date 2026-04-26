@@ -25,7 +25,15 @@ export default function Students() {
   const [sessionMessages, setSessionMessages] = useState<Array<{ role: string; content: string }>>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [formData, setFormData] = useState({ name: '', username: '', password: '', age_group: '6-9', consent_given: false });
+  const [formData, setFormData] = useState({
+    full_name: '',
+    username: '',
+    password: '',
+    age_group: '6-9',
+    parent_name: '',
+    parent_email: '',
+    consent_given: false,
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [shareEmail, setShareEmail] = useState('');
@@ -89,9 +97,25 @@ export default function Students() {
     setSaving(true);
     setError('');
     try {
-      await studentsMgmt.create(formData);
+      await studentsMgmt.create({
+        username: formData.username,
+        password: formData.password,
+        full_name: formData.full_name,
+        age_group: formData.age_group,
+        parent_name: formData.parent_name || undefined,
+        parent_email: formData.parent_email || undefined,
+        consent_method: 'educator_confirmed',
+      });
       setShowCreate(false);
-      setFormData({ name: '', username: '', password: '', age_group: '6-9', consent_given: false });
+      setFormData({
+        full_name: '',
+        username: '',
+        password: '',
+        age_group: '6-9',
+        parent_name: '',
+        parent_email: '',
+        consent_given: false,
+      });
       loadStudents();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create student');
@@ -122,7 +146,7 @@ export default function Students() {
     }
   };
 
-  const safeName = (s: Student) => (s.name || '').toString();
+  const safeName = (s: Student) => (s.full_name || '').toString();
   const safeUsername = (s: Student) => (s.username || '').toString();
   const initial = (s: Student) => {
     const n = safeName(s).trim();
@@ -193,7 +217,8 @@ export default function Students() {
                     <div key={act.id ?? `activity-${idx}`} className="p-3 bg-sand/20 rounded-xl flex items-center gap-3">
                       <Clock size={14} className="text-eco-text/40 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-ink">{act.type || 'Activity'}{act.subject ? ` — ${act.subject}` : ''}</p>
+                        <p className="text-sm text-ink">{act.activity_type || 'Activity'}{act.subject ? ` — ${act.subject}` : ''}</p>
+                        {act.prompt_text && <p className="text-xs text-eco-text/60 truncate">{act.prompt_text}</p>}
                         {act.created_at && <p className="text-xs text-eco-text/40">{new Date(act.created_at).toLocaleString()}</p>}
                       </div>
                     </div>
@@ -218,10 +243,12 @@ export default function Students() {
                     <div key={alert.id ?? `alert-${idx}`} className="p-3 bg-soft-rose/20 border border-danger/10 rounded-xl">
                       <div className="flex items-center gap-2 mb-1">
                         <AlertTriangle size={14} className="text-danger" />
-                        <span className="text-xs font-medium text-danger uppercase">{alert.status || 'unknown'}</span>
+                        <span className="text-xs font-medium text-danger uppercase">{alert.is_reviewed ? 'reviewed' : 'pending'}</span>
+                        {alert.severity && <span className="text-xs text-eco-text/50">· {alert.severity}</span>}
                         {alert.created_at && <span className="text-xs text-eco-text/40 ml-auto">{new Date(alert.created_at).toLocaleString()}</span>}
                       </div>
-                      <p className="text-sm text-ink">{alert.content || ''}</p>
+                      {alert.alert_type && <p className="text-xs font-medium text-ink mb-1">{alert.alert_type}</p>}
+                      <p className="text-sm text-ink">{alert.content_snippet || ''}</p>
                     </div>
                   ))}
                 </div>
@@ -351,8 +378,8 @@ export default function Students() {
             {error && <div className="mb-3 p-3 bg-soft-rose/50 border border-danger/20 rounded-xl text-sm text-danger">{error}</div>}
             <form onSubmit={handleCreate} className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-ink mb-1">Name</label>
-                <input value={formData.name} onChange={e => setFormData(f => ({ ...f, name: e.target.value }))} required
+                <label className="block text-sm font-medium text-ink mb-1">Full name</label>
+                <input value={formData.full_name} onChange={e => setFormData(f => ({ ...f, full_name: e.target.value }))} required
                   className="w-full px-4 py-2 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
               </div>
               <div>
@@ -374,6 +401,16 @@ export default function Students() {
                   <option value="9-12">9-12 (Upper Elementary)</option>
                   <option value="12-15">12-15 (Adolescent)</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1">Parent/guardian name <span className="text-eco-text/40 font-normal">(optional)</span></label>
+                <input value={formData.parent_name} onChange={e => setFormData(f => ({ ...f, parent_name: e.target.value }))}
+                  className="w-full px-4 py-2 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1">Parent/guardian email <span className="text-eco-text/40 font-normal">(optional)</span></label>
+                <input type="email" value={formData.parent_email} onChange={e => setFormData(f => ({ ...f, parent_email: e.target.value }))}
+                  className="w-full px-4 py-2 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
               </div>
               <label className="flex items-start gap-2 text-sm text-ink cursor-pointer">
                 <input type="checkbox" checked={formData.consent_given}

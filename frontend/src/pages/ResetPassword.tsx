@@ -5,7 +5,7 @@ import { Loader2, CheckCircle } from 'lucide-react';
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
-  const token = params.get('token') || '';
+  const token = params.get('token') || params.get('reset_token') || '';
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,11 +15,15 @@ export default function ResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) { setError('Passwords do not match'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password.length < 12) { setError('Password must be at least 12 characters'); return; }
     setLoading(true);
     setError('');
     try {
-      await auth.resetPassword(token, password);
+      await auth.resetPassword({
+        token,
+        new_password: password,
+        confirm_password: confirm,
+      });
       setDone(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');

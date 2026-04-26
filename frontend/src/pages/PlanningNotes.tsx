@@ -11,7 +11,6 @@ export default function PlanningNotes() {
   const [creating, setCreating] = useState(false);
   const [formTitle, setFormTitle] = useState('');
   const [formContent, setFormContent] = useState('');
-  const [formCategory, setFormCategory] = useState('');
   const [saving, setSaving] = useState(false);
   const [expandedNote, setExpandedNote] = useState<string | null>(null);
 
@@ -34,7 +33,6 @@ export default function PlanningNotes() {
     setEditing(null);
     setFormTitle('');
     setFormContent('');
-    setFormCategory('');
   };
 
   const startEdit = (note: PlanningNote) => {
@@ -42,7 +40,6 @@ export default function PlanningNotes() {
     setCreating(false);
     setFormTitle(note.title);
     setFormContent(note.content);
-    setFormCategory(note.category || '');
   };
 
   const cancel = () => {
@@ -55,9 +52,9 @@ export default function PlanningNotes() {
     setSaving(true);
     try {
       if (editing) {
-        await notesApi.update(editing.id, { title: formTitle, content: formContent, category: formCategory || undefined });
+        await notesApi.update(editing.id, { title: formTitle, content: formContent });
       } else {
-        await notesApi.create({ title: formTitle, content: formContent, category: formCategory || undefined });
+        await notesApi.create({ title: formTitle, content: formContent });
       }
       cancel();
       loadNotes();
@@ -106,8 +103,6 @@ export default function PlanningNotes() {
           <div className="space-y-3">
             <input value={formTitle} onChange={e => setFormTitle(e.target.value)} placeholder="Note title"
               className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink font-medium focus:border-leaf" />
-            <input value={formCategory} onChange={e => setFormCategory(e.target.value)} placeholder="Category (optional)"
-              className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
 
             <RichTextEditor
               content={formContent}
@@ -145,7 +140,6 @@ export default function PlanningNotes() {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h4 className="font-sans text-sm font-semibold text-ink">{note.title}</h4>
-                  {note.category && <span className="text-xs text-eco-accent">{note.category}</span>}
                 </div>
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   <button onClick={() => startEdit(note)} className="p-1.5 rounded-lg text-eco-text/40 hover:text-ink hover:bg-sand/50 transition-colors">

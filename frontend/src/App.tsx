@@ -25,6 +25,11 @@ import Settings from './pages/Settings';
 
 function RootRedirect() {
   const { user, loading, isStudent } = useAuth();
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get('reset_token');
+  if (resetToken) {
+    return <Navigate to={`/reset-password?token=${encodeURIComponent(resetToken)}`} replace />;
+  }
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
   return <Navigate to={isStudent ? '/learn' : '/dashboard'} replace />;

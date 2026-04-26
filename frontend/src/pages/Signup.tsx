@@ -4,27 +4,38 @@ import { useAuth } from '../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export default function Signup() {
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [localError, setLocalError] = useState('');
   const { signup, loading, error } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreeTerms) {
+      setLocalError('You must agree to the terms and conditions');
+      return;
+    }
     if (password !== confirm) {
       setLocalError('Passwords do not match');
       return;
     }
-    if (password.length < 6) {
-      setLocalError('Password must be at least 6 characters');
+    if (password.length < 12) {
+      setLocalError('Password must be at least 12 characters');
       return;
     }
     setLocalError('');
     try {
-      await signup({ name, email, password });
+      await signup({
+        email,
+        password,
+        full_name: fullName,
+        confirm_password: confirm,
+        agree_terms: agreeTerms,
+      });
       navigate('/dashboard');
     } catch {}
   };
@@ -49,7 +60,7 @@ export default function Signup() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-ink mb-1.5">Full name</label>
-              <input id="name" type="text" required value={name} onChange={e => setName(e.target.value)}
+              <input id="name" type="text" required value={fullName} onChange={e => setFullName(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink placeholder:text-eco-text/40 focus:border-leaf"
                 placeholder="Maria Montessori" />
             </div>
@@ -63,7 +74,8 @@ export default function Signup() {
               <label htmlFor="password" className="block text-sm font-medium text-ink mb-1.5">Password</label>
               <input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink placeholder:text-eco-text/40 focus:border-leaf"
-                placeholder="At least 6 characters" />
+                placeholder="At least 12 characters" />
+              <p className="text-xs text-eco-text/50 mt-1">Use at least 12 characters with upper- and lower-case letters and a number.</p>
             </div>
             <div>
               <label htmlFor="confirm" className="block text-sm font-medium text-ink mb-1.5">Confirm password</label>
@@ -71,6 +83,13 @@ export default function Signup() {
                 className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink placeholder:text-eco-text/40 focus:border-leaf"
                 placeholder="Repeat your password" />
             </div>
+            <label className="flex items-start gap-2 text-sm text-ink cursor-pointer">
+              <input type="checkbox" checked={agreeTerms} onChange={e => setAgreeTerms(e.target.checked)}
+                className="mt-0.5 rounded border-eco-border text-leaf focus:ring-leaf" />
+              <span>
+                I agree to the <Link to="/privacy" className="text-eco-accent hover:text-eco-hover">privacy policy</Link> and terms of service.
+              </span>
+            </label>
             <button type="submit" disabled={loading}
               className="w-full py-2.5 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
               {loading && <Loader2 size={16} className="animate-spin" />}

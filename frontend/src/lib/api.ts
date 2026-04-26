@@ -1,7 +1,11 @@
 import type {
   Student, PlanningNote, GreatStory, Conversation, Activity,
   Educator, SchoolInfo, SafetyAlert, AuditLog,
-  LessonPlanRequest, GreatStoryRequest, CreateStudentRequest, CreateNoteRequest,
+  LessonPlanRequest, AlignRequest, DifferentiateRequest, GreatStoryRequest,
+  CreateStudentRequest, CreateNoteRequest,
+  SignupRequest, ResetPasswordRequest, ChangePasswordRequest,
+  UpdateEmailRequest, UpdateProfileRequest,
+  JoinSchoolRequest, SchoolSetupRequest,
 } from './types';
 
 const BASE = import.meta.env.VITE_API_URL || '/api';
@@ -93,23 +97,23 @@ export const api = {
 
 export interface User {
   email: string;
-  name: string;
-  role: string;
+  full_name?: string;
+  role?: string;
   user_type?: string;
   is_admin?: boolean;
   id?: string;
-  full_name?: string;
   school_id?: string;
   school_name?: string;
-  institution?: string;
   institution_name?: string;
 }
 
 export interface StudentUser {
+  id?: string;
   username: string;
-  name: string;
-  role: 'student';
-  student_id: string;
+  full_name?: string;
+  age_group?: string;
+  educator_id?: string;
+  is_student?: true;
 }
 
 export interface AuthResponse {
@@ -117,8 +121,15 @@ export interface AuthResponse {
   user: User | StudentUser;
 }
 
+export interface SignupResponse {
+  success: boolean;
+  user_id: string;
+  message?: string;
+}
+
 export interface SessionResponse {
   authenticated: boolean;
+  user_type?: string;
   user?: User | StudentUser;
 }
 
@@ -130,29 +141,30 @@ export interface ChatMessage {
 export const auth = {
   login: (email: string, password: string) =>
     api.post<AuthResponse>('/auth/login', { email, password }),
-  signup: (data: { name: string; email: string; password: string; role?: string }) =>
-    api.post<AuthResponse>('/auth/signup', data),
+  signup: (data: SignupRequest) =>
+    api.post<SignupResponse>('/auth/signup', data),
   studentLogin: (username: string, password: string) =>
     api.post<AuthResponse>('/auth/login/student', { username, password }),
   session: () => api.get<SessionResponse>('/auth/session'),
   logout: () => api.post<{ message: string }>('/auth/logout'),
   forgotPassword: (email: string) =>
     api.post<{ message: string }>('/auth/forgot-password', { email }),
-  resetPassword: (token: string, new_password: string) =>
-    api.post<{ message: string }>('/auth/reset-password', { token, new_password }),
-  changePassword: (current_password: string, new_password: string) =>
-    api.post<{ message: string }>('/auth/change-password', { current_password, new_password }),
-  joinSchool: (school_code: string) =>
-    api.post<{ message: string }>('/auth/school-join', { school_code }),
-  setupSchool: (data: { school_name: string; school_type?: string; setup_token?: string }) =>
-    api.post<{ school_id: string; school_code: string }>('/auth/school-setup', data),
+  resetPassword: (data: ResetPasswordRequest) =>
+    api.post<{ message: string }>('/auth/reset-password', data),
+  changePassword: (data: ChangePasswordRequest) =>
+    api.post<{ message: string }>('/auth/change-password', data),
+  joinSchool: (data: JoinSchoolRequest) =>
+    api.post<AuthResponse>('/auth/school-join', data),
+  setupSchool: (data: SchoolSetupRequest) =>
+    api.post<AuthResponse>('/auth/school-setup', data),
 };
 
 export const users = {
   me: () => api.get<User>('/users/me'),
-  updateMe: (data: Partial<{ name: string; institution: string }>) =>
+  updateMe: (data: UpdateProfileRequest) =>
     api.patch<User>('/users/me', data),
-  updateEmail: (email: string) => api.put<User>('/users/me/email', { email }),
+  updateEmail: (data: UpdateEmailRequest) =>
+    api.put<{ success: boolean; message?: string }>('/users/me/email', data),
   deleteAccount: () => api.delete<{ message: string }>('/users/me'),
 };
 
@@ -166,8 +178,8 @@ export const tools = {
   pdExpertChat: (data: { message: string; history?: ChatMessage[]; session_id?: string }) =>
     api.post<{ response: string; session_id?: string }>('/tools/pd-expert/chat', data),
   lessonPlan: (data: LessonPlanRequest) => api.post<{ content: string }>('/tools/lesson-plan', data),
-  align: (data: LessonPlanRequest) => api.post<{ content: string }>('/tools/align', data),
-  differentiate: (data: LessonPlanRequest) => api.post<{ content: string }>('/tools/differentiate', data),
+  align: (data: AlignRequest) => api.post<{ content: string }>('/tools/align', data),
+  differentiate: (data: DifferentiateRequest) => api.post<{ content: string }>('/tools/differentiate', data),
   greatStory: (data: GreatStoryRequest) => api.post<{ content: string }>('/tools/great-story', data),
   listGreatStories: async (): Promise<{ stories: GreatStory[] }> =>
     unwrapList<'stories', GreatStory>(await api.get<unknown>('/tools/great-story'), 'stories'),
@@ -225,7 +237,10 @@ export const notes = {
 };
 
 export const schools = {
-  mine: () => api.get<SchoolInfo>('/schools/mine'),
+  mine: async (): Promise<SchoolInfo | null> => {
+    const res = await api.get<{ school: SchoolInfo | null }>('/schools/mine');
+    return res.school ?? null;
+  },
   educators: async (schoolId: string): Promise<{ educators: Educator[] }> =>
     unwrapList<'educators', Educator>(await api.get<unknown>(`/schools/${schoolId}/educators`), 'educators'),
   removeEducator: (schoolId: string, educatorId: string) =>

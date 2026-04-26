@@ -19,8 +19,8 @@ const toolsList = [
 
 export default function Dashboard() {
   const { user, isAdmin } = useAuth();
-  const displayName = user && 'name' in user ? user.name.split(' ')[0] : 'Educator';
-  const institution = user && 'institution' in user ? user.institution : undefined;
+  const displayName = user && 'full_name' in user && user.full_name ? user.full_name.split(' ')[0] : 'Educator';
+  const institution = user && 'institution_name' in user ? (user as { institution_name?: string }).institution_name : undefined;
   const schoolName = user && 'school_name' in user ? user.school_name : undefined;
   const [showSetupBanner, setShowSetupBanner] = useState(false);
 
@@ -32,8 +32,8 @@ export default function Dashboard() {
 
   const checkSchool = async () => {
     try {
-      await schools.mine();
-      setShowSetupBanner(false);
+      const info = await schools.mine();
+      setShowSetupBanner(!info);
     } catch {
       setShowSetupBanner(true);
     }

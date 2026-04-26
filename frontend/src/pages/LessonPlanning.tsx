@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { tools, api } from '../lib/api';
-import type { LessonPlanRequest } from '../lib/types';
+import type { LessonPlanRequest, AlignRequest, DifferentiateRequest } from '../lib/types';
 import { Loader2, BookOpen, Target, Layers, Upload, X, FileText } from 'lucide-react';
 
 type Mode = 'generate' | 'align' | 'differentiate';
@@ -75,17 +75,36 @@ export default function LessonPlanning() {
     setError('');
     setResult('');
     try {
-      const payload: LessonPlanRequest = {
-        topic,
-        age_group: ageGroup,
-        subject: subject || undefined,
-        duration: duration || undefined,
-        additional_context: [additional, fileContent].filter(Boolean).join('\n\n') || undefined,
-      };
+      const additionalContext = [additional, fileContent].filter(Boolean).join('\n\n') || undefined;
       let res: { content: string };
-      if (mode === 'generate') res = await tools.lessonPlan(payload);
-      else if (mode === 'align') res = await tools.align(payload);
-      else res = await tools.differentiate(payload);
+      if (mode === 'generate') {
+        const payload: LessonPlanRequest = {
+          topic,
+          age_group: ageGroup,
+          subject: subject || undefined,
+          duration: duration || undefined,
+          additional_context: additionalContext,
+        };
+        res = await tools.lessonPlan(payload);
+      } else if (mode === 'align') {
+        const payload: AlignRequest = {
+          topic,
+          age_group: ageGroup,
+          subject: subject || undefined,
+          duration: duration || undefined,
+          additional_context: additionalContext,
+        };
+        res = await tools.align(payload);
+      } else {
+        const payload: DifferentiateRequest = {
+          topic,
+          age_group: ageGroup,
+          subject: subject || undefined,
+          duration: duration || undefined,
+          additional_context: additionalContext,
+        };
+        res = await tools.differentiate(payload);
+      }
       setResult(res.content);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to generate. Please try again.');

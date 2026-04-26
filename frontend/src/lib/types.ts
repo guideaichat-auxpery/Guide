@@ -1,18 +1,23 @@
 export interface Student {
   id: string;
-  name: string;
+  full_name: string;
   username: string;
-  age_group: string;
+  age_group?: string;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
   educator_id?: string;
+  educator_name?: string;
+  educator_email?: string;
 }
 
 export interface PlanningNote {
   id: string;
   title: string;
   content: string;
-  category?: string;
+  chapters?: string;
+  images?: string;
+  materials?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -38,17 +43,20 @@ export interface Conversation {
 
 export interface Activity {
   id: string;
-  type: string;
-  content?: string;
+  activity_type: string;
+  prompt_text?: string;
+  response_text?: string;
+  session_id?: string;
   subject?: string;
   created_at?: string;
 }
 
 export interface Educator {
   id: string;
-  name: string;
+  full_name?: string;
   email: string;
   role: string;
+  created_at?: string;
 }
 
 export interface SchoolInfo {
@@ -58,16 +66,20 @@ export interface SchoolInfo {
   school_type?: string;
   code?: string;
   school_code?: string;
+  invite_code?: string;
   license_count?: number;
   educator_count?: number;
 }
 
 export interface SafetyAlert {
   id: string;
-  student_id: string;
+  student_id?: string;
   student_name?: string;
-  content: string;
-  status: string;
+  alert_type?: string;
+  content_snippet?: string;
+  severity?: string;
+  is_reviewed?: boolean;
+  reviewed_by?: string;
   created_at?: string;
 }
 
@@ -81,6 +93,30 @@ export interface AuditLog {
 export interface LessonPlanRequest {
   topic: string;
   age_group: string;
+  planning_type?: string;
+  curriculum_type?: string;
+  year_level?: string;
+  subject?: string;
+  duration?: string;
+  additional_context?: string;
+}
+
+export interface AlignRequest {
+  topic?: string;
+  content?: string;
+  age_group: string;
+  year_level?: string;
+  subject?: string;
+  duration?: string;
+  additional_context?: string;
+}
+
+export interface DifferentiateRequest {
+  topic?: string;
+  lesson_description?: string;
+  class_composition?: string;
+  focus_area?: string;
+  age_group: string;
   subject?: string;
   duration?: string;
   additional_context?: string;
@@ -92,16 +128,67 @@ export interface GreatStoryRequest {
   format_style?: string;
 }
 
+export interface SignupRequest {
+  email: string;
+  password: string;
+  full_name: string;
+  confirm_password: string;
+  agree_terms: boolean;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface UpdateEmailRequest {
+  new_email: string;
+  current_password: string;
+}
+
+export interface UpdateProfileRequest {
+  full_name?: string;
+  institution_name?: string;
+}
+
+export interface JoinSchoolRequest {
+  invite_code: string;
+  email: string;
+  password: string;
+  full_name: string;
+  confirm_password: string;
+  agree_terms: boolean;
+}
+
+export interface SchoolSetupRequest {
+  setup_token: string;
+  admin_email: string;
+  admin_password: string;
+  admin_name: string;
+  confirm_password: string;
+}
+
 export interface CreateStudentRequest {
-  name: string;
   username: string;
   password: string;
-  age_group: string;
-  consent_given: boolean;
+  full_name: string;
+  age_group?: string;
+  parent_name?: string;
+  parent_email?: string;
+  consent_method?: string;
 }
 
 export interface CreateNoteRequest {
   title: string;
   content: string;
-  category?: string;
+  chapters?: string;
+  images?: string;
+  materials?: string;
 }

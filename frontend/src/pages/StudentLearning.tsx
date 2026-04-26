@@ -19,7 +19,7 @@ export default function StudentLearning() {
   const [safetyText, setSafetyText] = useState('');
   const [safetySending, setSafetySending] = useState(false);
   const [safetySent, setSafetySent] = useState(false);
-  const rawDisplayName = user && 'name' in user ? user.name : '';
+  const rawDisplayName = user && 'full_name' in user ? (user.full_name || '') : '';
   const displayName = (rawDisplayName && rawDisplayName.trim()) || 'Explorer';
   const selected = subjects.find(s => s.id === selectedSubject);
 

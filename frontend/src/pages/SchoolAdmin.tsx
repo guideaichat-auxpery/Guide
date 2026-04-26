@@ -32,7 +32,7 @@ export default function SchoolAdmin() {
     try {
       const s = await schools.mine();
       setSchool(s);
-      if (s.id) {
+      if (s?.id) {
         const res = await schools.educators(s.id);
         setEducators(res.educators);
       }
@@ -45,9 +45,11 @@ export default function SchoolAdmin() {
 
   useEffect(() => { loadSchool(); }, []);
 
+  const inviteCode = school?.invite_code || school?.school_code || school?.code || '';
+
   const copyCode = () => {
-    if (school?.school_code) {
-      navigator.clipboard.writeText(school.school_code);
+    if (inviteCode) {
+      navigator.clipboard.writeText(inviteCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -136,11 +138,11 @@ export default function SchoolAdmin() {
                 <p className="text-sm text-ink">{educators.length} member{educators.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
-            {school?.school_code && (
+            {inviteCode && (
               <div className="mt-4 p-4 bg-sky/10 rounded-xl">
                 <p className="text-xs font-semibold text-eco-text/50 uppercase tracking-wider mb-1">Invite Code</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-mono text-ink tracking-wider">{school.school_code}</span>
+                  <span className="text-lg font-mono text-ink tracking-wider">{inviteCode}</span>
                   <button onClick={copyCode}
                     className="p-1.5 rounded-lg hover:bg-sky/20 transition-colors">
                     {copied ? <CheckCircle size={16} className="text-leaf" /> : <Copy size={16} className="text-eco-text/40" />}
@@ -166,10 +168,10 @@ export default function SchoolAdmin() {
               {educators.map(ed => (
                 <div key={ed.id} className="flex items-center gap-3 p-3 bg-sand/20 rounded-xl">
                   <div className="w-9 h-9 rounded-full bg-leaf/15 flex items-center justify-center text-leaf-dark font-semibold text-sm">
-                    {ed.name.charAt(0).toUpperCase()}
+                    {(ed.full_name || ed.email || '?').charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-ink truncate">{ed.name}</p>
+                    <p className="text-sm font-medium text-ink truncate">{ed.full_name || ed.email}</p>
                     <p className="text-xs text-eco-text/40">{ed.email} · {ed.role}</p>
                   </div>
                   <button onClick={() => removeEducator(ed.id)}

@@ -3,15 +3,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { users, auth as authApi, schools, dataApi } from '../lib/api';
 import type { SchoolInfo, Educator } from '../lib/types';
-import { Loader2, Save, Shield, Download, Users, AlertTriangle } from 'lucide-react';
+import { Loader2, Save, Shield, Download, Users, AlertTriangle, Mail } from 'lucide-react';
 
 export default function Settings() {
-  const { user, isAdmin, isStudent, logout } = useAuth();
+  const { user, isAdmin, isStudent, logout, refreshSession } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [institution, setInstitution] = useState('');
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [emailNew, setEmailNew] = useState('');
+  const [emailPw, setEmailPw] = useState('');
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailMessage, setEmailMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -21,11 +26,11 @@ export default function Settings() {
   const [tab, setTab] = useState<'profile' | 'security' | 'school' | 'data'>('profile');
 
   useEffect(() => {
-    if (user && 'name' in user) {
-      setName(user.name || '');
-      if ('institution' in user) {
-        setInstitution((user as { institution?: string }).institution || '');
-      }
+    if (user) {
+      const u = user as { full_name?: string; institution_name?: string; email?: string };
+      setFullName(u.full_name || '');
+      setInstitution(u.institution_name || '');
+      setEmailNew(u.email || '');
     }
   }, [user]);
 
@@ -44,7 +49,8 @@ export default function Settings() {
     setSaving(true);
     setMessage('');
     try {
-      await users.updateMe({ name, institution });
+      await users.updateMe({ full_name: fullName, institution_name: institution });
+      await refreshSession();
       setMessage('Profile updated');
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Failed to update');
@@ -53,16 +59,38 @@ export default function Settings() {
     }
   };
 
+  const handleEmailChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailSaving(true);
+    setEmailMessage('');
+    try {
+      await users.updateEmail({ new_email: emailNew, current_password: emailPw });
+      await refreshSession();
+      setEmailPw('');
+      setEmailMessage('Email updated successfully');
+    } catch (err) {
+      setEmailMessage(err instanceof Error ? err.message : 'Failed to update email');
+    } finally {
+      setEmailSaving(false);
+    }
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPw.length < 6) { setPwMessage('Password must be at least 6 characters'); return; }
+    if (newPw !== confirmPw) { setPwMessage('Passwords do not match'); return; }
+    if (newPw.length < 12) { setPwMessage('Password must be at least 12 characters'); return; }
     setPwSaving(true);
     setPwMessage('');
     try {
-      await authApi.changePassword(currentPw, newPw);
+      await authApi.changePassword({
+        current_password: currentPw,
+        new_password: newPw,
+        confirm_password: confirmPw,
+      });
       setPwMessage('Password changed successfully');
       setCurrentPw('');
       setNewPw('');
+      setConfirmPw('');
     } catch (e) {
       setPwMessage(e instanceof Error ? e.message : 'Failed to change password');
     } finally {
@@ -115,6 +143,8 @@ export default function Settings() {
     ...(isAdmin ? [{ key: 'school' as const, label: 'School Admin' }] : []),
   ];
 
+  const currentEmail = user && 'email' in user ? (user as { email?: string }).email || '' : '';
+
   return (
     <div className="animate-fade-in">
       <h2 className="text-2xl font-serif text-ink mb-6">Settings</h2>
@@ -132,31 +162,59 @@ export default function Settings() {
 
       <div className="bg-eco-card rounded-2xl border border-eco-border p-6">
         {tab === 'profile' && (
-          <div className="space-y-4 max-w-md">
-            <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Name</label>
-              <input value={name} onChange={e => setName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
-            </div>
-            {!isStudent && (
+          <div className="space-y-8 max-w-md">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-ink mb-1.5">Institution</label>
-                <input value={institution} onChange={e => setInstitution(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf"
-                  placeholder="Your school or organization" />
+                <label className="block text-sm font-medium text-ink mb-1.5">Full name</label>
+                <input value={fullName} onChange={e => setFullName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
+              </div>
+              {!isStudent && (
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1.5">Institution</label>
+                  <input value={institution} onChange={e => setInstitution(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf"
+                    placeholder="Your school or organization" />
+                </div>
+              )}
+              {message && <p className={`text-sm ${message.toLowerCase().includes('fail') ? 'text-danger' : 'text-leaf-dark'}`}>{message}</p>}
+              <button onClick={handleProfileSave} disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                Save changes
+              </button>
+            </div>
+
+            {!isStudent && (
+              <div className="border-t border-eco-border pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Mail size={18} className="text-leaf" />
+                  <h3 className="font-sans text-sm font-semibold text-ink">Change Email</h3>
+                </div>
+                <p className="text-xs text-eco-text/60 mb-3">
+                  Current email: <span className="font-medium text-ink">{currentEmail}</span>
+                </p>
+                <form onSubmit={handleEmailChange} className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-ink mb-1.5">New email</label>
+                    <input type="email" required value={emailNew} onChange={e => setEmailNew(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-ink mb-1.5">Current password</label>
+                    <input type="password" required value={emailPw} onChange={e => setEmailPw(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf"
+                      placeholder="Confirm with your current password" />
+                  </div>
+                  {emailMessage && <p className={`text-sm ${emailMessage.toLowerCase().includes('fail') || emailMessage.toLowerCase().includes('incorrect') || emailMessage.toLowerCase().includes('invalid') ? 'text-danger' : 'text-leaf-dark'}`}>{emailMessage}</p>}
+                  <button type="submit" disabled={emailSaving || !emailPw || emailNew === currentEmail}
+                    className="flex items-center gap-2 px-4 py-2 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                    {emailSaving ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+                    Update email
+                  </button>
+                </form>
               </div>
             )}
-            <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Email</label>
-              <input value={user && 'email' in user ? user.email : ''} readOnly
-                className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-sand/30 text-sm text-eco-text/60" />
-            </div>
-            {message && <p className={`text-sm ${message.includes('Failed') ? 'text-danger' : 'text-leaf-dark'}`}>{message}</p>}
-            <button onClick={handleProfileSave} disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              Save changes
-            </button>
           </div>
         )}
 
@@ -175,9 +233,15 @@ export default function Settings() {
               <div>
                 <label className="block text-sm font-medium text-ink mb-1.5">New password</label>
                 <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} required
+                  className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf"
+                  placeholder="At least 12 characters" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink mb-1.5">Confirm new password</label>
+                <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} required
                   className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf" />
               </div>
-              {pwMessage && <p className={`text-sm ${pwMessage.includes('Failed') ? 'text-danger' : 'text-leaf-dark'}`}>{pwMessage}</p>}
+              {pwMessage && <p className={`text-sm ${pwMessage.toLowerCase().includes('success') ? 'text-leaf-dark' : 'text-danger'}`}>{pwMessage}</p>}
               <button type="submit" disabled={pwSaving}
                 className="flex items-center gap-2 px-4 py-2 bg-leaf hover:bg-leaf-dark disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
                 {pwSaving ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
@@ -224,7 +288,7 @@ export default function Settings() {
               {schoolInfo ? (
                 <div className="p-4 bg-sand/20 rounded-xl text-sm text-ink space-y-1">
                   <p><span className="font-medium">Name:</span> {schoolInfo.name || schoolInfo.school_name || 'N/A'}</p>
-                  <p><span className="font-medium">Invite Code:</span> <code className="px-2 py-0.5 bg-eco-card rounded text-xs font-mono">{schoolInfo.code || schoolInfo.school_code || 'N/A'}</code></p>
+                  <p><span className="font-medium">Invite Code:</span> <code className="px-2 py-0.5 bg-eco-card rounded text-xs font-mono">{schoolInfo.invite_code || schoolInfo.code || schoolInfo.school_code || 'N/A'}</code></p>
                   {schoolInfo.license_count !== undefined && (
                     <p><span className="font-medium">Seats:</span> {schoolInfo.educator_count || educatorsList.length} / {schoolInfo.license_count} used</p>
                   )}
@@ -240,10 +304,10 @@ export default function Settings() {
                   {educatorsList.map(ed => (
                     <div key={ed.id} className="flex items-center gap-3 p-3 bg-sand/20 rounded-xl">
                       <div className="w-8 h-8 rounded-full bg-leaf/20 flex items-center justify-center text-leaf-dark font-semibold text-xs">
-                        {ed.name.charAt(0).toUpperCase()}
+                        {(ed.full_name || ed.email || '?').charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm text-ink truncate">{ed.name}</div>
+                        <div className="font-medium text-sm text-ink truncate">{ed.full_name || ed.email}</div>
                         <div className="text-xs text-eco-text/50">{ed.email}</div>
                       </div>
                       <span className="text-xs px-2 py-0.5 bg-eco-card rounded-lg border border-eco-border">{ed.role}</span>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { auth as authApi, setToken, clearToken, type User, type StudentUser, type ApiError } from '../lib/api';
+import type { SignupRequest } from '../lib/types';
 
 interface AuthState {
   user: (User | StudentUser) | null;
@@ -10,8 +11,9 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   studentLogin: (username: string, password: string) => Promise<void>;
-  signup: (data: { name: string; email: string; password: string }) => Promise<void>;
+  signup: (data: SignupRequest) => Promise<void>;
   logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
   clearError: () => void;
   isEducator: boolean;
   isStudent: boolean;
@@ -71,12 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (data: { name: string; email: string; password: string }) => {
+  const signup = async (data: SignupRequest) => {
     setState(s => ({ ...s, error: null, loading: true }));
     try {
-      const res = await authApi.signup(data);
-      setToken(res.token);
-      setState({ user: res.user, loading: false, error: null });
+      await authApi.signup(data);
+      const loginRes = await authApi.login(data.email, data.password);
+      setToken(loginRes.token);
+      setState({ user: loginRes.user, loading: false, error: null });
     } catch (e) {
       setState(s => ({ ...s, loading: false, error: (e as ApiError).message }));
       throw e;
@@ -91,6 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: null, loading: false, error: null });
   };
 
+  const refreshSession = async () => {
+    await checkSession();
+  };
+
   const clearError = () => setState(s => ({ ...s, error: null }));
 
   const u = state.user as (User & Partial<StudentUser>) | null;
@@ -100,11 +107,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isEducator =
     userType === 'teacher' ||
+    userType === 'educator' ||
     role === 'educator' ||
     role === 'admin' ||
     role === 'school_admin' ||
     role === 'school_educator';
-  const isStudent = userType === 'student' || role === 'student';
+  const isStudent = userType === 'student' || role === 'student' || (u != null && 'is_student' in u && Boolean(u.is_student));
   const isAdmin = isAdminFlag || role === 'admin' || role === 'school_admin';
 
   return (
@@ -114,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       studentLogin,
       signup,
       logout,
+      refreshSession,
       clearError,
       isEducator,
       isStudent,
