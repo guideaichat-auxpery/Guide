@@ -1,12 +1,13 @@
-import { memo } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { memo, useMemo } from 'react';
+import MarkdownIt from 'markdown-it';
 
 interface Props {
   content: string;
   variant?: 'default' | 'prose' | 'chat';
   className?: string;
 }
+
+const md = new MarkdownIt({ html: false, linkify: true, breaks: false });
 
 function looksLikeMarkdown(text: string): boolean {
   return /(^|\n)\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|\|.*\|)/.test(text)
@@ -22,7 +23,14 @@ function GeneratedContentInner({ content, variant = 'default', className = '' }:
         ? 'generated-content generated-content--chat'
         : 'generated-content';
 
-  if (!looksLikeMarkdown(content)) {
+  const isMarkdown = looksLikeMarkdown(content);
+
+  const html = useMemo(
+    () => (isMarkdown ? md.render(content || '') : ''),
+    [isMarkdown, content],
+  );
+
+  if (!isMarkdown) {
     return (
       <div className={`${variantClass} ${className}`.trim()}>
         {content.split(/\n{2,}/).map((para, i) => (
@@ -33,9 +41,10 @@ function GeneratedContentInner({ content, variant = 'default', className = '' }:
   }
 
   return (
-    <div className={`${variantClass} ${className}`.trim()}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-    </div>
+    <div
+      className={`${variantClass} ${className}`.trim()}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }
 
