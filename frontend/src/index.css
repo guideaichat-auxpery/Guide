@@ -139,3 +139,220 @@ h1, h2, h3, h4, h5, h6 {
   border-top: 1px solid var(--color-eco-border);
   margin: 1em 0;
 }
+
+/* ----------------------------------------------------------------------
+   Shared markdown rendering for AI-generated content (lesson plans,
+   stories, chat replies). Earth-tone, document-feel typography.
+   ---------------------------------------------------------------------- */
+.generated-content {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-eco-text);
+  word-wrap: break-word;
+}
+
+.generated-content > *:first-child { margin-top: 0; }
+.generated-content > *:last-child { margin-bottom: 0; }
+
+.generated-content p {
+  margin: 0 0 0.85em;
+}
+
+.generated-content h1,
+.generated-content h2,
+.generated-content h3,
+.generated-content h4,
+.generated-content h5,
+.generated-content h6 {
+  font-family: var(--font-serif);
+  color: var(--color-ink);
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 1.4em 0 0.5em;
+}
+
+.generated-content h1 { font-size: 1.6em; }
+.generated-content h2 {
+  font-size: 1.35em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--color-eco-border);
+}
+.generated-content h3 { font-size: 1.15em; }
+.generated-content h4 { font-size: 1em; font-family: var(--font-sans); text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-eco-accent); }
+.generated-content h5,
+.generated-content h6 { font-size: 0.95em; font-family: var(--font-sans); }
+
+.generated-content ul,
+.generated-content ol {
+  margin: 0.5em 0 1em;
+  padding-left: 1.6em;
+}
+
+.generated-content ul { list-style-type: disc; }
+.generated-content ol { list-style-type: decimal; }
+
+.generated-content li {
+  margin: 0.3em 0;
+  padding-left: 0.15em;
+}
+
+.generated-content li > p { margin: 0 0 0.4em; }
+
+.generated-content ul ul,
+.generated-content ol ol,
+.generated-content ul ol,
+.generated-content ol ul {
+  margin: 0.3em 0 0.4em;
+}
+
+.generated-content ul ul { list-style-type: circle; }
+.generated-content ul ul ul { list-style-type: square; }
+
+.generated-content strong { color: var(--color-ink); font-weight: 600; }
+.generated-content em { font-style: italic; }
+
+.generated-content blockquote {
+  margin: 1em 0;
+  padding: 0.6em 1em;
+  border-left: 3px solid var(--color-clay);
+  background: rgba(245, 241, 230, 0.4);
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: rgba(46, 46, 43, 0.85);
+}
+
+.generated-content blockquote > *:first-child { margin-top: 0; }
+.generated-content blockquote > *:last-child { margin-bottom: 0; }
+
+.generated-content code {
+  background: var(--color-sand);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+  color: var(--color-ink);
+}
+
+.generated-content pre {
+  background: var(--color-sand);
+  border-radius: 0.6rem;
+  padding: 0.85em 1em;
+  overflow-x: auto;
+  margin: 0.9em 0;
+}
+
+.generated-content pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.85em;
+  line-height: 1.55;
+}
+
+.generated-content a {
+  color: var(--color-eco-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.generated-content a:hover { color: var(--color-eco-hover); }
+
+.generated-content hr {
+  border: none;
+  border-top: 1px solid var(--color-eco-border);
+  margin: 1.5em 0;
+}
+
+.generated-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.92em;
+}
+
+.generated-content th,
+.generated-content td {
+  border: 1px solid var(--color-eco-border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.generated-content th {
+  background: rgba(245, 241, 230, 0.6);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.generated-content tbody tr:nth-child(even) td {
+  background: rgba(255, 253, 248, 0.6);
+}
+
+.generated-content img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 0.75em 0;
+}
+
+.generated-content input[type="checkbox"] {
+  margin-right: 0.4em;
+  transform: translateY(1px);
+}
+
+/* Prose variant — for stories: longer-form, narrower, slightly larger. */
+.generated-content--prose {
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  max-width: 38rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.generated-content--prose p { margin: 0 0 1.1em; }
+
+.generated-content--prose > p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  font-size: 3.2em;
+  float: left;
+  line-height: 0.9;
+  padding: 0.05em 0.1em 0 0;
+  color: var(--color-leaf-dark);
+}
+
+/* Chat variant — tighter spacing for assistant bubbles. */
+.generated-content--chat {
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.generated-content--chat p { margin: 0 0 0.6em; }
+.generated-content--chat h1,
+.generated-content--chat h2,
+.generated-content--chat h3,
+.generated-content--chat h4 {
+  margin: 0.9em 0 0.35em;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.generated-content--chat h2 { font-size: 1.1em; }
+.generated-content--chat h3 { font-size: 1em; }
+.generated-content--chat ul,
+.generated-content--chat ol { margin: 0.35em 0 0.7em; padding-left: 1.3em; }
+.generated-content--chat li { margin: 0.15em 0; }
+.generated-content--chat pre { margin: 0.5em 0; padding: 0.6em 0.8em; }
+
+/* ----------------------------------------------------------------------
+   Print stylesheet — used by the lesson plan & great story panels via
+   the .printable-area marker on the panel that should be printed.
+   ---------------------------------------------------------------------- */
+@media print {
+  body * { visibility: hidden !important; }
+  .printable-area,
+  .printable-area * { visibility: visible !important; }
+  .printable-area { position: absolute; inset: 0; padding: 1.5cm; max-height: none !important; overflow: visible !important; }
+  .printable-area .no-print { display: none !important; }
+  .printable-area { background: white !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+  .printable-area .generated-content { font-family: var(--font-serif); font-size: 11.5pt; color: #000; max-height: none !important; overflow: visible !important; }
+  .printable-area .generated-content h2 { border-bottom: 1px solid #999; }
+  @page { margin: 1.2cm; }
+}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { tools } from '../lib/api';
 import type { GreatStory } from '../lib/types';
-import { Loader2, BookMarked, Plus, Trash2, ArrowLeft, Eye } from 'lucide-react';
+import { Loader2, BookMarked, Plus, Trash2, ArrowLeft, Eye, Copy, Check, Printer } from 'lucide-react';
+import GeneratedContent from '../components/GeneratedContent';
 
 export default function GreatStories() {
   const [view, setView] = useState<'create' | 'library' | 'detail'>('create');
@@ -16,6 +17,25 @@ export default function GreatStories() {
   const [loadingStories, setLoadingStories] = useState(false);
   const [selectedStory, setSelectedStory] = useState<GreatStory | null>(null);
   const [loadingStory, setLoadingStory] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyText = async (text: string, key: string) => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* noop */ }
+      document.body.removeChild(ta);
+    }
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(prev => (prev === key ? null : prev)), 1800);
+  };
 
   const loadStories = async () => {
     setLoadingStories(true);
@@ -89,26 +109,40 @@ export default function GreatStories() {
           className="mb-4 inline-flex items-center gap-1 text-sm text-eco-accent hover:text-eco-hover transition-colors">
           <ArrowLeft size={14} /> Back to library
         </button>
-        <div className="bg-eco-card rounded-2xl border border-eco-border p-6">
+        <div className={`bg-eco-card rounded-2xl border border-eco-border p-6 ${selectedStory.content ? 'printable-area' : ''}`}>
           {loadingStory ? (
             <div className="flex justify-center py-8"><Loader2 className="animate-spin text-leaf" size={24} /></div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 no-print">
                 <h2 className="text-2xl font-serif text-ink">{selectedStory.title || selectedStory.topic || 'Untitled Story'}</h2>
-                <button onClick={() => handleDelete(selectedStory.id)}
-                  className="p-2 rounded-xl text-eco-text/40 hover:text-danger hover:bg-soft-rose/30 transition-colors">
-                  <Trash2 size={16} />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button type="button" onClick={() => copyText(selectedStory.content || '', `detail-${selectedStory.id}`)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
+                    title="Copy to clipboard">
+                    {copiedKey === `detail-${selectedStory.id}` ? <><Check size={13} className="text-leaf-dark" /> Copied</> : <><Copy size={13} /> Copy</>}
+                  </button>
+                  <button type="button" onClick={() => window.print()}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
+                    title="Print or save as PDF">
+                    <Printer size={13} /> Print
+                  </button>
+                  <button onClick={() => handleDelete(selectedStory.id)}
+                    className="p-2 rounded-xl text-eco-text/40 hover:text-danger hover:bg-soft-rose/30 transition-colors" title="Delete story">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2 mb-4 text-xs text-eco-text/50">
+              <div className="flex gap-2 mb-4 text-xs text-eco-text/50 no-print">
                 {selectedStory.age_group && <span className="px-2 py-1 bg-sand/50 rounded-lg">{selectedStory.age_group}</span>}
                 {selectedStory.story_type && <span className="px-2 py-1 bg-sky/30 rounded-lg">{selectedStory.story_type}</span>}
                 {selectedStory.created_at && <span className="px-2 py-1 bg-eco-bg rounded-lg">{new Date(selectedStory.created_at).toLocaleDateString()}</span>}
               </div>
-              <div className="prose text-sm text-eco-text leading-relaxed whitespace-pre-wrap">
-                {selectedStory.content}
+              <div className="hidden print:block mb-6 pb-3 border-b border-eco-border">
+                <h1 className="font-serif text-2xl text-ink m-0">{selectedStory.title || selectedStory.topic || 'Untitled Story'}</h1>
+                {selectedStory.age_group && <p className="text-sm text-eco-text/70 mt-1">Ages {selectedStory.age_group}</p>}
               </div>
+              <GeneratedContent content={selectedStory.content || ''} variant="prose" />
             </>
           )}
         </div>
@@ -179,11 +213,33 @@ export default function GreatStories() {
               </button>
             </form>
           </div>
-          <div className="bg-eco-card rounded-2xl border border-eco-border p-6">
-            <h3 className="font-sans text-sm font-semibold text-ink mb-3">Generated Story</h3>
-            {error && <div className="p-3 bg-soft-rose/50 border border-danger/20 rounded-xl text-sm text-danger mb-3">{error}</div>}
+          <div className={`bg-eco-card rounded-2xl border border-eco-border p-6 ${result ? 'printable-area' : ''}`}>
+            <div className="flex items-center justify-between mb-3 no-print">
+              <h3 className="font-sans text-sm font-semibold text-ink">Generated Story</h3>
+              {result && (
+                <div className="flex gap-1.5">
+                  <button type="button" onClick={() => copyText(result, 'create')}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
+                    title="Copy to clipboard">
+                    {copiedKey === 'create' ? <><Check size={13} className="text-leaf-dark" /> Copied</> : <><Copy size={13} /> Copy</>}
+                  </button>
+                  <button type="button" onClick={() => window.print()}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
+                    title="Print or save as PDF">
+                    <Printer size={13} /> Print
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="hidden print:block mb-6 pb-3 border-b border-eco-border">
+              <h1 className="font-serif text-2xl text-ink m-0">{topic || 'Great Story'}</h1>
+              {ageGroup && <p className="text-sm text-eco-text/70 mt-1">Ages {ageGroup}</p>}
+            </div>
+            {error && <div className="p-3 bg-soft-rose/50 border border-danger/20 rounded-xl text-sm text-danger mb-3 no-print">{error}</div>}
             {result ? (
-              <div className="prose text-sm text-eco-text leading-relaxed whitespace-pre-wrap max-h-[60vh] overflow-y-auto">{result}</div>
+              <div className="max-h-[60vh] overflow-y-auto print:max-h-none print:overflow-visible">
+                <GeneratedContent content={result} variant="prose" />
+              </div>
             ) : (
               <p className="text-sm text-eco-text/40 italic">Your story will appear here...</p>
             )}

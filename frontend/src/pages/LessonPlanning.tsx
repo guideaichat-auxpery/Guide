@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { tools, api } from '../lib/api';
 import type { LessonPlanRequest, AlignRequest, DifferentiateRequest } from '../lib/types';
-import { Loader2, BookOpen, Target, Layers, Upload, X, FileText } from 'lucide-react';
+import { Loader2, BookOpen, Target, Layers, Upload, X, FileText, Copy, Printer, Check } from 'lucide-react';
+import GeneratedContent from '../components/GeneratedContent';
 
 type Mode = 'generate' | 'align' | 'differentiate';
 
@@ -24,7 +25,32 @@ export default function LessonPlanning() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCopy = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = result;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* noop */ }
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }
+  };
+
+  const handlePrint = () => window.print();
+
+  const modeLabel = modes.find(m => m.key === mode)?.label || 'Result';
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -203,11 +229,44 @@ export default function LessonPlanning() {
           </form>
         </div>
 
-        <div className="bg-eco-card rounded-2xl border border-eco-border p-6">
-          <h3 className="font-sans text-sm font-semibold text-ink mb-3">Result</h3>
-          {error && <div className="p-3 bg-soft-rose/50 border border-danger/20 rounded-xl text-sm text-danger mb-3">{error}</div>}
+        <div className={`bg-eco-card rounded-2xl border border-eco-border p-6 ${result ? 'printable-area' : ''}`}>
+          <div className="flex items-start justify-between gap-3 mb-3 no-print">
+            <div>
+              <h3 className="font-sans text-sm font-semibold text-ink">{modeLabel}</h3>
+              {result && (topic || ageGroup || duration) && (
+                <p className="text-xs text-eco-text/60 mt-0.5">
+                  {[topic, ageGroup && `Ages ${ageGroup}`, duration && `${duration} min`, subject].filter(Boolean).join(' · ')}
+                </p>
+              )}
+            </div>
+            {result && (
+              <div className="flex gap-1.5 shrink-0">
+                <button type="button" onClick={handleCopy}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
+                  title="Copy to clipboard">
+                  {copied ? <><Check size={13} className="text-leaf-dark" /> Copied</> : <><Copy size={13} /> Copy</>}
+                </button>
+                <button type="button" onClick={handlePrint}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
+                  title="Print or save as PDF">
+                  <Printer size={13} /> Print
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="hidden print:block mb-4 pb-3 border-b border-eco-border">
+            <h1 className="font-serif text-2xl text-ink m-0">{topic || modeLabel}</h1>
+            <p className="text-sm text-eco-text/70 mt-1">
+              {[ageGroup && `Ages ${ageGroup}`, duration && `${duration} minutes`, subject].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+
+          {error && <div className="p-3 bg-soft-rose/50 border border-danger/20 rounded-xl text-sm text-danger mb-3 no-print">{error}</div>}
           {result ? (
-            <div className="prose text-sm text-eco-text leading-relaxed whitespace-pre-wrap max-h-[60vh] overflow-y-auto">{result}</div>
+            <div className="max-h-[60vh] overflow-y-auto print:max-h-none print:overflow-visible">
+              <GeneratedContent content={result} />
+            </div>
           ) : (
             <p className="text-sm text-eco-text/40 italic">Your generated content will appear here...</p>
           )}

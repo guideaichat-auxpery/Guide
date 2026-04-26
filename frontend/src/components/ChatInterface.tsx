@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, Trash2, Plus } from 'lucide-react';
 import type { ChatMessage } from '../lib/api';
+import GeneratedContent from './GeneratedContent';
 
 interface Props {
   title: string;
@@ -92,12 +93,12 @@ export default function ChatInterface({ title, subtitle, placeholder, onSend, we
 
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-            <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+            <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
               msg.role === 'user'
-                ? 'bg-leaf/15 text-ink'
+                ? 'bg-leaf/15 text-ink text-sm leading-relaxed whitespace-pre-wrap'
                 : 'bg-sand/40 text-eco-text'
             }`}>
-              {msg.content}
+              {msg.role === 'user' ? msg.content : <GeneratedContent content={msg.content} variant="chat" />}
             </div>
           </div>
         ))}

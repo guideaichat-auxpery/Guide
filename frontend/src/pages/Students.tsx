@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { studentsMgmt, tools } from '../lib/api';
 import type { Student, Activity, SafetyAlert } from '../lib/types';
 import { Loader2, Plus, Search, Users, ChevronRight, X, AlertTriangle, Clock, Shield, Share2, MessageSquare } from 'lucide-react';
+import GeneratedContent from '../components/GeneratedContent';
 
 interface ChatHistoryEntry {
   id: string;
@@ -272,12 +273,14 @@ export default function Students() {
                     <div className="space-y-3 max-h-[50vh] overflow-y-auto p-2">
                       {sessionMessages.map((msg, i) => (
                         <div key={i} className={`flex ${msg?.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                          <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                             msg?.role === 'user'
-                              ? 'bg-leaf/15 text-ink'
+                              ? 'bg-leaf/15 text-ink text-sm leading-relaxed whitespace-pre-wrap'
                               : 'bg-sand/40 text-eco-text'
                           }`}>
-                            {msg?.content || ''}
+                            {msg?.role === 'user'
+                              ? (msg?.content || '')
+                              : <GeneratedContent content={msg?.content || ''} variant="chat" />}
                           </div>
                         </div>
                       ))}
