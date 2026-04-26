@@ -7,7 +7,7 @@ import re
 import os
 
 from api.db import get_db, User, Student, PersistentSession, School
-from api.deps import get_current_session, get_current_user
+from api.deps import get_current_session, get_current_user, get_optional_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,11 +59,11 @@ class SchoolJoinRequest(BaseModel):
 
 
 class SchoolSetupRequest(BaseModel):
-    setup_token: str
-    admin_email: str
-    admin_password: str
-    admin_name: str
-    confirm_password: str
+    school_name: str
+    admin_email: Optional[str] = None
+    admin_password: Optional[str] = None
+    admin_name: Optional[str] = None
+    confirm_password: Optional[str] = None
 
 
 class AdminResetPasswordRequest(BaseModel):
@@ -518,51 +518,98 @@ def admin_lookup_user(
 
 
 @router.post("/school-setup")
-def school_setup(req: SchoolSetupRequest, db: Session = Depends(get_db)):
-    from database import create_persistent_session
-    import hashlib
-    from sqlalchemy import text as sa_text
+def school_setup(
+    req: SchoolSetupRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
+    """Create a school and make the caller its school_admin.
 
-    if not validate_email_format(req.admin_email):
+    Two flows are supported:
+      - Authenticated: an existing educator with no school is promoted to
+        school_admin of a newly created school. Only `school_name` is required
+        in the body; account fields are ignored.
+      - Unauthenticated: a new educator account is created alongside the
+        school. `admin_email`, `admin_password`, `confirm_password`, and
+        `admin_name` are all required.
+    """
+    from database import (
+        create_persistent_session,
+        create_school,
+        get_user_by_email,
+        create_user,
+        add_educator_to_school,
+        record_consent,
+    )
+
+    school_name = (req.school_name or "").strip()
+    if not school_name:
+        raise HTTPException(status_code=400, detail="School name is required")
+
+    if current_user is not None:
+        if getattr(current_user, "school_id", None):
+            raise HTTPException(
+                status_code=409,
+                detail="You are already linked to a school. Leave it before creating a new one.",
+            )
+
+        new_school = create_school(
+            db,
+            name=school_name,
+            contact_email=current_user.email,
+            contact_name=current_user.full_name,
+        )
+
+        success, err = add_educator_to_school(db, current_user.id, new_school.id, "school_admin")
+        if not success:
+            raise HTTPException(status_code=400, detail=err or "Failed to set up school")
+
+        return {
+            "token": None,
+            "user": {
+                "id": current_user.id,
+                "email": current_user.email,
+                "full_name": current_user.full_name,
+                "role": "school_admin",
+                "school_id": new_school.id,
+                "school_name": new_school.name,
+                "school_invite_code": new_school.invite_code,
+            },
+        }
+
+    # Unauthenticated flow: create the admin user and the school together.
+    if not req.admin_email or not validate_email_format(req.admin_email):
         raise HTTPException(status_code=400, detail="Invalid email format")
-    if req.admin_password != req.confirm_password:
+    if not req.admin_password or req.admin_password != (req.confirm_password or ""):
         raise HTTPException(status_code=400, detail="Passwords do not match")
 
     valid, msg = validate_password_strength(req.admin_password)
     if not valid:
         raise HTTPException(status_code=400, detail=msg)
 
-    token_hash = hashlib.sha256(req.setup_token.encode()).hexdigest()
-    result = db.execute(
-        sa_text("""SELECT id FROM school_setup_tokens
-                   WHERE token_hash = :th AND is_valid = TRUE AND expires_at > NOW()"""),
-        {"th": token_hash},
-    ).fetchone()
-
-    if not result:
-        raise HTTPException(status_code=400, detail="Invalid or expired setup token")
-
-    school_id = result[0]
-
-    db.execute(
-        sa_text("UPDATE school_setup_tokens SET is_valid = FALSE, used_at = NOW() WHERE token_hash = :th"),
-        {"th": token_hash},
-    )
-
-    from database import get_user_by_email, create_user, add_educator_to_school, record_consent
+    admin_name = (req.admin_name or "").strip()
+    if not admin_name:
+        raise HTTPException(status_code=400, detail="Your full name is required")
 
     existing = get_user_by_email(db, req.admin_email)
     if existing:
         raise HTTPException(status_code=409, detail="An account with this email already exists")
 
-    user = create_user(db, req.admin_email, req.admin_password, req.admin_name, "educator")
-    add_educator_to_school(db, user.id, school_id, "school_admin")
+    new_school = create_school(
+        db,
+        name=school_name,
+        contact_email=req.admin_email,
+        contact_name=admin_name,
+    )
+
+    user = create_user(db, req.admin_email, req.admin_password, admin_name, "educator")
+    add_educator_to_school(db, user.id, new_school.id, "school_admin")
     record_consent(db, user_id=user.id, consent_type="data_collection", policy_version="1.0")
     record_consent(db, user_id=user.id, consent_type="privacy_policy", policy_version="1.0")
 
-    token = create_persistent_session(db, user_id=user.id, user_type="educator", duration_hours=EDUCATOR_SESSION_HOURS)
-
-    school = db.query(School).filter(School.id == school_id).first()
+    token = create_persistent_session(
+        db, user_id=user.id, user_type="educator", duration_hours=EDUCATOR_SESSION_HOURS
+    )
 
     return {
         "token": token,
@@ -571,7 +618,8 @@ def school_setup(req: SchoolSetupRequest, db: Session = Depends(get_db)):
             "email": user.email,
             "full_name": user.full_name,
             "role": "school_admin",
-            "school_id": school_id,
-            "school_name": school.name if school else None,
+            "school_id": new_school.id,
+            "school_name": new_school.name,
+            "school_invite_code": new_school.invite_code,
         },
     }

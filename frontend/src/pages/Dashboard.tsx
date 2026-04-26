@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { schools } from '../lib/api';
 import {
   BookOpen, MessageCircle, Sparkles, GraduationCap, BookMarked,
-  Users, StickyNote, ArrowRight, Building2, AlertCircle
+  Users, StickyNote, ArrowRight, Building2, AlertCircle, CheckCircle, X
 } from 'lucide-react';
+
+type DashboardLocationState = {
+  newSchool?: { name: string; inviteCode: string };
+};
 
 const toolsList = [
   { to: '/lesson-planning', icon: BookOpen, label: 'Lesson Planning', desc: 'Generate plans, align curriculum, differentiate lessons', color: 'bg-sky/30 text-ink' },
@@ -19,10 +23,21 @@ const toolsList = [
 
 export default function Dashboard() {
   const { user, isAdmin } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const displayName = user && 'full_name' in user && user.full_name ? user.full_name.split(' ')[0] : 'Educator';
   const institution = user && 'institution_name' in user ? (user as { institution_name?: string }).institution_name : undefined;
   const schoolName = user && 'school_name' in user ? user.school_name : undefined;
   const [showSetupBanner, setShowSetupBanner] = useState(false);
+  const [newSchool, setNewSchool] = useState<{ name: string; inviteCode: string } | null>(null);
+
+  useEffect(() => {
+    const state = location.state as DashboardLocationState | null;
+    if (state?.newSchool) {
+      setNewSchool(state.newSchool);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     if (!institution && !schoolName) {
@@ -45,7 +60,41 @@ export default function Dashboard() {
 
   return (
     <div className="animate-fade-in">
-      {showSetupBanner && (
+      {newSchool && (
+        <div className="mb-6 p-4 bg-leaf/10 border border-leaf/30 rounded-2xl flex items-start gap-3">
+          <CheckCircle size={20} className="text-leaf-dark mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <h4 className="text-sm font-semibold text-ink mb-1">
+              {newSchool.name ? `${newSchool.name} is set up.` : 'School set up successfully.'}
+            </h4>
+            {newSchool.inviteCode ? (
+              <>
+                <p className="text-sm text-eco-text/70">
+                  Share this invite code with your educators so they can join your school:
+                </p>
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-eco-border rounded-lg">
+                  <span className="font-mono text-base text-ink tracking-wider">{newSchool.inviteCode}</span>
+                </div>
+                <p className="text-xs text-eco-text/50 mt-2">
+                  You can find it again any time under Settings → School Admin.
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-eco-text/70">
+                Find your invite code under Settings → School Admin to share with educators.
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => setNewSchool(null)}
+            className="text-eco-text/30 hover:text-ink transition-colors"
+            aria-label="Dismiss"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      {showSetupBanner && !newSchool && (
         <div className="mb-6 p-4 bg-sky/15 border border-sky/30 rounded-2xl flex items-start gap-3">
           <Building2 size={20} className="text-ink mt-0.5 shrink-0" />
           <div className="flex-1">

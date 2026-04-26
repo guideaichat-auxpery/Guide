@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from api.db import get_db, User, School
-from api.deps import get_current_user
+from api.deps import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/schools", tags=["schools"])
 
@@ -103,7 +103,11 @@ def school_join(req: dict, db: Session = Depends(get_db)):
 
 
 @router.post("/setup")
-def school_setup(req: dict, db: Session = Depends(get_db)):
+def school_setup(
+    req: dict,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user),
+):
     from api.routes.auth import school_setup as auth_school_setup, SchoolSetupRequest
     setup_req = SchoolSetupRequest(**req)
-    return auth_school_setup(setup_req, db)
+    return auth_school_setup(setup_req, db, current_user)

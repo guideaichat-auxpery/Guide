@@ -168,11 +168,11 @@ export interface JoinSchoolRequest {
 }
 
 export interface SchoolSetupRequest {
-  setup_token: string;
-  admin_email: string;
-  admin_password: string;
-  admin_name: string;
-  confirm_password: string;
+  school_name: string;
+  admin_email?: string;
+  admin_password?: string;
+  admin_name?: string;
+  confirm_password?: string;
 }
 
 export interface CreateStudentRequest {

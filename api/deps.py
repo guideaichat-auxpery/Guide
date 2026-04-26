@@ -2,10 +2,38 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import datetime
+from typing import Optional
 
 from api.db import get_db, User, Student, PersistentSession
 
 security = HTTPBearer()
+optional_security = HTTPBearer(auto_error=False)
+
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """Return the current educator user if a valid bearer token is provided, else None."""
+    if not credentials:
+        return None
+    token = credentials.credentials
+    session = (
+        db.query(PersistentSession)
+        .filter(
+            PersistentSession.token == token,
+            PersistentSession.is_active == True,
+            PersistentSession.expires_at > datetime.utcnow(),
+        )
+        .first()
+    )
+    if not session or session.user_type != "educator" or not session.user_id:
+        return None
+    user = db.query(User).filter(User.id == session.user_id, User.is_active == True).first()
+    if user:
+        session.last_activity = datetime.utcnow()
+        db.commit()
+    return user
 
 
 def get_current_session(
