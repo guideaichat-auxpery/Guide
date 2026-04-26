@@ -517,6 +517,64 @@ def admin_lookup_user(
     }
 
 
+def _send_school_setup_email(*, to_email: str, admin_name: Optional[str], school_name: str, invite_code: str) -> None:
+    """Send a confirmation email with the new school's invite code.
+
+    Failures are logged but never raised — email delivery must not block the
+    school-setup response.
+    """
+    import logging
+    from html import escape as _html_escape
+    logger = logging.getLogger(__name__)
+    try:
+        import resend
+        api_key = os.environ.get("RESEND_API_KEY", "")
+        if not api_key:
+            logger.warning("School setup email skipped: RESEND_API_KEY not configured")
+            return
+        resend.api_key = api_key
+
+        plain_school = (school_name or "").strip() or "your school"
+        plain_code = (invite_code or "").strip()
+        plain_name = (admin_name or "").strip()
+        plain_greeting = f"Hi {plain_name}," if plain_name else "Hi,"
+
+        safe_school = _html_escape(plain_school)
+        safe_code = _html_escape(plain_code)
+        safe_greeting = _html_escape(plain_greeting)
+        html_body = f"""<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#222;">
+            <h2 style="color:#2E8B57;">{safe_school} is set up on Guide</h2>
+            <p>{safe_greeting}</p>
+            <p>Thanks for setting up <strong>{safe_school}</strong> on Guide. Your school is ready, and you're now the school admin.</p>
+            <p>Share the invite code below with your educators so they can join your school when they sign up:</p>
+            <p style="text-align:center;margin:1.5rem 0;">
+                <span style="display:inline-block;background:#f4f6f4;border:1px solid #d8e0d8;border-radius:8px;padding:14px 22px;font-family:monospace;font-size:20px;letter-spacing:3px;color:#1f3a25;">{safe_code}</span>
+            </p>
+            <p>Educators can enter this code on the sign-up screen, or open <em>Join a school</em> from their account settings if they already have a Guide account.</p>
+            <p style="color:#666;font-size:0.9rem;">You can find this code again any time under <strong>Settings → School Admin</strong>.</p>
+            <p style="color:#666;font-size:0.85rem;margin-top:2rem;">— The Guide team</p>
+        </div>"""
+        text_body = (
+            f"{plain_greeting}\n\n"
+            f"Thanks for setting up {plain_school} on Guide. Your school is ready, and you're now the school admin.\n\n"
+            f"Share this invite code with your educators so they can join your school:\n\n"
+            f"    {plain_code}\n\n"
+            "Educators can enter this code on the sign-up screen, or open 'Join a school' from their "
+            "account settings if they already have a Guide account.\n\n"
+            "You can find this code again any time under Settings -> School Admin.\n\n"
+            "— The Guide team"
+        )
+        resend.Emails.send({
+            "from": "Guide <guide@auxpery.com.au>",
+            "to": [to_email],
+            "subject": f"Your Guide invite code for {plain_school}",
+            "html": html_body,
+            "text": text_body,
+        })
+    except Exception as exc:
+        logger.warning("Failed to send school setup email to %s: %s", to_email, exc)
+
+
 @router.post("/school-setup")
 def school_setup(
     req: SchoolSetupRequest,
@@ -564,6 +622,13 @@ def school_setup(
         if not success:
             raise HTTPException(status_code=400, detail=err or "Failed to set up school")
 
+        _send_school_setup_email(
+            to_email=current_user.email,
+            admin_name=current_user.full_name,
+            school_name=new_school.name,
+            invite_code=new_school.invite_code,
+        )
+
         return {
             "token": None,
             "user": {
@@ -606,6 +671,13 @@ def school_setup(
     add_educator_to_school(db, user.id, new_school.id, "school_admin")
     record_consent(db, user_id=user.id, consent_type="data_collection", policy_version="1.0")
     record_consent(db, user_id=user.id, consent_type="privacy_policy", policy_version="1.0")
+
+    _send_school_setup_email(
+        to_email=user.email,
+        admin_name=user.full_name,
+        school_name=new_school.name,
+        invite_code=new_school.invite_code,
+    )
 
     token = create_persistent_session(
         db, user_id=user.id, user_type="educator", duration_hours=EDUCATOR_SESSION_HOURS

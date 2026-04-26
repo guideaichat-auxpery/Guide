@@ -76,7 +76,7 @@ export default function Dashboard() {
                   <span className="font-mono text-base text-ink tracking-wider">{newSchool.inviteCode}</span>
                 </div>
                 <p className="text-xs text-eco-text/50 mt-2">
-                  You can find it again any time under Settings → School Admin.
+                  We also emailed this code to you, and you can find it again any time under Settings → School Admin.
                 </p>
               </>
             ) : (
