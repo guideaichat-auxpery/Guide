@@ -12,6 +12,14 @@ const modes: { key: Mode; icon: typeof BookOpen; label: string; desc: string }[]
   { key: 'differentiate', icon: Layers, label: 'Differentiate', desc: 'Adapt for diverse learners' },
 ];
 
+const focusAreaOptions = [
+  'All learners (full differentiation)',
+  'Learning support (struggling students)',
+  'Extension (gifted & talented)',
+  'EAL/D language support',
+  'Neurodiversity (autism, ADHD, dyslexia)',
+];
+
 export default function LessonPlanning() {
   const [mode, setMode] = useState<Mode>('generate');
   const [topic, setTopic] = useState('');
@@ -19,6 +27,9 @@ export default function LessonPlanning() {
   const [subject, setSubject] = useState('');
   const [duration, setDuration] = useState('45');
   const [additional, setAdditional] = useState('');
+  const [lessonDescription, setLessonDescription] = useState('');
+  const [classComposition, setClassComposition] = useState('');
+  const [focusArea, setFocusArea] = useState(focusAreaOptions[0]);
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -128,6 +139,9 @@ export default function LessonPlanning() {
           subject: subject || undefined,
           duration: duration || undefined,
           additional_context: additionalContext,
+          lesson_description: lessonDescription.trim() || undefined,
+          class_composition: classComposition.trim() || undefined,
+          focus_area: focusArea || undefined,
         };
         res = await tools.differentiate(payload);
       }
@@ -191,6 +205,35 @@ export default function LessonPlanning() {
                 className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf"
                 placeholder="e.g., Mathematics, Language, Science" />
             </div>
+            {mode === 'differentiate' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1.5">
+                    Lesson description <span className="text-eco-text/40 font-normal">(optional)</span>
+                  </label>
+                  <textarea value={lessonDescription} onChange={e => setLessonDescription(e.target.value)} rows={3}
+                    className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf resize-none"
+                    placeholder="e.g., Students investigate the water cycle through observation journals and outdoor exploration over 3 sessions." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1.5">
+                    Class composition <span className="text-eco-text/40 font-normal">(optional)</span>
+                  </label>
+                  <input value={classComposition} onChange={e => setClassComposition(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf"
+                    placeholder="e.g., 3 dyslexic, 2 EAL/D, 1 gifted, 20 on-track. Mixed Year 4/5." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-ink mb-1.5">Differentiation focus</label>
+                  <select value={focusArea} onChange={e => setFocusArea(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-eco-border bg-white text-sm text-ink focus:border-leaf">
+                    {focusAreaOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
             <div>
               <label className="block text-sm font-medium text-ink mb-1.5">Additional context</label>
               <textarea value={additional} onChange={e => setAdditional(e.target.value)} rows={3}
