@@ -37,7 +37,10 @@ export type SavedLessonPlanKind = 'lesson_plan' | 'alignment' | 'differentiation
 export interface SavedLessonPlan {
   id: string;
   title: string;
+  /** Current/edited version (what we display by default). */
   content: string;
+  /** Immutable AI-generated original captured at first save. */
+  original_content?: string;
   age_group?: string;
   kind: SavedLessonPlanKind;
   topic?: string;
@@ -50,9 +53,23 @@ export interface SavedLessonPlan {
 
 export interface SaveLessonPlanRequest {
   title: string;
+  /** Current/edited version the user wants to keep working from. */
   content: string;
+  /** Immutable AI-generated original; defaults to content if omitted. */
+  original_content?: string;
   age_group?: string;
   kind: SavedLessonPlanKind;
+  topic?: string;
+  subject?: string;
+  duration?: string;
+  description?: string;
+}
+
+export interface UpdateSavedLessonPlanRequest {
+  title?: string;
+  content?: string;
+  age_group?: string;
+  kind?: SavedLessonPlanKind;
   topic?: string;
   subject?: string;
   duration?: string;

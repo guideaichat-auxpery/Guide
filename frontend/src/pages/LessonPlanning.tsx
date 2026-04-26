@@ -73,6 +73,9 @@ export default function LessonPlanning() {
   const [detailEditedHtml, setDetailEditedHtml] = useState<string | null>(null);
   const [detailIsEditing, setDetailIsEditing] = useState(false);
   const [detailCopied, setDetailCopied] = useState(false);
+  const [detailSaving, setDetailSaving] = useState(false);
+  const [detailSaved, setDetailSaved] = useState(false);
+  const [detailDirty, setDetailDirty] = useState(false);
 
   const copyTextFallback = (text: string) => {
     const ta = document.createElement('textarea');
@@ -224,20 +227,58 @@ export default function LessonPlanning() {
       const titleParts = [topic.trim() || modeLabel];
       if (mode !== 'generate') titleParts.push(`(${kindLabels[kind]})`);
       const title = titleParts.join(' ');
-      const saved = await tools.saveLessonPlan({
-        title,
-        content: contentToSave,
-        age_group: ageGroup,
-        kind,
-        topic: topic.trim() || undefined,
-        subject: subject.trim() || undefined,
-        duration: duration.trim() || undefined,
-      });
-      setSavedId(saved.id);
+      if (savedId) {
+        // Updates only touch the current/edited content + metadata. The
+        // original AI-generated version on the server is intentionally left alone.
+        await tools.updateSavedLessonPlan(savedId, {
+          title,
+          content: contentToSave,
+          age_group: ageGroup,
+          kind,
+          topic: topic.trim() || undefined,
+          subject: subject.trim() || undefined,
+          duration: duration.trim() || undefined,
+        });
+      } else {
+        // First save: capture the AI-generated `result` as the immutable
+        // original alongside whatever the user has now (which may be edited).
+        const saved = await tools.saveLessonPlan({
+          title,
+          content: contentToSave,
+          original_content: result,
+          age_group: ageGroup,
+          kind,
+          topic: topic.trim() || undefined,
+          subject: subject.trim() || undefined,
+          duration: duration.trim() || undefined,
+        });
+        setSavedId(saved.id);
+      }
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : 'Failed to save. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDetailSave = async () => {
+    if (!selectedPlan || detailSaving) return;
+    setDetailSaving(true);
+    setDetailError('');
+    try {
+      const contentToSave = detailEditedHtml !== null ? htmlToPlainText(detailEditedHtml) : selectedPlan.content;
+      const updated = await tools.updateSavedLessonPlan(selectedPlan.id, { content: contentToSave });
+      setSelectedPlan(updated);
+      setSavedPlans(plans =>
+        plans.map(p => (p.id === updated.id ? { ...p, ...updated } : p)),
+      );
+      setDetailDirty(false);
+      setDetailSaved(true);
+      setTimeout(() => setDetailSaved(false), 2000);
+    } catch (e) {
+      setDetailError(e instanceof Error ? e.message : 'Failed to save changes. Please try again.');
+    } finally {
+      setDetailSaving(false);
     }
   };
 
@@ -266,6 +307,9 @@ export default function LessonPlanning() {
     setDetailIsEditing(false);
     setDetailCopied(false);
     setDetailError('');
+    setDetailSaving(false);
+    setDetailSaved(false);
+    setDetailDirty(false);
     try {
       const full = await tools.getSavedLessonPlan(plan.id);
       setSelectedPlan(full);
@@ -274,6 +318,23 @@ export default function LessonPlanning() {
     } finally {
       setLoadingPlan(false);
     }
+  };
+
+  const handleDetailEditedHtmlChange = (html: string) => {
+    setDetailEditedHtml(html);
+    setDetailDirty(true);
+    setDetailSaved(false);
+  };
+
+  const handleResetToOriginal = () => {
+    if (!selectedPlan) return;
+    const original = selectedPlan.original_content ?? selectedPlan.content;
+    if (!original) return;
+    if (!confirm('Replace your edits with the original AI-generated version? Your saved edits will only persist if you click Save changes after.')) return;
+    setSelectedPlan({ ...selectedPlan, content: original });
+    setDetailEditedHtml(null);
+    setDetailDirty(true);
+    setDetailSaved(false);
   };
 
   const handleDeletePlan = async (id: string) => {
@@ -316,7 +377,41 @@ export default function LessonPlanning() {
                 <div className="min-w-0">
                   <h2 className="text-2xl font-serif text-ink truncate">{plan.title || plan.topic || 'Untitled'}</h2>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                  {(detailDirty || detailSaving || detailSaved) && (
+                    <button
+                      type="button"
+                      onClick={handleDetailSave}
+                      disabled={detailSaving || !detailDirty}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        detailSaved
+                          ? 'bg-leaf/15 text-leaf-dark cursor-default'
+                          : 'bg-leaf hover:bg-leaf-dark text-white disabled:opacity-50'
+                      }`}
+                      title={detailDirty ? 'Save changes to library' : 'No unsaved changes'}
+                    >
+                      {detailSaving ? (
+                        <><Loader2 size={13} className="animate-spin" /> Saving...</>
+                      ) : detailSaved ? (
+                        <><Check size={13} /> Saved</>
+                      ) : (
+                        <><Save size={13} /> Save changes</>
+                      )}
+                    </button>
+                  )}
+                  {detailIsEditing
+                    && plan.original_content
+                    && plan.original_content !== plan.content
+                    && (
+                    <button
+                      type="button"
+                      onClick={handleResetToOriginal}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
+                      title="Replace with the original AI-generated version"
+                    >
+                      Reset to original
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setDetailIsEditing(v => !v)}
@@ -380,7 +475,7 @@ export default function LessonPlanning() {
                 markdown={plan.content || ''}
                 editedHtml={detailEditedHtml}
                 isEditing={detailIsEditing}
-                onEditedHtmlChange={setDetailEditedHtml}
+                onEditedHtmlChange={handleDetailEditedHtmlChange}
               />
             </>
           )}
@@ -548,17 +643,13 @@ export default function LessonPlanning() {
                 </div>
                 {result && (
                   <div className="flex gap-1.5 shrink-0 flex-wrap justify-end">
-                    <button type="button" onClick={handleSave} disabled={saving || savedId !== null}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        savedId !== null
-                          ? 'bg-leaf/15 text-leaf-dark cursor-default'
-                          : 'bg-leaf hover:bg-leaf-dark text-white disabled:opacity-50'
-                      }`}
-                      title={savedId !== null ? 'Saved to library' : 'Save to library'}>
+                    <button type="button" onClick={handleSave} disabled={saving}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors bg-leaf hover:bg-leaf-dark text-white disabled:opacity-50"
+                      title={savedId !== null ? 'Update saved lesson plan' : 'Save to library'}>
                       {saving ? (
                         <><Loader2 size={13} className="animate-spin" /> Saving...</>
                       ) : savedId !== null ? (
-                        <><Check size={13} /> Saved</>
+                        <><Save size={13} /> Save changes</>
                       ) : (
                         <><Save size={13} /> Save</>
                       )}

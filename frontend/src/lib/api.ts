@@ -2,7 +2,7 @@ import type {
   Student, PlanningNote, GreatStory, Conversation, Activity,
   Educator, SchoolInfo, SafetyAlert, AuditLog,
   LessonPlanRequest, AlignRequest, DifferentiateRequest, GreatStoryRequest,
-  SavedLessonPlan, SaveLessonPlanRequest,
+  SavedLessonPlan, SaveLessonPlanRequest, UpdateSavedLessonPlanRequest,
   CreateStudentRequest, CreateNoteRequest,
   SignupRequest, ResetPasswordRequest, ChangePasswordRequest,
   UpdateEmailRequest, UpdateProfileRequest,
@@ -191,6 +191,8 @@ export const tools = {
   listSavedLessonPlans: async (): Promise<{ plans: SavedLessonPlan[] }> =>
     unwrapList<'plans', SavedLessonPlan>(await api.get<unknown>('/tools/lesson-plans'), 'plans'),
   getSavedLessonPlan: (id: string) => api.get<SavedLessonPlan>(`/tools/lesson-plans/${id}`),
+  updateSavedLessonPlan: (id: string, data: UpdateSavedLessonPlanRequest) =>
+    api.put<SavedLessonPlan>(`/tools/lesson-plans/${id}`, data),
   deleteSavedLessonPlan: (id: string) =>
     api.delete<{ success: boolean }>(`/tools/lesson-plans/${id}`),
   listConversations: async (interfaceType: string): Promise<{ conversations: Conversation[] }> =>

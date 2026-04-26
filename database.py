@@ -196,7 +196,8 @@ class LessonPlan(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    content = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)  # Current / edited version (what the user sees)
+    original_content = Column(Text, nullable=True)  # Immutable AI-generated original, captured at first save
     australian_curriculum_codes = Column(Text, nullable=True)  # JSON string of AC codes
     montessori_principles = Column(Text, nullable=True)  # JSON string of principles
     age_group = Column(String, nullable=False)
@@ -524,6 +525,11 @@ def initialize_database_once():
                 conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS topic VARCHAR"))
                 conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS subject VARCHAR"))
                 conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS duration VARCHAR"))
+                conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS description TEXT"))
+                conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS original_content TEXT"))
+                # Backfill: for plans saved before original/edited was tracked,
+                # treat the existing content as both the original and the current version.
+                conn.execute(text("UPDATE lesson_plans SET original_content = content WHERE original_content IS NULL"))
                 conn.commit()
                 conn.close()
                 logger.info("Added kind/topic/subject/duration columns to lesson_plans table (or already exists)")
@@ -1261,12 +1267,19 @@ def create_saved_lesson_plan(
     subject: Optional[str] = None,
     duration: Optional[str] = None,
     description: Optional[str] = None,
+    original_content: Optional[str] = None,
 ):
-    """Create a new saved lesson plan / alignment / differentiation."""
+    """Create a new saved lesson plan / alignment / differentiation.
+
+    `content` is the current/edited version the user wants to keep working from.
+    `original_content` is the immutable AI-generated original. If not supplied
+    we fall back to `content` so the original is never lost.
+    """
     plan = LessonPlan(
         creator_id=educator_id,
         title=title,
         content=content,
+        original_content=original_content if original_content is not None else content,
         age_group=age_group or "",
         kind=kind,
         topic=topic,
@@ -1278,6 +1291,44 @@ def create_saved_lesson_plan(
     db.commit()
     db.refresh(plan)
     return plan
+
+def update_saved_lesson_plan(
+    db,
+    plan_id: int,
+    title: Optional[str] = None,
+    content: Optional[str] = None,
+    age_group: Optional[str] = None,
+    kind: Optional[str] = None,
+    topic: Optional[str] = None,
+    subject: Optional[str] = None,
+    duration: Optional[str] = None,
+    description: Optional[str] = None,
+):
+    """Update an existing saved lesson plan / alignment / differentiation."""
+    plan = db.query(LessonPlan).filter(LessonPlan.id == plan_id).first()
+    if not plan:
+        return None
+    if title is not None:
+        plan.title = title
+    if content is not None:
+        plan.content = content
+    if age_group is not None:
+        plan.age_group = age_group
+    if kind is not None:
+        plan.kind = kind
+    if topic is not None:
+        plan.topic = topic
+    if subject is not None:
+        plan.subject = subject
+    if duration is not None:
+        plan.duration = duration
+    if description is not None:
+        plan.description = description
+    plan.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(plan)
+    return plan
+
 
 def get_educator_saved_lesson_plans(db, educator_id: int):
     """Get all saved lesson plans / alignments / differentiations for an educator."""

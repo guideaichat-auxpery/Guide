@@ -87,9 +87,21 @@ SAVED_LESSON_PLAN_KINDS = {"lesson_plan", "alignment", "differentiation"}
 
 class SaveLessonPlanRequest(BaseModel):
     title: str
-    content: str
+    content: str  # Current/edited version (what the user wants displayed)
+    original_content: Optional[str] = None  # Immutable AI-generated original; defaults to content
     age_group: str = ""
     kind: str = "lesson_plan"  # 'lesson_plan' | 'alignment' | 'differentiation'
+    topic: Optional[str] = None
+    subject: Optional[str] = None
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+
+class UpdateLessonPlanRequest(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    age_group: Optional[str] = None
+    kind: Optional[str] = None
     topic: Optional[str] = None
     subject: Optional[str] = None
     duration: Optional[str] = None
@@ -512,10 +524,13 @@ def delete_great_story_tool(
 
 
 def _serialize_lesson_plan(plan) -> dict:
+    original = getattr(plan, "original_content", None)
     return {
         "id": plan.id,
         "title": plan.title,
         "content": plan.content,
+        # Immutable AI-generated original; falls back to current content for older rows.
+        "original_content": original if original is not None else plan.content,
         "age_group": plan.age_group,
         "kind": plan.kind or "lesson_plan",
         "topic": plan.topic,
@@ -556,6 +571,7 @@ def save_lesson_plan(
         educator_id=user.id,
         title=title,
         content=req.content,
+        original_content=req.original_content,
         age_group=req.age_group or "",
         kind=kind,
         topic=req.topic,
@@ -577,6 +593,46 @@ def get_saved_lesson_plan_route(
     if not plan or plan.creator_id != user.id:
         raise HTTPException(status_code=404, detail="Lesson plan not found")
     return _serialize_lesson_plan(plan)
+
+
+@router.put("/lesson-plans/{plan_id}")
+@router.patch("/lesson-plans/{plan_id}")
+def update_saved_lesson_plan_route(
+    plan_id: int,
+    req: UpdateLessonPlanRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_saved_lesson_plan, update_saved_lesson_plan
+    plan = get_saved_lesson_plan(db, plan_id)
+    if not plan or plan.creator_id != user.id:
+        raise HTTPException(status_code=404, detail="Lesson plan not found")
+    kind = req.kind
+    if kind is not None:
+        kind = (kind or "").strip() or "lesson_plan"
+        if kind not in SAVED_LESSON_PLAN_KINDS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid kind '{kind}'. Must be one of: {sorted(SAVED_LESSON_PLAN_KINDS)}",
+            )
+    title = req.title
+    if title is not None:
+        title = title.strip() or "Untitled lesson plan"
+    # NOTE: update never touches `original_content` — the AI-generated original is immutable
+    # by design so the user can always see what was first produced even after re-edits.
+    updated = update_saved_lesson_plan(
+        db,
+        plan_id=plan_id,
+        title=title,
+        content=req.content,
+        age_group=req.age_group,
+        kind=kind,
+        topic=req.topic,
+        subject=req.subject,
+        duration=req.duration,
+        description=req.description,
+    )
+    return _serialize_lesson_plan(updated)
 
 
 @router.delete("/lesson-plans/{plan_id}")
