@@ -2,6 +2,7 @@ import type {
   Student, PlanningNote, GreatStory, Conversation, Activity,
   Educator, SchoolInfo, SafetyAlert, AuditLog,
   LessonPlanRequest, AlignRequest, DifferentiateRequest, GreatStoryRequest,
+  SavedLessonPlan, SaveLessonPlanRequest,
   CreateStudentRequest, CreateNoteRequest,
   SignupRequest, ResetPasswordRequest, ChangePasswordRequest,
   UpdateEmailRequest, UpdateProfileRequest,
@@ -185,6 +186,13 @@ export const tools = {
     unwrapList<'stories', GreatStory>(await api.get<unknown>('/tools/great-story'), 'stories'),
   getGreatStory: (id: string) => api.get<GreatStory>(`/tools/great-story/${id}`),
   deleteGreatStory: (id: string) => api.delete<{ message: string }>(`/tools/great-story/${id}`),
+  saveLessonPlan: (data: SaveLessonPlanRequest) =>
+    api.post<SavedLessonPlan>('/tools/lesson-plans', data),
+  listSavedLessonPlans: async (): Promise<{ plans: SavedLessonPlan[] }> =>
+    unwrapList<'plans', SavedLessonPlan>(await api.get<unknown>('/tools/lesson-plans'), 'plans'),
+  getSavedLessonPlan: (id: string) => api.get<SavedLessonPlan>(`/tools/lesson-plans/${id}`),
+  deleteSavedLessonPlan: (id: string) =>
+    api.delete<{ success: boolean }>(`/tools/lesson-plans/${id}`),
   listConversations: async (interfaceType: string): Promise<{ conversations: Conversation[] }> =>
     unwrapList<'conversations', Conversation>(
       await api.get<unknown>(`/tools/conversations?interface=${interfaceType}`),

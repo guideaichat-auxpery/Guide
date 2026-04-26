@@ -82,6 +82,20 @@ class GreatStoryRequest(BaseModel):
     format_style: Optional[str] = None
 
 
+SAVED_LESSON_PLAN_KINDS = {"lesson_plan", "alignment", "differentiation"}
+
+
+class SaveLessonPlanRequest(BaseModel):
+    title: str
+    content: str
+    age_group: str = ""
+    kind: str = "lesson_plan"  # 'lesson_plan' | 'alignment' | 'differentiation'
+    topic: Optional[str] = None
+    subject: Optional[str] = None
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+
 class CreateConversationRequest(BaseModel):
     interface_type: str = "companion"
     title: Optional[str] = None
@@ -494,6 +508,88 @@ def delete_great_story_tool(
         raise HTTPException(status_code=404, detail="Story not found")
     from database import delete_great_story
     delete_great_story(db, story_id)
+    return {"success": True}
+
+
+def _serialize_lesson_plan(plan) -> dict:
+    return {
+        "id": plan.id,
+        "title": plan.title,
+        "content": plan.content,
+        "age_group": plan.age_group,
+        "kind": plan.kind or "lesson_plan",
+        "topic": plan.topic,
+        "subject": plan.subject,
+        "duration": plan.duration,
+        "description": plan.description,
+        "created_at": plan.created_at.isoformat() if plan.created_at else None,
+        "updated_at": plan.updated_at.isoformat() if plan.updated_at else None,
+    }
+
+
+@router.get("/lesson-plans")
+def list_saved_lesson_plans(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_educator_saved_lesson_plans
+    plans = get_educator_saved_lesson_plans(db, user.id)
+    return [_serialize_lesson_plan(p) for p in plans]
+
+
+@router.post("/lesson-plans")
+def save_lesson_plan(
+    req: SaveLessonPlanRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import create_saved_lesson_plan
+    kind = (req.kind or "lesson_plan").strip() or "lesson_plan"
+    if kind not in SAVED_LESSON_PLAN_KINDS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid kind '{kind}'. Must be one of: {sorted(SAVED_LESSON_PLAN_KINDS)}",
+        )
+    title = (req.title or "").strip() or (req.topic or "").strip() or "Untitled lesson plan"
+    plan = create_saved_lesson_plan(
+        db,
+        educator_id=user.id,
+        title=title,
+        content=req.content,
+        age_group=req.age_group or "",
+        kind=kind,
+        topic=req.topic,
+        subject=req.subject,
+        duration=req.duration,
+        description=req.description,
+    )
+    return _serialize_lesson_plan(plan)
+
+
+@router.get("/lesson-plans/{plan_id}")
+def get_saved_lesson_plan_route(
+    plan_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_saved_lesson_plan
+    plan = get_saved_lesson_plan(db, plan_id)
+    if not plan or plan.creator_id != user.id:
+        raise HTTPException(status_code=404, detail="Lesson plan not found")
+    return _serialize_lesson_plan(plan)
+
+
+@router.delete("/lesson-plans/{plan_id}")
+def delete_saved_lesson_plan_route(
+    plan_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from database import get_saved_lesson_plan, delete_saved_lesson_plan
+    plan = get_saved_lesson_plan(db, plan_id)
+    if not plan or plan.creator_id != user.id:
+        raise HTTPException(status_code=404, detail="Lesson plan not found")
+    delete_saved_lesson_plan(db, plan_id)
     return {"success": True}
 
 

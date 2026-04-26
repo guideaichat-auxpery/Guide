@@ -201,6 +201,11 @@ class LessonPlan(Base):
     montessori_principles = Column(Text, nullable=True)  # JSON string of principles
     age_group = Column(String, nullable=False)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # Library metadata (added for the saved lesson plans feature)
+    kind = Column(String, nullable=True)  # 'lesson_plan' | 'alignment' | 'differentiation'
+    topic = Column(String, nullable=True)
+    subject = Column(String, nullable=True)
+    duration = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -511,6 +516,19 @@ def initialize_database_once():
                 logger.info("Added school_id and role columns to users table (or already exists)")
             except Exception as e:
                 logger.info(f"school columns migration: {str(e)}")
+
+            # Migration: Add library metadata columns to lesson_plans table
+            try:
+                conn = engine.connect()
+                conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS kind VARCHAR"))
+                conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS topic VARCHAR"))
+                conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS subject VARCHAR"))
+                conn.execute(text("ALTER TABLE lesson_plans ADD COLUMN IF NOT EXISTS duration VARCHAR"))
+                conn.commit()
+                conn.close()
+                logger.info("Added kind/topic/subject/duration columns to lesson_plans table (or already exists)")
+            except Exception as e:
+                logger.info(f"lesson_plans columns migration: {str(e)}")
             
             # Create admin account if not exists (requires ADMIN_PASSWORD env var)
             from database import User
@@ -1200,6 +1218,58 @@ def delete_great_story(db, story_id: int):
     story = db.query(GreatStory).filter(GreatStory.id == story_id).first()
     if story:
         db.delete(story)
+        db.commit()
+        return True
+    return False
+
+# Saved lesson-plan library functions (covers lesson plans, alignments, differentiations)
+def create_saved_lesson_plan(
+    db,
+    educator_id: int,
+    title: str,
+    content: str,
+    age_group: str,
+    kind: str = "lesson_plan",
+    topic: Optional[str] = None,
+    subject: Optional[str] = None,
+    duration: Optional[str] = None,
+    description: Optional[str] = None,
+):
+    """Create a new saved lesson plan / alignment / differentiation."""
+    plan = LessonPlan(
+        creator_id=educator_id,
+        title=title,
+        content=content,
+        age_group=age_group or "",
+        kind=kind,
+        topic=topic,
+        subject=subject,
+        duration=duration,
+        description=description,
+    )
+    db.add(plan)
+    db.commit()
+    db.refresh(plan)
+    return plan
+
+def get_educator_saved_lesson_plans(db, educator_id: int):
+    """Get all saved lesson plans / alignments / differentiations for an educator."""
+    return (
+        db.query(LessonPlan)
+        .filter(LessonPlan.creator_id == educator_id)
+        .order_by(LessonPlan.updated_at.desc())
+        .all()
+    )
+
+def get_saved_lesson_plan(db, plan_id: int):
+    """Get a specific saved lesson plan by ID."""
+    return db.query(LessonPlan).filter(LessonPlan.id == plan_id).first()
+
+def delete_saved_lesson_plan(db, plan_id: int):
+    """Delete a saved lesson plan."""
+    plan = db.query(LessonPlan).filter(LessonPlan.id == plan_id).first()
+    if plan:
+        db.delete(plan)
         db.commit()
         return True
     return False

@@ -32,6 +32,33 @@ export interface GreatStory {
   created_at?: string;
 }
 
+export type SavedLessonPlanKind = 'lesson_plan' | 'alignment' | 'differentiation';
+
+export interface SavedLessonPlan {
+  id: string;
+  title: string;
+  content: string;
+  age_group?: string;
+  kind: SavedLessonPlanKind;
+  topic?: string;
+  subject?: string;
+  duration?: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SaveLessonPlanRequest {
+  title: string;
+  content: string;
+  age_group?: string;
+  kind: SavedLessonPlanKind;
+  topic?: string;
+  subject?: string;
+  duration?: string;
+  description?: string;
+}
+
 export interface Conversation {
   id: string;
   session_id: string;
