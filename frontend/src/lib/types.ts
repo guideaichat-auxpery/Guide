@@ -87,10 +87,9 @@ export interface LessonPlanRequest {
 }
 
 export interface GreatStoryRequest {
-  topic: string;
+  theme: string;
   age_group: string;
-  story_type?: string;
-  additional_context?: string;
+  format_style?: string;
 }
 
 export interface CreateStudentRequest {

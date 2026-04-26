@@ -39,7 +39,14 @@ export default function GreatStories() {
     setError('');
     setResult('');
     try {
-      const res = await tools.greatStory({ topic, age_group: ageGroup, story_type: storyType, additional_context: additional });
+      const theme = additional.trim()
+        ? `${topic.trim()}\n\nAdditional context: ${additional.trim()}`
+        : topic.trim();
+      const res = await tools.greatStory({
+        theme,
+        age_group: ageGroup,
+        ...(storyType ? { format_style: storyType } : {}),
+      });
       setResult(res.content);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to generate story');
