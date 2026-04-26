@@ -35,9 +35,9 @@ export default function Students() {
     setLoading(true);
     try {
       const res = await studentsMgmt.list();
-      setStudents(res.students);
+      setStudents(Array.isArray(res?.students) ? res.students : []);
     } catch {
-      // failed to load
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -50,20 +50,22 @@ export default function Students() {
     try {
       if (tab === 'activities') {
         const res = await studentsMgmt.activities(student.id);
-        setActivities(res.activities);
+        setActivities(Array.isArray(res?.activities) ? res.activities : []);
       } else if (tab === 'safety') {
         const res = await studentsMgmt.safetyAlerts(student.id);
-        setAlerts(res.alerts);
+        setAlerts(Array.isArray(res?.alerts) ? res.alerts : []);
       } else if (tab === 'chat-history') {
         try {
           const res = await studentsMgmt.chatHistory(student.id);
-          setChatHistory(res.sessions);
+          setChatHistory(Array.isArray(res?.sessions) ? res.sessions : []);
         } catch {
           setChatHistory([]);
         }
       }
     } catch {
-      // failed to load detail
+      if (tab === 'activities') setActivities([]);
+      if (tab === 'safety') setAlerts([]);
+      if (tab === 'chat-history') setChatHistory([]);
     } finally {
       setLoadingDetail(false);
     }

@@ -27,6 +27,17 @@ export function clearToken() {
   localStorage.removeItem('guide_token');
 }
 
+function unwrapList<K extends string, T>(res: unknown, key: K): Record<K, T[]> {
+  let arr: T[] = [];
+  if (Array.isArray(res)) {
+    arr = res as T[];
+  } else if (res && typeof res === 'object') {
+    const v = (res as Record<string, unknown>)[key];
+    if (Array.isArray(v)) arr = v as T[];
+  }
+  return { [key]: arr } as Record<K, T[]>;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -158,15 +169,22 @@ export const tools = {
   align: (data: LessonPlanRequest) => api.post<{ content: string }>('/tools/align', data),
   differentiate: (data: LessonPlanRequest) => api.post<{ content: string }>('/tools/differentiate', data),
   greatStory: (data: GreatStoryRequest) => api.post<{ content: string }>('/tools/great-story', data),
-  listGreatStories: () => api.get<{ stories: GreatStory[] }>('/tools/great-story'),
+  listGreatStories: async (): Promise<{ stories: GreatStory[] }> =>
+    unwrapList<'stories', GreatStory>(await api.get<unknown>('/tools/great-story'), 'stories'),
   getGreatStory: (id: string) => api.get<GreatStory>(`/tools/great-story/${id}`),
   deleteGreatStory: (id: string) => api.delete<{ message: string }>(`/tools/great-story/${id}`),
-  listConversations: (interfaceType: string) =>
-    api.get<{ conversations: Conversation[] }>(`/tools/conversations?interface=${interfaceType}`),
+  listConversations: async (interfaceType: string): Promise<{ conversations: Conversation[] }> =>
+    unwrapList<'conversations', Conversation>(
+      await api.get<unknown>(`/tools/conversations?interface=${interfaceType}`),
+      'conversations',
+    ),
   createConversation: (data: { interface_type: string; title?: string }) =>
     api.post<{ session_id: string }>('/tools/conversations', data),
-  getMessages: (sessionId: string) =>
-    api.get<{ messages: ChatMessage[] }>(`/tools/conversations/${sessionId}/messages`),
+  getMessages: async (sessionId: string): Promise<{ messages: ChatMessage[] }> =>
+    unwrapList<'messages', ChatMessage>(
+      await api.get<unknown>(`/tools/conversations/${sessionId}/messages`),
+      'messages',
+    ),
   renameConversation: (id: string, title: string) =>
     api.put<{ message: string }>(`/tools/conversations/${id}`, { title }),
   deleteConversation: (id: string) => api.delete<{ message: string }>(`/tools/conversations/${id}`),
@@ -174,25 +192,33 @@ export const tools = {
     api.post<{ response: string; session_id?: string }>('/tools/chat', { ...data, interface_type: 'student' }),
 };
 
+type ChatSession = { id: string; subject?: string; created_at?: string; message_count?: number; last_message?: string };
+type ConsentRecord = { type: string; granted_at: string };
+
 export const studentsMgmt = {
-  list: () => api.get<{ students: Student[] }>('/students/'),
+  list: async (): Promise<{ students: Student[] }> =>
+    unwrapList<'students', Student>(await api.get<unknown>('/students/'), 'students'),
   get: (id: string) => api.get<Student>(`/students/${id}`),
   create: (data: CreateStudentRequest) => api.post<Student>('/students/', data),
   update: (id: string, data: Partial<Student>) => api.put<Student>(`/students/${id}`, data),
   delete: (id: string) => api.delete<{ message: string }>(`/students/${id}`),
-  activities: (id: string) => api.get<{ activities: Activity[] }>(`/students/${id}/activities`),
+  activities: async (id: string): Promise<{ activities: Activity[] }> =>
+    unwrapList<'activities', Activity>(await api.get<unknown>(`/students/${id}/activities`), 'activities'),
   learningJourney: (id: string) => api.get<{ journey: Record<string, unknown> }>(`/students/${id}/learning-journey`),
   grantAccess: (id: string, data: { educator_email: string }) => api.post<{ message: string }>(`/students/${id}/grant-access`, data),
-  consent: (id: string) => api.get<{ consent_records: Array<{ type: string; granted_at: string }> }>(`/students/${id}/consent`),
-  safetyAlerts: (id: string) => api.get<{ alerts: SafetyAlert[] }>(`/students/${id}/safety-alerts`),
+  consent: async (id: string): Promise<{ consent_records: ConsentRecord[] }> =>
+    unwrapList<'consent_records', ConsentRecord>(await api.get<unknown>(`/students/${id}/consent`), 'consent_records'),
+  safetyAlerts: async (id: string): Promise<{ alerts: SafetyAlert[] }> =>
+    unwrapList<'alerts', SafetyAlert>(await api.get<unknown>(`/students/${id}/safety-alerts`), 'alerts'),
   revokeAccess: (studentId: string, educatorId: string) =>
     api.delete<{ message: string }>(`/students/${studentId}/revoke-access/${educatorId}`),
-  chatHistory: (id: string) =>
-    api.get<{ sessions: Array<{ id: string; subject?: string; created_at?: string; message_count?: number; last_message?: string }> }>(`/students/${id}/chat-history`),
+  chatHistory: async (id: string): Promise<{ sessions: ChatSession[] }> =>
+    unwrapList<'sessions', ChatSession>(await api.get<unknown>(`/students/${id}/chat-history`), 'sessions'),
 };
 
 export const notes = {
-  list: () => api.get<{ notes: PlanningNote[] }>('/notes/'),
+  list: async (): Promise<{ notes: PlanningNote[] }> =>
+    unwrapList<'notes', PlanningNote>(await api.get<unknown>('/notes/'), 'notes'),
   create: (data: CreateNoteRequest) => api.post<PlanningNote>('/notes/', data),
   update: (id: string, data: Partial<CreateNoteRequest>) => api.put<PlanningNote>(`/notes/${id}`, data),
   delete: (id: string) => api.delete<{ message: string }>(`/notes/${id}`),
@@ -200,7 +226,8 @@ export const notes = {
 
 export const schools = {
   mine: () => api.get<SchoolInfo>('/schools/mine'),
-  educators: (schoolId: string) => api.get<{ educators: Educator[] }>(`/schools/${schoolId}/educators`),
+  educators: async (schoolId: string): Promise<{ educators: Educator[] }> =>
+    unwrapList<'educators', Educator>(await api.get<unknown>(`/schools/${schoolId}/educators`), 'educators'),
   removeEducator: (schoolId: string, educatorId: string) =>
     api.delete<{ message: string }>(`/schools/${schoolId}/educators/${educatorId}`),
 };
@@ -208,9 +235,13 @@ export const schools = {
 export const dataApi = {
   export: () => api.get<Record<string, unknown>>('/data/export'),
   retentionStatus: () => api.get<{ status: string }>('/data/retention-status'),
-  auditLogs: (studentId?: string) =>
-    api.get<{ logs: AuditLog[] }>(`/data/audit-logs${studentId ? `?student_id=${studentId}` : ''}`),
-  safetyAlerts: () => api.get<{ alerts: SafetyAlert[] }>('/data/safety-alerts'),
+  auditLogs: async (studentId?: string): Promise<{ logs: AuditLog[] }> =>
+    unwrapList<'logs', AuditLog>(
+      await api.get<unknown>(`/data/audit-logs${studentId ? `?student_id=${studentId}` : ''}`),
+      'logs',
+    ),
+  safetyAlerts: async (): Promise<{ alerts: SafetyAlert[] }> =>
+    unwrapList<'alerts', SafetyAlert>(await api.get<unknown>('/data/safety-alerts'), 'alerts'),
   reviewAlert: (alertId: string) => api.post<{ message: string }>(`/data/safety-alerts/${alertId}/review`),
 };
 
