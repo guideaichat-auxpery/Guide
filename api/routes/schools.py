@@ -45,6 +45,24 @@ def get_my_school(
     }
 
 
+@router.post("/{school_id}/invite-code/rotate")
+def rotate_invite_code(
+    school_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if getattr(user, "school_id", None) != school_id:
+        raise HTTPException(status_code=403, detail="Not a member of this school")
+    if getattr(user, "role", "") != "school_admin":
+        raise HTTPException(status_code=403, detail="School admin access required")
+
+    from database import rotate_school_invite_code
+    school = rotate_school_invite_code(db, school_id)
+    if not school:
+        raise HTTPException(status_code=404, detail="School not found")
+    return {"invite_code": school.invite_code}
+
+
 @router.get("/{school_id}/educators")
 def list_school_educators(
     school_id: int,

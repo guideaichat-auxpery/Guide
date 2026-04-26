@@ -835,6 +835,33 @@ def get_school_by_id(db, school_id: int):
     """Get school by ID"""
     return db.query(School).filter(School.id == school_id).first()
 
+def rotate_school_invite_code(db, school_id: int):
+    """Generate a new unique invite code for the given school and return the
+    updated School record. The previous invite code stops working immediately
+    because schools are looked up by their current invite_code value."""
+    from sqlalchemy.exc import IntegrityError
+
+    school = db.query(School).filter(School.id == school_id).first()
+    if not school:
+        return None
+
+    for _ in range(5):
+        new_code = generate_invite_code()
+        if db.query(School).filter(School.invite_code == new_code).first():
+            continue
+        school.invite_code = new_code
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            school = db.query(School).filter(School.id == school_id).first()
+            if not school:
+                return None
+            continue
+        db.refresh(school)
+        return school
+    return None
+
 def get_school_by_invite_code(db, invite_code: str):
     """Get school by invite code"""
     return db.query(School).filter(School.invite_code == invite_code).first()

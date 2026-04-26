@@ -253,6 +253,8 @@ export const schools = {
     unwrapList<'educators', Educator>(await api.get<unknown>(`/schools/${schoolId}/educators`), 'educators'),
   removeEducator: (schoolId: string, educatorId: string) =>
     api.delete<{ message: string }>(`/schools/${schoolId}/educators/${educatorId}`),
+  rotateInviteCode: (schoolId: string) =>
+    api.post<{ invite_code: string }>(`/schools/${schoolId}/invite-code/rotate`, {}),
 };
 
 export const dataApi = {

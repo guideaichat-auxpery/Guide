@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { users, auth as authApi, schools, dataApi } from '../lib/api';
 import type { SchoolInfo, Educator } from '../lib/types';
-import { Loader2, Save, Shield, Download, Users, AlertTriangle, Mail } from 'lucide-react';
+import { Loader2, Save, Shield, Download, Users, AlertTriangle, Mail, RefreshCw } from 'lucide-react';
 
 export default function Settings() {
   const { user, isAdmin, isStudent, logout, refreshSession } = useAuth();
@@ -23,6 +23,9 @@ export default function Settings() {
   const [pwMessage, setPwMessage] = useState('');
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
   const [educatorsList, setEducatorsList] = useState<Educator[]>([]);
+  const [rotatingCode, setRotatingCode] = useState(false);
+  const [rotateMessage, setRotateMessage] = useState('');
+  const [rotateError, setRotateError] = useState(false);
   const [tab, setTab] = useState<'profile' | 'security' | 'school' | 'data'>('profile');
 
   useEffect(() => {
@@ -122,6 +125,25 @@ export default function Settings() {
       navigate('/login');
     } catch {
       // failed to delete
+    }
+  };
+
+  const handleRotateInviteCode = async () => {
+    if (!schoolInfo?.id) return;
+    if (!confirm('Generate a new invite code? The current code will stop working immediately.')) return;
+    setRotatingCode(true);
+    setRotateMessage('');
+    setRotateError(false);
+    try {
+      const res = await schools.rotateInviteCode(schoolInfo.id);
+      setSchoolInfo(prev => prev ? { ...prev, invite_code: res.invite_code } : prev);
+      setRotateMessage('New invite code generated');
+      setRotateError(false);
+    } catch (e) {
+      setRotateMessage(e instanceof Error ? e.message : 'Failed to regenerate invite code');
+      setRotateError(true);
+    } finally {
+      setRotatingCode(false);
     }
   };
 
@@ -286,9 +308,24 @@ export default function Settings() {
                 <h3 className="font-sans text-sm font-semibold text-ink">School Information</h3>
               </div>
               {schoolInfo ? (
-                <div className="p-4 bg-sand/20 rounded-xl text-sm text-ink space-y-1">
+                <div className="p-4 bg-sand/20 rounded-xl text-sm text-ink space-y-2">
                   <p><span className="font-medium">Name:</span> {schoolInfo.name || schoolInfo.school_name || 'N/A'}</p>
-                  <p><span className="font-medium">Invite Code:</span> <code className="px-2 py-0.5 bg-eco-card rounded text-xs font-mono">{schoolInfo.invite_code || schoolInfo.code || schoolInfo.school_code || 'N/A'}</code></p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">Invite Code:</span>
+                    <code className="px-2 py-0.5 bg-eco-card rounded text-xs font-mono">{schoolInfo.invite_code || schoolInfo.code || schoolInfo.school_code || 'N/A'}</code>
+                    <button
+                      onClick={handleRotateInviteCode}
+                      disabled={rotatingCode}
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-eco-card border border-eco-border hover:bg-sand/50 disabled:opacity-50 text-xs font-medium text-ink rounded-lg transition-colors"
+                    >
+                      {rotatingCode ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                      Regenerate
+                    </button>
+                  </div>
+                  <p className="text-xs text-eco-text/60">Regenerating creates a new code and immediately disables the old one.</p>
+                  {rotateMessage && (
+                    <p className={`text-xs ${rotateError ? 'text-danger' : 'text-leaf-dark'}`}>{rotateMessage}</p>
+                  )}
                   {schoolInfo.license_count !== undefined && (
                     <p><span className="font-medium">Seats:</span> {schoolInfo.educator_count || educatorsList.length} / {schoolInfo.license_count} used</p>
                   )}
