@@ -82,7 +82,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
 
   return (
     <div className="border border-eco-border rounded-xl overflow-hidden">
-      <div className="flex items-center gap-0.5 px-3 py-2 bg-sand/30 border-b border-eco-border flex-wrap">
+      <div className="flex items-center gap-0.5 px-3 py-2 bg-sand/30 border-b border-eco-border flex-wrap no-print">
         {toolbarButtons.map((btn, i) => (
           <span key={btn.title}>
             {(i === 2 || i === 5 || i === 9) && <div className="w-px h-4 bg-eco-border mx-0.5 inline-block align-middle" />}

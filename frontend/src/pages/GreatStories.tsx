@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { tools } from '../lib/api';
 import type { GreatStory } from '../lib/types';
-import { Loader2, BookMarked, Plus, Trash2, ArrowLeft, Eye, Copy, Check, Printer } from 'lucide-react';
-import GeneratedContent from '../components/GeneratedContent';
+import { Loader2, BookMarked, Plus, Trash2, ArrowLeft, Eye, Copy, Check, Printer, Pencil } from 'lucide-react';
+import EditableGeneratedContent, { htmlToPlainText } from '../components/EditableGeneratedContent';
 
 export default function GreatStories() {
   const [view, setView] = useState<'create' | 'library' | 'detail'>('create');
@@ -11,6 +11,10 @@ export default function GreatStories() {
   const [storyType, setStoryType] = useState('');
   const [additional, setAdditional] = useState('');
   const [result, setResult] = useState('');
+  const [createEditedHtml, setCreateEditedHtml] = useState<string | null>(null);
+  const [createIsEditing, setCreateIsEditing] = useState(false);
+  const [detailEditedHtml, setDetailEditedHtml] = useState<string | null>(null);
+  const [detailIsEditing, setDetailIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [stories, setStories] = useState<GreatStory[]>([]);
@@ -37,6 +41,11 @@ export default function GreatStories() {
     setTimeout(() => setCopiedKey(prev => (prev === key ? null : prev)), 1800);
   };
 
+  const copyEditableText = (markdown: string, edited: string | null, key: string) => {
+    const text = edited !== null ? htmlToPlainText(edited) : markdown;
+    return copyText(text, key);
+  };
+
   const loadStories = async () => {
     setLoadingStories(true);
     try {
@@ -58,6 +67,8 @@ export default function GreatStories() {
     setLoading(true);
     setError('');
     setResult('');
+    setCreateEditedHtml(null);
+    setCreateIsEditing(false);
     try {
       const theme = additional.trim()
         ? `${topic.trim()}\n\nAdditional context: ${additional.trim()}`
@@ -92,6 +103,8 @@ export default function GreatStories() {
   const viewStory = async (story: GreatStory) => {
     setLoadingStory(true);
     setView('detail');
+    setDetailEditedHtml(null);
+    setDetailIsEditing(false);
     try {
       const full = await tools.getGreatStory(story.id);
       setSelectedStory(full);
@@ -117,7 +130,16 @@ export default function GreatStories() {
               <div className="flex items-center justify-between mb-4 no-print">
                 <h2 className="text-2xl font-serif text-ink">{selectedStory.title || selectedStory.topic || 'Untitled Story'}</h2>
                 <div className="flex items-center gap-1.5">
-                  <button type="button" onClick={() => copyText(selectedStory.content || '', `detail-${selectedStory.id}`)}
+                  <button type="button" onClick={() => setDetailIsEditing(v => !v)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      detailIsEditing
+                        ? 'bg-leaf/15 text-leaf-dark hover:bg-leaf/25'
+                        : 'text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand'
+                    }`}
+                    title={detailIsEditing ? 'Switch to view mode' : 'Edit content'}>
+                    {detailIsEditing ? <><Eye size={13} /> View</> : <><Pencil size={13} /> Edit</>}
+                  </button>
+                  <button type="button" onClick={() => copyEditableText(selectedStory.content || '', detailEditedHtml, `detail-${selectedStory.id}`)}
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
                     title="Copy to clipboard">
                     {copiedKey === `detail-${selectedStory.id}` ? <><Check size={13} className="text-leaf-dark" /> Copied</> : <><Copy size={13} /> Copy</>}
@@ -142,7 +164,13 @@ export default function GreatStories() {
                 <h1 className="font-serif text-2xl text-ink m-0">{selectedStory.title || selectedStory.topic || 'Untitled Story'}</h1>
                 {selectedStory.age_group && <p className="text-sm text-eco-text/70 mt-1">Ages {selectedStory.age_group}</p>}
               </div>
-              <GeneratedContent content={selectedStory.content || ''} variant="prose" />
+              <EditableGeneratedContent
+                markdown={selectedStory.content || ''}
+                editedHtml={detailEditedHtml}
+                isEditing={detailIsEditing}
+                onEditedHtmlChange={setDetailEditedHtml}
+                variant="prose"
+              />
             </>
           )}
         </div>
@@ -218,7 +246,16 @@ export default function GreatStories() {
               <h3 className="font-sans text-sm font-semibold text-ink">Generated Story</h3>
               {result && (
                 <div className="flex gap-1.5">
-                  <button type="button" onClick={() => copyText(result, 'create')}
+                  <button type="button" onClick={() => setCreateIsEditing(v => !v)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      createIsEditing
+                        ? 'bg-leaf/15 text-leaf-dark hover:bg-leaf/25'
+                        : 'text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand'
+                    }`}
+                    title={createIsEditing ? 'Switch to view mode' : 'Edit content'}>
+                    {createIsEditing ? <><Eye size={13} /> View</> : <><Pencil size={13} /> Edit</>}
+                  </button>
+                  <button type="button" onClick={() => copyEditableText(result, createEditedHtml, 'create')}
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
                     title="Copy to clipboard">
                     {copiedKey === 'create' ? <><Check size={13} className="text-leaf-dark" /> Copied</> : <><Copy size={13} /> Copy</>}
@@ -238,7 +275,13 @@ export default function GreatStories() {
             {error && <div className="p-3 bg-soft-rose/50 border border-danger/20 rounded-xl text-sm text-danger mb-3 no-print">{error}</div>}
             {result ? (
               <div className="max-h-[60vh] overflow-y-auto print:max-h-none print:overflow-visible">
-                <GeneratedContent content={result} variant="prose" />
+                <EditableGeneratedContent
+                  markdown={result}
+                  editedHtml={createEditedHtml}
+                  isEditing={createIsEditing}
+                  onEditedHtmlChange={setCreateEditedHtml}
+                  variant="prose"
+                />
               </div>
             ) : (
               <p className="text-sm text-eco-text/40 italic">Your story will appear here...</p>

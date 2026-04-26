@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { tools, api } from '../lib/api';
 import type { LessonPlanRequest, AlignRequest, DifferentiateRequest } from '../lib/types';
-import { Loader2, BookOpen, Target, Layers, Upload, X, FileText, Copy, Printer, Check } from 'lucide-react';
-import GeneratedContent from '../components/GeneratedContent';
+import { Loader2, BookOpen, Target, Layers, Upload, X, FileText, Copy, Printer, Check, Pencil, Eye } from 'lucide-react';
+import EditableGeneratedContent, { htmlToPlainText } from '../components/EditableGeneratedContent';
 
 type Mode = 'generate' | 'align' | 'differentiate';
 
@@ -31,6 +31,8 @@ export default function LessonPlanning() {
   const [classComposition, setClassComposition] = useState('');
   const [focusArea, setFocusArea] = useState(focusAreaOptions[0]);
   const [result, setResult] = useState('');
+  const [editedHtml, setEditedHtml] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -39,24 +41,27 @@ export default function LessonPlanning() {
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const copyTextFallback = (text: string) => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch { /* noop */ }
+    document.body.removeChild(ta);
+  };
+
   const handleCopy = async () => {
-    if (!result) return;
+    const text = editedHtml !== null ? htmlToPlainText(editedHtml) : result;
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(result);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      await navigator.clipboard.writeText(text);
     } catch {
-      const ta = document.createElement('textarea');
-      ta.value = result;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch { /* noop */ }
-      document.body.removeChild(ta);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      copyTextFallback(text);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   };
 
   const handlePrint = () => window.print();
@@ -111,6 +116,8 @@ export default function LessonPlanning() {
     setLoading(true);
     setError('');
     setResult('');
+    setEditedHtml(null);
+    setIsEditing(false);
     try {
       const additionalContext = [additional, fileContent].filter(Boolean).join('\n\n') || undefined;
       let res: { content: string };
@@ -162,7 +169,7 @@ export default function LessonPlanning() {
         {modes.map(m => (
           <button
             key={m.key}
-            onClick={() => { setMode(m.key); setResult(''); }}
+            onClick={() => { setMode(m.key); setResult(''); setEditedHtml(null); setIsEditing(false); }}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               mode === m.key ? 'bg-leaf/15 text-leaf-dark border border-leaf/30' : 'bg-eco-card border border-eco-border text-eco-text/70 hover:bg-sand/50'
             }`}
@@ -284,6 +291,15 @@ export default function LessonPlanning() {
             </div>
             {result && (
               <div className="flex gap-1.5 shrink-0">
+                <button type="button" onClick={() => setIsEditing(v => !v)}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    isEditing
+                      ? 'bg-leaf/15 text-leaf-dark hover:bg-leaf/25'
+                      : 'text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand'
+                  }`}
+                  title={isEditing ? 'Switch to view mode' : 'Edit content'}>
+                  {isEditing ? <><Eye size={13} /> View</> : <><Pencil size={13} /> Edit</>}
+                </button>
                 <button type="button" onClick={handleCopy}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-eco-text/70 hover:text-ink bg-sand/40 hover:bg-sand transition-colors"
                   title="Copy to clipboard">
@@ -308,7 +324,12 @@ export default function LessonPlanning() {
           {error && <div className="p-3 bg-soft-rose/50 border border-danger/20 rounded-xl text-sm text-danger mb-3 no-print">{error}</div>}
           {result ? (
             <div className="max-h-[60vh] overflow-y-auto print:max-h-none print:overflow-visible">
-              <GeneratedContent content={result} />
+              <EditableGeneratedContent
+                markdown={result}
+                editedHtml={editedHtml}
+                isEditing={isEditing}
+                onEditedHtmlChange={setEditedHtml}
+              />
             </div>
           ) : (
             <p className="text-sm text-eco-text/40 italic">Your generated content will appear here...</p>
