@@ -1,7 +1,9 @@
-import { memo, useMemo } from 'react';
+import { lazy, memo, Suspense, useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
 import MarkdownIt from 'markdown-it';
 import GeneratedContent from './GeneratedContent';
-import RichTextEditor from './RichTextEditor';
+
+const RichTextEditor = lazy(() => import('./RichTextEditor'));
 
 const md = new MarkdownIt({ html: false, linkify: true, breaks: false });
 
@@ -20,6 +22,14 @@ function variantToClass(variant: Props['variant']): string {
   return 'generated-content';
 }
 
+function EditorFallback() {
+  return (
+    <div className="border border-eco-border rounded-xl p-6 flex items-center justify-center text-eco-text/60">
+      <Loader2 className="animate-spin text-leaf" size={20} />
+    </div>
+  );
+}
+
 function EditableGeneratedContentInner({
   markdown,
   editedHtml,
@@ -36,7 +46,9 @@ function EditableGeneratedContentInner({
   if (isEditing) {
     return (
       <div className={className}>
-        <RichTextEditor content={initialEditHtml} onChange={onEditedHtmlChange} />
+        <Suspense fallback={<EditorFallback />}>
+          <RichTextEditor content={initialEditHtml} onChange={onEditedHtmlChange} />
+        </Suspense>
       </div>
     );
   }
