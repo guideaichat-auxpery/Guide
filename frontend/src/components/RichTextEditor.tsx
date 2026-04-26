@@ -137,7 +137,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
   const mobileMoreItems: ToolbarButton[] = [...extraBlockButtons, ...overflowButtons];
 
   const buttonClass = (active: boolean) =>
-    `inline-flex items-center justify-center min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 sm:p-1.5 rounded hover:bg-eco-card transition-colors ${
+    `inline-flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:p-1.5 rounded hover:bg-eco-card transition-colors ${
       active ? 'bg-eco-card text-ink' : ''
     }`;
 
