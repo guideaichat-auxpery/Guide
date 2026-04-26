@@ -67,13 +67,16 @@ def create_student(
     if existing:
         raise HTTPException(status_code=409, detail="Username already taken")
 
+    # Guide is currently locked to the adolescent plane (Cycle 4, ages
+    # 12-15). Whatever the client sends, students are always created in
+    # this age band so downstream curriculum logic stays consistent.
     student = create_student_with_consent(
         db,
         username=req.username,
         password=req.password,
         full_name=req.full_name,
         educator_id=user.id,
-        age_group=req.age_group,
+        age_group="12-15",
         parent_name=req.parent_name,
         parent_email=req.parent_email,
         consent_method=req.consent_method,
@@ -112,8 +115,9 @@ def update_student(
 
     if req.full_name is not None:
         student.full_name = req.full_name
-    if req.age_group is not None:
-        student.age_group = req.age_group
+    # age_group is intentionally ignored — Guide is locked to Cycle 4
+    # (12-15) for all students. Force-reset in case earlier records drifted.
+    student.age_group = "12-15"
     if req.password is not None:
         import bcrypt
         student.password_hash = bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")

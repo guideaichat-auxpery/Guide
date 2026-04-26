@@ -202,9 +202,9 @@ export const tools = {
     ),
   createConversation: (data: { interface_type: string; title?: string }) =>
     api.post<{ session_id: string }>('/tools/conversations', data),
-  getMessages: async (sessionId: string): Promise<{ messages: ChatMessage[] }> =>
+  getMessages: async (sessionId: string, interfaceType: string = 'companion'): Promise<{ messages: ChatMessage[] }> =>
     unwrapList<'messages', ChatMessage>(
-      await api.get<unknown>(`/tools/conversations/${sessionId}/messages`),
+      await api.get<unknown>(`/tools/conversations/${sessionId}/messages?interface_type=${encodeURIComponent(interfaceType)}`),
       'messages',
     ),
   renameConversation: (id: string, title: string) =>
@@ -212,6 +212,37 @@ export const tools = {
   deleteConversation: (id: string) => api.delete<{ message: string }>(`/tools/conversations/${id}`),
   studentTutor: (data: { message: string; subject?: string; history?: ChatMessage[]; session_id?: string }) =>
     api.post<{ response: string; session_id?: string }>('/tools/chat', { ...data, interface_type: 'student' }),
+  studentChat: (data: {
+    message: string;
+    session_id?: string;
+    subjects?: string[];
+    year_level?: string;
+    history?: ChatMessage[];
+  }) =>
+    api.post<{ response: string; session_id?: string }>('/tools/chat', {
+      ...data,
+      interface_type: 'student',
+    }),
+  studentWorkFeedback: (data: {
+    work_file: File;
+    rubric_file?: File | null;
+    session_id?: string;
+    year_level?: string;
+    subjects?: string[];
+  }) => {
+    const fd = new FormData();
+    fd.append('work_file', data.work_file);
+    if (data.rubric_file) fd.append('rubric_file', data.rubric_file);
+    if (data.session_id) fd.append('session_id', data.session_id);
+    if (data.year_level) fd.append('year_level', data.year_level);
+    if (data.subjects && data.subjects.length > 0) {
+      fd.append('subjects', JSON.stringify(data.subjects));
+    }
+    return api.postForm<{ response: string; session_id?: string }>(
+      '/tools/student/work-feedback',
+      fd,
+    );
+  },
 };
 
 type ChatSession = { id: string; subject?: string; created_at?: string; message_count?: number; last_message?: string };

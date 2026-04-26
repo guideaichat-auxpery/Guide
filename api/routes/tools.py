@@ -17,9 +17,18 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
     age_group: Optional[str] = None
     subject: Optional[str] = None
+    subjects: Optional[List[str]] = None  # Multiple subjects for student chat
     year_level: Optional[str] = None
     curriculum_type: Optional[str] = "Blended"
     conversation_id: Optional[int] = None
+
+
+# Cycle 4 (12-15) — adolescent age group is the only supported student age group.
+STUDENT_AGE_GROUP = "12-15"
+STUDENT_ALLOWED_SUBJECTS = {
+    "english", "maths", "mathematics", "science",
+    "history", "geography", "civics", "economics",
+}
 
 
 class CompanionChatRequest(BaseModel):
@@ -141,8 +150,16 @@ def chat(
     is_student = identity["type"] == "student"
     user_id, student_id = _identity_ids(identity)
 
+    # Students are locked to Cycle 4 (12-15) regardless of what the client sends.
+    age_group = STUDENT_AGE_GROUP if is_student else req.age_group
+
+    # Normalise subjects: students can pass a multi-select; primary subject drives prompt.
+    subjects = [s.strip() for s in (req.subjects or []) if s and s.strip()]
+    primary_subject = req.subject or (subjects[0] if subjects else None)
+
     messages = [{"role": "user", "content": req.message}]
 
+    conv = None
     if req.session_id:
         from api.db import ChatConversation
         conv = db.query(ChatConversation).filter(
@@ -162,11 +179,11 @@ def chat(
         messages=messages,
         max_tokens=4000,
         is_student=is_student,
-        age_group=req.age_group,
+        age_group=age_group,
         interface_type=req.interface_type,
         curriculum_type=req.curriculum_type,
         year_level=req.year_level,
-        subject=req.subject,
+        subject=primary_subject,
     )
 
     if not result:
@@ -177,7 +194,319 @@ def chat(
         save_conversation_message(db, req.session_id, req.interface_type, "user", req.message, user_id=user_id, student_id=student_id)
         save_conversation_message(db, req.session_id, req.interface_type, "assistant", result, user_id=user_id, student_id=student_id)
 
+        # Tag the conversation with its primary subject for educator analytics.
+        # New conversations default to "General", so treat that as untagged
+        # too — otherwise the real subject would never overwrite the default.
+        existing_tag = (getattr(conv, "subject_tag", None) or "").strip().lower()
+        if conv is not None and primary_subject and existing_tag in ("", "general"):
+            try:
+                conv.subject_tag = primary_subject
+                db.commit()
+            except Exception:
+                db.rollback()
+
+        # Fire-and-forget: record curriculum keyword to adaptive trending.
+        if is_student and primary_subject:
+            try:
+                _record_trending_keyword(primary_subject, req.message, req.session_id, student_id)
+            except Exception:
+                pass  # never block chat on analytics
+
     return {"response": result, "session_id": req.session_id}
+
+
+def _record_trending_keyword(subject: str, message: str, session_id: Optional[str], student_id: Optional[int]):
+    """Fire-and-forget POST to the adaptive trending endpoint.
+
+    We extract the most salient keyword from the student message (first
+    capitalised noun phrase, falling back to the longest content word) so
+    the educator analytics dashboard sees real curriculum terms rather
+    than full prompts. Never raises — failures are silent by design.
+    """
+    import re
+    import httpx
+
+    # Strip punctuation, drop short / common words.
+    words = re.findall(r"[A-Za-z][A-Za-z\-]{2,}", message)
+    stop = {
+        "the", "and", "for", "with", "but", "you", "are", "this", "that",
+        "what", "how", "why", "can", "would", "could", "should", "have",
+        "has", "had", "was", "were", "been", "being", "from", "about",
+        "into", "onto", "than", "then", "they", "them", "their", "there",
+        "here", "when", "where", "which", "who", "whom", "whose", "your",
+        "yours", "ours", "mine", "his", "her", "its", "our", "out", "now",
+        "all", "any", "some", "much", "many", "more", "most", "very",
+        "just", "also", "only", "even", "ever", "still", "tell", "say",
+        "said", "get", "got", "give", "make", "made",
+    }
+    candidates = [w for w in words if w.lower() not in stop]
+    if not candidates:
+        return
+    # Prefer capitalised words (likely proper nouns / curriculum terms).
+    cap = [w for w in candidates if w[0].isupper()]
+    keyword = (cap[0] if cap else max(candidates, key=len)).lower()
+
+    payload = {"subject": subject.lower(), "keyword": keyword}
+    if session_id:
+        payload["sessionId"] = session_id
+    if student_id is not None:
+        payload["studentId"] = str(student_id)
+
+    try:
+        with httpx.Client(timeout=2.0) as client:
+            client.post("http://localhost:3000/api/trending/record", json=payload)
+    except Exception:
+        pass
+
+
+def _extract_text_from_upload(upload: UploadFile) -> str:
+    """Extract plain text from a student-uploaded file.
+
+    Supports PDF, DOCX, TXT/MD, and common image formats (via OCR). Returns
+    an empty string if the file type is unsupported or extraction fails;
+    callers should treat empty text as "no extractable content" rather than
+    a hard error so students still get useful feedback on the prompt itself.
+    """
+    import io
+
+    if not upload or not upload.filename:
+        return ""
+
+    name = upload.filename.lower()
+    try:
+        data = upload.file.read()
+    except Exception:
+        return ""
+    finally:
+        try:
+            upload.file.seek(0)
+        except Exception:
+            pass
+
+    if not data:
+        return ""
+
+    try:
+        if name.endswith(".pdf"):
+            import PyPDF2
+            reader = PyPDF2.PdfReader(io.BytesIO(data))
+            chunks = []
+            for page in reader.pages:
+                try:
+                    chunks.append(page.extract_text() or "")
+                except Exception:
+                    continue
+            return "\n".join(chunks).strip()
+
+        if name.endswith(".docx"):
+            from docx import Document
+            doc = Document(io.BytesIO(data))
+            return "\n".join(p.text for p in doc.paragraphs).strip()
+
+        if name.endswith((".txt", ".md")):
+            for enc in ("utf-8", "latin-1"):
+                try:
+                    return data.decode(enc).strip()
+                except UnicodeDecodeError:
+                    continue
+            return ""
+
+        if name.endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".webp")):
+            try:
+                from PIL import Image
+                import pytesseract
+                image = Image.open(io.BytesIO(data))
+                return (pytesseract.image_to_string(image) or "").strip()
+            except Exception:
+                return ""
+
+    except Exception:
+        return ""
+
+    return ""
+
+
+def _build_work_feedback_prompt(
+    work_text: str,
+    rubric_text: str,
+    work_filename: str,
+    rubric_filename: Optional[str],
+    year_level: Optional[str],
+    subjects: List[str],
+) -> str:
+    """Build the rubric-aligned feedback prompt scoped to Cycle 4 (12-15)."""
+    subjects_line = ", ".join(subjects) if subjects else "general learning"
+    year_line = year_level or "Year 7-9"
+
+    if rubric_text:
+        rubric_section = (
+            f"\n\nRUBRIC PROVIDED BY THE STUDENT (\"{rubric_filename}\"):\n"
+            f"---\n{rubric_text[:6000]}\n---\n"
+            "Use this rubric as the primary criteria. Reference specific rubric "
+            "criteria by name where you can."
+        )
+    else:
+        rubric_section = (
+            "\n\nNo rubric was provided. Use the Australian Curriculum V9 "
+            f"achievement standards for {year_line} {subjects_line} as the "
+            "criteria."
+        )
+
+    work_body = work_text[:8000] if work_text else (
+        "(no extractable text — give feedback based on the conversation context)"
+    )
+
+    return (
+        f"A {year_level or 'secondary'} student in the adolescent plane "
+        f"(Cycle 4, ages 12-15) has shared their work for feedback. The "
+        f"subject(s) are: {subjects_line}.\n\n"
+        f"STUDENT WORK (\"{work_filename}\"):\n---\n{work_body}\n---"
+        f"{rubric_section}\n\n"
+        "Provide warm, specific, growth-oriented feedback. Structure it as:\n"
+        "1. Two genuine strengths (be concrete — quote phrases where possible).\n"
+        "2. Two clear next steps the student can act on today.\n"
+        "3. One question that invites the student to deepen their thinking.\n\n"
+        "Speak directly to the student, use British English, and keep the "
+        "tone Montessori-aligned: respectful, observational, and trusting "
+        "their capacity. Avoid grades, scores, or judgemental language."
+    )
+
+
+@router.post("/student/work-feedback")
+async def student_work_feedback(
+    work_file: UploadFile = File(...),
+    rubric_file: Optional[UploadFile] = File(None),
+    session_id: Optional[str] = Form(None),
+    year_level: Optional[str] = Form(None),
+    subjects: Optional[str] = Form(None),
+    identity: dict = Depends(get_current_user_or_student),
+    db: Session = Depends(get_db),
+):
+    """Accept a student's work (and optional rubric) and return rubric-aligned
+    feedback. Persists the exchange into the conversation so it appears
+    inline alongside chat messages."""
+    from utils import call_openai_api
+
+    if identity["type"] != "student":
+        raise HTTPException(status_code=403, detail="Student account required")
+
+    user_id, student_id = _identity_ids(identity)
+
+    # Parse subjects: accept JSON list or comma-separated string.
+    subject_list: List[str] = []
+    if subjects:
+        raw = subjects.strip()
+        if raw.startswith("["):
+            import json
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    subject_list = [str(s).strip() for s in parsed if str(s).strip()]
+            except Exception:
+                subject_list = []
+        if not subject_list:
+            subject_list = [s.strip() for s in raw.split(",") if s.strip()]
+
+    primary_subject = subject_list[0] if subject_list else None
+
+    # Verify conversation ownership BEFORE doing any work for that session —
+    # we never want to feed someone else's chat history into the model based
+    # on a guessed/leaked session_id.
+    conv = None
+    if session_id:
+        from api.db import ChatConversation
+        conv = db.query(ChatConversation).filter(
+            ChatConversation.session_id == session_id,
+            ChatConversation.is_active == True,
+        ).first()
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        _ownership_check(conv, user_id, student_id)
+
+    work_text = _extract_text_from_upload(work_file)
+    rubric_text = _extract_text_from_upload(rubric_file) if rubric_file else ""
+
+    prompt = _build_work_feedback_prompt(
+        work_text=work_text,
+        rubric_text=rubric_text,
+        work_filename=work_file.filename or "work",
+        rubric_filename=(rubric_file.filename if rubric_file else None),
+        year_level=year_level,
+        subjects=subject_list,
+    )
+
+    # Build conversation history so feedback is contextual (now safe — we've
+    # already confirmed the caller owns this session above).
+    messages = []
+    if session_id:
+        from database import get_conversation_history
+        history = get_conversation_history(db, session_id, "student", limit=20)
+        if history:
+            messages = [{"role": h.role, "content": h.content} for h in history]
+    messages.append({"role": "user", "content": prompt})
+
+    result = call_openai_api(
+        messages=messages,
+        max_tokens=2000,
+        is_student=True,
+        age_group=STUDENT_AGE_GROUP,
+        interface_type="student",
+        year_level=year_level,
+        subject=primary_subject,
+    )
+
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to generate feedback")
+
+    # Persist a friendly user-facing message + the assistant's feedback so
+    # the upload appears as part of the chat transcript.
+    if session_id:
+        from database import save_conversation_message
+        from api.db import ChatConversation
+
+        conv = db.query(ChatConversation).filter(
+            ChatConversation.session_id == session_id,
+            ChatConversation.is_active == True,
+        ).first()
+        if conv:
+            _ownership_check(conv, user_id, student_id)
+
+        excerpt = (work_text[:240] + "…") if len(work_text) > 240 else work_text
+        user_msg = f"📎 Shared work: **{work_file.filename}**"
+        if rubric_file and rubric_file.filename:
+            user_msg += f"\n📋 Rubric: **{rubric_file.filename}**"
+        if excerpt:
+            user_msg += f"\n\n> {excerpt}"
+
+        save_conversation_message(
+            db, session_id, "student", "user", user_msg,
+            user_id=user_id, student_id=student_id,
+        )
+        save_conversation_message(
+            db, session_id, "student", "assistant", result,
+            user_id=user_id, student_id=student_id,
+        )
+
+        existing_tag = (getattr(conv, "subject_tag", None) or "").strip().lower()
+        if conv is not None and primary_subject and existing_tag in ("", "general"):
+            try:
+                conv.subject_tag = primary_subject
+                db.commit()
+            except Exception:
+                db.rollback()
+
+        if primary_subject:
+            try:
+                _record_trending_keyword(
+                    primary_subject,
+                    work_text or work_file.filename or "",
+                    session_id,
+                    student_id,
+                )
+            except Exception:
+                pass
+
+    return {"response": result, "session_id": session_id}
 
 
 @router.post("/companion/chat")

@@ -1,0 +1,38 @@
+Student Chat Interface — Structure & Functions
+Startup & Session Restoration
+When a student first loads the chat, it automatically looks up their most recent conversation in the database and restores it — they see their previous messages with a subtle "Restored your conversation" notification. If it's a brand new student, a fresh conversation session is created automatically.
+
+Sidebar
+A conversation sidebar is rendered showing the student's full chat history, grouped and manageable. They can switch between past conversations just like an educator can.
+
+Subject & Year Level Selectors
+At the top of the chat, students pick:
+
+Subjects (multiselect) — e.g. English, Maths, Science, History, Geography. The options adjust based on their age group (younger students get a simpler list; adolescents get Civics, Economics added).
+Year level — a dropdown scoped to their age group (e.g. a 9–12 student only sees Years 4–6).
+These selections shape the AI's response style, vocabulary, and curriculum references.
+
+File Upload (Work Feedback)
+Students can upload their own work (TXT, PDF, JPG, PNG, DOCX) and optionally a rubric (TXT, PDF, DOCX). When they click "How about some feedback?", the AI reads both files and gives structured, rubric-aligned feedback in an age-appropriate tone, citing Australian Curriculum V9 for their year level. The feedback is saved to their conversation history.
+
+Main Chat Input
+A persistent text input at the bottom. When a student sends a message:
+
+The message is saved to the database
+Curriculum keywords are detected in the message (subject-tagged) and logged for trend tracking — this feeds the educator's analytics dashboard
+The AI responds using the full conversation history, year level, and selected subjects
+Detected keywords in the AI's response are highlighted in bold for the student
+Both the student message and AI response are saved to the database and logged as activity events (learning_question and ai_response)
+Privacy & Safety
+A prominent privacy banner warns students not to enter personal information
+All files are validated before processing (security check)
+PII is sanitised before being sent to the OpenAI API
+Visual Style
+Fade-in animation on each new chat bubble
+Custom subject-colour themes (e.g. geography = green, history = purple)
+Auto-scroll to the latest message after each reply
+A "scroll to top" button for navigating long conversations
+Data Flow Summary
+Student types → saved to DB → keywords detected & logged
+→ OpenAI API called → response displayed with highlighted keywords
+→ response saved to DB → educator analytics updated silently
