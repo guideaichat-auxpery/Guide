@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   AlertTriangle, X, Loader2, CheckCircle, Shield, Plus, Trash2, Pencil,
   Send, Paperclip, FileText, MessageSquare, ArrowUp, Upload, FileCheck2,
-  Menu,
+  Menu, Lightbulb,
 } from 'lucide-react';
 import GeneratedContent from '../components/GeneratedContent';
 import { tools, type ChatMessage } from '../lib/api';
@@ -509,13 +509,28 @@ export default function StudentLearning() {
           className="relative flex-1 overflow-y-auto bg-eco-card rounded-2xl border border-eco-border p-4 space-y-4"
         >
           {showWelcome && (
-            <div className="text-center py-10 text-eco-text/60">
-              <p className="text-base text-ink font-serif mb-2">
-                What would you like to explore today?
+            <div className="flex flex-col items-center justify-center text-center py-12 px-4">
+              <div className="w-12 h-12 rounded-full bg-leaf/15 flex items-center justify-center mb-3">
+                <Lightbulb size={22} className="text-leaf-dark" />
+              </div>
+              <h3 className="text-xl font-serif text-ink mb-1">
+                Hi {displayName}, ready to learn?
+              </h3>
+              <p className="text-sm text-eco-text/70 max-w-md mb-5">
+                Pick a subject above and ask me anything — or share some work
+                for friendly feedback.
               </p>
-              <p className="text-xs">
-                Pick one or more subjects above, then ask a question or share work for feedback.
-              </p>
+              <button
+                onClick={() => {
+                  handleNewChat();
+                  setTimeout(() => inputRef.current?.focus(), 0);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-colors"
+                style={{ background: accent }}
+              >
+                <Plus size={16} />
+                Start a new chat
+              </button>
             </div>
           )}
 

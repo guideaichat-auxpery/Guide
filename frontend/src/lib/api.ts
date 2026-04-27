@@ -197,7 +197,7 @@ export const tools = {
     api.delete<{ success: boolean }>(`/tools/lesson-plans/${id}`),
   listConversations: async (interfaceType: string): Promise<{ conversations: Conversation[] }> =>
     unwrapList<'conversations', Conversation>(
-      await api.get<unknown>(`/tools/conversations?interface=${interfaceType}`),
+      await api.get<unknown>(`/tools/conversations?interface_type=${encodeURIComponent(interfaceType)}`),
       'conversations',
     ),
   createConversation: (data: { interface_type: string; title?: string }) =>

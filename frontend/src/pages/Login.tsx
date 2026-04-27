@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -9,24 +9,34 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [studentPw, setStudentPw] = useState('');
-  const { login, studentLogin, loading, error, clearError } = useAuth();
-  const navigate = useNavigate();
+  const { user, loading, isStudent, isEducator, login, studentLogin, error, clearError } = useAuth();
+
+  // Clear any stale error when this screen mounts so a previous failed
+  // attempt doesn't show up as a banner on a fresh visit.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { clearError(); }, []);
 
   const handleEducatorLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await login(email, password);
-      navigate('/dashboard');
-    } catch {}
+    // Don't navigate imperatively; once `login` updates auth state the
+    // declarative redirect below picks the right destination from the
+    // role the API actually returned.
+    try { await login(email, password); } catch {}
   };
 
   const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await studentLogin(username, studentPw);
-      navigate('/learn');
-    } catch {}
+    try { await studentLogin(username, studentPw); } catch {}
   };
+
+  // Single redirect rule for both "already signed in when arriving at
+  // /login" and "just successfully signed in" cases. Driven entirely by
+  // the role returned by the API, so the student tab can't accidentally
+  // drop a non-student onto /learn (and vice versa).
+  if (!loading && user) {
+    const dest = isStudent ? '/learn' : isEducator ? '/dashboard' : '/';
+    return <Navigate to={dest} replace />;
+  }
 
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4">
