@@ -118,4 +118,4 @@ STRIPE_SCHOOL_SEAT_PRICE_ID = "price_1SteED8PGiRAuUvflyL4Hqr2"
 
 [postMerge]
 path = "scripts/post-merge.sh"
-timeoutMs = 180000
+timeoutMs = 600000
