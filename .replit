@@ -115,3 +115,7 @@ VITE_API_URL = "https://guide-2pwx.onrender.com/api"
 PAYMENTS_API_SECRET = "f898a5ea592454e66e3a38fb6cff4992888e515e8a4b3becda362431a42c5431"
 ADMIN_PASSWORD = "Testtest"
 STRIPE_SCHOOL_SEAT_PRICE_ID = "price_1SteED8PGiRAuUvflyL4Hqr2"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000
