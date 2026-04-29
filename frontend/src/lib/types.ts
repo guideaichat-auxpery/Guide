@@ -92,6 +92,8 @@ export interface Activity {
   response_text?: string;
   session_id?: string;
   subject?: string;
+  session_title?: string;
+  interface_type?: string;
   created_at?: string;
 }
 

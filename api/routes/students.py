@@ -151,12 +151,22 @@ def get_student_activities(
     db: Session = Depends(get_db),
 ):
     from database import get_educator_accessible_students, get_student_activities as db_get_activities
+    from api.db import ChatConversation
 
     students = get_educator_accessible_students(db, user.id)
     if not any(s.id == student_id for s in students):
         raise HTTPException(status_code=404, detail="Student not found or access denied")
 
     activities = db_get_activities(db, student_id, limit=limit)
+
+    session_ids = list({a.session_id for a in activities if a.session_id})
+    convs_by_session: dict = {}
+    if session_ids:
+        convs = db.query(ChatConversation).filter(
+            ChatConversation.session_id.in_(session_ids)
+        ).all()
+        convs_by_session = {c.session_id: c for c in convs}
+
     return [
         {
             "id": a.id,
@@ -164,10 +174,102 @@ def get_student_activities(
             "prompt_text": a.prompt_text,
             "response_text": a.response_text,
             "session_id": a.session_id,
+            "subject": (convs_by_session.get(a.session_id).subject_tag if a.session_id and convs_by_session.get(a.session_id) else None),
+            "session_title": (convs_by_session.get(a.session_id).title if a.session_id and convs_by_session.get(a.session_id) else None),
+            "interface_type": (convs_by_session.get(a.session_id).interface_type if a.session_id and convs_by_session.get(a.session_id) else None),
             "created_at": a.created_at.isoformat() if a.created_at else None,
         }
         for a in activities
     ]
+
+
+@router.get("/{student_id}/chat-history")
+def get_student_chat_history(
+    student_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return chat sessions for a student that the requesting educator can access."""
+    from database import get_educator_accessible_students, get_user_chat_conversations
+    from api.db import ConversationHistory
+
+    students = get_educator_accessible_students(db, user.id)
+    if not any(s.id == student_id for s in students):
+        raise HTTPException(status_code=404, detail="Student not found or access denied")
+
+    convs = get_user_chat_conversations(db, student_id=student_id)
+
+    sessions = []
+    for c in convs:
+        msg_count = db.query(ConversationHistory).filter(
+            ConversationHistory.session_id == c.session_id,
+            ConversationHistory.interface_type == c.interface_type,
+        ).count()
+        last = db.query(ConversationHistory).filter(
+            ConversationHistory.session_id == c.session_id,
+            ConversationHistory.interface_type == c.interface_type,
+        ).order_by(ConversationHistory.created_at.desc()).first()
+        sessions.append({
+            "id": c.session_id,
+            "session_id": c.session_id,
+            "title": c.title,
+            "subject": c.subject_tag,
+            "interface_type": c.interface_type,
+            "message_count": msg_count,
+            "last_message": (last.content[:160] if last and last.content else None),
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+            "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+        })
+    return sessions
+
+
+@router.get("/{student_id}/chat-sessions/{session_id}/messages")
+def get_student_chat_session_messages(
+    student_id: int,
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the full thread for a specific student chat session (educator view)."""
+    from database import get_educator_accessible_students
+    from api.db import ChatConversation, ConversationHistory
+
+    students = get_educator_accessible_students(db, user.id)
+    if not any(s.id == student_id for s in students):
+        raise HTTPException(status_code=404, detail="Student not found or access denied")
+
+    conv = db.query(ChatConversation).filter(
+        ChatConversation.session_id == session_id,
+        ChatConversation.student_id == student_id,
+    ).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Chat session not found for this student")
+
+    history = db.query(ConversationHistory).filter(
+        ConversationHistory.session_id == session_id,
+        ConversationHistory.interface_type == conv.interface_type,
+    ).order_by(ConversationHistory.created_at.asc()).all()
+
+    return {
+        "session": {
+            "id": conv.session_id,
+            "session_id": conv.session_id,
+            "title": conv.title,
+            "subject": conv.subject_tag,
+            "interface_type": conv.interface_type,
+            "created_at": conv.created_at.isoformat() if conv.created_at else None,
+            "updated_at": conv.updated_at.isoformat() if conv.updated_at else None,
+        },
+        "messages": [
+            {
+                "id": h.id,
+                "role": h.role,
+                "content": h.content,
+                "created_at": h.created_at.isoformat() if h.created_at else None,
+            }
+            for h in history
+        ],
+    }
 
 
 @router.get("/{student_id}/learning-journey")

@@ -31,6 +31,18 @@ STUDENT_ALLOWED_SUBJECTS = {
 }
 
 
+def _filter_student_subjects(values):
+    """Return only the entries whose lowercased form is in the allowlist.
+
+    Preserves the original casing supplied by the client (e.g. "Maths") so the
+    prompt and subject_tag stay human-readable, while preventing arbitrary
+    free-text strings from leaking into student-facing AI calls.
+    """
+    if not values:
+        return []
+    return [v for v in values if isinstance(v, str) and v.strip().lower() in STUDENT_ALLOWED_SUBJECTS]
+
+
 class CompanionChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
@@ -155,7 +167,13 @@ def chat(
 
     # Normalise subjects: students can pass a multi-select; primary subject drives prompt.
     subjects = [s.strip() for s in (req.subjects or []) if s and s.strip()]
+    if is_student:
+        # Backend allowlist enforcement — UI restricts to these subjects but
+        # never trust the client. Drop anything outside the AC V9 set.
+        subjects = _filter_student_subjects(subjects)
     primary_subject = req.subject or (subjects[0] if subjects else None)
+    if is_student and primary_subject and primary_subject.strip().lower() not in STUDENT_ALLOWED_SUBJECTS:
+        primary_subject = subjects[0] if subjects else None
 
     messages = [{"role": "user", "content": req.message}]
 
@@ -407,6 +425,9 @@ async def student_work_feedback(
         if not subject_list:
             subject_list = [s.strip() for s in raw.split(",") if s.strip()]
 
+    # Backend allowlist enforcement — never trust client-supplied subject
+    # strings on student-facing endpoints.
+    subject_list = _filter_student_subjects(subject_list)
     primary_subject = subject_list[0] if subject_list else None
 
     # Verify conversation ownership BEFORE doing any work for that session —

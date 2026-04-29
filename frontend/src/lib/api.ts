@@ -267,6 +267,10 @@ export const studentsMgmt = {
     api.delete<{ message: string }>(`/students/${studentId}/revoke-access/${educatorId}`),
   chatHistory: async (id: string): Promise<{ sessions: ChatSession[] }> =>
     unwrapList<'sessions', ChatSession>(await api.get<unknown>(`/students/${id}/chat-history`), 'sessions'),
+  chatSessionMessages: (studentId: string, sessionId: string) =>
+    api.get<{ session: ChatSession; messages: Array<{ id?: number; role: string; content: string; created_at?: string }> }>(
+      `/students/${studentId}/chat-sessions/${encodeURIComponent(sessionId)}/messages`,
+    ),
 };
 
 export const notes = {
