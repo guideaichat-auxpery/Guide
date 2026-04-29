@@ -38,13 +38,25 @@ if _replit_slug and _replit_owner:
     if static_origin not in ALLOWED_ORIGINS:
         ALLOWED_ORIGINS.append(static_origin)
 
+# Always allow any Replit-hosted frontend origin (dev preview *.replit.dev,
+# Static deploys *.replit.app, plus the canonical *.repl.co legacy form) via
+# a regex. This avoids the recurring "Disallowed CORS origin" failure when
+# the published frontend domain isn't enumerated in CORS_ORIGINS.
+ALLOWED_ORIGIN_REGEX = (
+    r"^https://([A-Za-z0-9-]+\.)*replit\.(app|dev)$"
+    r"|^https://([A-Za-z0-9-]+\.)*repl\.co$"
+)
+
 if not ALLOWED_ORIGINS:
-    ALLOWED_ORIGINS = ["*"]
+    # Even with the regex, keep an explicit empty list (not "*") so we can
+    # safely allow credentials.
+    ALLOWED_ORIGINS = []
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True if ALLOWED_ORIGINS != ["*"] else False,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
