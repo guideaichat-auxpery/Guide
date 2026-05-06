@@ -337,15 +337,38 @@ def _extract_text_from_upload(upload: UploadFile) -> str:
 
     try:
         if name.endswith(".pdf"):
-            import PyPDF2
-            reader = PyPDF2.PdfReader(io.BytesIO(data))
-            chunks = []
-            for page in reader.pages:
+            # Try PyPDF2 first; fall back to pdfplumber for PDFs whose text
+            # layer PyPDF2 silently can't read (very common in real-world
+            # student uploads exported from Word/Pages). Neither does OCR —
+            # scanned/image-only PDFs still need pytesseract + the tesseract
+            # binary, which Render's runtime doesn't ship by default.
+            text = ""
+            try:
+                import PyPDF2
+                reader = PyPDF2.PdfReader(io.BytesIO(data))
+                chunks = []
+                for page in reader.pages:
+                    try:
+                        chunks.append(page.extract_text() or "")
+                    except Exception:
+                        continue
+                text = "\n".join(chunks).strip()
+            except Exception:
+                text = ""
+            if not text:
                 try:
-                    chunks.append(page.extract_text() or "")
+                    import pdfplumber
+                    with pdfplumber.open(io.BytesIO(data)) as pdf:
+                        chunks = []
+                        for page in pdf.pages:
+                            try:
+                                chunks.append(page.extract_text() or "")
+                            except Exception:
+                                continue
+                        text = "\n".join(chunks).strip()
                 except Exception:
-                    continue
-            return "\n".join(chunks).strip()
+                    pass
+            return text
 
         if name.endswith(".docx"):
             from docx import Document
@@ -523,6 +546,25 @@ async def student_chat_with_files(
     work_name = work_file.filename if (work_file and work_file.filename) else None
     rubric_name = rubric_file.filename if (rubric_file and rubric_file.filename) else None
     has_attachments = bool(work_name or rubric_name)
+
+    # If attachments were sent but we couldn't pull any text out of any of
+    # them, fail loudly with a friendly message rather than letting the model
+    # hallucinate a refusal ("I can't see your file…"). Common causes: a
+    # scanned/image-only PDF, an unusual Word export, or an image we can't
+    # OCR in this environment.
+    if has_attachments:
+        attached_with_text = (work_name and work_text) or (rubric_name and rubric_text)
+        if not attached_with_text:
+            unreadable = [n for n, t in [(work_name, work_text), (rubric_name, rubric_text)] if n and not t]
+            unread_list = ", ".join(unreadable)
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"I couldn't read any text from {unread_list}. If it's a "
+                    "scanned PDF or photo, try a Word document, a .txt export, "
+                    "or paste the text into the chat directly."
+                ),
+            )
 
     # Build the prompt the model sees. When attachments are present, prepend
     # a context block; the student's question drives the response.
