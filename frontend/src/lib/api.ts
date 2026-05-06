@@ -223,6 +223,28 @@ export const tools = {
       ...data,
       interface_type: 'student',
     }),
+  studentChatWithFiles: (data: {
+    message: string;
+    session_id?: string;
+    subjects?: string[];
+    year_level?: string;
+    work_file?: File | null;
+    rubric_file?: File | null;
+  }) => {
+    const fd = new FormData();
+    fd.append('message', data.message);
+    if (data.session_id) fd.append('session_id', data.session_id);
+    if (data.year_level) fd.append('year_level', data.year_level);
+    if (data.subjects && data.subjects.length > 0) {
+      fd.append('subjects', JSON.stringify(data.subjects));
+    }
+    if (data.work_file) fd.append('work_file', data.work_file);
+    if (data.rubric_file) fd.append('rubric_file', data.rubric_file);
+    return api.postForm<{ response: string; session_id?: string }>(
+      '/tools/student/chat',
+      fd,
+    );
+  },
   studentWorkFeedback: (data: {
     work_file: File;
     rubric_file?: File | null;

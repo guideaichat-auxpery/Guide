@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   AlertTriangle, X, Loader2, CheckCircle, Shield, Plus, Trash2, Pencil,
-  Send, Paperclip, FileText, MessageSquare, ArrowUp, Upload, FileCheck2,
+  Send, Paperclip, FileText, MessageSquare, ArrowUp, FileCheck2,
   Menu, Lightbulb,
 } from 'lucide-react';
 import GeneratedContent from '../components/GeneratedContent';
@@ -74,11 +74,11 @@ export default function StudentLearning() {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [yearLevel, setYearLevel] = useState<string>('Year 8');
 
-  // ----- file upload state -----
+  // ----- file attachment state (lives on the chat composer) -----
   const [workFile, setWorkFile] = useState<File | null>(null);
   const [rubricFile, setRubricFile] = useState<File | null>(null);
-  const [uploadingFeedback, setUploadingFeedback] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
+  const workInputRef = useRef<HTMLInputElement>(null);
+  const rubricInputRef = useRef<HTMLInputElement>(null);
 
   // ----- safety modal -----
   const [showSafety, setShowSafety] = useState(false);
@@ -126,7 +126,7 @@ export default function StudentLearning() {
   // -- auto-scroll to newest --
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, sending, uploadingFeedback]);
+  }, [messages.length, sending]);
 
   // -- scroll-to-top button visibility --
   const onScroll = useCallback(() => {
@@ -194,7 +194,6 @@ export default function StudentLearning() {
     setInput('');
     setWorkFile(null);
     setRubricFile(null);
-    setShowUpload(false);
   }
 
   async function handleRename(c: Conversation) {
@@ -232,8 +231,14 @@ export default function StudentLearning() {
 
   async function handleSend(textOverride?: string) {
     const msg = (textOverride ?? input).trim();
-    if (!msg || sending) return;
+    if ((!msg && !workFile && !rubricFile) || sending) return;
+    // If only files attached and no message, give the model a sensible default.
+    const finalMsg = msg || (workFile || rubricFile
+      ? 'Please give me feedback on the attached work.'
+      : '');
+    if (!finalMsg) return;
     setInput('');
+
     const session_id = await ensureSession();
     if (!session_id) {
       setMessages(prev => [...prev, {
@@ -243,16 +248,53 @@ export default function StudentLearning() {
       }]);
       return;
     }
-    const userMsg: UIMessage = { id: `u-${Date.now()}`, role: 'user', content: msg };
+
+    const hasFiles = !!(workFile || rubricFile);
+
+    // Show the user's message in the bubble exactly as they'll see it
+    // (filenames + question), without dumping the extracted document text.
+    const attachLine = hasFiles
+      ? [
+          workFile ? `📎 **${workFile.name}**` : null,
+          rubricFile ? `📋 **${rubricFile.name}**` : null,
+        ].filter(Boolean).join(' · ')
+      : '';
+    const visibleUserContent = hasFiles
+      ? `Attached ${attachLine}\n\n${finalMsg}`
+      : finalMsg;
+
+    const userMsg: UIMessage = {
+      id: `u-${Date.now()}`,
+      role: 'user',
+      content: visibleUserContent,
+    };
     setMessages(prev => [...prev, userMsg]);
+
+    // Snapshot the files for this send, then clear the chips immediately so
+    // the student doesn't accidentally re-upload the same docs on the next
+    // message (the document text now lives in conversation history).
+    const sendWork = workFile;
+    const sendRubric = rubricFile;
+    setWorkFile(null);
+    setRubricFile(null);
+
     setSending(true);
     try {
-      const res = await tools.studentChat({
-        message: msg,
-        session_id,
-        subjects: selectedSubjects,
-        year_level: yearLevel,
-      });
+      const res = hasFiles
+        ? await tools.studentChatWithFiles({
+            message: finalMsg,
+            session_id,
+            subjects: selectedSubjects,
+            year_level: yearLevel,
+            work_file: sendWork,
+            rubric_file: sendRubric,
+          })
+        : await tools.studentChat({
+            message: finalMsg,
+            session_id,
+            subjects: selectedSubjects,
+            year_level: yearLevel,
+          });
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`,
         role: 'assistant',
@@ -260,55 +302,18 @@ export default function StudentLearning() {
       }]);
       // Refresh sidebar so titles/timestamps update.
       tools.listConversations('student').then(r => setConversations(r.conversations || [])).catch(() => {});
-    } catch {
+    } catch (e) {
+      const errText = e instanceof Error ? e.message : '';
       setMessages(prev => [...prev, {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: "I'm sorry, something went wrong. Please try again.",
+        content: hasFiles
+          ? `I couldn't read that attachment just now. ${errText}`.trim()
+          : "I'm sorry, something went wrong. Please try again.",
       }]);
     } finally {
       setSending(false);
       inputRef.current?.focus();
-    }
-  }
-
-  async function handleFeedbackUpload() {
-    if (!workFile || uploadingFeedback) return;
-    const session_id = await ensureSession();
-    if (!session_id) return;
-    setUploadingFeedback(true);
-    const stagedUserMsg: UIMessage = {
-      id: `u-${Date.now()}`,
-      role: 'user',
-      content: `📎 Shared work: **${workFile.name}**${rubricFile ? `\n📋 Rubric: **${rubricFile.name}**` : ''}`,
-    };
-    setMessages(prev => [...prev, stagedUserMsg]);
-    try {
-      const res = await tools.studentWorkFeedback({
-        work_file: workFile,
-        rubric_file: rubricFile,
-        session_id,
-        year_level: yearLevel,
-        subjects: selectedSubjects,
-      });
-      setMessages(prev => [...prev, {
-        id: `a-${Date.now()}`,
-        role: 'assistant',
-        content: res.response,
-      }]);
-      setWorkFile(null);
-      setRubricFile(null);
-      setShowUpload(false);
-      tools.listConversations('student').then(r => setConversations(r.conversations || [])).catch(() => {});
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Something went wrong uploading that.';
-      setMessages(prev => [...prev, {
-        id: `err-${Date.now()}`,
-        role: 'assistant',
-        content: `I couldn't read that file just now. ${msg}`,
-      }]);
-    } finally {
-      setUploadingFeedback(false);
     }
   }
 
@@ -517,8 +522,9 @@ export default function StudentLearning() {
                 Hi {displayName}, ready to learn?
               </h3>
               <p className="text-sm text-eco-text/70 max-w-md mb-5">
-                Pick a subject above and ask me anything — or share some work
-                for friendly feedback.
+                Pick a subject above and ask me anything — or use the paperclip
+                to attach your work (and a rubric, if you have one) and ask
+                questions about it.
               </p>
               <button
                 onClick={() => {
@@ -555,7 +561,7 @@ export default function StudentLearning() {
             </div>
           ))}
 
-          {(sending || uploadingFeedback) && (
+          {sending && (
             <div className="flex justify-start animate-fade-in">
               <div className="bg-sand/40 rounded-2xl px-4 py-3 border-l-2" style={{ borderLeftColor: accent }}>
                 <Loader2 className="animate-spin" size={18} style={{ color: accent }} />
@@ -577,66 +583,58 @@ export default function StudentLearning() {
           )}
         </div>
 
-        {/* upload panel */}
-        {showUpload && (
-          <div className="mt-2 p-3 bg-eco-card border border-eco-border rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-semibold text-ink">Get feedback on your work</h4>
-              <button
-                onClick={() => { setShowUpload(false); setWorkFile(null); setRubricFile(null); }}
-                className="p-1 rounded-lg hover:bg-sand/50"
-                aria-label="Close upload panel"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-2">
-              <FileSlot
-                label="Your work (required)"
-                file={workFile}
-                onPick={setWorkFile}
-                accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
+        {/* attached-file pills (sit just above the composer) */}
+        {(workFile || rubricFile) && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {workFile && (
+              <AttachmentPill
+                label={workFile.name}
                 Icon={FileText}
+                kind="Work"
+                onRemove={() => setWorkFile(null)}
+                accent={accent}
               />
-              <FileSlot
-                label="Rubric (optional)"
-                file={rubricFile}
-                onPick={setRubricFile}
-                accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
+            )}
+            {rubricFile && (
+              <AttachmentPill
+                label={rubricFile.name}
                 Icon={FileCheck2}
+                kind="Rubric"
+                onRemove={() => setRubricFile(null)}
+                accent={accent}
               />
-            </div>
-            <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-eco-text/60">
-                PDFs, Word docs, plain text, or images. We'll align feedback to {yearLevel} {selectedSubjects.length ? selectedSubjects.join(', ') : 'AC V9 standards'}.
-              </p>
-              <button
-                onClick={handleFeedbackUpload}
-                disabled={!workFile || uploadingFeedback}
-                className="px-3 py-1.5 text-sm font-medium text-white rounded-xl disabled:opacity-50 transition-colors flex items-center gap-2"
-                style={{ background: accent }}
-              >
-                {uploadingFeedback ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                How about some feedback?
-              </button>
-            </div>
+            )}
+            <span className="text-xs text-eco-text/60">
+              Attached. Ask any question — feedback, evaluation against the rubric, a summary, anything.
+            </span>
           </div>
         )}
 
         {/* composer */}
-        <div className="mt-2 flex gap-2">
-          <button
-            onClick={() => setShowUpload(o => !o)}
-            className={`p-3 rounded-xl border transition-colors ${
-              showUpload
-                ? 'bg-leaf/15 border-leaf/30 text-leaf'
-                : 'bg-eco-card border-eco-border text-eco-text/70 hover:text-ink'
-            }`}
-            title="Upload work for feedback"
-            aria-label="Upload work for feedback"
-          >
-            <Paperclip size={18} />
-          </button>
+        <div className="mt-2 flex gap-2 items-end">
+          {/* hidden file inputs driven by the paperclip menu */}
+          <input
+            ref={workInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
+            onChange={e => { setWorkFile(e.target.files?.[0] || null); e.target.value = ''; }}
+          />
+          <input
+            ref={rubricInputRef}
+            type="file"
+            className="hidden"
+            accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
+            onChange={e => { setRubricFile(e.target.files?.[0] || null); e.target.value = ''; }}
+          />
+
+          <AttachMenu
+            onPickWork={() => workInputRef.current?.click()}
+            onPickRubric={() => rubricInputRef.current?.click()}
+            hasWork={!!workFile}
+            hasRubric={!!rubricFile}
+          />
+
           <textarea
             ref={inputRef}
             value={input}
@@ -647,9 +645,11 @@ export default function StudentLearning() {
                 handleSend();
               }
             }}
-            placeholder={activeSubject
-              ? `Ask anything about ${activeSubject}…`
-              : 'Ask a question, or pick a subject above'}
+            placeholder={(workFile || rubricFile)
+              ? 'Ask anything about your attached work…'
+              : (activeSubject
+                ? `Ask anything about ${activeSubject}…`
+                : 'Ask a question, or attach work using the paperclip')}
             rows={1}
             className="flex-1 resize-none rounded-xl border border-eco-border bg-eco-card px-4 py-3 text-sm text-ink placeholder:text-eco-text/40 focus:border-leaf focus:ring-0 transition-colors"
             style={{ minHeight: '44px', maxHeight: '120px' }}
@@ -661,7 +661,7 @@ export default function StudentLearning() {
           />
           <button
             onClick={() => handleSend()}
-            disabled={!input.trim() || sending}
+            disabled={(!input.trim() && !workFile && !rubricFile) || sending}
             className="px-4 py-3 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
             style={{ background: accent }}
             aria-label="Send message"
@@ -732,44 +732,98 @@ export default function StudentLearning() {
   );
 }
 
-interface FileSlotProps {
+interface AttachmentPillProps {
   label: string;
-  file: File | null;
-  onPick: (f: File | null) => void;
-  accept: string;
+  kind: string;
   Icon: typeof FileText;
+  onRemove: () => void;
+  accent: string;
 }
 
-function FileSlot({ label, file, onPick, accept, Icon }: FileSlotProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+function AttachmentPill({ label, kind, Icon, onRemove, accent }: AttachmentPillProps) {
   return (
-    <label className="block cursor-pointer">
-      <span className="text-xs text-eco-text/60">{label}</span>
-      <div
-        className="mt-1 flex items-center gap-2 p-2 rounded-xl border border-dashed border-eco-border bg-white/60 hover:border-leaf/50"
-        onClick={() => inputRef.current?.click()}
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border bg-white"
+      style={{ borderColor: `${accent}66`, color: '#3f4a3a' }}
+    >
+      <Icon size={12} style={{ color: accent }} />
+      <span className="font-medium" style={{ color: accent }}>{kind}:</span>
+      <span className="truncate max-w-[16rem]" title={label}>{label}</span>
+      <button
+        onClick={onRemove}
+        className="p-0.5 rounded-full hover:bg-sand/50 text-eco-text/60 hover:text-ink"
+        aria-label={`Remove ${kind.toLowerCase()} attachment`}
       >
-        <Icon size={16} className="text-eco-text/60" />
-        <span className="text-sm text-ink truncate flex-1">
-          {file ? file.name : 'Choose a file'}
-        </span>
-        {file && (
+        <X size={12} />
+      </button>
+    </span>
+  );
+}
+
+interface AttachMenuProps {
+  onPickWork: () => void;
+  onPickRubric: () => void;
+  hasWork: boolean;
+  hasRubric: boolean;
+}
+
+function AttachMenu({ onPickWork, onPickRubric, hasWork, hasRubric }: AttachMenuProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [open]);
+
+  const active = hasWork || hasRubric;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className={`p-3 rounded-xl border transition-colors ${
+          active
+            ? 'bg-leaf/15 border-leaf/30 text-leaf'
+            : 'bg-eco-card border-eco-border text-eco-text/70 hover:text-ink'
+        }`}
+        title="Attach a file"
+        aria-label="Attach a file"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <Paperclip size={18} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute bottom-full mb-2 left-0 w-56 bg-white border border-eco-border rounded-xl shadow-lg p-1 z-30"
+        >
           <button
-            onClick={e => { e.stopPropagation(); onPick(null); }}
-            className="p-1 rounded hover:bg-sand/40 text-eco-text/60"
-            aria-label="Remove file"
+            role="menuitem"
+            onClick={() => { setOpen(false); onPickWork(); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-sand/50 rounded-lg text-left"
           >
-            <X size={14} />
+            <FileText size={14} className="text-eco-text/60" />
+            <span className="flex-1">{hasWork ? 'Replace work file' : 'Attach your work'}</span>
           </button>
-        )}
-        <input
-          ref={inputRef}
-          type="file"
-          className="hidden"
-          accept={accept}
-          onChange={e => onPick(e.target.files?.[0] || null)}
-        />
-      </div>
-    </label>
+          <button
+            role="menuitem"
+            onClick={() => { setOpen(false); onPickRubric(); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-sand/50 rounded-lg text-left"
+          >
+            <FileCheck2 size={14} className="text-eco-text/60" />
+            <span className="flex-1">{hasRubric ? 'Replace rubric' : 'Attach a rubric'}</span>
+          </button>
+          <p className="text-[11px] text-eco-text/50 px-3 py-1.5">
+            PDFs, Word docs, text or images.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
